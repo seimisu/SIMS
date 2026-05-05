@@ -38,7 +38,7 @@
                             ref="uploadRef"
                             @select-files="handleFiles"
                             @remove-file="clearForm"
-                            :progress="progressUpload"
+                            :progress="progressFilesUploaded"
                             accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         >
                         </UploadInput>
@@ -56,14 +56,24 @@ import {
     IconUserUp,
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+
+import { useForm, progress } from "@inertiajs/vue3";
 
 const uploadRef = ref(null);
 const modelValue = defineModel("modelValue");
 const fileUpload = ref(null);
+const progressFilesUploaded = computed(() => progress.getStatus());
+const filesUploadForm = useForm({
+    files: [],
+});
 
 const handleFiles = (e) => {
-    fileUpload.value = e.files;
-    console.log(fileUpload.value);
+    filesUploadForm.files = Array.from(e.files);
+};
+
+const clearForm = () => {
+    filesUploadForm.files = [];
+    filesUploadForm.resetAndClearErrors();
 };
 </script>
