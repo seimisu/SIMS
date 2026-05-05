@@ -23,6 +23,7 @@
         "@tabler/icons-vue": "^3.35.0",
         "@vitejs/plugin-vue": "^6.0.1",
         "apexcharts": "^5.6.0",
+        "nprogress": "^0.2.0",
         "primeicons": "^7.0.0",
         "primevue": "^4.4.1",
         "v-calendar": "^3.1.2",

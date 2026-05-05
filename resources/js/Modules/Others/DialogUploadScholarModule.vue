@@ -20,7 +20,7 @@
                 <div class="flex flex-col lg:flex-row gap-3">
                     <div class="flex-1 flex flex-col gap-5">
                         <div
-                            class="flex items-start p-2 shadow border border-blue-500 text-blue-500 rounded-xl bg-blue-50 gap-1"
+                            class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1"
                         >
                             <div>
                                 <IconExclamationCircleFilled :size="20" />
@@ -38,12 +38,17 @@
                             ref="uploadRef"
                             @select-files="handleFiles"
                             @remove-file="clearForm"
-                            :progress="progressFilesUploaded"
+                            :progress="progressUpload"
                             accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         >
+                            {{ progressUpload }}
                         </UploadInput>
                         <div class="flex justify-end">
-                            <DefaultButton size="small" label="Upload File" />
+                            <DefaultButton
+                                size="small"
+                                label="Upload File"
+                                @click="submitForm"
+                            />
                         </div>
                     </div>
                     <div class="flex-3"></div>
@@ -67,7 +72,7 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 const uploadRef = ref(null);
 const modelValue = defineModel("modelValue");
 const fileUpload = ref(null);
-const progressFilesUploaded = computed(() => progress.getStatus());
+const progressUpload = ref(0);
 const filesUploadForm = useForm({
     files: [],
 });
@@ -85,12 +90,23 @@ const submitForm = () => {
     uploadRef.value.upload();
     filesUploadForm.post(route("scholar.store"), {
         forceFormData: true,
+        onProgress: (e) => {
+            if (!e.total) return;
+
+            const percent = (e.loaded / e.total) * 99;
+
+            setTimeout(() => {
+                progressUpload.value = Math.round(percent);
+            }, 100); // delay in ms
+        },
         onSuccess: () => {
-            toastRef.value.show(page.props.flash);
-            if (page.props.flash?.status == "success") {
-                filesUploadForm.resetAndClearErrors();
-                uploadRef.value.clear();
-            }
+            // toastRef.value.show(page.props.flash);
+            // if (page.props.flash?.status == "success") {
+            //     filesUploadForm.resetAndClearErrors();
+            //     uploadRef.value.clear();
+            // }
+        },
+        onFinish: () => {
             progressUpload.value = 100;
         },
     });
