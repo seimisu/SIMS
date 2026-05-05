@@ -42,6 +42,9 @@
                             accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         >
                         </UploadInput>
+                        <div class="flex justify-end">
+                            <DefaultButton size="small" label="Upload File" />
+                        </div>
                     </div>
                     <div class="flex-3"></div>
                 </div>
@@ -59,6 +62,7 @@ import UploadInput from "../../Components/inputs/UploadInput.vue";
 import { computed, ref } from "vue";
 
 import { useForm, progress } from "@inertiajs/vue3";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 
 const uploadRef = ref(null);
 const modelValue = defineModel("modelValue");
@@ -75,5 +79,20 @@ const handleFiles = (e) => {
 const clearForm = () => {
     filesUploadForm.files = [];
     filesUploadForm.resetAndClearErrors();
+};
+
+const submitForm = () => {
+    uploadRef.value.upload();
+    filesUploadForm.post(route("scholar.store"), {
+        forceFormData: true,
+        onSuccess: () => {
+            toastRef.value.show(page.props.flash);
+            if (page.props.flash?.status == "success") {
+                filesUploadForm.resetAndClearErrors();
+                uploadRef.value.clear();
+            }
+            progressUpload.value = 100;
+        },
+    });
 };
 </script>
