@@ -311,7 +311,7 @@ class Scholar1Controller extends Controller
                         'type' => $q->type?->name,
                         'program' => $q->program?->name,
                         'status' => [
-                            'name' => $q->status?->name,
+                            'name' => Str::ucfirst($q->status?->name),
                             'bcolor' => $q->status?->color?->background_color,
                             'tcolor' => $q->status?->color?->text_color,
                             'icon' => $q->status?->icon
