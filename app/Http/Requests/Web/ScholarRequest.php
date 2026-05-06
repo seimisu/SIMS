@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Web;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Override;
 
 class ScholarRequest extends FormRequest
 {
@@ -22,8 +23,18 @@ class ScholarRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'files' => ['required', 'array'],
-            'files.*' => 'file|mimes:xlsx,csv|max:10240',
+            'files' => ['required'],
+            'files.*' => 'file|mimes:xls,xlsx,csv|max:10240',
+        ];
+    }
+
+    #[Override]
+    public function messages(): array
+    {
+        return [
+            'files.*.file' => 'Each item must be a valid file.',
+            'files.*.mimes' => 'Only XLS, XLSX, and CSV files are allowed.',
+            'files.*.max' => 'Each file must not exceed 10MB.',
         ];
     }
 }

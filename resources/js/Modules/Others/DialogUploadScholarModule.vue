@@ -66,9 +66,12 @@ import {
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import { computed, ref } from "vue";
 
-import { useForm, progress } from "@inertiajs/vue3";
+import { useForm, progress, usePage } from "@inertiajs/vue3";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+import { useToast } from "primevue";
 
+const page = usePage();
+const toast = useToast();
 const uploadRef = ref(null);
 const modelValue = defineModel("modelValue");
 const fileUpload = ref(null);
@@ -79,25 +82,25 @@ const filesUploadForm = useForm({
 
 const handleFiles = (e) => {
     filesUploadForm.files = Array.from(e.files);
+    progressUpload.value = 0;
 };
 
 const clearForm = () => {
-    filesUploadForm.files = [];
     filesUploadForm.resetAndClearErrors();
+    filesUploadForm.files = [];
 };
 
 const submitForm = () => {
     uploadRef.value.upload();
     filesUploadForm.post(route("scholar.store"), {
         forceFormData: true,
+        onBefore: () => {
+            progressUpload.value = 0;
+        },
         onProgress: (e) => {
             if (!e.total) return;
-
-            const percent = (e.loaded / e.total) * 99;
-
-            setTimeout(() => {
-                progressUpload.value = Math.round(percent);
-            }, 100); // delay in ms
+            console.log(e.percentage);
+            progressUpload.value = (e.loaded / e.total) * 97;
         },
         onSuccess: () => {
             // toastRef.value.show(page.props.flash);
@@ -105,6 +108,20 @@ const submitForm = () => {
             //     filesUploadForm.resetAndClearErrors();
             //     uploadRef.value.clear();
             // }
+            toast.add({
+                severity: page.props.flash?.status,
+                summary: page.props.flash?.title,
+                detail: page.props.flash?.message,
+                life: 3000,
+            });
+        },
+        onError: (e) => {
+            toast.add({
+                severity: "error",
+                summary: "Something is wrong",
+                detail: page.props.errors?.files,
+                life: 3000,
+            });
         },
         onFinish: () => {
             progressUpload.value = 100;
