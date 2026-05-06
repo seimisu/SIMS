@@ -31,6 +31,7 @@ use App\Http\Controllers\Web\SchoolController;
 use App\Http\Controllers\Web\SchoolDetailController;
 use App\Http\Controllers\Web\StatusController;
 use App\Http\Controllers\Web\UserController;
+use App\Http\Controllers\Web\StipendController;
 use App\Models\SchoolCampusCourseSubjects;
 
 Route::get('/', function () {
@@ -138,6 +139,10 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::post('scholar/{id}/requestSubjectAccept', [ScholarController::class, 'requestSubjectAccept'])->name('scholar.requestSubject-accept');
     Route::post('geolocation', [GeolocationController::class, 'store'])->name('geolocation.store');
 
+    Route::post('stipends', [StipendController::class, 'store'])->name('stipends.store');
+    Route::put('stipends/{id}/{type}', [StipendController::class, 'update'])->name('stipends.update');
+    Route::delete('stipends/{id}/{type}', [StipendController::class, 'destroy'])->name('stipends.destroy');
+
     // Scholar 1.0 Routes
     Route::post('scholars/{id}/{type}', [Scholar1Controller::class, 'update'])->name('scholars.update');
     Route::post('scholarsActivation/{id}', [Scholar1Controller::class, 'activation'])->name('scholars.activation');
@@ -161,5 +166,6 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('scholars', [Scholar1Controller::class, 'index'])->name('scholars');
     Route::get('programs', [programController::class, 'index'])->name('programs');
     Route::get('events', [eventController::class, 'index'])->name('events');
+    Route::get('stipends', [StipendController::class, 'index'])->name('stipends');
     Route::get('geolocation', [GeolocationController::class, 'index']);
 });
