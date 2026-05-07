@@ -33,7 +33,16 @@
                     </p>
                 </div>
                 <template v-for="(item, index) in scholar" :key="index">
-                    <Panel >
+                    <Panel
+                        :pt="{
+                            root: [
+                                '!rounded-xl',
+                                item.verified_by
+                                    ? '!border-green-500 !shadow-green-500 '
+                                    : null,
+                            ],
+                        }"
+                    >
                         <template #header>
                             <div class="flex items-center gap-2">
                                 <Avatar
@@ -192,33 +201,38 @@
                         </template>
                         <template #footer>
                             <div class="flex justify-between">
-                                <div
-                                    class="flex gap-1 items-center"
-                                    v-show="item.verified_by"
-                                >
+                                <div class="flex gap-1 items-center">
                                     <Avatar
                                         class="!bg-green-100 !text-green-600 border"
                                         shape="circle"
+                                        v-if="item.verified_by"
                                     >
                                         <IconUser :size="18" />
                                     </Avatar>
-                                    <div class="flex flex-col text-xs">
-                                        <div>Verify by:</div>
+                                    <div
+                                        class="flex flex-col text-xs"
+                                        v-if="item.verified_by"
+                                    >
+                                        <div>Verified by:</div>
                                         <div class="font-medium">
-                                            {{ item.verified_by }} • {{item.verified_at}}
+                                            {{ item.verified_by }} •
+                                            {{ item.verified_at }}
                                         </div>
                                     </div>
                                 </div>
-
-                                <DefaultButton
-                                    size="small"
-                                    raised
-                                    :disabled="item.loading"
-                                    @click="saveValidate(item, index)"
-                                    :loading="item.loading"
-                                    label="Save and Review Submission"
-                                    class="!rounded-xl !px-10"
-                                />
+                                <div class="">
+                                    <DefaultButton
+                                        size="small"
+                                        raised
+                                        :disabled="
+                                            item.loading || !!item.verified_by
+                                        "
+                                        @click="saveValidate(item, index)"
+                                        :loading="item.loading"
+                                        label="Save and Review Submission"
+                                        class="!rounded-xl !px-10"
+                                    />
+                                </div>
                             </div>
                         </template>
                     </Panel>
