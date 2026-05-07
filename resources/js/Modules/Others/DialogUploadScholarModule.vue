@@ -64,10 +64,9 @@ import {
     IconUserUp,
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
-import { computed, ref } from "vue";
-
-import { useForm, progress, usePage } from "@inertiajs/vue3";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+import { computed, ref } from "vue";
+import { useForm, progress, usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 
 const page = usePage();
@@ -104,16 +103,17 @@ const submitForm = () => {
         },
         onSuccess: () => {
             // toastRef.value.show(page.props.flash);
-            // if (page.props.flash?.status == "success") {
-            //     filesUploadForm.resetAndClearErrors();
-            //     uploadRef.value.clear();
-            // }
-            toast.add({
-                severity: page.props.flash?.status,
-                summary: page.props.flash?.title,
-                detail: page.props.flash?.message,
-                life: 3000,
-            });
+            if (page.props.flash?.status == "success") {
+                filesUploadForm.resetAndClearErrors();
+                filesUploadForm.files = [];
+                uploadRef.value.clear();
+                toast.add({
+                    severity: page.props.flash?.status,
+                    summary: page.props.flash?.title,
+                    detail: page.props.flash?.message,
+                    life: 3000,
+                });
+            }
         },
         onError: (e) => {
             toast.add({

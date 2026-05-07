@@ -6,15 +6,19 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Row;
 
-class CheckScholarImport implements OnEachRow, WithHeadingRow, WithMultipleSheets
+class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, WithHeadingRow, WithMultipleSheets
 {
     /**
      * @param  Collection  $row
      */
+    public $rows;
+
     public function headingRow(): int
     {
         return 1;
@@ -44,18 +48,19 @@ class CheckScholarImport implements OnEachRow, WithHeadingRow, WithMultipleSheet
                 'suffix' => ['nullable'],
                 'sex' => ['required', Rule::in(['M', 'F'])],
                 'email' => ['required', 'email', Rule::unique('scholar_upload_temps', 'email')],
-                'contact_no' => ['required'],
+                'contact_no' => ['nullable'],
                 'birthdate' => ['required'],
                 'birthplace' => ['required'],
                 'civil_status' => ['required'],
-                'address' => ['required'],
-                'barangay' => ['required'],
-                'municipality' => ['required'],
-                'province' => ['required'],
-                'region' => ['required'],
+                'address' => ['nullable'],
+                'village' => ['nullable'],
+                'barangay' => ['nullable'],
+                'municipality' => ['nullable'],
+                'province' => ['nullable'],
+                'region' => ['nullable'],
                 'year_awarded' => ['required'],
-                'course' => ['required'],
                 'school' => ['required'],
+                'course' => ['required'],
             ],
             [
                 'spas_no.required' => "Row {$row->getRowIndex()}: SPAS No is required.",
@@ -66,5 +71,10 @@ class CheckScholarImport implements OnEachRow, WithHeadingRow, WithMultipleSheet
                 'birthdate.date' => "Row {$row->getRowIndex()}: Invalid birthdate format.",
             ]
         )->validate();
+    }
+
+    public function collection(Collection $collection)
+    {
+        $this->rows = $collection;
     }
 }
