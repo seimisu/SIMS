@@ -301,7 +301,9 @@ class ScholarController extends Controller
                             ['%'.strtolower($scholar->change_course).'%']
                         )
 
-                    )->first() : null;
+                    )
+                        ->whereHas('campus', fn ($q) => $q->where('generated_name', 'like', '%'.$scholar->change_school.'%')
+                        )->first() : null;
 
                     $courseOption = SchoolCampusCourses::with(['course', 'campus'])->where([
                         'is_delete' => false,
