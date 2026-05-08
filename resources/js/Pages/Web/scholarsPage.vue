@@ -184,11 +184,7 @@
                         </div>
                     </template>
                 </Column>
-                <Column header="Email Checker">
-                    <template #body="props">
-                        {{ props.data.email }}
-                    </template>
-                </Column>
+
                 <Column header="School/Course">
                     <template #body="props">
                         <div class="flex flex-col">
