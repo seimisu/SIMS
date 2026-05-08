@@ -3,24 +3,27 @@
 namespace App\Imports;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Row;
 
-class CheckScholarImport implements OnEachRow, WithHeadingRow, WithMultipleSheets
+class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, WithHeadingRow, WithMultipleSheets
 {
     /**
-     * @param Collection $row
+     * @param  Collection  $row
      */
+    public $rows;
+
     public function headingRow(): int
     {
         return 1;
     }
+
     public function sheets(): array
     {
         return [
@@ -31,67 +34,47 @@ class CheckScholarImport implements OnEachRow, WithHeadingRow, WithMultipleSheet
     public function onRow(Row $row)
     {
         $data = $row->toArray();
-
         Validator::make(
             $data,
             [
-                'spas_no' => ['required', Rule::unique('scholars', 'spas_no')],
-                'scholarship_type' => ['required', Rule::exists('list_references', 'name')->where(fn($query) => $query->where('is_active', true)->where('is_delete', false))],
-                'scholarship_subprogram' => ['required', Rule::exists('list_programs', 'name')->where(fn($query) => $query->where('is_active', true)->where('is_delete', false))],
-                'scholarship_program' => ['required', Rule::exists('list_references', 'name')->where(fn($query) => $query->where('is_active', true)->where('is_delete', false))],
-                'status' => ['nullable'],
-                'firstname' => ['nullable'],
-                'lastname' => ['nullable'],
-                'middlename' => ['nullable'],
+                'spas_no' => ['required', Rule::unique('scholar_upload_temps', 'spas_no')],
+                'status' => ['required'],
+                'standing' => ['required'],
+                'scholarship_type' => ['required'],
+                'scholarship_subprogram' => ['required'],
+                'fname' => ['required'],
+                'lname' => ['required'],
+                'mname' => ['nullable'],
                 'suffix' => ['nullable'],
-                'sex' => ['nullable'],
-                'email' => ['nullable'],
-                'contact' => ['nullable'],
-                'birth_place' => ['nullable'],
-                'religion' => ['nullable'],
-                'civil_status' => ['nullable'],
+                'sex' => ['required', Rule::in(['M', 'F'])],
+                'email' => ['required', 'email', Rule::unique('scholar_upload_temps', 'email')],
+                'contact_no' => ['nullable'],
+                'birthdate' => ['required'],
+                'birthplace' => ['required'],
+                'civil_status' => ['required'],
                 'address' => ['nullable'],
+                'village' => ['nullable'],
                 'barangay' => ['nullable'],
                 'municipality' => ['nullable'],
                 'province' => ['nullable'],
-                'province' => ['nullable'],
                 'region' => ['nullable'],
-                'id_no' => ['nullable'],
-                'id_place' => ['nullable'],
-                'id_date' => ['nullable'],
-                'companion' => ['nullable'],
-                'year_award' => ['nullable'],
-                // 'course' =>  [
-                //     'nullable',
-                //     Rule::exists('list_courses', 'name'),
-                // ],
-                'school' =>
-                [
-                    'required',
-                    //  Rule::exists('school_campuses', 'generated_name')->where(fn($query) => $query->where('is_active', true)->where('is_delete', false))
-                ]
+                'year_awarded' => ['required'],
+                'school' => ['required'],
+                'course' => ['required'],
             ],
-            // [
-            //     'email.email' =>  "Row {$row->getRowIndex()}: must be valid email address.",
-            //     'spas_no.required' =>
-            //     "Row {$row->getRowIndex()}: The SPAS No field is required.",
-            //     'spas_no.unique' =>
-            //     "Row {$row->getRowIndex()}: The SPAS No has already been taken.",
-            //     'scholarship_type.required' =>
-            //     "Row {$row->getRowIndex()}: The Scholarship Type field is required.",
-            //     'scholarship_subprogram.required' =>
-            //     "Row {$row->getRowIndex()}: The Scholarship Subprogram field is required.",
-            //     'scholarship_program.required' =>
-            //     "Row {$row->getRowIndex()}: The Scholarship Program field is required.",
-            //     'status.required' =>
-            //     "Row {$row->getRowIndex()}: The Status field is required.",
-            //     'scholarship_type.exists' => "Row {$row->getRowIndex()}: Please contact admin support to update scholarship option.",
-            //     'scholarship_subprogram.exists' => "Row {$row->getRowIndex()}: Please contact admin support to update subprogram option.",
-            //     'scholarship_program.exists' => "Row {$row->getRowIndex()}: Please contact admin support to update program option.",
-            //     'school.exists' => "Row {$row->getRowIndex()}: Please contact admin support to update school option.",
-            //     //'course.required' => "Row {$row->getRowIndex()}: Please contact admin support to update school option.",
-            //     'course.exists' => "Row {$row->getRowIndex()}: Please contact admin support to update school option.",
-            // ]
+            [
+                'spas_no.required' => "Row {$row->getRowIndex()}: SPAS No is required.",
+                'spas_no.unique' => "Row {$row->getRowIndex()}: SPAS No already exists.",
+                'email.email' => "Row {$row->getRowIndex()}: Invalid email format.",
+                'email.unique' => "Row {$row->getRowIndex()}: Email already exists.",
+                'sex.in' => "Row {$row->getRowIndex()}: Sex must be either M or F.",
+                'birthdate.date' => "Row {$row->getRowIndex()}: Invalid birthdate format.",
+            ]
         )->validate();
+    }
+
+    public function collection(Collection $collection)
+    {
+        $this->rows = $collection;
     }
 }

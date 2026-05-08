@@ -16,15 +16,14 @@ class ScholarUploadedFiles extends Model
         'validated_by',
         'validated_at',
         'created_at',
-        'status'
+        'status',
 
     ];
+
     protected $hidden = [
         'id',
-        'filepath'
+        'filepath',
     ];
-
-
 
     protected $appends = ['formatted_date', 'validated_formatted_date', 'hash_id', 'file_url'];
 
@@ -35,13 +34,13 @@ class ScholarUploadedFiles extends Model
             : null;
     }
 
-
     public function getFileUrlAttribute()
     {
         return $this->filepath
-            ? asset('storage/' . $this->filepath)
+            ? asset('storage/'.$this->filepath)
             : null;
     }
+
     public function getValidatedFormattedDateAttribute()
     {
         return $this->validated_at
@@ -52,5 +51,10 @@ class ScholarUploadedFiles extends Model
     public function getHashIdAttribute()
     {
         return Hashids::encode($this->id);
+    }
+
+    public function temp()
+    {
+        return $this->hasMany(ScholarUploadTemp::class, 'file_id');
     }
 }

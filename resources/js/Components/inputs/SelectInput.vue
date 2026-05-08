@@ -8,7 +8,6 @@
             :placeholder="placeholder"
             v-model="modelValue"
             :disabled="disable"
-            
             :filter="filter"
             optionLabel="name"
             @update:modelValue="emit('update-model', $event)"
