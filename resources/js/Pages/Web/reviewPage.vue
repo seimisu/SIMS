@@ -22,44 +22,152 @@
                 >
                     <Column header="Filename">
                         <template #body="props">
-                            <div class="flex flex-col">
-                                <div>{{ props.data.filename }}</div>
+                            <div class="flex items-start justify-between gap-3">
+                                <!-- File Info -->
+                                <div class="flex flex-col">
+                                    <div class="font-medium text-gray-800">
+                                        {{ props.data.filename }}
+                                    </div>
+
+                                    <div class="text-xs text-gray-400">
+                                        Uploaded file
+                                    </div>
+                                </div>
+
+                                <!-- Download Button -->
                                 <a
                                     :href="props.data.file_url"
                                     download
-                                    class="text-blue-500 underline text-xs"
-                                    >Click to download</a
+                                    class="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition"
                                 >
+                                    <IconDownload size="14" />
+                                    Download
+                                </a>
                             </div>
                         </template>
                     </Column>
-                    <Column header="Regional Office" field="region_office">
-                    </Column>
+                  <Column header="Regional Office">
+    <template #body="props">
+        <div class="flex items-center">
+            <span
+                class="px-3 py-1 text-xs font-medium rounded-full
+                       bg-indigo-50 text-indigo-600 border border-indigo-200"
+            >
+                {{ props.data.region_office ?? 'N/A' }}
+            </span>
+        </div>
+    </template>
+</Column>
                     <Column header="Created By">
                         <template #body="props">
-                            <div class="flex flex-col">
-                                <div class="text-xs text-gray-600">
-                                    {{ props.data.created_by }}
+                            <div
+                                class="flex items-center justify-between gap-3"
+                            >
+                                <!-- Creator Info -->
+                                <div class="flex flex-col">
+                                    <div
+                                        class="text-sm font-medium text-gray-800"
+                                    >
+                                        {{ props.data.created_by }}
+                                    </div>
+
+                                    <div
+                                        class="text-xs text-gray-400 flex items-center gap-1"
+                                    >
+                                        <IconCalendar size="12" />
+                                        {{ props.data.formatted_date }}
+                                    </div>
                                 </div>
-                                <div class="text-sm">
-                                    {{ props.data.formatted_date }}
-                                </div>
+
+                                <!-- Optional badge -->
+                              
                             </div>
                         </template>
                     </Column>
-                    <Column>
-                        <template #header>
-                            <div class="flex w-full justify-center">
-                                <div class="font-bold">Status</div>
-                            </div>
-                        </template>
+                    <Column header="Validation Status">
                         <template #body="props">
-                            <div class="flex w-full justify-center">
+                            <div class="min-w-[180px]">
+                                <!-- Progress -->
                                 <div
-                                    v-if="props.data.status == 'pending'"
-                                    class="text-yellow-500 capitalize"
+                                    class="flex items-center justify-between mb-1"
                                 >
-                                    • {{ props.data.status }}
+                                    <span
+                                        class="text-xs text-gray-500 font-medium"
+                                    >
+                                        Validation Progress
+                                    </span>
+
+                                    <span class="text-xs font-semibold">
+                                        {{ props.data.active_temp_count }} /
+                                        {{ props.data.temp_count }}
+                                    </span>
+                                </div>
+
+                                <!-- Progress Bar -->
+                                <div
+                                    class="w-full bg-gray-100 rounded-full h-2 overflow-hidden"
+                                >
+                                    <div
+                                        class="h-full rounded-full transition-all duration-300"
+                                        :class="{
+                                            'bg-green-500':
+                                                props.data.active_temp_count ===
+                                                props.data.temp_count,
+                                            'bg-yellow-500':
+                                                props.data.active_temp_count >
+                                                    0 &&
+                                                props.data.active_temp_count <
+                                                    props.data.temp_count,
+                                            'bg-red-500':
+                                                props.data.active_temp_count ===
+                                                0,
+                                        }"
+                                        :style="{
+                                            width: `${
+                                                props.data.temp_count
+                                                    ? (props.data
+                                                          .active_temp_count /
+                                                          props.data
+                                                              .temp_count) *
+                                                      100
+                                                    : 0
+                                            }%`,
+                                        }"
+                                    />
+                                </div>
+
+                                <!-- Status -->
+                                <div class="mt-2 flex justify-end">
+                                    <div
+                                        v-if="
+                                            props.data.active_temp_count ===
+                                            props.data.temp_count
+                                        "
+                                        class="text-green-600 bg-green-50 border border-green-200 rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1"
+                                    >
+                                        <IconCircleCheckFilled size="14" />
+                                        Completed
+                                    </div>
+
+                                    <div
+                                        v-else-if="
+                                            props.data.active_temp_count > 0
+                                        "
+                                        class="text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1"
+                                    >
+                                        <IconProgressCheck size="14" />
+                                        In Progress
+                                    </div>
+
+                                    <div
+                                        v-else
+                                        class="text-red-600 bg-red-50 border border-red-200 rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1"
+                                    >
+                                        <IconExclamationCircleFilled
+                                            size="14"
+                                        />
+                                        Pending
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -81,9 +189,14 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DrawerScholarVerificationModule from "../../Modules/Others/DrawerScholarVerificationModule.vue";
 import {
+    IconCalendar,
+    IconDownload,
     IconExclamationCircle,
     IconExclamationCircleFilled,
     IconUserUp,
+    IconCircleCheckFilled,
+    IconProgressCheck,
+
 } from "@tabler/icons-vue";
 import { useForm, progress, usePage, Head, router } from "@inertiajs/vue3";
 import { ref } from "vue";

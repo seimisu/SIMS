@@ -277,7 +277,10 @@ class ScholarController extends Controller
         //         : null,
 
         return Inertia::render('Web/reviewPage', [
-            'files' => ScholarUploadedFiles::whereNot('status', 'reject')->orderBy('id', 'desc')->paginate(10),
+            'files' => ScholarUploadedFiles::whereNot('status', 'reject')    ->withCount([
+        'temp',
+        'temp as active_temp_count' => fn ($q) => $q->where('verified_at', '!=', null),
+    ])->orderBy('id', 'desc')->paginate(10),
             'selected' => $request->input('id') ? ScholarUploadTemp::where('file_id', Hashids::decode($request->input('id'))[0] ?? 0)->orderBy('id', 'ASC')
                 ->get()->map(function ($scholar) {
 
@@ -301,7 +304,9 @@ class ScholarController extends Controller
                             ['%'.strtolower($scholar->change_course).'%']
                         )
 
-                    )->first() : null;
+                    )
+                       ->whereHas('campus', fn ($q) => $q->where('generated_name', 'like', '%'.$scholar->change_school.'%'))
+                    ->first() : null;
 
                     $courseOption = SchoolCampusCourses::with(['course', 'campus'])->where([
                         'is_delete' => false,
@@ -309,6 +314,7 @@ class ScholarController extends Controller
                     ])
                         ->whereHas('campus', fn ($q) => $q->where('generated_name', 'like', '%'.$scholar->change_school.'%')
                         )
+            
                         ->get()
                         ->map(function ($course) {
                             return [
