@@ -39,6 +39,8 @@ class ScholarUploadTemp extends Model
         'change_school',
         'change_course',
         'change_fulladdress',
+        'publish_by',
+        'publish_at'
     ];
 
     protected $casts = [
@@ -57,10 +59,10 @@ class ScholarUploadTemp extends Model
     public function getFullnameAttribute()
     {
         return trim(
-            $this->fname.' '.
-            ($this->mname ? $this->mname.' ' : '').
-            $this->lname.
-            ($this->suffix ? ' '.$this->suffix : '')
+            $this->fname . ' ' .
+                ($this->mname ? $this->mname . ' ' : '') .
+                $this->lname .
+                ($this->suffix ? ' ' . $this->suffix : '')
         );
     }
 

@@ -6,6 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\ScholarRequest;
 use App\Imports\CheckScholarImport;
 use App\Imports\ScholarImport;
+use App\Models\ListPrograms;
+use App\Models\ListReferences;
+use App\Models\ListStatuses;
+use App\Models\LocationBarangays;
+use App\Models\LocationCity;
+use App\Models\LocationProvinces;
+use App\Models\LocationRegions;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
 use App\Models\ScholarSchoolInfos;
@@ -276,45 +283,48 @@ class ScholarController extends Controller
         //         ->get()
         //         : null,
 
+
         return Inertia::render('Web/reviewPage', [
-            'files' => ScholarUploadedFiles::whereNot('status', 'reject')    ->withCount([
-        'temp',
-        'temp as active_temp_count' => fn ($q) => $q->where('verified_at', '!=', null),
-    ])->orderBy('id', 'desc')->paginate(10),
+            'files' => ScholarUploadedFiles::whereNot('status', 'reject')->withCount([
+                'temp',
+                'temp as active_temp_count' => fn($q) => $q->where('verified_at', '!=', null),
+            ])->orderBy('id', 'desc')->paginate(10),
             'selected' => $request->input('id') ? ScholarUploadTemp::where('file_id', Hashids::decode($request->input('id'))[0] ?? 0)->orderBy('id', 'ASC')
                 ->get()->map(function ($scholar) {
 
                     $schoolChange = $scholar->change_school
-                    ? SchoolCampuses::where([
-                        'is_delete' => false,
-                        'is_active' => true,
-                        'generated_name' => $scholar->change_school,
-                    ])
+                        ? SchoolCampuses::where([
+                            'is_delete' => false,
+                            'is_active' => true,
+                            'generated_name' => $scholar->change_school,
+                        ])
                         ->first()->only('id', 'generated_name')
-                    : null;
+                        : null;
 
                     $courseChange = $scholar->change_course
-                    ? SchoolCampusCourses::with(['course', 'campus'])->where([
-                        'is_delete' => false,
-                        'is_active' => true,
-                    ])->whereHas(
-                        'course',
-                        fn ($q) => $q->whereRaw(
-                            'LOWER(name) LIKE ?',
-                            ['%'.strtolower($scholar->change_course).'%']
-                        )
+                        ? SchoolCampusCourses::with(['course', 'campus'])->where([
+                            'is_delete' => false,
+                            'is_active' => true,
+                        ])->whereHas(
+                            'course',
+                            fn($q) => $q->whereRaw(
+                                'LOWER(name) LIKE ?',
+                                ['%' . strtolower($scholar->change_course) . '%']
+                            )
 
-                    )
-                       ->whereHas('campus', fn ($q) => $q->where('generated_name', 'like', '%'.$scholar->change_school.'%'))
-                    ->first() : null;
+                        )
+                        ->whereHas('campus', fn($q) => $q->where('generated_name', 'like', '%' . $scholar->change_school . '%'))
+                        ->first() : null;
 
                     $courseOption = SchoolCampusCourses::with(['course', 'campus'])->where([
                         'is_delete' => false,
                         'is_active' => true,
                     ])
-                        ->whereHas('campus', fn ($q) => $q->where('generated_name', 'like', '%'.$scholar->change_school.'%')
+                        ->whereHas(
+                            'campus',
+                            fn($q) => $q->where('generated_name', 'like', '%' . $scholar->change_school . '%')
                         )
-            
+
                         ->get()
                         ->map(function ($course) {
                             return [
@@ -355,11 +365,19 @@ class ScholarController extends Controller
                         'verified_at' => $scholar->verified_at ? Carbon::parse($scholar->verified_at)->diffForHumans() : null,
                         'verified_by' => $scholar->verified_by,
                     ];
-
                 }) : [],
+            'validationStatus' => $request->input('id') ?  ScholarUploadedFiles::whereNot('status', 'reject')->withCount([
+                'temp',
+                'temp as active_temp_count' => fn($q) => $q->where('verified_at', '!=', null),
+            ])->where('id', Hashids::decode($request->input('id'))[0] ?? 0)->get()
+                ->map(fn($item) => [
+                    'completed' => $item->active_temp_count ?? 0,
+                    'total' => $item->temp_count ?? 0,
+                ])
+                ->first() : [],
             'resultSearch' => request('findAddress')
-                   ? ($location->getFullAddress(request('findAddress')) ?? [])
-                   : [],
+                ? ($location->getFullAddress(request('findAddress')) ?? [])
+                : [],
             'schoolOption' => $request->input('id') ? SchoolCampuses::where([
                 'is_delete' => false,
                 'is_active' => true,
@@ -369,11 +387,13 @@ class ScholarController extends Controller
                     'name' => $campus->generated_name,
                 ];
             }) : [],
-            'courseOption' => Inertia::optional(fn () => SchoolCampusCourses::with(['course', 'campus'])->where([
+            'courseOption' => Inertia::optional(fn() => SchoolCampusCourses::with(['course', 'campus'])->where([
                 'is_delete' => false,
                 'is_active' => true,
             ])
-                ->whereHas('campus', fn ($q) => $q->where('generated_name', 'like', '%'.$request->campus.'%')
+                ->whereHas(
+                    'campus',
+                    fn($q) => $q->where('generated_name', 'like', '%' . $request->campus . '%')
                 )
                 ->get()
                 ->map(function ($course) {
@@ -432,9 +452,9 @@ class ScholarController extends Controller
             $path = null;
             $file = $data['files'][0];
             $import = new CheckScholarImport;
-            $filename = Str::random(12).'.'.$file->getClientOriginalExtension();
+            $filename = Str::random(12) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('imports/scholars', $filename, 'public');
-            Excel::import($import, storage_path('app/public/'.$path));
+            Excel::import($import, storage_path('app/public/' . $path));
 
             $uploadedfile = ScholarUploadedFiles::create([
                 'filename' => $filename,
@@ -461,7 +481,7 @@ class ScholarController extends Controller
                         'birthdate' => Carbon::parse($value['birthdate'])->format('Y-m-d'),
                         'birthplace' => $value['birthplace'],
                         'civil_status' => $value['civil_status'],
-                        'address' => $value['address'].' '.$value['village'],
+                        'address' => $value['address'] . ' ' . $value['village'],
                         'barangay' => $value['barangay'],
                         'municipality' => $value['municipality'],
                         'province' => $value['province'],
@@ -508,17 +528,17 @@ class ScholarController extends Controller
             return redirect()->back()->with('flash', [
                 'status' => 'error',
                 'title' => 'Import Failed',
-                'message' => 'There was an error importing the data: '.$e->getMessage(),
+                'message' => 'There was an error importing the data: ' . $e->getMessage(),
             ]);
         }
     }
 
-    public function insert(Request $request, $id)
+    public function insert(Request $request, string $id)
     {
 
         DB::beginTransaction();
         try {
-            $file = ScholarUploadedFiles::where('id', Hashids::decode($id))->first();
+            $file = ScholarUploadedFiles::where('id', Hashids::decode($id)[0] ?? 0)->first();
 
             $file->update([
                 'validated_by' => Auth::user()->profile->fullname,
@@ -528,7 +548,7 @@ class ScholarController extends Controller
             $fullname = $file->created_by;
             $highTable = User::with('profile:user_id,fname,lname')
                 ->whereHas('profile', function ($q) use ($fullname) {
-                    $q->whereRaw("LOWER(CONCAT(fname, ' ', lname)) LIKE ?", ['%'.strtolower($fullname).'%']);
+                    $q->whereRaw("LOWER(CONCAT(fname, ' ', lname)) LIKE ?", ['%' . strtolower($fullname) . '%']);
                 })
                 ->select('id')
                 ->get();
@@ -542,7 +562,7 @@ class ScholarController extends Controller
                 );
             }
 
-            Excel::import(new ScholarImport, storage_path('app/public/'.$file->filepath));
+            Excel::import(new ScholarImport, storage_path('app/public/' . $file->filepath));
             DB::commit();
 
             return redirect()->back()->with('flash', [
@@ -556,7 +576,7 @@ class ScholarController extends Controller
             return redirect()->back()->with('flash', [
                 'status' => 'error',
                 'title' => 'Save Failed',
-                'message' => 'There was an error saving the data: '.$e->getMessage(),
+                'message' => 'There was an error saving the data: ' . $e->getMessage(),
             ]);
         }
     }
@@ -597,7 +617,7 @@ class ScholarController extends Controller
             DB::rollBack();
 
             throw ValidationException::withMessages([
-                'subjects' => ['There was an error updating the grades: '.$e->getMessage()],
+                'subjects' => ['There was an error updating the grades: ' . $e->getMessage()],
             ]);
         }
     }
@@ -617,7 +637,7 @@ class ScholarController extends Controller
             ]);
         } catch (Exception $e) {
             throw ValidationException::withMessages([
-                'subjects' => ['There was an error deleting the grade: '.$e->getMessage()],
+                'subjects' => ['There was an error deleting the grade: ' . $e->getMessage()],
             ]);
         }
     }
@@ -645,7 +665,7 @@ class ScholarController extends Controller
             ]);
         } catch (Exception $e) {
             throw ValidationException::withMessages([
-                'request' => ['There was an error updating the request: '.$e->getMessage()],
+                'request' => ['There was an error updating the request: ' . $e->getMessage()],
             ]);
         }
     }
@@ -673,9 +693,167 @@ class ScholarController extends Controller
             ]);
         } catch (Exception $e) {
             throw ValidationException::withMessages([
-                'request' => ['There was an error updating the request: '.$e->getMessage()],
+                'request' => ['There was an error updating the request: ' . $e->getMessage()],
             ]);
         }
+    }
+
+    public function publish(string $id, Request $request)
+    {
+        $id = Hashids::decode($id)[0] ?? 0;
+
+        $check = ScholarUploadedFiles::where('id', $id)
+            ->withCount([
+                'temp',
+                'temp as active_temp_count' => fn($q) =>
+                $q->whereNotNull('verified_at'),
+            ])
+            ->first();
+
+        if ($check->active_temp_count < $check->temp_count) {
+
+            $check->update([
+                'status' => 'Partial Publish'
+            ]);
+        } else {
+            $check->update([
+                'status' => 'Completed'
+            ]);
+        }
+
+
+        $validatedScholar = ScholarUploadTemp::where('file_id', $id)
+            ->whereNotNull('verified_at')
+            ->whereNull('publish_at')
+            ->get();
+
+        if ($validatedScholar->isEmpty()) {
+
+            return redirect()->back()->with('flash', [
+                'status' => 'warn',
+                'title' => 'No records found',
+                'message' => 'There are no validated scholar records available for publishing.',
+            ]);
+        }
+
+        DB::beginTransaction();
+        //  dd($validatedScholar);
+        try {
+            foreach ($validatedScholar as $key => $data) {
+
+
+
+                $data->update([
+                    'publish_at' => now(),
+                    'publish_by' =>  Auth::user()->profile->fullname,
+                ]);
+
+
+                $campus = SchoolCampusCourses::with(['course', 'campus'])
+                    ->whereHas('campus', fn($q) => $q->where('generated_name', 'like', '%' . $data['change_school'] . '%'))
+                    ->where('is_delete', false)
+                    ->first();
+
+                $scholars = Scholars::create([
+                    'spas_no'     => trim($data['spas_no']) ?? null,
+                    'type_id' => ListReferences::whereRaw('LOWER(name) = ?', [strtolower(trim($data['scholarship_type']))])
+                        ->value('id') ?? null,
+
+                    'program_id' => ListPrograms::whereRaw('LOWER(name) = ?', [strtolower(trim($data['scholarship_subprogram']))])
+                        ->value('id') ?? null,
+
+                    'category_id' => ListReferences::whereRaw('LOWER(name) = ?', [strtolower(trim($data['scholarship_subprogram']))])
+                        ->value('id') ?? null,
+
+                    'status_id' => ListStatuses::whereRaw('LOWER(name) = ?', [strtolower(trim($data['status']))])
+                        ->value('id') ?? null,
+                    'created_by'  => Auth::user()->profile->fullname,
+                    'award_year' => $data['year_awarded']
+                ]);
+
+                $scholars->profile()->create([
+                    'fname' => $data['fname'] ?? null,
+                    'lname' => $data['lname'] ?? null,
+                    'mname' => $data['mname'] ?? null,
+                    'suffix' => $data['suffix'] ?? null,
+                    'contact_no' => $data['contact_no'] ?? null,
+                    'birthdate' => Carbon::parse($data['birthdate'])->setTimezone('Asia/Manila')->format('m/d/Y') ?? null,
+                    'birthplace' => $data['birth_place'] ?? null,
+                    'email' => $data['email'] ?? null,
+                    'sex' => $data['sex'] ?? null,
+                    'religion' => $data['religion'] ?? null,
+                    'civil_status' => $data['civil_status'] ?? null,
+
+                ]);
+
+
+                $sliceName = explode('-', $data['change_fulladdress']['id']);
+
+                $scholars->address()->create([
+                    'address' => $data['address'],
+                    'barangay_code' => $sliceName[0],
+                    'municipality_code' => $sliceName[1],
+                    'province_code' => $sliceName[2],
+                    'region_code' => $sliceName[3],
+                ]);
+
+
+                $scholars->schoolInfo()->create([
+                    'campus_id' => $campus->campus_id,
+                    'campus_course_id' => $campus->id,
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->back()->with('flash', [
+                'status' => 'success',
+                'title'  => 'Scholar data saved',
+                'message' => 'The scholar information has been successfully saved and updated.',
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return redirect()->back()->with('flash', [
+                'status' => 'error',
+                'title' => 'Publishing failed',
+                'message' => $th->getMessage(),
+            ]);
+        }
+
+        // dd($validatedScholar);
+
+
+
+        // $yearLevel = SchoolCampusCourses::select('years')
+        //     ->whereHas('course', function ($q) use ($data) {
+        //         $q->where('name', $data['course']);
+        //     })
+        //     ->first();
+
+
+
+        //  $academic_term = ListReferences::select('id', 'name')
+        //      ->where('classification', $campus->term?->name)
+        //      ->where('type', 'Term')
+        //      ->get();
+
+
+
+        //  $levels = ListReferences::whereIn('others', range(1, $yearLevel->years))
+        //  ->pluck('id', 'others');
+
+
+        // for ($i = 1; $i <= (int) $yearLevel->years; $i++) {
+        //     foreach ($academic_term as $value) {
+        //         $termRecords = $scholars->termRecords()->create([
+        //             'scholar_school_id' => $schoolInfo->id ?? null,
+        //             'term_id'           => $campus->term_id ?? null,
+        //             'level_id'          => $levels[(string) $i] ?? null,
+        //             'term_type_id'      => $value->id ?? null
+        //         ]);
+        //     }
+        // }
+
     }
 
     // function update(StatusRequest $request, string $id, string $type)
