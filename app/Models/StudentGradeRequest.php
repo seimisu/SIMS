@@ -11,8 +11,8 @@ class StudentGradeRequest extends Model
     protected $table = 'student_grade_requests';
 
     protected $fillable = [
-        'term_grades_id',
-        'term_record_id',
+        'student_grades_id',
+        'subject_id',
         'grades_id',
         'reviewed_at',
         'reviewed_by',
@@ -20,10 +20,9 @@ class StudentGradeRequest extends Model
         'remarks',
     ];
 
-
-    public function scholarGrade()
+    public function studentGrade()
     {
-        return $this->belongsTo(ScholarSchoolGrades::class, 'term_grades_id');
+        return $this->belongsTo(StudentGrade::class, 'student_grades_id', 'id');
     }
 
     public function grade()
@@ -31,9 +30,13 @@ class StudentGradeRequest extends Model
         return $this->belongsTo(SchoolCampusGrades::class, 'grades_id');
     }
 
+    public function subject()
+    {
+        return $this->belongsTo(SchoolCampusCourseCurriculumSubjects::class, 'subject_id');
+    }
 
     public function termRecord()
     {
-        return $this->belongsTo(ScholarTerm::class, 'term_record_id');
+        return $this->studentGrade->termRecord();
     }
 }
