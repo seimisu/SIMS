@@ -36,15 +36,38 @@ class ScholarUploadTemp extends Model
         'updated_by',
         'verified_by',
         'verified_at',
+        'change_school',
+        'change_course',
+        'change_fulladdress',
+        'publish_by',
+        'publish_at'
     ];
 
     protected $casts = [
         'birthdate' => 'date',
         'verified_at' => 'datetime',
+        'change_fulladdress' => 'array',
     ];
+
+    protected $appends = ['fullname', 'fulladdress'];
 
     public function file()
     {
         return $this->belongsTo(ScholarUploadedFiles::class, 'file_id');
+    }
+
+    public function getFullnameAttribute()
+    {
+        return trim(
+            $this->fname . ' ' .
+                ($this->mname ? $this->mname . ' ' : '') .
+                $this->lname .
+                ($this->suffix ? ' ' . $this->suffix : '')
+        );
+    }
+
+    public function getFulladdressAttribute()
+    {
+        return null;
     }
 }

@@ -60,6 +60,7 @@
                                                 key,
                                                 item,
                                                 removeFileCallback,
+                                                removeUploadedFileCallback,
                                             )
                                         "
                                     >
@@ -113,10 +114,15 @@ function formatFileSize(size) {
     return (size / Math.pow(1024, i)).toFixed(2) + " " + units[i];
 }
 
-const handleRemoveFile = (key, file, removeFileCallback) => {
+const handleRemoveFile = (
+    key,
+    file,
+    removeFileCallback,
+    removeUploadedFileCallback,
+) => {
     // Remove file from FileUpload internal list
     removeFileCallback(key);
-
+    removeUploadedFileCallback(key);
     emit("remove-file", file);
 };
 

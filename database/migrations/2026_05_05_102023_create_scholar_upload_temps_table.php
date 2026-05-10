@@ -35,7 +35,6 @@ return new class extends Migration
             $table->string('province')->nullable();
             $table->string('region')->nullable();
             $table->string('year_awarded')->nullable();
-            $table->string('program')->nullable();
             $table->string('course')->nullable();
             $table->string('school')->nullable();
             $table->string('created_by')->nullable();

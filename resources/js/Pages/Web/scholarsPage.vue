@@ -8,14 +8,14 @@
                     description="Comprehensive records of all scholars, including profile details, program assignments, and status monitoring."
                 />
                 <div>
-                    <DefaultButton
+                    <!-- <DefaultButton
                         size="small"
                         label="Register Scholar"
                         :icon="TablerIcons.IconPlus"
                         @click="dialogUploadScholar = true"
                         class-name="!rounded-xl !text-sm !px-4"
                         raised
-                    />
+                    /> -->
                 </div>
             </div>
             <div class="w-full flex items-end justify-between">

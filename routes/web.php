@@ -4,12 +4,10 @@ use App\Http\Controllers\Auth\ActivationController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OtpRequestController;
-use App\Http\Controllers\profileController;
 use App\Http\Controllers\Web\CampusCourseController;
 use App\Http\Controllers\Web\CampusCourseSubjectController;
 use App\Http\Controllers\Web\CampusGradeController;
 use App\Http\Controllers\Web\CourseController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\eventController;
 use App\Http\Controllers\Web\GeolocationController;
@@ -28,11 +26,10 @@ use App\Http\Controllers\Web\SchoolCampusCurriculumController;
 use App\Http\Controllers\Web\SchoolCampusInfoController;
 use App\Http\Controllers\Web\SchoolCampusSemesterController;
 use App\Http\Controllers\Web\SchoolController;
-use App\Http\Controllers\Web\SchoolDetailController;
 use App\Http\Controllers\Web\StatusController;
-use App\Http\Controllers\Web\UserController;
 use App\Http\Controllers\Web\StipendController;
-use App\Models\SchoolCampusCourseSubjects;
+use App\Http\Controllers\Web\UserController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -55,7 +52,6 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notif.read');
     Route::post('user/changePassword', [ChangePasswordController::class, 'update'])->name('user.changePassword');
 
-
     Route::post('routes', [RouteController::class, 'store'])->name('routes.store');
     Route::put('routes/{id}/{type}', [RouteController::class, 'update'])->name('routes.update');
     Route::delete('routes/{id}', [RouteController::class, 'destroy'])->name('routes.destroy');
@@ -64,8 +60,6 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::post('users/email/{id}', [UserController::class, 'resend'])->name('users.resend');
     Route::put('users/{id}/{type}', [UserController::class, 'update'])->name('users.update');
     Route::delete('users/{id}/{type}', [UserController::class, 'destroy'])->name('users.destroy');
-
-
 
     Route::post('programs', [programController::class, 'store'])->name('programs.store');
     Route::put('programs/{id}/{type}', [programController::class, 'update'])->name('programs.update');
@@ -109,7 +103,7 @@ Route::middleware(['auth', 'web'])->group(function () {
 
     // Route::post('subjects', [CampusCourseSubjectController::class, 'store'])->name('subject.store');
     // Route::put('subjects/{id}/{type}', [CampusCourseSubjectController::class, 'update'])->name('subject.update');
-    //Route::delete('subjects/{id}/{type}', [CampusCourseSubjectController::class, 'destroy'])->name('campus.subject.destroy');
+    // Route::delete('subjects/{id}/{type}', [CampusCourseSubjectController::class, 'destroy'])->name('campus.subject.destroy');
 
     Route::post('statuses', [StatusController::class, 'store'])->name('status.store');
     Route::put('statuses/{id}/{type}', [StatusController::class, 'update'])->name('status.update');
@@ -148,6 +142,9 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::post('scholarsActivation/{id}', [Scholar1Controller::class, 'activation'])->name('scholars.activation');
     Route::post('scholars/{id}/{type}/SubjectRequest', [Scholar1Controller::class, 'validate'])->name('scholars.validate');
     Route::post('scholars/{id}/{type}/GradeRequest', [Scholar1Controller::class, 'gradeValidate'])->name('scholars.gradeValidate');
+
+    Route::post('scholar-review/{id}/validate', [ScholarController::class, 'validate'])->name('review.validate');
+    Route::post('scholar-review/{id}/publish', [ScholarController::class, 'publish'])->name('review.publish');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -162,10 +159,11 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('academic/references', [ReferenceController::class, 'index'])->name('academic.references');
     Route::get('academic/schools', [SchoolController::class, 'index'])->name('academic.universities');
     Route::get('scholar/statuses', [StatusController::class, 'index'])->name('statuses');
-    Route::get('scholarsV1/oldVersion', [ScholarController::class, 'index'])->name('scholarsOldVersion');
+    // Route::get('scholarsV1/oldVersion', [ScholarController::class, 'index'])->name('scholarsOldVersion');
     Route::get('scholars', [Scholar1Controller::class, 'index'])->name('scholars');
     Route::get('programs', [programController::class, 'index'])->name('programs');
     Route::get('events', [eventController::class, 'index'])->name('events');
     Route::get('stipends', [StipendController::class, 'index'])->name('stipends');
     Route::get('geolocation', [GeolocationController::class, 'index']);
+    Route::get('scholar-review', [ScholarController::class, 'index'])->name('review');
 });
