@@ -114,13 +114,16 @@ const registrationForm = useForm({
     agency: null,
     contact: null,
     password: null,
+    is_coordinator: page.props?.user?.role_array.name == 'School Coordinator' ? true : false,
     cpassword: null,
 });
+
 
 const initializePhoto = () => {
     fileInput.value?.click();
 };
 const submitForm = () => {
+
 
     registrationForm.post(route("activation.update", { id: page.props.user?.id }), {
         forceFormData: true,

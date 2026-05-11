@@ -398,7 +398,7 @@ class ScholarController extends Controller
                 ->get()
                 ->map(function ($course) {
                     return [
-                        'id' => $course->course?->id,
+                        'id' => $course->id,
                         'name' => Str::upper($course->course?->name),
                         'campus' => $course->campus?->generated_name,
                     ];
@@ -759,6 +759,11 @@ class ScholarController extends Controller
 
                 $campus = SchoolCampusCourses::with(['course', 'campus'])
                     ->whereHas('campus', fn($q) => $q->where('generated_name', 'like', '%' . $data['change_school'] . '%'))
+                    ->whereHas(
+                        'course',
+                        fn($q) =>
+                        $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($data['change_course']) . '%'])
+                    )
                     ->where('is_delete', false)
                     ->first();
 

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
+use Override;
 
 class ActivationRequest extends FormRequest
 {
@@ -33,7 +34,7 @@ class ActivationRequest extends FormRequest
             'fname'         => ['required', 'string'],
             'lname'         => ['required', 'string'],
             'email'         => ['email', 'required'],
-
+            'school'        => ['required_if:is_coordinator,1'],
             'designation'   => ['required', 'string'],
             'agency'        => ['required', 'array'],
             'contact'       => ['required'],
@@ -46,6 +47,14 @@ class ActivationRequest extends FormRequest
     {
         return [
             'cpassword' => 'Confirm password'
+        ];
+    }
+
+    #[Override]
+    public function messages()
+    {
+        return [
+            'school.required_if' => 'Assigned school is required.',
         ];
     }
 }

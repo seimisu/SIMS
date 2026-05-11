@@ -165,7 +165,7 @@
                                     <component :is="TablerIcons[item.icon]" :size="18"></component>
                                     <span class="!text-xs">{{
                                         item.label
-                                    }}</span>
+                                        }}</span>
                                     <Badge v-if="item.badge" size="small" severity="danger" class="ml-auto !text-xs"
                                         :value="item.badge" />
                                     <Badge v-if="item.status" size="small" severity="info" class="ml-auto !text-xs"
@@ -258,9 +258,9 @@
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <SelectInput label="School" v-model="personalInfo.school" :disable="!editBtn.info"
-                                        :options="page.props?.programOptions"></SelectInput>
-                                    <SelectInput label="Course" v-model="personalInfo.sub_program"
-                                        :disable="!editBtn.info" :options="page.props?.subProgramOptions"></SelectInput>
+                                        :options="page.props?.schoolOptions"></SelectInput>
+                                    <SelectInput label="Course" v-model="personalInfo.course" :disable="!editBtn.info"
+                                        :options="page.props?.courseOptions"></SelectInput>
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <DatePickerInput v-model="personalInfo.award_year" label="Award Year" view="year"
@@ -1019,6 +1019,7 @@ const torInfo = useForm({
 });
 
 const personalInfo = useForm({
+    schoolId: null,
     last_name: null,
     first_name: null,
     middle_name: null,
@@ -1033,6 +1034,7 @@ const personalInfo = useForm({
     address: null,
     fulladdress: null,
     school: null,
+    course: null,
     program: null,
     sub_program: null,
     award_year: null,
@@ -1291,8 +1293,6 @@ const checkChangesYearAndTerm = () => {
 watch(
     () => page.props?.details,
     (newVal) => {
-
-        console.log(newVal.birthdate)
         if (!newVal) return;
         personalInfo.last_name = newVal.lname ?? null;
         personalInfo.first_name = newVal.fname ?? null;
@@ -1315,7 +1315,9 @@ watch(
             : null;
         personalInfo.status = newVal.status ?? null;
         personalInfo.school = newVal.schoolInput ?? null;
-        personalInfo.guardian_name = newVal.guardian?.name ?? null;
+        personalInfo.course = newVal.courseInput ?? null;
+        personalInfo.schoolId = newVal.schoolInfoId ?? null,
+            personalInfo.guardian_name = newVal.guardian?.name ?? null;
         personalInfo.guardian_id_no = newVal.guardian?.id_no ?? null;
         personalInfo.guardian_place_issue =
             newVal.guardian?.place_issue ?? null;

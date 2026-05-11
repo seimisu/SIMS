@@ -10,6 +10,7 @@ use App\Models\ListStatuses;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
+use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
 use App\Models\StudentGrade;
@@ -188,6 +189,30 @@ class Scholar1Controller extends Controller
                 'name' => $campus->generated_name,
             ];
         }) : [];
+
+
+        $courseOptions = $request->input('id') ? SchoolCampusCourses::with(['course', 'campus'])->where([
+            'is_delete' => false,
+            'is_active' => true,
+        ])
+            ->whereHas(
+                'campus',
+                fn($q) => $q->where(
+                    'generated_name',
+                    'like',
+                    '%' . Scholars::find(Hashids::decode($request->input('id'))[0] ?? 0)->schoolInfo->first()?->campus->generated_name . '%'
+                )
+            )
+            ->get()
+            ->map(function ($course) {
+                return [
+                    'id' => $course->id,
+                    'name' => $course->course?->name,
+                    'campus' => $course->campus?->generated_name,
+                ];
+            }) : [];
+
+
 
 
         $termSubjectRecordIds = StudentSubject::whereHas('subjectRequests', function ($q) {
@@ -438,11 +463,17 @@ class Scholar1Controller extends Controller
                             ],
                             'fullAddress' => $q?->address?->full_address,
                             'awardYear' => $q?->award_year,
+                            'schoolInfoId' => $q?->schoolInfo?->first()?->id,
                             'course' => $q?->schoolInfo?->first()?->course?->course?->name,
                             'school' => $q?->schoolInfo?->first()?->campus?->generated_name,
                             'schoolInput' => [
                                 'id'    => $q->schoolInfo?->first()?->campus?->id,
                                 'name' => $q->schoolInfo?->first()?->campus?->generated_name,
+                            ],
+                            'courseInput' => [
+                                'id' => $q?->schoolInfo?->first()?->course?->id,
+                                'name' => $q?->schoolInfo?->first()?->course?->course?->name,
+                                'campus' => $q?->schoolInfo?->first()?->campus?->generated_name,
                             ],
                             'region' => $q?->schoolInfo?->first()?->campus?->address?->region_array,
                             'tr_request' => $q?->termRecords
@@ -549,6 +580,7 @@ class Scholar1Controller extends Controller
                 'subjectOptions' => $subjectOptions,
                 'gradeOptions' => $gradeOptions,
                 'schoolOptions' => $schoolOptions,
+                'courseOptions' => $courseOptions,
                 'generateSubjects' => $generateSubjects,
                 'OpenDetail' => $request->input('id') ?? null,
                 'filterSearch' => $request->input('search') ?? null,
@@ -603,6 +635,9 @@ class Scholar1Controller extends Controller
                     'sub_program' => 'required',
                     'award_year' => 'required',
                     'status' => 'required',
+                    'school' => 'required',
+                    'course' => 'required',
+                    'schoolId' => 'required',
 
                     // // Guardian
                     'guardian_name' => 'nullable|string|max:255',
@@ -611,6 +646,8 @@ class Scholar1Controller extends Controller
                     'guardian_date_issue' => 'nullable|date',
                 ]);
 
+
+
                 $slice = explode('-', $data['fulladdress']['id']);
 
                 $scholar->update([
@@ -618,6 +655,7 @@ class Scholar1Controller extends Controller
                     'type_id' => $data['sub_program']['id'],
                     'award_year' => Carbon::parse($data['award_year'])->format('Y') + 1,
                     'status_id' => $data['status']['id'],
+                    ''
                 ]);
                 $scholar->profile()->updateOrCreate(
                     ['scholar_id' => $scholar->id],
@@ -627,6 +665,7 @@ class Scholar1Controller extends Controller
                         'lname' => $data['last_name'],
                         'suffix' => $data['suffix'] ?? null,
                         'email' => $data['email'],
+
                         'contact_no' => $data['contact_no'] ?? null,
                         'birthplace' => $data['birth_place'] ?? null,
                         'birthdate' => Carbon::parse($data['birth_date'])->setTimezone('Asia/Manila')
@@ -636,6 +675,8 @@ class Scholar1Controller extends Controller
                     ]
                 );
 
+
+
                 $scholar->address()->updateOrCreate(
                     ['scholar_id' => $scholar->id],
                     [
@@ -644,6 +685,17 @@ class Scholar1Controller extends Controller
                         'municipality_code' => $slice[1] ?? null,
                         'province_code' => $slice[2] ?? null,
                         'region_code' => $slice[3] ?? null,
+                    ]
+                );
+
+                $scholar->schoolInfo()->updateOrCreate(
+                    [
+                        'id' => $data['schoolId'],
+                        'scholar_id' => $scholar->id
+                    ],
+                    [
+                        'campus_id' => $data['school']['id'],
+                        'campus_course_id' => $data['course']['id']
                     ]
                 );
 

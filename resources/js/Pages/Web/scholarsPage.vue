@@ -376,6 +376,8 @@ const toggleScholarDetails = (event) => {
             "statusOptions",
             "termOptions",
             "yearOptions",
+            "schoolOptions",
+            "courseOptions"
         ],
         data: { id: event.id },
         preserveState: false,
