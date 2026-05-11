@@ -339,43 +339,40 @@ const saveValidate = (item, index) => {
 };
 
 const moveProd = () => {
-    if (parseInt(page.props?.validationStatus.completed) < parseInt(page.props?.validationStatus.total)) {
-        confirm.require({
-            group: 'templating',
-            message: 'Are you sure you want to publish all completed records?',
-            header: 'Publish Completed Records',
-            icon: 'pi pi-exclamation-triangle',
-            rejectProps: {
-                label: 'Cancel',
-                severity: 'secondary',
-                outlined: true
-            },
-            acceptProps: {
-                label: 'Proceed'
-            },
-            accept: () => {
-                router.post(route('review.publish', { id: props.id }), {}, {
-                    onSuccess: () => {
-                        toast.add({
-                            severity: page.props?.flash?.status,
-                            summary: page.props?.flash?.title,
-                            detail: page.props?.flash?.message,
-                            life: 3000
-                        });
-                    }
-                });
-            },
-            reject: () => {
-                toast.add({
-                    severity: 'warn',
-                    summary: 'Cancelled',
-                    detail: 'Validation was cancelled.',
-                    life: 3000
-                });
-            }
-        });
-    }
-
+    confirm.require({
+        group: 'templating',
+        message: 'Are you sure you want to publish all completed records?',
+        header: 'Publish Completed Records',
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Proceed'
+        },
+        accept: () => {
+            router.post(route('review.publish', { id: props.id }), {}, {
+                onSuccess: () => {
+                    toast.add({
+                        severity: page.props?.flash?.status,
+                        summary: page.props?.flash?.title,
+                        detail: page.props?.flash?.message,
+                        life: 3000
+                    });
+                }
+            });
+        },
+        reject: () => {
+            toast.add({
+                severity: 'warn',
+                summary: 'Cancelled',
+                detail: 'Validation was cancelled.',
+                life: 3000
+            });
+        }
+    });
 }
 
 </script>
