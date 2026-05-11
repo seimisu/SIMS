@@ -165,7 +165,7 @@
                                     <component :is="TablerIcons[item.icon]" :size="18"></component>
                                     <span class="!text-xs">{{
                                         item.label
-                                    }}</span>
+                                        }}</span>
                                     <Badge v-if="item.badge" size="small" severity="danger" class="ml-auto !text-xs"
                                         :value="item.badge" />
                                     <Badge v-if="item.status" size="small" severity="info" class="ml-auto !text-xs"
@@ -254,6 +254,13 @@
                                         :disable="!editBtn.info" :options="page.props?.programOptions"></SelectInput>
 
                                     <SelectInput label="Scholar Sub-Program" v-model="personalInfo.sub_program"
+                                        :disable="!editBtn.info" :options="page.props?.subProgramOptions"></SelectInput>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <SelectInput label="School" v-model="personalInfo.program" :disable="!editBtn.info"
+                                        :options="page.props?.programOptions"></SelectInput>
+
+                                    <SelectInput label="Course" v-model="personalInfo.sub_program"
                                         :disable="!editBtn.info" :options="page.props?.subProgramOptions"></SelectInput>
                                 </div>
                                 <div class="flex items-center gap-3">
@@ -454,9 +461,11 @@ item, index
                                         Records
                                     </span>
                                 </div>
-                                <Panel v-if="termRecord.subjects?.length > 0 && termRecord.subjects.some(s => s.subject?.name)" class="!rounded-xl" :pt="{
-                                    header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                                }">
+                                <Panel
+                                    v-if="termRecord.subjects?.length > 0 && termRecord.subjects.some(s => s.subject?.name)"
+                                    class="!rounded-xl" :pt="{
+                                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
+                                    }">
                                     <template #header>
                                         <div class="p-3 w-full flex justify-between">
                                             <div class="flex items-center gap-2 text-md font-medium text-gray-700">
@@ -605,16 +614,14 @@ item, index
                                                         ">
                                                         <div class="w-[26rem] p-1 flex flex-col gap-4">
                                                             <!-- Header -->
-                                                            <div
-                                                                class="flex items-start justify-between">
+                                                            <div class="flex items-start justify-between">
                                                                 <div>
-                                                                    <h3
-                                                                        class="text-sm font-semibold text-gray-800">
+                                                                    <h3 class="text-sm font-semibold text-gray-800">
                                                                         Reject Subject Request
                                                                     </h3>
-                                                                    <p
-                                                                        class="text-xs text-gray-500 mt-1">
-                                                                        Provide a reason for rejecting all subject requests.
+                                                                    <p class="text-xs text-gray-500 mt-1">
+                                                                        Provide a reason for rejecting all subject
+                                                                        requests.
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -631,10 +638,8 @@ item, index
                                                                 </label>
 
                                                                 <Textarea v-model="validateRequestForm.reason
-                                                                    " rows="4"
-                                                                    placeholder="Enter your reason here..."
-                                                                    class="w-full !text-sm"
-                                                                    size="small" />
+                                                                    " rows="4" placeholder="Enter your reason here..."
+                                                                    class="w-full !text-sm" size="small" />
                                                             </div>
 
                                                             <!-- Actions -->
@@ -647,24 +652,22 @@ item, index
                                                                             e,
                                                                             index,
                                                                         )
-                                                                " label="Cancel" rounded outlined
-                                                                    size="small" class-name="!px-4" />
+                                                                " label="Cancel" rounded outlined size="small"
+                                                                    class-name="!px-4" />
 
-                                                                <DefaultButton label="Reject Request"
-                                                                    :icon="TablerIcons.IconX
-                                                                        " :loading="loading.validateReject
-                                                                            " :disabled="loading.validateReject
-                                                                                " @click="
-                                                                                    validateRequest(
-                                                                                        {
-                                                                                            id: termRecord
-                                                                                                .id,
-                                                                                            type: 'reject',
-                                                                                        },
-                                                                                    )
-                                                                                    " severity="danger"
-                                                                    rounded size="small"
-                                                                    class-name="!px-5" />
+                                                                <DefaultButton label="Reject Request" :icon="TablerIcons.IconX
+                                                                    " :loading="loading.validateReject
+                                                                        " :disabled="loading.validateReject
+                                                                            " @click="
+                                                                                validateRequest(
+                                                                                    {
+                                                                                        id: termRecord
+                                                                                            .id,
+                                                                                        type: 'reject',
+                                                                                    },
+                                                                                )
+                                                                                " severity="danger" rounded
+                                                                    size="small" class-name="!px-5" />
                                                             </div>
                                                         </div>
                                                     </Popover>
@@ -797,10 +800,12 @@ item, index
                                                             <div v-if="item.request?.is_drop" class="text-red-600">
                                                                 Dropped
                                                             </div>
-                                                            <div v-else-if="item.request?.is_failed" class="text-rose-600">
+                                                            <div v-else-if="item.request?.is_failed"
+                                                                class="text-rose-600">
                                                                 Failed
                                                             </div>
-                                                            <div v-else-if="item.request?.is_incomplete" class="text-amber-600">
+                                                            <div v-else-if="item.request?.is_incomplete"
+                                                                class="text-amber-600">
                                                                 Incompleted
                                                             </div>
                                                             <div v-else-if="item.request?.grade" class="text-green-600">
@@ -835,7 +840,8 @@ item, index
                                                 </tbody>
                                             </table>
                                             <!-- Group Action Buttons -->
-                                            <div v-if="termRecord.gradeRequest" class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200">
+                                            <div v-if="termRecord.gradeRequest"
+                                                class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200">
                                                 <div>
                                                     <DefaultButton @click="
                                                         (e) =>
@@ -856,16 +862,14 @@ item, index
                                                         ">
                                                         <div class="w-[26rem] p-1 flex flex-col gap-4">
                                                             <!-- Header -->
-                                                            <div
-                                                                class="flex items-start justify-between">
+                                                            <div class="flex items-start justify-between">
                                                                 <div>
-                                                                    <h3
-                                                                        class="text-sm font-semibold text-gray-800">
+                                                                    <h3 class="text-sm font-semibold text-gray-800">
                                                                         Reject Grade Request
                                                                     </h3>
-                                                                    <p
-                                                                        class="text-xs text-gray-500 mt-1">
-                                                                        Provide a reason for rejecting all grade requests.
+                                                                    <p class="text-xs text-gray-500 mt-1">
+                                                                        Provide a reason for rejecting all grade
+                                                                        requests.
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -882,10 +886,8 @@ item, index
                                                                 </label>
 
                                                                 <Textarea v-model="validateGradeForm.reason
-                                                                    " rows="4"
-                                                                    placeholder="Enter your reason here..."
-                                                                    class="w-full !text-sm"
-                                                                    size="small" />
+                                                                    " rows="4" placeholder="Enter your reason here..."
+                                                                    class="w-full !text-sm" size="small" />
                                                             </div>
 
                                                             <!-- Actions -->
@@ -898,24 +900,22 @@ item, index
                                                                             e,
                                                                             index,
                                                                         )
-                                                                " label="Cancel" rounded outlined
-                                                                    size="small" class-name="!px-4" />
+                                                                " label="Cancel" rounded outlined size="small"
+                                                                    class-name="!px-4" />
 
-                                                                <DefaultButton label="Reject Request"
-                                                                    :icon="TablerIcons.IconX
-                                                                        " :loading="loading.validateGrade
-                                                                            " :disabled="loading.validateGrade
-                                                                                " @click="
-                                                                                    validateGradeRequest(
-                                                                                        {
-                                                                                            id: termRecord
-                                                                                                .id,
-                                                                                            type: 'reject',
-                                                                                        },
-                                                                                    )
-                                                                                    " severity="danger"
-                                                                    rounded size="small"
-                                                                    class-name="!px-5" />
+                                                                <DefaultButton label="Reject Request" :icon="TablerIcons.IconX
+                                                                    " :loading="loading.validateGrade
+                                                                        " :disabled="loading.validateGrade
+                                                                            " @click="
+                                                                                validateGradeRequest(
+                                                                                    {
+                                                                                        id: termRecord
+                                                                                            .id,
+                                                                                        type: 'reject',
+                                                                                    },
+                                                                                )
+                                                                                " severity="danger" rounded
+                                                                    size="small" class-name="!px-5" />
                                                             </div>
                                                         </div>
                                                     </Popover>

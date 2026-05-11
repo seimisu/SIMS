@@ -6,6 +6,8 @@
             <div class="flex flex-col lg:flex-row items-center space-x-0 gap-4">
                 <HeaderModule title="Pending Scholar Review"
                     description="This section allows administrators to review and validate pending scholar submissions before approval." />
+                <DefaultButton size="small" label="Register Scholar" :icon="IconPlus"
+                    @click="dialogUploadScholar = true" class-name="!rounded-xl !text-sm !px-4" raised />
             </div>
             <div class="flex-1 flex flex-col gap-2">
                 <DefaultSelectionTable :items="page.props.files.data" :pagination="{
@@ -172,6 +174,7 @@
                 </DefaultSelectionTable>
             </div>
         </div>
+        <DialogUploadScholarModule v-if="dialogUploadScholar" v-model="dialogUploadScholar"></DialogUploadScholarModule>
         <DrawerScholarVerificationModule v-if="selectedDrawer" v-model="selectedDrawer" :id="selectedId" />
     </AuthLayout>
 </template>
@@ -190,12 +193,15 @@ import {
     IconUserUp,
     IconCircleCheckFilled,
     IconProgressCheck,
+    IconPlus,
 
 } from "@tabler/icons-vue";
 import { useForm, progress, usePage, Head, router } from "@inertiajs/vue3";
 import { ref } from "vue";
+import DialogUploadScholarModule from "../../Modules/Others/DialogUploadScholarModule.vue";
 
 const page = usePage();
+const dialogUploadScholar = ref(false)
 const selectedDrawer = ref(false);
 const selectedId = ref(null)
 const loading = ref({
@@ -206,9 +212,6 @@ const selectScholar = (e) => {
     router.reload({
         only: ["selected", "courseOption", "schoolOption", "validationStatus"],
         data: { id: e.hash_id },
-        preserveState: true,
-        preserveScroll: true,
-        showProgress: true,
         replace: true,
         onBefore: () => {
             selectedId.value = e.hash_id

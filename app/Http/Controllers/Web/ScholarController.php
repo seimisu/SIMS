@@ -464,6 +464,14 @@ class ScholarController extends Controller
                 'status' => 'pending',
             ]);
             foreach ($import->rows as $key => $value) {
+
+                $date = $value['birthdate'];
+                if (is_numeric($date)) {
+                    $date = Carbon::createFromFormat('Y-m-d', '1899-12-30')
+                        ->addDays($date);
+                } else {
+                    $date = Carbon::createFromFormat('m/d/y', $date);
+                }
                 $uploadedfile->temp()->create(
                     [
                         'spas_no' => $value['spas_no'],
@@ -478,7 +486,7 @@ class ScholarController extends Controller
                         'sex' => $value['sex'],
                         'email' => $value['email'],
                         'contact_no' => (string) $value['contact_no'],
-                        'birthdate' => Carbon::parse($value['birthdate'])->format('Y-m-d'),
+                        'birthdate' => $date,
                         'birthplace' => $value['birthplace'],
                         'civil_status' => $value['civil_status'],
                         'address' => $value['address'] . ' ' . $value['village'],
@@ -777,7 +785,7 @@ class ScholarController extends Controller
                     'mname' => $data['mname'] ?? null,
                     'suffix' => $data['suffix'] ?? null,
                     'contact_no' => $data['contact_no'] ?? null,
-                    'birthdate' => Carbon::parse($data['birthdate'])->setTimezone('Asia/Manila')->format('m/d/Y') ?? null,
+                    'birthdate' => Carbon::parse($data['birthdate'])->setTimezone('Asia/Manila')->format('Y-m-d') ?? null,
                     'birthplace' => $data['birth_place'] ?? null,
                     'email' => $data['email'] ?? null,
                     'sex' => $data['sex'] ?? null,

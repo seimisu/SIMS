@@ -27,7 +27,7 @@ class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, Wit
     public function sheets(): array
     {
         return [
-            'information' => $this,
+            'Scholars' => $this,
         ];
     }
 
@@ -50,7 +50,7 @@ class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, Wit
                 'email' => ['required', 'email', Rule::unique('scholar_upload_temps', 'email')],
                 'contact_no' => ['nullable'],
                 'birthdate' => ['required'],
-                'birthplace' => ['required'],
+                'birthplace' => ['nullable'],
                 'civil_status' => ['required'],
                 'address' => ['nullable'],
                 'village' => ['nullable'],
