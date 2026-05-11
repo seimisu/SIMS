@@ -10,6 +10,7 @@ use App\Models\ListStatuses;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
+use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
 use App\Models\StudentGrade;
 use App\Models\StudentGradeRequest;
@@ -30,8 +31,8 @@ class Scholar1Controller extends Controller
     public function index(Request $request, LocationClass $location)
     {
         $schoolFilter = Inertia::optional(
-            fn () => Scholars::with([
-                'schoolInfo' => fn ($q) => $q
+            fn() => Scholars::with([
+                'schoolInfo' => fn($q) => $q
                     ->select('id', 'scholar_id', 'campus_id')
                     ->with('campus:id,generated_name')
                     ->latest()
@@ -51,7 +52,7 @@ class Scholar1Controller extends Controller
                 ->values()
         );
         $programFilter = Inertia::optional(
-            fn () => Scholars::with([
+            fn() => Scholars::with([
                 'program:id,name',
             ])
                 ->get()
@@ -67,7 +68,7 @@ class Scholar1Controller extends Controller
                 ->values()
         );
         $subFilter = Inertia::optional(
-            fn () => Scholars::with([
+            fn() => Scholars::with([
                 'type:id,name',
             ])
                 ->get()
@@ -83,7 +84,7 @@ class Scholar1Controller extends Controller
         );
 
         $statusFilter = Inertia::optional(
-            fn () => Scholars::with([
+            fn() => Scholars::with([
                 'status:id,name',
             ])
                 ->get()
@@ -154,10 +155,10 @@ class Scholar1Controller extends Controller
 
         $subjectOptions = $request->input('id') ?
             SchoolCampusCourseCurriculumSubjects::where('is_active', true)
-                ->where('is_delete', false)
-                ->whereHas('curriculum', function ($q) use ($request) {
-                    $q->where('campus_course_id', Scholars::find(Hashids::decode($request->input('id'))[0] ?? 0)->schoolInfo->first()?->campus_course_id);
-                })->get()->map(fn ($q) => [
+            ->where('is_delete', false)
+            ->whereHas('curriculum', function ($q) use ($request) {
+                $q->where('campus_course_id', Scholars::find(Hashids::decode($request->input('id'))[0] ?? 0)->schoolInfo->first()?->campus_course_id);
+            })->get()->map(fn($q) => [
                 'id' => $q->id,
                 'name' => $q->name,
                 'code' => $q->subject_code,
@@ -178,16 +179,26 @@ class Scholar1Controller extends Controller
                 ];
             }) : null;
 
+        $schoolOptions = $request->input('id') ? SchoolCampuses::where([
+            'is_delete' => false,
+            'is_active' => true,
+        ])->get()->map(function ($campus) {
+            return [
+                'id' => $campus->id,
+                'name' => $campus->generated_name,
+            ];
+        }) : [];
 
-        $termSubjectRecordIds = StudentSubject::whereHas('subjectRequests', function($q) {
+
+        $termSubjectRecordIds = StudentSubject::whereHas('subjectRequests', function ($q) {
             $q->where('status', 'pending');
         })->pluck('term_record_id')->toArray();
-        $termGradeRecordIds = StudentGrade::whereHas('gradeRequests', function($q) {
+        $termGradeRecordIds = StudentGrade::whereHas('gradeRequests', function ($q) {
             $q->where('status', 'submitted');
         })->pluck('term_record_id')->toArray();
 
         $generateSubjects = Inertia::optional(
-            fn () => SchoolCampusCourseCurriculumSubjects::where('is_active', true)
+            fn() => SchoolCampusCourseCurriculumSubjects::where('is_active', true)
                 ->where('is_delete', false)
                 ->whereHas('curriculum', function ($q) use ($request) {
                     $q->where('is_active', true)
@@ -196,7 +207,7 @@ class Scholar1Controller extends Controller
                 })
                 ->where('semester_id', $request->input('term'))
                 ->where('year', $request->input('year'))
-                ->get()->map(fn ($q) => [
+                ->get()->map(fn($q) => [
                     'id' => $q->id,
                     'name' => $q->name,
                     'code' => $q->subject_code,
@@ -211,7 +222,7 @@ class Scholar1Controller extends Controller
                     StudentSubject::where('status', 'pending')->count()
                 )->toString(),
                 'grade_request_cnt' => Str::of(
-                    StudentGrade::whereHas('gradeRequests', function($q) {
+                    StudentGrade::whereHas('gradeRequests', function ($q) {
                         $q->where('status', 'submitted');
                     })->count()
                 )->toString(),
@@ -233,13 +244,13 @@ class Scholar1Controller extends Controller
                         'program:id,name',
                         'type:id,name',
                         'profile:id,scholar_id,photo,sex,fname,lname,mname,suffix,email,contact_no',
-                        'schoolInfo' => fn ($q) => $q
+                        'schoolInfo' => fn($q) => $q
                             ->select('id', 'scholar_id', 'campus_id', 'campus_course_id')
                             ->with([
                                 'campus:id,generated_name,agency_id',
                                 'campus.agency:id,name,slug',
                                 'campus.address:campus_id,region_code',
-                                'course' => fn ($q) => $q
+                                'course' => fn($q) => $q
                                     ->select('id', 'course_id')
                                     ->with([
                                         'course:id,name',
@@ -247,7 +258,7 @@ class Scholar1Controller extends Controller
                             ])
                             ->latest()
                             ->limit(1),
-                        'termRecords' => fn ($q) => $q
+                        'termRecords' => fn($q) => $q
                             ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id')
                             ->with([
                                 'requests' => fn($q) => $q
@@ -259,21 +270,21 @@ class Scholar1Controller extends Controller
                                     ->where('status', 'submitted')
                             ]),
                     ])
-                    ->when($request->input('search'), fn ($q) => $q->whereHas(
+                    ->when($request->input('search'), fn($q) => $q->whereHas(
                         'profile',
-                        fn ($q) => $q->whereRaw("CONCAT(lname, ' ', fname, ' ', COALESCE(mname, '')) ILIKE ?", ['%'.$request->input('search').'%'])
+                        fn($q) => $q->whereRaw("CONCAT(lname, ' ', fname, ' ', COALESCE(mname, '')) ILIKE ?", ['%' . $request->input('search') . '%'])
                     ))
                     ->when($request->input('schools'), function ($q, $schools) {
-                        $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->whereIn('generated_name', $schools)));
+                        $q->whereHas('schoolInfo', fn($w) => $w->whereHas('campus', fn($r) => $r->whereIn('generated_name', $schools)));
                     })
                     ->when($request->input('programs'), function ($q, $programs) {
-                        $q->whereHas('program', fn ($w) => $w->whereIn('name', $programs));
+                        $q->whereHas('program', fn($w) => $w->whereIn('name', $programs));
                     })
                     ->when($request->input('sub'), function ($q, $sub) {
-                        $q->whereHas('type', fn ($w) => $w->whereIn('name', $sub));
+                        $q->whereHas('type', fn($w) => $w->whereIn('name', $sub));
                     })
                     ->when($request->input('status'), function ($q, $status) {
-                        $q->whereHas('status', fn ($w) => $w->whereIn('name', $status));
+                        $q->whereHas('status', fn($w) => $w->whereIn('name', $status));
                     })
 
                     ->when($request->input('subjectRequest'), function ($q) use ($termSubjectRecordIds) {
@@ -288,7 +299,7 @@ class Scholar1Controller extends Controller
                     })
                     ->orderBy('scholar_profiles.lname', 'ASC')
                     ->paginate(10)
-                    ->through(fn ($q) => [
+                    ->through(fn($q) => [
                         'id' => Hashids::encode($q->id),
                         'spas_no' => $q->spas_no,
                         'photo' => $q->profile?->photo,
@@ -298,7 +309,7 @@ class Scholar1Controller extends Controller
                         'activated_at' => $q->activated_at,
                         'acticationRequest' => ! empty($q->activation_token),
                         'fullname' => trim(collect([
-                            $q->profile?->lname.',',
+                            $q->profile?->lname . ',',
                             $q->profile?->fname,
                             $q->profile?->mname,
                             $q->profile?->suffix,
@@ -346,13 +357,13 @@ class Scholar1Controller extends Controller
                                 'program:id,name',
                                 'type:id,name',
                                 'profile:id,scholar_id,photo,sex,fname,lname,mname,suffix,email,contact_no,birthplace,birthdate,religion,civil_status',
-                                'schoolInfo' => fn ($q) => $q
+                                'schoolInfo' => fn($q) => $q
                                     ->select('id', 'scholar_id', 'campus_id', 'campus_course_id')
                                     ->with([
                                         'campus:id,generated_name,agency_id',
                                         'campus.agency:id,name,slug',
                                         'campus.address:campus_id,region_code',
-                                        'course' => fn ($q) => $q
+                                        'course' => fn($q) => $q
                                             ->select('id', 'course_id')
                                             ->with([
                                                 'course:id,name',
@@ -360,7 +371,7 @@ class Scholar1Controller extends Controller
                                     ])
                                     ->latest()
                                     ->limit(1),
-                                'termRecords' => fn ($q) => $q
+                                'termRecords' => fn($q) => $q
                                     ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id')
                                     ->with([
                                         'requests' => fn($q) => $q
@@ -370,13 +381,13 @@ class Scholar1Controller extends Controller
                                             ]),
                                         'termType:id,name',
                                         'level:id,name,others',
-                                        'subjects' => fn ($q) => $q
+                                        'subjects' => fn($q) => $q
                                             ->select('id', 'term_record_id', 'subject_id', 'grade_id')
                                             ->with([
                                                 'subject:id,name,year,subject_code,unit,subject_class,semester_id',
                                                 'grade:id,grade,is_failed,is_incomplete,is_drop,is_active',
                                             ]),
-                                        'gradeRequests' => fn ($q) => $q
+                                        'gradeRequests' => fn($q) => $q
                                             ->where('status', 'submitted'),
 
                                     ]),
@@ -406,7 +417,7 @@ class Scholar1Controller extends Controller
                             'religion' => $q?->profile?->religion,
                             'civil_status' => $q?->profile?->civil_status,
                             'fullname' => trim(collect([
-                                $q?->profile?->lname.',',
+                                $q?->profile?->lname . ',',
                                 $q?->profile?->fname,
                                 $q?->profile?->mname,
                                 $q?->profile?->suffix,
@@ -429,6 +440,10 @@ class Scholar1Controller extends Controller
                             'awardYear' => $q?->award_year,
                             'course' => $q?->schoolInfo?->first()?->course?->course?->name,
                             'school' => $q?->schoolInfo?->first()?->campus?->generated_name,
+                            'schoolInput' => [
+                                'id'    => $q->schoolInfo?->first()?->campus?->id,
+                                'name' => $q->schoolInfo?->first()?->campus?->generated_name,
+                            ],
                             'region' => $q?->schoolInfo?->first()?->campus?->address?->region_array,
                             'tr_request' => $q?->termRecords
                                 ->pluck('requests')
@@ -444,8 +459,8 @@ class Scholar1Controller extends Controller
 
                             ],
                             'termGrades' => $q?->termRecords->sortBy([
-                                fn ($term) => $term?->level?->others,
-                                fn ($term) => $term?->term?->name,
+                                fn($term) => $term?->level?->others,
+                                fn($term) => $term?->term?->name,
 
                             ])->values()->map(function ($term) {
                                 return [
@@ -472,7 +487,7 @@ class Scholar1Controller extends Controller
                                                 'is_drop' => $sub->grade?->is_drop,
                                                 'is_active' => $sub->grade?->is_active,
                                             ],
-                                            'request' => (function() use ($sub) {
+                                            'request' => (function () use ($sub) {
                                                 $gradeRequest = $sub->gradeRequests()->where('status', 'submitted')->first();
                                                 return [
                                                     'id' => $gradeRequest?->id,
@@ -533,18 +548,19 @@ class Scholar1Controller extends Controller
                 'termOptions' => $termOptions,
                 'subjectOptions' => $subjectOptions,
                 'gradeOptions' => $gradeOptions,
+                'schoolOptions' => $schoolOptions,
                 'generateSubjects' => $generateSubjects,
                 'OpenDetail' => $request->input('id') ?? null,
                 'filterSearch' => $request->input('search') ?? null,
                 'filterSchool' => $request->input('schools') != null ? Scholars::with([
-                    'schoolInfo' => fn ($q) => $q
+                    'schoolInfo' => fn($q) => $q
                         ->select('id', 'scholar_id', 'campus_id')
                         ->with('campus:id,generated_name')
                         ->latest()
                         ->limit(1),
                 ])
                     ->when($request->input('schools'), function ($q, $schools) {
-                        $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->whereIn('generated_name', $schools)));
+                        $q->whereHas('schoolInfo', fn($w) => $w->whereHas('campus', fn($r) => $r->whereIn('generated_name', $schools)));
                     })
                     ->get()
                     ->map(function ($q) {
@@ -730,7 +746,7 @@ class Scholar1Controller extends Controller
                 $requestRecord = StudentSubjectRequest::findOrFail($id);
                 $studentSubject = $requestRecord->studentSubject;
                 $termRecordId = $studentSubject->term_record_id;
-                
+
                 $studentSubject->update([
                     'status' => 'approved',
                     'updated_by' => Auth::user()->profile->fullname,
@@ -764,7 +780,7 @@ class Scholar1Controller extends Controller
     {
         try {
             $termRecordId = (int) $id;  // Use the ID directly without decoding
-            
+
             if ($type == 'reject') {
                 $data = $request->validate([
                     'reason' => 'required|string|max:255',
@@ -786,9 +802,9 @@ class Scholar1Controller extends Controller
             } else {
                 // Get all grade requests for this term
                 $gradeRequests = StudentGradeRequest::on('scholars')
-                    ->whereHas('studentGrade', function($q) use ($termRecordId) {
+                    ->whereHas('studentGrade', function ($q) use ($termRecordId) {
                         $q->where('term_record_id', $termRecordId)
-                          ->where('status', 'submitted');
+                            ->where('status', 'submitted');
                     })
                     ->get();
 
@@ -801,7 +817,7 @@ class Scholar1Controller extends Controller
                             'grade_id' => $gradeRequest->grades_id,
                         ]);
                 }
-                
+
                 // Update all student_grades for this term to validated
                 $updated = StudentGrade::on('scholars')
                     ->where('term_record_id', $termRecordId)
@@ -841,7 +857,7 @@ class Scholar1Controller extends Controller
             'activation_token' => $activation,
         ]);
 
-        $url = 'https://portal7.science-scholarships.ph/activation?token='.$activation;
+        $url = 'https://portal7.science-scholarships.ph/activation?token=' . $activation;
         Mail::to($user->profile->email)
             ->send(new activationLinkMail($url));
 

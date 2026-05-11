@@ -21,6 +21,7 @@ class User extends Authenticatable
     protected $fillable = [
         'role_id',
         'email',
+        'school_id',
         'can_create',
         'can_edit',
         'can_delete',
@@ -71,6 +72,10 @@ class User extends Authenticatable
         return Carbon::parse($this->created_at)->format('M d, Y | h:i a');
     }
 
+    public function school()
+    {
+        return $this->belongsTo(SchoolCampuses::class, 'school_id');
+    }
     public function getRoleArrayAttribute()
     {
         return $this->role ? [

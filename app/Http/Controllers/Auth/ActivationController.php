@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ActivationRequest;
+use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\References\ListClass;
@@ -37,7 +38,16 @@ class ActivationController extends Controller
             return Inertia::render('Auth/activationPage', [
                 'token' => $token,
                 'user' => $user,
-                'agencyOption' => $this->agencyOption
+                'agencyOption' => $this->agencyOption,
+                'schoolOption' => SchoolCampuses::where([
+                    'is_delete' => false,
+                    'is_active' => true,
+                ])->get()->map(function ($campus) {
+                    return [
+                        'id' => $campus->id,
+                        'name' => $campus->generated_name,
+                    ];
+                })
             ]);
         } catch (ModelNotFoundException $e) {
             return redirect()->route('login');
@@ -63,6 +73,7 @@ class ActivationController extends Controller
             'fname'       => Str::upper($data['fname']),
             'lname'       => Str::upper($data['lname']),
             'email'       => $data['email'],
+            'school_id'   => $data['school']['id'],
             'designation' => Str::lower($data['designation']),
             'agency_id'   => $data['agency']['id'],
             'contact_no'  => $data['contact'],

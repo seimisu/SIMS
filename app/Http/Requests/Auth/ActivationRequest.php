@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 
 class ActivationRequest extends FormRequest
@@ -22,6 +24,8 @@ class ActivationRequest extends FormRequest
      */
     public function rules(): array
     {
+
+
         return [
             'photo'         => ['nullable', 'string'],
             'photoCrop'     => ['nullable', 'string'],
@@ -29,6 +33,7 @@ class ActivationRequest extends FormRequest
             'fname'         => ['required', 'string'],
             'lname'         => ['required', 'string'],
             'email'         => ['email', 'required'],
+
             'designation'   => ['required', 'string'],
             'agency'        => ['required', 'array'],
             'contact'       => ['required'],
