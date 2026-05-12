@@ -30,7 +30,7 @@
                         <UploadInput ref="uploadRef" @select-files="handleFiles" @remove-file="clearForm"
                             :progress="progressUpload"
                             accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-                            {{ progressUpload }}
+
                         </UploadInput>
                         <div class="flex justify-end">
                             <DefaultButton size="small" label="Upload File" @click="submitForm" />
@@ -83,7 +83,7 @@ const submitForm = () => {
         },
         onProgress: (e) => {
             if (!e.total) return;
-            console.log(e.percentage);
+
             progressUpload.value = (e.loaded / e.total) * 97;
         },
         onSuccess: () => {
