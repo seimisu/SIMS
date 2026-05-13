@@ -164,13 +164,14 @@ class UserController extends Controller
 
     function destroy(UserRequest $request, int $id)
     {
-        dd($request->checkSuperAdminId());
+
 
         $find = User::findOrFail($id);
-        $find->update([
-            'is_delete' => true,
 
-        ]);
+        $find->profile()->delete();
+        $find->delete();
+
+
         return redirect()->back()->with('flash', [
             'status' => 'success',
             'title'  => 'User Deleted',

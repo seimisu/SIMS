@@ -61,19 +61,18 @@ class ActivationController extends Controller
 
 
         $user = User::findOrFail($id);
-        $profile = UserProfile::where('user_id', $id)->firstOrFail();
 
         $user->update([
             'password'          => bcrypt($data['password']),
             'activation_token'  => null,
             'is_verified'        => true,
+            'school_id'   => $data['school'] ? $data['school']['id'] : null,
+            'email'       => $data['email'],
         ]);
 
-        $profile->update([
+        $user->profile()->update([
             'fname'       => Str::upper($data['fname']),
             'lname'       => Str::upper($data['lname']),
-            'email'       => $data['email'],
-            'school_id'   => $data['school']['id'],
             'designation' => Str::lower($data['designation']),
             'agency_id'   => $data['agency']['id'],
             'contact_no'  => $data['contact'],
@@ -97,8 +96,9 @@ class ActivationController extends Controller
             $filename = 'profile_' . time() . '.' . $imageType;
             Storage::disk('public')->put("avatars/{$user->id}/{$filename}", $imageData);
 
-            $profile->avatar = $filename;
-            $profile->save();
+            $user->profile()->update([
+                'avatar' => $filename
+            ]);
         }
 
         return redirect()->back()->with('flash', [
