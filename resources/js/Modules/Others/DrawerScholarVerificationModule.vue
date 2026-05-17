@@ -163,6 +163,7 @@
                                             {{ item.verified_at }}
                                         </div>
                                     </div>
+
                                 </div>
                                 <div class="">
                                     <DefaultButton size="small" raised :disabled="item.loading || !!item.verified_by

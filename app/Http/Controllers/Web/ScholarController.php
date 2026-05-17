@@ -289,7 +289,9 @@ class ScholarController extends Controller
                 'temp',
                 'temp as active_temp_count' => fn($q) => $q->where('verified_at', '!=', null),
             ])->orderBy('id', 'desc')->paginate(10),
-            'selected' => $request->input('id') ? ScholarUploadTemp::where('file_id', Hashids::decode($request->input('id'))[0] ?? 0)->orderBy('id', 'ASC')
+            'selected' => $request->input('id') ? ScholarUploadTemp::where('file_id', Hashids::decode($request->input('id'))[0] ?? 0)
+                ->whereNull('publish_at')
+                ->orderBy('id', 'ASC')
                 ->get()->map(function ($scholar) {
 
                     $schoolChange = $scholar->change_school
@@ -364,6 +366,8 @@ class ScholarController extends Controller
                         'error3' => null,
                         'verified_at' => $scholar->verified_at ? Carbon::parse($scholar->verified_at)->diffForHumans() : null,
                         'verified_by' => $scholar->verified_by,
+                        'publish_at' => $scholar->publish_at ? Carbon::parse($scholar->publish_at)->diffForHumans() : null,
+                        'publish_by' => $scholar->publish_by,
                     ];
                 }) : [],
             'validationStatus' => $request->input('id') ?  ScholarUploadedFiles::whereNot('status', 'reject')->withCount([
