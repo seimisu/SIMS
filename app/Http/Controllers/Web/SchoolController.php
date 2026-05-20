@@ -26,12 +26,12 @@ class SchoolController extends Controller
 
         if ($id = request('id')) {
             $school = SchoolCampuses::with([
-                'courses.subjects' => fn($q) => $q->where('is_delete', false),
-                'courses' => fn($q) => $q->where('is_delete', false),
-                'grades' => fn($q) => $q->where('is_delete', false)->orderBy('grade', 'asc'),
-                'info' => fn($q) => $q->select(['id', 'campus_id', 'dean', 'registrar', 'contact', 'email'])->where('is_delete', false),
-                'semesters' => fn($q) => $q->where('is_delete', false),
-                'address'
+                'courses.subjects' => fn ($q) => $q->where('is_delete', false),
+                'courses' => fn ($q) => $q->where('is_delete', false),
+                'grades' => fn ($q) => $q->where('is_delete', false)->orderBy('grade', 'asc'),
+                'info' => fn ($q) => $q->select(['id', 'campus_id', 'dean', 'registrar', 'contact', 'email'])->where('is_delete', false),
+                'semesters' => fn ($q) => $q->where('is_delete', false),
+                'address',
             ])->find($id);
 
             // Convert entire object recursively to plain arrays
@@ -39,9 +39,9 @@ class SchoolController extends Controller
         }
 
         return Inertia::render('Web/schoolPage', [
-            //table shool
+            // table shool
             'universities' => $ref->getSchools('table', $request->input('search')),
-            //option ref
+            // option ref
             'classOption' => $ref->getRefs('option', null, null, 'Class'),
             'classificationOption' => $ref->getRefs('option', null, null, 'Term Type'),
             'agencyOption' => $ref->getAgencies(false),
@@ -51,15 +51,14 @@ class SchoolController extends Controller
             'semesterOption' => request('semesterType')
                 ? $ref->getRefs('option', null, null, request('semesterType'))
                 : null,
-            //search
+            // search
             'resultSearch' => request('autosuggest')
                 ? ($location->getFullAddress(request('autosuggest')) ?? [])
                 : [],
             'schoolDetail' => $schoolDetail,
             'subjectDetail' => request('campusCourseId')
                 ? SchoolCampusCourseCurriculums::with([
-                    'subjects' => fn($q) =>
-                    $q->select(
+                    'subjects' => fn ($q) => $q->select(
                         'id',
                         'curriculum_id',
                         'semester_id',
@@ -75,69 +74,69 @@ class SchoolController extends Controller
                     )->where('is_delete', false),
 
                 ])
-                ->select([
-                    'id',
-                    'campus_course_id',
-                    'years as yearLevel',
-                    'semester_type_id as semesterTypeId',
-                    'is_duplicated'
-                ])
-                ->withExists([
-                    'replication as has_replication' => function ($q) {
-                        $q->where('user_id', Auth::id())
-                            ->whereNull('deleted_at');
-                    }
-                ])
-                ->where('campus_course_id', request('campusCourseId'))
-                ->where('semester_type_id', request('semTypeId'))
-                ->where('is_delete', false)
-                ->orderBy('id', 'desc')
-                ->get()
-                ->toArray()
+                    ->select([
+                        'id',
+                        'campus_course_id',
+                        'years as yearLevel',
+                        'semester_type_id as semesterTypeId',
+                        'is_duplicated',
+                    ])
+                    ->withExists([
+                        'replication as has_replication' => function ($q) {
+                            $q->where('user_id', Auth::id())
+                                ->whereNull('deleted_at');
+                        },
+                    ])
+                    ->where('campus_course_id', request('campusCourseId'))
+                    ->where('semester_type_id', request('semTypeId'))
+                    ->where('is_delete', false)
+                    ->orderBy('id', 'desc')
+                    ->get()
+                    ->toArray()
                 : null,
             'regionAccess' => request('id') ?
-                SchoolCampuses::when(Auth::check() &&  Auth::user()->role_array['name'] == 'regional staff', function ($query) {
+                SchoolCampuses::when(Auth::check() && Auth::user()->role_array['name'] == 'regional staff', function ($query) {
                     $query->where('agency_id', Auth::user()->profile->agency_array['id']);
                 })
-                ->where('id', request('id'))
-                ->exists()
+                    ->where('id', request('id'))
+                    ->exists()
                 : false,
 
             'schoolEdit' => request('school_id')
                 ? Schools::with(['campuses' => function ($query) {
                     if (Auth::user()->role_array['name'] != 'Administrator') {
                         $query->whereHas('agency', function ($q) {
-                            $q->where('name',  Auth::user()->profile->agency->name);
+                            $q->where('name', Auth::user()->profile->agency->name);
                         });
                     }
                     $query->with('address');
                     $query->where('is_delete', false);
                 }])
-                ->where('id', request('school_id'))
-                ->first()?->toArray()
+                    ->where('id', request('school_id'))
+                    ->first()?->toArray()
                 : null,
             'templateOptions' => request('campusCourseId')
                 ? CurriculumReplication::select('id', 'curriculum_id')
-                ->with([
-                    'curriculum' => fn($q) => $q
-                        ->select('id', 'campus_course_id', 'years', 'semester_type_id')
-                        ->with([
-                            'course' => fn($q) => $q
-                                ->select('id', 'campus_id', 'course_id')
-                                ->with([
-                                    'campus'
-                                ])
-                        ])
-                ])
-                ->where('user_id', Auth::id())
-                ->whereHas('curriculum.course.campus', function ($q) {
-                    $q->where('school_id', request('schoolId'));
-                })
-                ->get()
-                ->map(fn($q) => [
-                    'curriculum_id' => Hashids::encode($q->curriculum_id),
-                    'name' => $q->curriculum->course->course['name'] . ' - Curriculum ' . $q->curriculum->years,
-                ])
+                    ->with([
+                        'curriculum' => fn ($q) => $q
+                            ->select('id', 'campus_course_id', 'years', 'semester_type_id')
+                            ->with([
+                                'course' => fn ($q) => $q
+                                    ->select('id', 'campus_id', 'course_id')
+                                    ->with([
+                                        'campus',
+                                    ]),
+                            ]),
+                    ])
+                    ->where('user_id', Auth::id())
+                    ->whereHas('curriculum.course.campus', function ($q) {
+                        $q->where('school_id', request('schoolId'));
+                    })
+                    ->get()
+                    ->map(fn ($q) => [
+                        'curriculum_id' => Hashids::encode($q->curriculum_id),
+                        'name' => $q->curriculum->course->course['name'].' - Curriculum '.$q->curriculum->years,
+                    ])
                 : null,
         ]);
     }
@@ -150,7 +149,7 @@ class SchoolController extends Controller
             'name' => Str::lower($data['name']),
             'shortcut' => $data['abbreviation'],
             'reference_id' => $data['class']['id'],
-            'created_by'    => Auth::user()->profile->fullname
+            'created_by' => Auth::user()->profile->fullname,
         ]);
 
         foreach ($data['campuses'] as $campus) {
@@ -162,8 +161,8 @@ class SchoolController extends Controller
                 'name' => isset($campus['name']) ? Str::lower($campus['name']) : null,
                 'agency_id' => $campus['agency']['id'],
                 'grading_id' => $campus['grading']['id'],
-                'generated_name' => isset($campus['name']) ? Str::upper($data['name']) . '-' . Str::upper($campus['name']) : Str::upper($data['name']) . '-' . Str::of($sliceName[1])->trim()->upper(),
-                'created_by'    => Auth::user()->profile->fullname
+                'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::of($sliceName[1])->trim()->upper(),
+                'created_by' => Auth::user()->profile->fullname,
             ]);
 
             $campusModel->address()->create([
@@ -173,19 +172,19 @@ class SchoolController extends Controller
                 'municipality_code' => $slice[1],
                 'province_code' => $slice[2],
                 'region_code' => $slice[3],
-                'created_by'    => Auth::user()->profile->fullname
+                'created_by' => Auth::user()->profile->fullname,
             ]);
         }
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'University Created',
+            'title' => 'University Created',
             'message' => 'University successfully created.',
-        ]);;
+        ]);
     }
-    function update(SchoolRequest $request, string $id, string $type)
-    {
 
+    public function update(SchoolRequest $request, string $id, string $type)
+    {
 
         $data = $request->validated();
         $find = Schools::findOrFail($id);
@@ -196,43 +195,42 @@ class SchoolController extends Controller
                 'name' => $data['name'],
                 'shortcut' => $data['abbreviation'],
                 'reference_id' => $data['class']['id'],
-                'updated_by'    => Auth::user()->profile->fullname,
-                'updated_at'    => now()
+                'updated_by' => Auth::user()->profile->fullname,
+                'updated_at' => now(),
             ]);
-
 
             foreach ($data['campuses'] as $campus) {
                 $slice = explode('-', $campus['address']['id']);
                 $sliceName = explode(',', $campus['address']['name']);
-                if (!empty($campus['id'])) {
+                if (! empty($campus['id'])) {
                     $campusModel = $find->campuses()->find($campus['id']);
                     $campusModel->update([
-                        'is_main'     => $campus['main'],
-                        'term_id'     => $campus['semester']['id'],
-                        'agency_id'   => $campus['agency']['id'],
+                        'is_main' => $campus['main'],
+                        'term_id' => $campus['semester']['id'],
+                        'agency_id' => $campus['agency']['id'],
                         'name' => isset($campus['name']) ? Str::lower($campus['name']) : null,
-                        'generated_name' => isset($campus['name']) ? Str::upper($data['name']) . '-' . Str::upper($campus['name']) : Str::upper($data['name']) . '-' . Str::of($sliceName[1])->trim()->upper(),
-                        'grading_id'  => $campus['grading']['id'],
-                        'updated_by'  => Auth::user()->profile->fullname,
-                        'updated_at'  => now()
+                        'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::of($sliceName[1])->trim()->upper(),
+                        'grading_id' => $campus['grading']['id'],
+                        'updated_by' => Auth::user()->profile->fullname,
+                        'updated_at' => now(),
                     ]);
                     $campusModel->address()->update([
-                        'address'     => $campus['street'],
+                        'address' => $campus['street'],
                         'barangay_code' => $slice[0],
                         'municipality_code' => $slice[1],
                         'province_code' => $slice[2],
                         'region_code' => $slice[3],
 
-                        'updated_at'    => now()
+                        'updated_at' => now(),
                     ]);
                 } else {
                     $newCampus = $find->campuses()->create([
-                        'is_main'     => $campus['main'],
-                        'term_id'     => $campus['semester']['id'],
-                        'agency_id'   => $campus['agency']['id'],
-                        'generated_name' => isset($campus['name']) ? Str::upper($data['name']) . '-' . Str::upper($campus['name']) : Str::upper($data['name']) . '-' . Str::of($sliceName[1])->trim()->upper(),
-                        'grading_id'  => $campus['grading']['id'],
-                        'created_by'  => Auth::user()->profile->fullname,
+                        'is_main' => $campus['main'],
+                        'term_id' => $campus['semester']['id'],
+                        'agency_id' => $campus['agency']['id'],
+                        'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::of($sliceName[1])->trim()->upper(),
+                        'grading_id' => $campus['grading']['id'],
+                        'created_by' => Auth::user()->profile->fullname,
                     ]);
 
                     $newCampus->address()->create([
@@ -241,7 +239,7 @@ class SchoolController extends Controller
                         'municipality_code' => $slice[1],
                         'province_code' => $slice[2],
                         'region_code' => $slice[3],
-                        'created_by'    => Auth::user()->profile->fullname
+                        'created_by' => Auth::user()->profile->fullname,
                     ]);
                 }
             }
@@ -253,7 +251,7 @@ class SchoolController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'University Updated',
+            'title' => 'University Updated',
             'message' => 'University successfully updated.',
         ]);
     }
@@ -265,8 +263,7 @@ class SchoolController extends Controller
             $university->is_delete = true;
             $university->save();
 
-
-            $school = Schools::withCount(['campuses' => fn($q) => $q->where('is_delete', false)])
+            $school = Schools::withCount(['campuses' => fn ($q) => $q->where('is_delete', false)])
                 ->where('id', $university->school_id)
                 ->first();
 
@@ -277,7 +274,7 @@ class SchoolController extends Controller
 
             return redirect()->back()->with('flash', [
                 'status' => 'success',
-                'title'  => 'School Campus Deleted',
+                'title' => 'School Campus Deleted',
                 'message' => 'School campus successfully deleted.',
             ]);
         } catch (\Throwable $e) {
@@ -285,9 +282,10 @@ class SchoolController extends Controller
             Log::channel('errortracer')->error('Deleting campus', [
                 'error' => $e->getMessage(),
             ]);
+
             return redirect()->back()->with('flash', [
                 'status' => 'error',
-                'title'  => 'Something went wrong',
+                'title' => 'Something went wrong',
                 'message' => 'Please report this to Administrator.',
             ]);
         }

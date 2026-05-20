@@ -1,11 +1,17 @@
 <template>
-    <Drawer v-model:visible="modelValue" position="full" :pt="{
-        header: 'border-b-1 border-gray-300 border-dashed',
-        content: 'bg-slate-50',
-        footer: 'border-t-1 border-gray-300 border-dashed',
-    }">
+    <Drawer
+        v-model:visible="modelValue"
+        position="full"
+        :pt="{
+            header: 'border-b-1 border-gray-300 border-dashed',
+            content: 'bg-slate-50',
+            footer: 'border-t-1 border-gray-300 border-dashed',
+        }"
+    >
         <template #header>
-            <div class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2">
+            <div
+                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
+            >
                 <IconId :size="20" :stroke-width="2" />
                 <div class="uppercase font-medium">Scholar Validation</div>
             </div>
@@ -13,7 +19,8 @@
         <template #default>
             <div class="mt-5 flex flex-col gap-3">
                 <div
-                    class="flex items-start p-3 shadow border border-green-300 text-green-500 rounded-xl bg-green-50 gap-1">
+                    class="flex items-start p-3 shadow border border-green-300 text-green-500 rounded-xl bg-green-50 gap-1"
+                >
                     <div>
                         <IconExclamationCircleFilled :size="20" />
                     </div>
@@ -26,25 +33,31 @@
                     </p>
                 </div>
                 <template v-for="(item, index) in scholar" :key="index">
-                    <Panel :pt="{
-                        root: [
-                            '!rounded-xl',
-                            item.verified_by
-                                ? '!border-green-500 !shadow-green-500 '
-                                : null,
-                        ],
-                    }">
+                    <Panel
+                        :pt="{
+                            root: [
+                                '!rounded-xl',
+                                item.verified_by
+                                    ? '!border-green-500 !shadow-green-500 '
+                                    : null,
+                            ],
+                        }"
+                    >
                         <template #header>
                             <div class="flex items-center gap-2">
-                                <Avatar class="!bg-blue-100 !text-blue-600 border">
+                                <Avatar
+                                    class="!bg-blue-100 !text-blue-600 border"
+                                >
                                     <IconUser :size="18" />
                                 </Avatar>
                                 <div class="text-sm">
-                                    <div :class="[
-                                        item.sex == 'M'
-                                            ? 'text-blue-500'
-                                            : 'text-red-500',
-                                    ]">
+                                    <div
+                                        :class="[
+                                            item.sex == 'M'
+                                                ? 'text-blue-500'
+                                                : 'text-red-500',
+                                        ]"
+                                    >
                                         # {{ item.spas_no }}
                                     </div>
                                     <div class="font-semibold">
@@ -55,11 +68,15 @@
                         </template>
                         <template #icons>
                             <div class="flex items-start gap-3 text-xs">
-                                <div class="bg-red-100 px-3 py-1 rounded-2xl shadow">
+                                <div
+                                    class="bg-red-100 px-3 py-1 rounded-2xl shadow"
+                                >
                                     • {{ item.status }}
                                 </div>
 
-                                <div class="bg-slate-100 px-3 py-1 rounded-2xl shadow">
+                                <div
+                                    class="bg-slate-100 px-3 py-1 rounded-2xl shadow"
+                                >
                                     • {{ item.standing }}
                                 </div>
                             </div>
@@ -67,7 +84,9 @@
                         <template #default>
                             <div class="flex flex-col lg:flex-row gap-3 w-full">
                                 <div class="flex flex-col flex-1">
-                                    <div class="flex-1 flex flex-col items-center justify-center">
+                                    <div
+                                        class="flex-1 flex flex-col items-center justify-center"
+                                    >
                                         <div class="text-sm text-gray-500">
                                             Imported address data:
                                         </div>
@@ -88,10 +107,12 @@
                                                 page.props?.selected[index]
                                                     .province
                                             }}
-                                            <span v-if="
-                                                page.props?.selected[index]
-                                                    .region
-                                            ">
+                                            <span
+                                                v-if="
+                                                    page.props?.selected[index]
+                                                        .region
+                                                "
+                                            >
                                                 (Region
                                                 {{
                                                     page.props?.selected[index]
@@ -100,7 +121,9 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="flex-1 flex flex-col items-center justify-center">
+                                    <div
+                                        class="flex-1 flex flex-col items-center justify-center"
+                                    >
                                         <div class="text-sm text-gray-500">
                                             Imported School data:
                                         </div>
@@ -121,30 +144,60 @@
                                 <div class="flex flex-1 flex-col gap-3">
                                     <div class="flex flex-col gap-2">
                                         <Divider align="right" class="!m-0">
-                                            <span class="text-xs font-medium">Residential Information
+                                            <span class="text-xs font-medium"
+                                                >Residential Information
                                             </span>
                                         </Divider>
-                                        <TextInput label="Street/Village" v-model="scholar[index].address" disabled />
-                                        <AutoCompleteInput v-model="scholar[index].inputAddress
-                                            " :options="page.props?.resultSearch"
+                                        <TextInput
+                                            label="Street/Village"
+                                            v-model="scholar[index].address"
+                                            disabled
+                                        />
+                                        <AutoCompleteInput
+                                            v-model="
+                                                scholar[index].inputAddress
+                                            "
+                                            :options="page.props?.resultSearch"
                                             placeholder="Find by Barangay, Municipality, Province, or Region"
-                                            @complete="autoSearch" selection></AutoCompleteInput>
+                                            @complete="autoSearch"
+                                            selection
+                                            :disabled="!!item.verified_by"
+                                        ></AutoCompleteInput>
                                     </div>
                                     <div class="flex flex-col gap-2">
                                         <Divider align="right" class="!m-0">
-                                            <span class="text-xs font-medium">Educational Background
+                                            <span class="text-xs font-medium"
+                                                >Educational Background
                                                 Information
                                             </span>
                                         </Divider>
-                                        <SelectInput label="School" filter v-model="scholar[index].inputSchool"
-                                            :options="page.props?.schoolOption || []
-                                                " :error-mark="item?.error2" @update:model-value="
-                                                    renderCourse(item, index)
-                                                    " />
-                                        <SelectInput label="Course" filter :error-mark="item?.error3" :disable="!scholar[index].inputSchool
-                                            " v-model="scholar[index].inputCourse" :options="scholar[index].courseOption ||
+                                        <SelectInput
+                                            :disable="!!item.verified_by"
+                                            label="School"
+                                            filter
+                                            v-model="scholar[index].inputSchool"
+                                            :options="
+                                                page.props?.schoolOption || []
+                                            "
+                                            :error-mark="item?.error2"
+                                            @update:model-value="
+                                                renderCourse(item, index)
+                                            "
+                                        />
+                                        <SelectInput
+                                            label="Course"
+                                            filter
+                                            :error-mark="item?.error3"
+                                            :disable="
+                                                !scholar[index].inputSchool ||
+                                                !!item.verified_by
+                                            "
+                                            v-model="scholar[index].inputCourse"
+                                            :options="
+                                                scholar[index].courseOption ||
                                                 []
-                                                " />
+                                            "
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -152,23 +205,36 @@
                         <template #footer>
                             <div class="flex justify-between">
                                 <div class="flex gap-1 items-center">
-                                    <Avatar class="!bg-green-100 !text-green-600 border" shape="circle"
-                                        v-if="item.verified_by">
+                                    <Avatar
+                                        class="!bg-green-100 !text-green-600 border"
+                                        shape="circle"
+                                        v-if="item.verified_by"
+                                    >
                                         <IconUser :size="18" />
                                     </Avatar>
-                                    <div class="flex flex-col text-xs" v-if="item.verified_by">
+                                    <div
+                                        class="flex flex-col text-xs"
+                                        v-if="item.verified_by"
+                                    >
                                         <div>Verified by:</div>
                                         <div class="font-medium">
                                             {{ item.verified_by }} •
                                             {{ item.verified_at }}
                                         </div>
                                     </div>
-
                                 </div>
                                 <div class="">
-                                    <DefaultButton size="small" raised :disabled="item.loading || !!item.verified_by
-                                        " @click="saveValidate(item, index)" :loading="item.loading"
-                                        label="Save and Review Submission" class="!rounded-xl !px-10" />
+                                    <DefaultButton
+                                        size="small"
+                                        raised
+                                        :disabled="
+                                            item.loading || !!item.verified_by
+                                        "
+                                        @click="saveValidate(item, index)"
+                                        :loading="item.loading"
+                                        label="Save and Review Submission"
+                                        class="!rounded-xl !px-10"
+                                    />
                                 </div>
                             </div>
                         </template>
@@ -192,42 +258,63 @@
                     </div>
 
                     <!-- Progress Bar -->
-                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                        <div class="h-full rounded-full transition-all duration-300" :class="{
-                            'bg-green-500':
-                                page.props?.validationStatus.completed ===
-                                page.props?.validationStatus.total,
-                            'bg-yellow-500':
-                                page.props?.validationStatus.completed >
-                                0 &&
-                                page.props?.validationStatus.completed <
-                                page.props?.validationStatus.total,
-                            'bg-red-500':
-                                page.props?.validationStatus.completed ===
-                                0,
-                        }" :style="{
-                            width: `${page.props?.validationStatus.total
-                                ? (page.props?.validationStatus.completed /
-                                    page.props?.validationStatus.total) *
-                                100
-                                : 0
+                    <div
+                        class="w-full bg-gray-100 rounded-full h-2 overflow-hidden"
+                    >
+                        <div
+                            class="h-full rounded-full transition-all duration-300"
+                            :class="{
+                                'bg-green-500':
+                                    page.props?.validationStatus.completed ===
+                                    page.props?.validationStatus.total,
+                                'bg-yellow-500':
+                                    page.props?.validationStatus.completed >
+                                        0 &&
+                                    page.props?.validationStatus.completed <
+                                        page.props?.validationStatus.total,
+                                'bg-red-500':
+                                    page.props?.validationStatus.completed ===
+                                    0,
+                            }"
+                            :style="{
+                                width: `${
+                                    page.props?.validationStatus.total
+                                        ? (page.props?.validationStatus
+                                              .completed /
+                                              page.props?.validationStatus
+                                                  .total) *
+                                          100
+                                        : 0
                                 }%`,
-                        }" />
+                            }"
+                        />
                     </div>
                 </div>
-                <DefaultButton size="small" raised label="Move to Production" class="!rounded-xl !px-10"
-                    @click="moveProd" />
+                <DefaultButton
+                    size="small"
+                    raised
+                    label="Move to Production"
+                    class="!rounded-xl !px-10"
+                    @click="moveProd"
+                />
             </div>
         </template>
     </Drawer>
     <ConfirmDialog group="templating" class="w-100">
         <template #message="slotProps">
             <div class="flex flex-col items-center w-full gap-4 text-center">
-                <i :class="slotProps.message.icon" class="!text-6xl text-red-500"></i>
+                <i
+                    :class="slotProps.message.icon"
+                    class="!text-6xl text-red-500"
+                ></i>
                 <p class="text-wrap text-sm">{{ slotProps.message.message }}</p>
-                <div class="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 w-fit">
+                <div
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 w-fit"
+                >
                     <div class="flex flex-col">
-                        <span class="text-xs text-emerald-700 font-medium uppercase tracking-wide">
+                        <span
+                            class="text-xs text-emerald-700 font-medium uppercase tracking-wide"
+                        >
                             Validation Progress
                         </span>
 
@@ -236,9 +323,7 @@
                                 {{ page.props?.validationStatus.completed }}
                             </span>
 
-                            <span class="text-sm text-gray-500">
-                                out of
-                            </span>
+                            <span class="text-sm text-gray-500"> out of </span>
 
                             <span class="text-lg font-bold text-gray-600">
                                 {{ page.props?.validationStatus.total }}
@@ -274,8 +359,8 @@ import { useToast } from "primevue/usetoast";
 const toast = useToast();
 const confirm = useConfirm();
 const props = defineProps({
-    id: String
-})
+    id: String,
+});
 const modelValue = defineModel("modelValue");
 const page = usePage();
 const loading = ref({
@@ -319,7 +404,7 @@ const saveValidate = (item, index) => {
     router.post(route("review.validate", { id: item.id }), item, {
         preserveState: true,
         preserveScroll: true,
-        onSuccess: () => { },
+        onSuccess: () => {},
         onError: (e) => {
             console.log(e);
 
@@ -341,39 +426,42 @@ const saveValidate = (item, index) => {
 
 const moveProd = () => {
     confirm.require({
-        group: 'templating',
-        message: 'Are you sure you want to publish all completed records?',
-        header: 'Publish Completed Records',
-        icon: 'pi pi-exclamation-triangle',
+        group: "templating",
+        message: "Are you sure you want to publish all completed records?",
+        header: "Publish Completed Records",
+        icon: "pi pi-exclamation-triangle",
         rejectProps: {
-            label: 'Cancel',
-            severity: 'secondary',
-            outlined: true
+            label: "Cancel",
+            severity: "secondary",
+            outlined: true,
         },
         acceptProps: {
-            label: 'Proceed'
+            label: "Proceed",
         },
         accept: () => {
-            router.post(route('review.publish', { id: props.id }), {}, {
-                onSuccess: () => {
-                    toast.add({
-                        severity: page.props?.flash?.status,
-                        summary: page.props?.flash?.title,
-                        detail: page.props?.flash?.message,
-                        life: 3000
-                    });
-                }
-            });
+            router.post(
+                route("review.publish", { id: props.id }),
+                {},
+                {
+                    onSuccess: () => {
+                        toast.add({
+                            severity: page.props?.flash?.status,
+                            summary: page.props?.flash?.title,
+                            detail: page.props?.flash?.message,
+                            life: 3000,
+                        });
+                    },
+                },
+            );
         },
         reject: () => {
             toast.add({
-                severity: 'warn',
-                summary: 'Cancelled',
-                detail: 'Validation was cancelled.',
-                life: 3000
+                severity: "warn",
+                summary: "Cancelled",
+                detail: "Validation was cancelled.",
+                life: 3000,
             });
-        }
+        },
     });
-}
-
+};
 </script>
