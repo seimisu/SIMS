@@ -1,14 +1,8 @@
 <template>
-    <Dialog
-        v-model:visible="modelValue"
-        modal
-        :style="{ width: '95%' }"
-        :pt="{ header: 'border-b-1 border-gray-300 border-dashed' }"
-    >
+    <Dialog v-model:visible="modelValue" modal :style="{ width: '45rem' }"
+        :pt="{ header: 'border-b-1 border-gray-300 border-dashed' }">
         <template #header>
-            <div
-                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
-            >
+            <div class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2">
                 <IconUserUp :size="18" :stroke-width="2" />
                 <div class="uppercase font-medium text-sm">
                     Register Scholars
@@ -20,8 +14,7 @@
                 <div class="flex flex-col lg:flex-row gap-3">
                     <div class="flex-1 flex flex-col gap-5">
                         <div
-                            class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1"
-                        >
+                            class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1">
                             <div>
                                 <IconExclamationCircleFilled :size="20" />
                             </div>
@@ -34,24 +27,29 @@
                                 before submitting.
                             </p>
                         </div>
-                        <UploadInput
-                            ref="uploadRef"
-                            @select-files="handleFiles"
-                            @remove-file="clearForm"
+                        <UploadInput ref="uploadRef" @select-files="handleFiles" @remove-file="clearForm"
                             :progress="progressUpload"
-                            accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        >
-                            {{ progressUpload }}
+                            accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+
                         </UploadInput>
+                        <div class="" v-if="page.props?.flash.status == 'error'">
+                            <div
+                                class="flex items-start p-3 shadow border border-red-300 text-red-500 rounded-xl bg-red-50 gap-1">
+                                <div>
+                                    <IconExclamationCircleFilled :size="20" />
+                                </div>
+
+                                <p class="text-xs leading-5 text-justify">
+                                    {{ page.props?.flash.message }}
+                                </p>
+                            </div>
+
+                        </div>
                         <div class="flex justify-end">
-                            <DefaultButton
-                                size="small"
-                                label="Upload File"
-                                @click="submitForm"
-                            />
+                            <DefaultButton size="small" label="Upload File" @click="submitForm" />
                         </div>
                     </div>
-                    <div class="flex-3"></div>
+
                 </div>
             </div>
         </template>
@@ -98,7 +96,7 @@ const submitForm = () => {
         },
         onProgress: (e) => {
             if (!e.total) return;
-            console.log(e.percentage);
+
             progressUpload.value = (e.loaded / e.total) * 97;
         },
         onSuccess: () => {

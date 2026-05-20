@@ -44,6 +44,9 @@
                                 :options="page.props.agencyOption" :clearable="true" capitalize></SelectInput>
                             <TextInput label="Designation" capitalize v-model="registrationForm.designation">
                             </TextInput>
+                            <SelectInput label="School Assigned" v-model="registrationForm.school"
+                                v-if="page.props?.user?.role_array?.name == 'School Coordinator'" filter
+                                :options="page.props.schoolOption" :clearable="true" capitalize></SelectInput>
                             <MaskInput label="Contact No." :placeholder="'(09__) ___-____'"
                                 v-model="registrationForm.contact" :mask="'(9999) 999-9999'">
                             </MaskInput>
@@ -107,16 +110,20 @@ const registrationForm = useForm({
     lname: page.props?.user.profile.lname ?? null,
     email: page.props?.user.email ?? null,
     designation: null,
+    school: null,
     agency: null,
     contact: null,
     password: null,
+    is_coordinator: page.props?.user?.role_array.name == 'School Coordinator' ? true : false,
     cpassword: null,
 });
+
 
 const initializePhoto = () => {
     fileInput.value?.click();
 };
 const submitForm = () => {
+
 
     registrationForm.post(route("activation.update", { id: page.props.user?.id }), {
         forceFormData: true,

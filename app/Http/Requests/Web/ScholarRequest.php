@@ -24,7 +24,7 @@ class ScholarRequest extends FormRequest
     {
         return [
             'files' => ['required'],
-            'files.*' => 'file|mimes:xls,xlsx,csv|max:10240',
+            'files.*' => 'file|mimes:xls,xlsx,csv',
         ];
     }
 
@@ -34,7 +34,7 @@ class ScholarRequest extends FormRequest
         return [
             'files.*.file' => 'Each item must be a valid file.',
             'files.*.mimes' => 'Only XLS, XLSX, and CSV files are allowed.',
-            'files.*.max' => 'Each file must not exceed 10MB.',
+       
         ];
     }
 }

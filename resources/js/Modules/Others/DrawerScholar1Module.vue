@@ -165,7 +165,7 @@
                                     <component :is="TablerIcons[item.icon]" :size="18"></component>
                                     <span class="!text-xs">{{
                                         item.label
-                                    }}</span>
+                                        }}</span>
                                     <Badge v-if="item.badge" size="small" severity="danger" class="ml-auto !text-xs"
                                         :value="item.badge" />
                                     <Badge v-if="item.status" size="small" severity="info" class="ml-auto !text-xs"
@@ -255,6 +255,12 @@
 
                                     <SelectInput label="Scholar Sub-Program" v-model="personalInfo.sub_program"
                                         :disable="!editBtn.info" :options="page.props?.subProgramOptions"></SelectInput>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <SelectInput label="School" v-model="personalInfo.school" :disable="!editBtn.info"
+                                        :options="page.props?.schoolOptions"></SelectInput>
+                                    <SelectInput label="Course" v-model="personalInfo.course" :disable="!editBtn.info"
+                                        :options="page.props?.courseOptions"></SelectInput>
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <DatePickerInput v-model="personalInfo.award_year" label="Award Year" view="year"
@@ -444,7 +450,7 @@ item, index
                             </template>
                         </Panel>
                         <div class="bg-red-200 px-1 rounded-lg py-3"
-                            v-if="parseInt(page.props?.details?.tr_request) > 0">
+                            v-if="parseInt(page.props?.details?.tr_request) > 0 && page.props?.details?.requestGrades?.length > 0">
                             <div v-for="(termRecord, index) in page.props
                                 ?.details?.requestGrades" class="my-1">
                                 <div v-if="index == 0" class="flex items-center mb-2 gap-1">
@@ -454,9 +460,11 @@ item, index
                                         Records
                                     </span>
                                 </div>
-                                <Panel class="!rounded-xl" :pt="{
-                                    header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                                }">
+                                <Panel
+                                    v-if="termRecord.subjects?.length > 0 && termRecord.subjects.some(s => s.subject?.name)"
+                                    class="!rounded-xl" :pt="{
+                                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
+                                    }">
                                     <template #header>
                                         <div class="p-3 w-full flex justify-between">
                                             <div class="flex items-center gap-2 text-md font-medium text-gray-700">
@@ -517,11 +525,8 @@ item, index
                                                         <th class="px-3 py-2 text-right">
                                                             Grades
                                                         </th>
-                                                        <th class="px-3 py-2 text-center">
-                                                            Remarks
-                                                        </th>
                                                         <th class="px-3 py-2 text-center rounded-r-xl">
-                                                            Validation
+                                                            Remarks
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -581,135 +586,108 @@ item, index
                                                                 Passed
                                                             </div>
                                                         </td>
-                                                        <td>
-                                                            <div class="w-full flex items-center justify-center gap-1">
-                                                                <div>
-                                                                    <DefaultButton @click="
-                                                                        (
-                                                                            e,
-                                                                        ) =>
-                                                                            opToggle(
-                                                                                e,
-                                                                                index,
-                                                                            )
-                                                                    " :icon="TablerIcons.IconX
-                                                                        " severity="danger" :icon-size="15
-                                                                            " rounded outlined size="small" />
-                                                                    <Popover :ref="(
-                                                                        el,
-                                                                    ) =>
-                                                                    (opRequest[
-                                                                        index
-                                                                    ] =
-                                                                        el)
-                                                                        ">
-                                                                        <div class="w-[26rem] p-1 flex flex-col gap-4">
-                                                                            <!-- Header -->
-                                                                            <div
-                                                                                class="flex items-start justify-between">
-                                                                                <div>
-                                                                                    <h3
-                                                                                        class="text-sm font-semibold text-gray-800">
-                                                                                        Reject
-                                                                                        Request
-                                                                                    </h3>
-                                                                                    <p
-                                                                                        class="text-xs text-gray-500 mt-1">
-                                                                                        Provide
-                                                                                        a
-                                                                                        reason
-                                                                                        for
-                                                                                        rejecting
-                                                                                        this
-                                                                                        request.
-                                                                                    </p>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <!-- Divider -->
-                                                                            <div class="border-t"></div>
-
-                                                                            <!-- Form -->
-                                                                            <div class="flex flex-col gap-2">
-                                                                                <label
-                                                                                    class="text-xs font-medium text-gray-600 leading-0">
-                                                                                    Remarks
-                                                                                    <span class="text-red-500">*</span>
-                                                                                </label>
-
-                                                                                <Textarea v-model="validateRequestForm.reason
-                                                                                    " rows="4"
-                                                                                    placeholder="Enter your reason here..."
-                                                                                    class="w-full !text-sm"
-                                                                                    size="small" />
-                                                                            </div>
-
-                                                                            <!-- Actions -->
-                                                                            <div class="flex justify-end gap-2 pt-2">
-                                                                                <DefaultButton @click="
-                                                                                    (
-                                                                                        e,
-                                                                                    ) =>
-                                                                                        opToggle(
-                                                                                            e,
-                                                                                            index,
-                                                                                        )
-                                                                                " label="Cancel" rounded outlined
-                                                                                    size="small" class-name="!px-4" />
-
-                                                                                <DefaultButton label="Reject Request"
-                                                                                    :icon="TablerIcons.IconX
-                                                                                        " :loading="loading.validateReject
-                                                                                            " :disabled="loading.validateReject
-                                                                                                " @click="
-                                                                                                    validateRequest(
-                                                                                                        {
-                                                                                                            id: item
-                                                                                                                .subject
-                                                                                                                .id,
-                                                                                                            type: 'reject',
-                                                                                                        },
-                                                                                                    )
-                                                                                                    " severity="danger"
-                                                                                    rounded size="small"
-                                                                                    class-name="!px-5" />
-                                                                            </div>
-                                                                        </div>
-                                                                    </Popover>
-                                                                </div>
-
-                                                                <DefaultButton @click="
-                                                                    validateRequest(
-                                                                        {
-                                                                            id: item
-                                                                                .subject
-                                                                                .id,
-                                                                            type: 'accept',
-                                                                        },
-                                                                    )
-                                                                    " tooltip="Approved Request" :icon="TablerIcons.IconCheck
-                                                                        " :loading="loading.validateReject
-                                                                            " :disabled="loading.validateReject
-                                                                                " severity="success" :icon-size="15
-                                                                                    " rounded size="small" />
-                                                            </div>
-                                                        </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
-                                        </div>
-                                    </template>
-                                    <!-- <template #footer>
-                                        <div class="flex w-full justify-end">
+                                            <!-- Group Action Buttons -->
+                                            <div class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200">
+                                                <div>
+                                                    <DefaultButton @click="
+                                                        (
+                                                            e,
+                                                        ) =>
+                                                            opToggle(
+                                                                e,
+                                                                index,
+                                                            )
+                                                    " :icon="TablerIcons.IconX
+                                                        " label="Reject All" severity="danger" :icon-size="15
+                                                            " rounded outlined size="small" class-name="!px-5" />
+                                                    <Popover :ref="(
+                                                        el,
+                                                    ) =>
+                                                    (opRequest[
+                                                        index
+                                                    ] =
+                                                        el)
+                                                        ">
+                                                        <div class="w-[26rem] p-1 flex flex-col gap-4">
+                                                            <!-- Header -->
+                                                            <div class="flex items-start justify-between">
+                                                                <div>
+                                                                    <h3 class="text-sm font-semibold text-gray-800">
+                                                                        Reject Subject Request
+                                                                    </h3>
+                                                                    <p class="text-xs text-gray-500 mt-1">
+                                                                        Provide a reason for rejecting all subject
+                                                                        requests.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
 
-                                            <div class="flex items-center gap-2">
-                                                <DefaultButton :icon="TablerIcons.IconX" label="Reject Request"
-                                                    size="small" severity="danger" outlined
-                                                    class-name="!rounded-xl !px-5" />
+                                                            <!-- Divider -->
+                                                            <div class="border-t"></div>
 
+                                                            <!-- Form -->
+                                                            <div class="flex flex-col gap-2">
+                                                                <label
+                                                                    class="text-xs font-medium text-gray-600 leading-0">
+                                                                    Remarks
+                                                                    <span class="text-red-500">*</span>
+                                                                </label>
+
+                                                                <Textarea v-model="validateRequestForm.reason
+                                                                    " rows="4" placeholder="Enter your reason here..."
+                                                                    class="w-full !text-sm" size="small" />
+                                                            </div>
+
+                                                            <!-- Actions -->
+                                                            <div class="flex justify-end gap-2 pt-2">
+                                                                <DefaultButton @click="
+                                                                    (
+                                                                        e,
+                                                                    ) =>
+                                                                        opToggle(
+                                                                            e,
+                                                                            index,
+                                                                        )
+                                                                " label="Cancel" rounded outlined size="small"
+                                                                    class-name="!px-4" />
+
+                                                                <DefaultButton label="Reject Request" :icon="TablerIcons.IconX
+                                                                    " :loading="loading.validateReject
+                                                                        " :disabled="loading.validateReject
+                                                                            " @click="
+                                                                                validateRequest(
+                                                                                    {
+                                                                                        id: termRecord
+                                                                                            .id,
+                                                                                        type: 'reject',
+                                                                                    },
+                                                                                )
+                                                                                " severity="danger" rounded
+                                                                    size="small" class-name="!px-5" />
+                                                            </div>
+                                                        </div>
+                                                    </Popover>
+                                                </div>
+
+                                                <DefaultButton @click="
+                                                    validateRequest(
+                                                        {
+                                                            id: termRecord
+                                                                .id,
+                                                            type: 'accept',
+                                                        },
+                                                    )
+                                                    " label="Approve All" :icon="TablerIcons.IconCheck
+                                                        " :loading="loading.validateReject
+                                                            " :disabled="loading.validateReject
+                                                                " severity="success" :icon-size="15
+                                                                    " rounded size="small" class-name="!px-5" />
                                             </div>
                                         </div>
-                                    </template> -->
+                                    </template>
                                 </Panel>
                             </div>
                         </div>
@@ -722,7 +700,7 @@ item, index
                                         Previous Transcript of Records
                                     </span>
                                 </div>
-                                <Panel class="!rounded-xl" :pt="{
+                                <Panel v-if="termRecord.subjects?.length > 0" class="!rounded-xl" :pt="{
                                     header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
                                 }">
                                     <template #header>
@@ -781,13 +759,8 @@ item, index
                                                         <th class="px-3 py-2 text-right">
                                                             Grades
                                                         </th>
-                                                        <th class="px-3 py-2 text-center">
+                                                        <th class="px-3 py-2 text-center rounded-r-xl">
                                                             Remarks
-                                                        </th>
-                                                        <th class="px-3 py-2 text-right rounded-r-xl" v-if="
-                                                            termRecord.gradeRequest
-                                                        ">
-                                                            Action
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -818,13 +791,26 @@ item, index
                                                         </td>
                                                         <td class="px-3 py-2 text-right max-w-35">
                                                             {{
-                                                                item.request
-                                                                    .grade ??
-                                                                item.grade.grade
+                                                                item.request?.grade ??
+                                                                item.grade?.grade
                                                             }}
                                                         </td>
-                                                        <td class="px-3 py-2 text-right">
-                                                            <div v-if="
+                                                        <td class="px-3 py-2 text-center">
+                                                            <div v-if="item.request?.is_drop" class="text-red-600">
+                                                                Dropped
+                                                            </div>
+                                                            <div v-else-if="item.request?.is_failed"
+                                                                class="text-rose-600">
+                                                                Failed
+                                                            </div>
+                                                            <div v-else-if="item.request?.is_incomplete"
+                                                                class="text-amber-600">
+                                                                Incompleted
+                                                            </div>
+                                                            <div v-else-if="item.request?.grade" class="text-green-600">
+                                                                Passed
+                                                            </div>
+                                                            <div v-else-if="
                                                                 item.grade
                                                                     ?.is_drop
                                                             " class="text-red-600">
@@ -849,123 +835,105 @@ item, index
                                                                 Passed
                                                             </div>
                                                         </td>
-                                                        <td v-if="
-                                                            termRecord.gradeRequest
-                                                        ">
-                                                            <div class="w-full flex items-center justify-end gap-1">
-                                                                <div>
-                                                                    <DefaultButton @click="
-                                                                        (
-                                                                            e,
-                                                                        ) =>
-                                                                            opGradeToggle(
-                                                                                e,
-                                                                                index,
-                                                                            )
-                                                                    " :icon="TablerIcons.IconX
-                                                                        " severity="danger" :icon-size="15
-                                                                            " rounded outlined size="small" />
-                                                                    <Popover :ref="(
-                                                                        el,
-                                                                    ) =>
-                                                                    (opGradeRequest[
-                                                                        index
-                                                                    ] =
-                                                                        el)
-                                                                        ">
-                                                                        <div class="w-[26rem] p-1 flex flex-col gap-4">
-                                                                            <div
-                                                                                class="flex items-start justify-between">
-                                                                                <div>
-                                                                                    <h3
-                                                                                        class="text-sm font-semibold text-gray-800">
-                                                                                        Reject
-                                                                                        Request
-                                                                                    </h3>
-                                                                                    <p
-                                                                                        class="text-xs text-gray-500 mt-1">
-                                                                                        Provide
-                                                                                        a
-                                                                                        reason
-                                                                                        for
-                                                                                        rejecting
-                                                                                        this
-                                                                                        request.
-                                                                                    </p>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <!-- Divider -->
-                                                                            <div class="border-t"></div>
-
-                                                                            <!-- Form -->
-                                                                            <div class="flex flex-col gap-2">
-                                                                                <label
-                                                                                    class="text-xs font-medium text-gray-600 leading-0">
-                                                                                    Remarks
-                                                                                    <span class="text-red-500">*</span>
-                                                                                </label>
-
-                                                                                <Textarea v-model="validateGradeForm.reason
-                                                                                    " rows="4"
-                                                                                    placeholder="Enter your reason here..."
-                                                                                    class="w-full !text-sm"
-                                                                                    size="small" />
-                                                                            </div>
-
-                                                                            <!-- Actions -->
-                                                                            <div class="flex justify-end gap-2 pt-2">
-                                                                                <DefaultButton @click="
-                                                                                    (
-                                                                                        e,
-                                                                                    ) =>
-                                                                                        opGradeRequest(
-                                                                                            e,
-                                                                                            index,
-                                                                                        )
-                                                                                " label="Cancel" rounded outlined
-                                                                                    size="small" class-name="!px-4" />
-
-                                                                                <DefaultButton label="Reject Request"
-                                                                                    :icon="TablerIcons.IconX
-                                                                                        " :loading="loading.validateReject
-                                                                                            " :disabled="loading.validateReject
-                                                                                                " @click="
-                                                                                                    validateGradeRequest(
-                                                                                                        {
-                                                                                                            id: item
-                                                                                                                .subject
-                                                                                                                .id,
-                                                                                                            type: 'reject',
-                                                                                                        },
-                                                                                                    )
-                                                                                                    " severity="danger"
-                                                                                    rounded size="small"
-                                                                                    class-name="!px-5" />
-                                                                            </div>
-                                                                        </div>
-                                                                    </Popover>
-                                                                </div>
-
-                                                                <DefaultButton @click="
-                                                                    validateGradeRequest(
-                                                                        {
-                                                                            id: item
-                                                                                .request
-                                                                                .id,
-                                                                            type: 'accept',
-                                                                        },
-                                                                    )
-                                                                    " tooltip="Approved Request" :icon="TablerIcons.IconCheck
-                                                                        " :loading="loading.validateReject
-                                                                            " :disabled="loading.validateReject
-                                                                                " severity="success" :icon-size="15
-                                                                                    " rounded size="small" />
-                                                            </div>
-                                                        </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
+                                            <!-- Group Action Buttons -->
+                                            <div v-if="termRecord.gradeRequest"
+                                                class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200">
+                                                <div>
+                                                    <DefaultButton @click="
+                                                        (e) =>
+                                                            opGradeToggle(
+                                                                e,
+                                                                index,
+                                                            )
+                                                    " :icon="TablerIcons.IconX
+                                                        " label="Reject All" severity="danger" :icon-size="15
+                                                            " rounded outlined size="small" class-name="!px-5" />
+                                                    <Popover :ref="(
+                                                        el,
+                                                    ) =>
+                                                    (opGradeRequest[
+                                                        index
+                                                    ] =
+                                                        el)
+                                                        ">
+                                                        <div class="w-[26rem] p-1 flex flex-col gap-4">
+                                                            <!-- Header -->
+                                                            <div class="flex items-start justify-between">
+                                                                <div>
+                                                                    <h3 class="text-sm font-semibold text-gray-800">
+                                                                        Reject Grade Request
+                                                                    </h3>
+                                                                    <p class="text-xs text-gray-500 mt-1">
+                                                                        Provide a reason for rejecting all grade
+                                                                        requests.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Divider -->
+                                                            <div class="border-t"></div>
+
+                                                            <!-- Form -->
+                                                            <div class="flex flex-col gap-2">
+                                                                <label
+                                                                    class="text-xs font-medium text-gray-600 leading-0">
+                                                                    Remarks
+                                                                    <span class="text-red-500">*</span>
+                                                                </label>
+
+                                                                <Textarea v-model="validateGradeForm.reason
+                                                                    " rows="4" placeholder="Enter your reason here..."
+                                                                    class="w-full !text-sm" size="small" />
+                                                            </div>
+
+                                                            <!-- Actions -->
+                                                            <div class="flex justify-end gap-2 pt-2">
+                                                                <DefaultButton @click="
+                                                                    (
+                                                                        e,
+                                                                    ) =>
+                                                                        opGradeToggle(
+                                                                            e,
+                                                                            index,
+                                                                        )
+                                                                " label="Cancel" rounded outlined size="small"
+                                                                    class-name="!px-4" />
+
+                                                                <DefaultButton label="Reject Request" :icon="TablerIcons.IconX
+                                                                    " :loading="loading.validateGrade
+                                                                        " :disabled="loading.validateGrade
+                                                                            " @click="
+                                                                                validateGradeRequest(
+                                                                                    {
+                                                                                        id: termRecord
+                                                                                            .id,
+                                                                                        type: 'reject',
+                                                                                    },
+                                                                                )
+                                                                                " severity="danger" rounded
+                                                                    size="small" class-name="!px-5" />
+                                                            </div>
+                                                        </div>
+                                                    </Popover>
+                                                </div>
+
+                                                <DefaultButton @click="
+                                                    validateGradeRequest(
+                                                        {
+                                                            id: termRecord
+                                                                .id,
+                                                            type: 'accept',
+                                                        },
+                                                    )
+                                                    " label="Approve All" :icon="TablerIcons.IconCheck
+                                                        " :loading="loading.validateGrade
+                                                            " :disabled="loading.validateGrade
+                                                                " severity="success" :icon-size="15
+                                                                    " rounded size="small" class-name="!px-5" />
+                                            </div>
                                         </div>
                                     </template>
                                     <!-- <template #footer>
@@ -1051,6 +1019,7 @@ const torInfo = useForm({
 });
 
 const personalInfo = useForm({
+    schoolId: null,
     last_name: null,
     first_name: null,
     middle_name: null,
@@ -1064,6 +1033,8 @@ const personalInfo = useForm({
     civil_status: null,
     address: null,
     fulladdress: null,
+    school: null,
+    course: null,
     program: null,
     sub_program: null,
     award_year: null,
@@ -1184,56 +1155,62 @@ const validateRequest = (data) => {
 const validateGradeRequest = (data) => {
     loading.value.validateGrade = true;
 
-
-    validateGradeForm.post(
-        route("scholars.gradeValidate", {
-            id: data.id,
-            type: data.type
-        }),
-        {
-            onSuccess: () => {
-                toast.add({
-                    severity: page.props.flash?.status,
-                    summary: page.props.flash?.title,
-                    detail: page.props.flash?.message,
-                    life: 3000,
-                });
-            },
-            onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to save grade record.",
-                    life: 3000,
-                });
-            },
-            onFinish: () => (loading.value.validateGrade = false),
-        })
-    // validateRequestForm.post(
-    //     route("scholars.validate", {
-    //         id: data.id,
-    //         type: data.type,
-    //     }),
-    //     {
-    //         onSuccess: () => {
-    //             toast.add({
-    //                 severity: page.props.flash?.status,
-    //                 summary: page.props.flash?.title,
-    //                 detail: page.props.flash?.message,
-    //                 life: 3000,
-    //             });
-    //         },
-    //         onError: (errors) => {
-    //             toast.add({
-    //                 severity: "error",
-    //                 summary: "Error",
-    //                 detail: "Failed to save grade record.",
-    //                 life: 3000,
-    //             });
-    //         },
-    //         onFinish: () => (loading.value.validateReject = false),
-    //     },
-    // );
+    if (data.type === 'accept') {
+        // For approval, send direct request without form validation
+        router.post(
+            route("scholars.gradeValidate", {
+                id: data.id,
+                type: data.type
+            }),
+            {},
+            {
+                onSuccess: () => {
+                    toast.add({
+                        severity: page.props.flash?.status,
+                        summary: page.props.flash?.title,
+                        detail: page.props.flash?.message,
+                        life: 3000,
+                    });
+                },
+                onError: (errors) => {
+                    toast.add({
+                        severity: "error",
+                        summary: "Error",
+                        detail: errors.message || "Failed to approve grades.",
+                        life: 3000,
+                    });
+                },
+                onFinish: () => (loading.value.validateGrade = false),
+            }
+        );
+    } else {
+        // For rejection, use form with reason validation
+        validateGradeForm.post(
+            route("scholars.gradeValidate", {
+                id: data.id,
+                type: data.type
+            }),
+            {
+                onSuccess: () => {
+                    toast.add({
+                        severity: page.props.flash?.status,
+                        summary: page.props.flash?.title,
+                        detail: page.props.flash?.message,
+                        life: 3000,
+                    });
+                },
+                onError: (errors) => {
+                    toast.add({
+                        severity: "error",
+                        summary: "Error",
+                        detail: "Failed to reject grades. Please ensure you've provided remarks.",
+                        life: 3000,
+                    });
+                },
+                onFinish: () => (loading.value.validateGrade = false),
+            }
+        );
+    }
 };
 
 const storeTor = () => {
@@ -1316,8 +1293,6 @@ const checkChangesYearAndTerm = () => {
 watch(
     () => page.props?.details,
     (newVal) => {
-
-        console.log(newVal.birthdate)
         if (!newVal) return;
         personalInfo.last_name = newVal.lname ?? null;
         personalInfo.first_name = newVal.fname ?? null;
@@ -1339,7 +1314,10 @@ watch(
             ? new Date(parseInt(newVal.awardYear), 0, 1)
             : null;
         personalInfo.status = newVal.status ?? null;
-        personalInfo.guardian_name = newVal.guardian?.name ?? null;
+        personalInfo.school = newVal.schoolInput ?? null;
+        personalInfo.course = newVal.courseInput ?? null;
+        personalInfo.schoolId = newVal.schoolInfoId ?? null,
+            personalInfo.guardian_name = newVal.guardian?.name ?? null;
         personalInfo.guardian_id_no = newVal.guardian?.id_no ?? null;
         personalInfo.guardian_place_issue =
             newVal.guardian?.place_issue ?? null;

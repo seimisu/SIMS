@@ -10,7 +10,7 @@ class StudentSubjectRequest extends Model
     protected $table = 'student_subject_requests';
     public $timestamps = false;
     protected $fillable = [
-        'term_record_id',
+        'student_subject_id',
         'subject_id',
         'reviewed_at',
         'reviewed_by',
@@ -18,9 +18,9 @@ class StudentSubjectRequest extends Model
         'remarks',
     ];
 
-    public function termRecord()
+    public function studentSubject()
     {
-        return $this->belongsTo(ScholarTerm::class, 'term_record_id');
+        return $this->belongsTo(StudentSubject::class, 'student_subject_id', 'id');
     }
 
     public function subject()

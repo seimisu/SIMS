@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ActivationRequest;
+use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\References\ListClass;
@@ -37,7 +38,16 @@ class ActivationController extends Controller
             return Inertia::render('Auth/activationPage', [
                 'token' => $token,
                 'user' => $user,
-                'agencyOption' => $this->agencyOption
+                'agencyOption' => $this->agencyOption,
+                'schoolOption' => SchoolCampuses::where([
+                    'is_delete' => false,
+                    'is_active' => true,
+                ])->get()->map(function ($campus) {
+                    return [
+                        'id' => $campus->id,
+                        'name' => $campus->generated_name,
+                    ];
+                })
             ]);
         } catch (ModelNotFoundException $e) {
             return redirect()->route('login');
@@ -51,18 +61,18 @@ class ActivationController extends Controller
 
 
         $user = User::findOrFail($id);
-        $profile = UserProfile::where('user_id', $id)->firstOrFail();
 
         $user->update([
             'password'          => bcrypt($data['password']),
             'activation_token'  => null,
             'is_verified'        => true,
+            'school_id'   => $data['school'] ? $data['school']['id'] : null,
+            'email'       => $data['email'],
         ]);
 
-        $profile->update([
+        $user->profile()->update([
             'fname'       => Str::upper($data['fname']),
             'lname'       => Str::upper($data['lname']),
-            'email'       => $data['email'],
             'designation' => Str::lower($data['designation']),
             'agency_id'   => $data['agency']['id'],
             'contact_no'  => $data['contact'],
@@ -86,8 +96,9 @@ class ActivationController extends Controller
             $filename = 'profile_' . time() . '.' . $imageType;
             Storage::disk('public')->put("avatars/{$user->id}/{$filename}", $imageData);
 
-            $profile->avatar = $filename;
-            $profile->save();
+            $user->profile()->update([
+                'avatar' => $filename
+            ]);
         }
 
         return redirect()->back()->with('flash', [
