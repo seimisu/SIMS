@@ -474,6 +474,20 @@
                                         <span class="ml-2 text-xs">{{
                                             item.label
                                         }}</span>
+                                        <Badge
+                                            v-if="
+                                                selectedRow.personalRequest
+                                                    .hasRequest &&
+                                                item.label == 'Details Request'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            severity="danger"
+                                            :value="
+                                                selectedRow.personalRequest
+                                                    .count
+                                            "
+                                        />
                                     </a>
                                 </template>
                             </Menu>
@@ -536,7 +550,7 @@ const toggleOption = (event, rowData) => {
     menu.value.toggle(event);
 };
 
-const menuItems = computed(() => {
+const menuItems = computed((item) => {
     if (!selectedRow.value) return [];
 
     return [
@@ -776,4 +790,7 @@ watch(
         }, 300);
     },
 );
+onMounted(() => {
+    console.log("mounted");
+});
 </script>

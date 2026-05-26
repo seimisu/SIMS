@@ -33,7 +33,7 @@
                             </div>
                         </div>
                         <template
-                            v-for="(item, index) in page.props?.personalRequest"
+                            v-for="(item, index) in personalRequest"
                             :key="index"
                             class="overflow-x-auto"
                         >
@@ -49,6 +49,18 @@
                                     <div
                                         v-if="item.status == 'pending'"
                                         class="text-xs bg-amber-100 text-amber-500 border capitalize rounded-xl px-3 py-1"
+                                    >
+                                        {{ item.status }}
+                                    </div>
+                                    <div
+                                        v-else-if="item.status == 'approved'"
+                                        class="text-xs bg-green-100 text-green-500 border capitalize rounded-xl px-3 py-1"
+                                    >
+                                        {{ item.status }}
+                                    </div>
+                                    <div
+                                        v-else
+                                        class="text-xs bg-red-100 text-red-500 border capitalize rounded-xl px-3 py-1"
                                     >
                                         {{ item.status }}
                                     </div>
@@ -113,10 +125,13 @@
                                             <IconUser :size="18" />
                                         </Avatar>
                                         <div class="flex flex-col text-xs">
-                                            <div>Verified by:</div>
-                                            <div class="font-medium">
-                                                {{ item.reviewed_by }} •
-                                                {{ item.verified_at }}
+                                            <div class="leading-none">
+                                                <div class="font-medium">
+                                                    {{ item.reviewed_at }}
+                                                </div>
+                                                <div>
+                                                    {{ item.reviewed_by }}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -341,12 +356,19 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="flex flex-col gap-4" v-if="selectedRow">
                             <div class="leading-none">
                                 <label for="remarks" class="text-sm"
                                     >Remarks</label
                                 >
-                                <Textarea id="remarks" fluid rows="5" />
+                                <Textarea
+                                    id="remarks"
+                                    fluid
+                                    rows="5"
+                                    v-model="selectedRow.remarks"
+                                    :disabled="selectedRow.reviewed_at"
+                                />
                             </div>
 
                             <div class="flex justify-end">
@@ -354,17 +376,20 @@
                                     <Button
                                         label="Reject Request"
                                         size="small"
+                                        :disabled="!!selectedRow.reviewed_at"
                                         class="!text-xs !rounded-lg"
                                         severity="danger"
                                         outlined
-                                        iconPos="right"
+                                        :loading="loading.reject"
+                                        @click="approveRequest('reject', index)"
                                     />
                                     <Button
                                         label="Approve Request"
+                                        :disabled="!!selectedRow.reviewed_at"
                                         size="small"
                                         class="!text-xs !rounded-lg"
                                         :loading="loading.approve"
-                                        @click="approveRequest('accept')"
+                                        @click="approveRequest('accept', index)"
                                         raised
                                     />
                                 </div>
@@ -392,7 +417,7 @@ import {
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
@@ -403,9 +428,11 @@ const toast = useToast();
 const selectedRow = ref(null);
 const loading = ref({
     approve: false,
+    reject: false,
 });
+const personalRequest = ref(null);
 
-const approveRequest = (decision) => {
+const approveRequest = (decision, index) => {
     router.post(
         route("profile.request", { type: decision }),
         {
@@ -413,13 +440,37 @@ const approveRequest = (decision) => {
         },
         {
             onBefore: () => {
-                loading.value.approve = true;
+                if (decision === "reject") {
+                    loading.value.reject = true;
+                } else {
+                    loading.value.approve = true;
+                }
             },
-            onSuccess: () => {},
+            onSuccess: () => {
+                toast.add({
+                    severity: page.props.flash?.status || "success",
+                    summary: page.props.flash?.title || "Success",
+                    detail:
+                        page.props.flash?.message ||
+                        "Request has been processed successfully.",
+                    life: 3000,
+                });
+                personalRequest.value[index].status =
+                    decision === "accept" ? "approved" : "rejected";
+            },
+
             onFinish: () => {
-                loading.value.approve = false;
+                if (decision === "reject") {
+                    loading.value.reject = false;
+                } else {
+                    loading.value.approve = false;
+                }
             },
         },
     );
 };
+
+onMounted(() => {
+    personalRequest.value = page.props?.personalRequest;
+});
 </script>

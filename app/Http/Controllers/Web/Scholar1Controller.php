@@ -8,6 +8,9 @@ use App\Models\ListPrograms;
 use App\Models\ListReferences;
 use App\Models\ListStatuses;
 use App\Models\LocationBarangays;
+use App\Models\LocationCity;
+use App\Models\LocationProvinces;
+use App\Models\LocationRegions;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
@@ -24,6 +27,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Vinkla\Hashids\Facades\Hashids;
@@ -359,6 +363,10 @@ class Scholar1Controller extends Controller
                             ->pluck('gradeRequests')
                             ->flatten()
                             ->isNotEmpty(),
+                        'personalRequest' => [
+                            'count' => $q->profileRequest->where('status', 'pending')->count(),
+                            'hasRequest' => $q->profileRequest->where('status', 'pending')->isNotEmpty(),
+                        ],
 
                     ]),
                 'personalRequest' => Inertia::optional(
@@ -872,7 +880,7 @@ class Scholar1Controller extends Controller
                 'status' => 'error',
                 'title' => 'Save Failed',
                 'message' => 'Missing or invalid required fields. Please check your input and try again.',
-            ]);
+            ])->with('');
         }
     }
 
@@ -971,30 +979,48 @@ class Scholar1Controller extends Controller
     public function profileRequest(string $type, Request $request)
     {
         $data = $request->input('data');
+        $scholar = Scholars::where('spas_no', $data['spas_no'])->firstOrFail();
 
         if ($type == 'accept') {
-            $scholar = Scholars::where('spas_no', $data['spas_no']);
 
-            if (! $scholar) {
-                return redirect()->back()->with('flash', [
-                    'status' => 'error',
-                    'title' => 'Not Found',
-                    'message' => 'Scholar record not found.',
-                ]);
-            }
-            $scholar->profile()->create([
+            $scholar->profile()->update([
                 'email' => $data['email'],
                 'contact_no' => $data['contact_no'],
                 'civil_status' => $data['civil_status'],
             ]);
 
-            $scholar->address()->create([
+            $scholar->address()->update([
                 'address' => $data['address'],
-                'barangay' => LocationBarangays::where('name'),
+                'barangay_code' => LocationBarangays::firstWhere('name', $data['barangay'])?->code,
+                'municipality_code' => LocationCity::firstWhere('name', $data['municipality'])?->code,
+                'province_code' => LocationProvinces::firstWhere('name', $data['province'])?->code,
+                'region_code' => LocationRegions::firstWhere('name', $data['region'])?->code,
+            ]);
+
+            $scholar->profileRequest()->update([
+                'status' => 'approved',
+                'reviewed_at' => Carbon::now(),
+                'reviewed_by' => Auth::user()->profile->fullname,
             ]);
 
         } else {
-            dd('accept');
+
+            $validation = Validator::make($data, [
+                'remarks' => 'required|string|max:255',
+            ]);
+            if ($validation->fails()) {
+                return redirect()->back()->with('flash', [
+                    'status' => 'error',
+                    'title' => 'Validation Failed',
+                    'message' => 'Please fill in the remarks field.',
+                ]);
+            }
+            $scholar->profileRequest()->update([
+                'status' => 'rejected',
+                'reviewed_at' => Carbon::now(),
+                'reviewed_by' => Auth::user()->profile->fullname,
+                'remarks' => $data['remarks'],
+            ]);
         }
 
         return redirect()->back()->with('flash', [
