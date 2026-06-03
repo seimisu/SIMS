@@ -44,6 +44,7 @@
                                 label="Email"
                                 type="email"
                             ></TextInput>
+
                             <SelectInput
                                 label="Role"
                                 v-model="userForm.role"
@@ -367,6 +368,7 @@ const userForm = useForm({
     lname: null,
     email: null,
     role: null,
+    school: null,
     canCreate: true,
     canEdit: true,
     canDelete: true,
@@ -431,6 +433,7 @@ const toggleModal = (res) => {
         userForm.canCreate = res.data.can_create;
         userForm.canEdit = res.data.can_edit;
         userForm.canDelete = res.data.can_delete;
+        userForm.school = res.data.school_array;
     }
 
     if (res.type == "resend") {

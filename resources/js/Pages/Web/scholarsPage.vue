@@ -323,8 +323,19 @@
                                 >
                                     <div># {{ props.data.spas_no }}</div>
                                 </div>
-                                <div class="font-medium">
-                                    {{ props.data.fullname }}
+                                <div class="flex gap-1 items-center">
+                                    <div class="font-medium">
+                                        {{ props.data.fullname }}
+                                    </div>
+                                    <div
+                                        v-tooltip.top="'Account activated'"
+                                        v-if="props.data?.activated_at"
+                                    >
+                                        <IconRosetteDiscountCheckFilled
+                                            :size="20"
+                                            class="text-green-600"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -349,16 +360,27 @@
                         </div>
                     </template>
                 </Column>
-                <Column header="Programs">
+                <Column>
+                    <template #header>
+                        <div class="flex justify-center w-full font-semibold">
+                            <div class="font-semibold">Types</div>
+                        </div>
+                    </template>
                     <template #body="props">
-                        <div
-                            class="flex items-center gap-1 text-xs font-medium"
-                        >
-                            <div class="flex items-center">
-                                <p>
-                                    {{ props.data.mainProgram }}
-                                </p>
-                            </div>
+                        <div class="text-center text-xs font-medium">
+                            {{ props.data.type }}
+                        </div>
+                    </template>
+                </Column>
+                <Column>
+                    <template #header>
+                        <div class="flex justify-center w-full font-semibold">
+                            <div class="font-semibold">Programs</div>
+                        </div>
+                    </template>
+                    <template #body="props">
+                        <div class="text-center text-xs font-medium">
+                            {{ props.data.subProgram }}
                         </div>
                     </template>
                 </Column>
@@ -374,27 +396,7 @@
                         </div>
                     </template>
                 </Column>
-                <Column>
-                    <template #header>
-                        <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Types</div>
-                        </div>
-                    </template>
-                    <template #body="props">
-                        <div class="flex justify-center items-center gap-1">
-                            <p
-                                :class="[
-                                    props.data.type == 'Undergraduate'
-                                        ? 'bg-sky-50 !text-sky-500  '
-                                        : 'bg-teal-50 !text-teal-500',
-                                    'text-xs px-3 py-1 rounded-2xl border',
-                                ]"
-                            >
-                                ● {{ props.data.type }}
-                            </p>
-                        </div>
-                    </template>
-                </Column>
+
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
@@ -488,6 +490,16 @@
                                                     .count
                                             "
                                         />
+
+                                        <Badge
+                                            v-if="
+                                                selectedRow.activationRequested &&
+                                                item.label == 'Activation Link'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            :value="'Sent'"
+                                        />
                                     </a>
                                 </template>
                             </Menu>
@@ -500,27 +512,36 @@
             v-if="drawerDetailsRequest"
             v-model="drawerDetailsRequest"
         />
+        <DialogScholarGradeRequest
+            v-if="drawerGradeRequest"
+            v-model="drawerGradeRequest"
+        />
         <DrawerScholar1Module v-if="drawerScholar" v-model="drawerScholar" />
     </AuthLayout>
 </template>
 <script setup>
+import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
+import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
+import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Module.vue";
+import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
+import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
+import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+import IconTextInput from "../../Components/inputs/IconTextInput.vue";
+import HeaderModule from "../../Modules/Others/HeaderModule.vue";
+import TextInput from "../../Components/inputs/TextInput.vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import * as TablerIcons from "@tabler/icons-vue";
-import HeaderModule from "../../Modules/Others/HeaderModule.vue";
-import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
-import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
-import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Module.vue";
 
-import TextInput from "../../Components/inputs/TextInput.vue";
-import IconTextInput from "../../Components/inputs/IconTextInput.vue";
-import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import { computed, onMounted, onUpdated, reactive, ref, watch } from "vue";
-import { route } from "ziggy-js";
+import {
+    IconLineDashed,
+    IconSettings,
+    IconRosetteDiscountCheckFilled,
+} from "@tabler/icons-vue";
 import { Head, usePage, router } from "@inertiajs/vue3";
-import { IconLineDashed, IconSettings } from "@tabler/icons-vue";
-import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
 import { useToast } from "primevue";
-import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
+import { route } from "ziggy-js";
 
 const toast = useToast();
 const page = usePage();
@@ -528,7 +549,7 @@ const loading = reactive({
     table: false,
     request: false,
 });
-const drawerDetailsRequest = ref(false);
+
 const menu = ref(null);
 const opSchool = ref(null);
 const opProgram = ref(null);
@@ -540,7 +561,8 @@ const filterSub = ref(null);
 const filterStatus = ref(null);
 const filterSubjectRequest = ref(false);
 const filterGradeRequest = ref(false);
-
+const drawerDetailsRequest = ref(false);
+const drawerGradeRequest = ref(false);
 const drawerScholar = ref(false);
 const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
@@ -603,13 +625,20 @@ const menuItems = computed((item) => {
             },
         },
         {
-            label: "Subjects & Grades Request",
+            label: "Subjects & Grades- Request",
             icon: TablerIcons.IconId,
             class: "text-cyan-500",
             command: () => {
-                toggleModal({
-                    type: "resend",
-                    data: selectedRow.value,
+                router.reload({
+                    only: ["gradeRequest"],
+                    data: { id: selectedRow.value.id },
+
+                    preserveState: false,
+                    showProgress: true,
+                    replace: true,
+                    onFinish: () => {
+                        drawerGradeRequest.value = true;
+                    },
                 });
             },
         },
@@ -790,7 +819,4 @@ watch(
         }, 300);
     },
 );
-onMounted(() => {
-    console.log("mounted");
-});
 </script>

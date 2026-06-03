@@ -22,11 +22,10 @@ class SchoolCampuses extends Model
         'is_delete',
     ];
 
-
     protected $hidden = [
         'agency',
         'grading',
-        'term'
+        'term',
     ];
 
     protected $appends = ['term_array', 'grading_array', 'agency_array'];
@@ -76,6 +75,10 @@ class SchoolCampuses extends Model
         return $this->hasMany(SchoolCampusSemesters::class, 'campus_id', 'id');
     }
 
+    public function coordinators()
+    {
+        return $this->hasMany(User::class, 'school_id', 'id');
+    }
 
     // public function getFullnameCampusAttribute()
     // {
@@ -89,6 +92,7 @@ class SchoolCampuses extends Model
             'name' => $this->term->name,
         ] : null;
     }
+
     public function getGradingArrayAttribute()
     {
         return $this->grading ? [
@@ -96,6 +100,7 @@ class SchoolCampuses extends Model
             'name' => $this->grading->name,
         ] : null;
     }
+
     public function getAgencyArrayAttribute()
     {
         return $this->agency ? [

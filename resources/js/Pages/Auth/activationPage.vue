@@ -41,12 +41,14 @@
                                 <TextInput label="Last Name" uppercase v-model="registrationForm.lname"></TextInput>
                             </div>
                             <SelectInput label="Agency" v-model="registrationForm.agency"
-                                :options="page.props.agencyOption" :clearable="true" capitalize></SelectInput>
+                                :options="page.props.agencyOption" :clearable="true" capitalize @update:model-value="onSchoolChange">
+                            </SelectInput>
                             <TextInput label="Designation" capitalize v-model="registrationForm.designation">
                             </TextInput>
                             <SelectInput label="School Assigned" v-model="registrationForm.school"
-                                v-if="page.props?.user?.role_array?.name == 'School Coordinator'" filter
-                                :options="page.props.schoolOption" :clearable="true" capitalize></SelectInput>
+                                v-if="page.props?.user?.role_array?.name == 'School Coordinator'" :disable="registrationForm.agency != null ? false : true" filter
+                                :options="page.props.schoolOption" :clearable="true" capitalize >
+                            </SelectInput>
                             <MaskInput label="Contact No." :placeholder="'(09__) ___-____'"
                                 v-model="registrationForm.contact" :mask="'(9999) 999-9999'">
                             </MaskInput>
@@ -85,7 +87,7 @@
 </template>
 <script setup>
 import { IconAlertCircle, IconPhoto, IconPlus } from "@tabler/icons-vue";
-import { Head, useForm, usePage } from "@inertiajs/vue3";
+import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import PasswordInput from "../../Components/inputs/PasswordInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
@@ -170,10 +172,26 @@ function applyTheme() {
     document.documentElement.classList.toggle("dark", isDark.value);
 }
 
+function onSchoolChange(e) {
+    router.reload({ only: ["schoolOption"], data: {agency: e.id} });
+}
+
+
+
+
+
 onMounted(() => {
     isDark.value = localStorage.getItem("theme") === "dark";
     applyTheme();
 });
+
+
+
+
+
+
+
+
 </script>
 <style>
 /* .cropper {

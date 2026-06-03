@@ -380,6 +380,22 @@
                             <div
                                 class="flex justify-center font-semibold w-full"
                             >
+                                <div>Coordinators</div>
+                            </div>
+                        </template>
+                        <template #body="prop">
+                            {{
+                                prop.data.coordinators
+                                    .map((item) => item.name)
+                                    .join(", ")
+                            }}
+                        </template>
+                    </Column>
+                    <Column>
+                        <template #header>
+                            <div
+                                class="flex justify-center font-semibold w-full"
+                            >
                                 <div>Active Semester</div>
                             </div>
                         </template>

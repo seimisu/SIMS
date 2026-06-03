@@ -5,16 +5,17 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\UserRequest;
 use App\Mail\UserCreatedMail;
+use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\References\ListClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    function index(Request $request, ListClass $reference)
+    public function index(Request $request, ListClass $reference)
     {
         $user = User::where('is_delete', false)
             ->when($request->input('search'), function ($query) {
@@ -28,7 +29,7 @@ class UserController extends Controller
                         });
                 });
             })
-            ->with(['role', 'profile'])
+            ->with(['role', 'profile', 'school'])
             ->orderBy('id')
             ->paginate(10);
 
@@ -41,48 +42,53 @@ class UserController extends Controller
             return $u;
         });
 
-
-
         return Inertia::render('Web/userPage', [
             'users' => $user,
-            'roleOption' => $reference->getRoles(false)
+            'roleOption' => $reference->getRoles(false),
+            'schoolOption' => SchoolCampuses::where([
+                'is_delete' => false,
+                'is_active' => true,
+                'agency_id' => request()->input('agency'),
+            ])->get()->map(function ($campus) {
+                return [
+                    'id' => $campus->id,
+                    'name' => $campus->generated_name,
+                ];
+            }),
         ]);
     }
 
-
-    function store(UserRequest $request)
+    public function store(UserRequest $request)
     {
 
         $data = $request->validated();
         $activation = Str::random(64);
 
-
         $user = User::create([
-            'email'             => $data['email'],
-            'role_id'           => $data['role']['id'],
-            'can_create'        => $data['canCreate'],
-            'can_edit'          => $data['canEdit'],
-            'activation_token'  => $activation,
-            'can_delete'        => $data['canDelete'],
+            'email' => $data['email'],
+            'role_id' => $data['role']['id'],
+            'can_create' => $data['canCreate'],
+            'can_edit' => $data['canEdit'],
+            'activation_token' => $activation,
+            'can_delete' => $data['canDelete'],
 
         ]);
 
         $user->profile()->create([
-            'fname' =>  Str::lower($data['fname']),
-            'lname' => Str::lower($data['lname'])
+            'fname' => Str::lower($data['fname']),
+            'lname' => Str::lower($data['lname']),
         ]);
 
         Mail::to($data['email'])->send(new UserCreatedMail($user, $activation));
 
-
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'User Created',
+            'title' => 'User Created',
             'message' => 'User successfully created.',
         ]);
     }
 
-    function resend(string $id)
+    public function resend(string $id)
     {
         $user = User::findOrFail($id);
         $activation = Str::random(64);
@@ -90,30 +96,28 @@ class UserController extends Controller
         if ($user->is_verified) {
             return redirect()->back()->with('flash', [
                 'status' => 'error',
-                'title'  => 'Cannot Resend Email',
+                'title' => 'Cannot Resend Email',
                 'message' => 'User is already verified.',
             ]);
         }
 
         $user->update([
-            'activation_token'  => $activation,
+            'activation_token' => $activation,
         ]);
         Mail::to($user->email)->send(new UserCreatedMail($user, $activation));
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Email Resent',
+            'title' => 'Email Resent',
             'message' => 'User activation email successfully resent.',
         ]);
     }
 
-    function update(UserRequest $request, string $id, string $type)
+    public function update(UserRequest $request, string $id, string $type)
     {
 
         $data = $request->validated();
         $find = User::findOrFail($id);
-
-
 
         switch ($type) {
             case 'create':
@@ -139,42 +143,37 @@ class UserController extends Controller
 
             default:
                 $find->update([
-                    'email'         => $data['email'],
-                    'role_id'       => $data['role']['id'],
-                    'can_create'    => $data['canCreate'],
-                    'can_edit'      => $data['canEdit'],
-                    'can_delete'    => $data['canDelete'],
+                    'email' => $data['email'],
+                    'role_id' => $data['role']['id'],
+                    'can_create' => $data['canCreate'],
+                    'can_edit' => $data['canEdit'],
+                    'can_delete' => $data['canDelete'],
                 ]);
                 $find->profile()->update([
                     'fname' => $data['fname'],
-                    'lname' => $data['lname']
+                    'lname' => $data['lname'],
                 ]);
                 break;
         }
 
-
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'User Updated',
+            'title' => 'User Updated',
             'message' => 'User successfully updated.',
         ]);
     }
 
-
-
-    function destroy(UserRequest $request, int $id)
+    public function destroy(UserRequest $request, int $id)
     {
-
 
         $find = User::findOrFail($id);
 
         $find->profile()->delete();
         $find->delete();
 
-
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'User Deleted',
+            'title' => 'User Deleted',
             'message' => 'User successfully deleted.',
         ]);
     }

@@ -151,7 +151,9 @@
                                             class="!text-xs !rounded-lg"
                                             severity="secondary"
                                             iconPos="right"
-                                            @click="selectedRow = item"
+                                            @click="
+                                                selectedRequest(item, index)
+                                            "
                                             icon="pi pi-arrow-right"
                                         />
                                     </div>
@@ -376,20 +378,28 @@
                                     <Button
                                         label="Reject Request"
                                         size="small"
-                                        :disabled="!!selectedRow.reviewed_at"
+                                        :disabled="
+                                            selectedRow.reviewed_at
+                                                ? true
+                                                : false
+                                        "
                                         class="!text-xs !rounded-lg"
                                         severity="danger"
                                         outlined
                                         :loading="loading.reject"
-                                        @click="approveRequest('reject', index)"
+                                        @click="approveRequest('reject')"
                                     />
                                     <Button
                                         label="Approve Request"
-                                        :disabled="!!selectedRow.reviewed_at"
+                                        :disabled="
+                                            selectedRow.reviewed_at
+                                                ? true
+                                                : false
+                                        "
                                         size="small"
                                         class="!text-xs !rounded-lg"
                                         :loading="loading.approve"
-                                        @click="approveRequest('accept', index)"
+                                        @click="approveRequest('accept')"
                                         raised
                                     />
                                 </div>
@@ -432,7 +442,12 @@ const loading = ref({
 });
 const personalRequest = ref(null);
 
-const approveRequest = (decision, index) => {
+const selectedRequest = (item, index) => {
+    selectedRow.value = item;
+    selectedRow.value.index = index;
+};
+
+const approveRequest = (decision) => {
     router.post(
         route("profile.request", { type: decision }),
         {
@@ -455,8 +470,14 @@ const approveRequest = (decision, index) => {
                         "Request has been processed successfully.",
                     life: 3000,
                 });
-                personalRequest.value[index].status =
-                    decision === "accept" ? "approved" : "rejected";
+
+                if (page.props.flash?.status === "success") {
+                    personalRequest.value[selectedRow.value.index].status =
+                        decision === "accept" ? "approved" : "rejected";
+                    selectedRow.value.reviewed_at = "Just now";
+                    selectedRow.value.reviewed_by =
+                        page.props.user.profile.fullname;
+                }
             },
 
             onFinish: () => {

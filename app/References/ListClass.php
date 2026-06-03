@@ -13,11 +13,10 @@ use App\Models\SchoolCampuses;
 use App\Models\Schools;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Vinkla\Hashids\Facades\Hashids;
 
 class ListClass
 {
-    public function getStatuses(Bool $main, $search = null)
+    public function getStatuses(bool $main, $search = null)
     {
         if ($main) {
             return ListStatuses::where('is_delete', false)->when($search, function ($query) {
@@ -38,7 +37,7 @@ class ListClass
         }
     }
 
-    public function getColors(Bool $main, $search = null)
+    public function getColors(bool $main, $search = null)
     {
         if ($main) {
             return ListColors::where('is_delete', false)->when($search, function ($query) {
@@ -54,16 +53,15 @@ class ListClass
                 ListColors::where('is_active', true)->where('is_delete', false)->get()->map(function ($q) {
                     return [
                         'id' => $q->id,
-                        'name' => $q->background_color . ' ' . $q->text_color,
+                        'name' => $q->background_color.' '.$q->text_color,
                         'bgColor' => $q->background_color,
-                        'textColor' => $q->text_color
+                        'textColor' => $q->text_color,
                     ];
                 });
         }
     }
 
-
-    public function getRoles(Bool $main, $search = null)
+    public function getRoles(bool $main, $search = null)
     {
         if ($main) {
             return ListRole::where('is_delete', false)->when($search, function ($query) {
@@ -85,7 +83,7 @@ class ListClass
         }
     }
 
-    public function getAgencies(Bool $main, $search = null)
+    public function getAgencies(bool $main, $search = null)
     {
         if ($main) {
             return ListAgencies::where('is_delete', false)->when($search, function ($query) {
@@ -99,7 +97,7 @@ class ListClass
 
             if (Auth::check() && Auth::user()->role_array['name'] == 'regional staff' && Auth::user()->is_verified) {
                 return
-                    ListAgencies::where('is_active', true)->where('is_delete', false,)->where('id', Auth::user()->profile->agency_array['id'])->get()->map(function ($role) {
+                    ListAgencies::where('is_active', true)->where('is_delete', false)->where('id', Auth::user()->profile->agency_array['id'])->get()->map(function ($role) {
                         return [
                             'id' => $role->id,
                             'name' => $role->name,
@@ -117,7 +115,6 @@ class ListClass
         }
     }
 
-
     public function getRefs(string $main, $search = null, $type = null, $classification = null)
     {
         switch ($main) {
@@ -125,34 +122,33 @@ class ListClass
 
                 return
                     ListReferences::where('is_active', true)->where('is_delete', false)
-                    ->when($type, function ($query) use ($type) {
-                        $query->where('type', $type);
-                    })->when($classification, function ($query) use ($classification) {
-                        $query->where('classification', $classification);
-                    })
-                    ->get()
-                    ->map(function ($q) {
-                        return [
-                            'id' => $q->id,
-                            'name' => $q->name,
-                        ];
-                    });
+                        ->when($type, function ($query) use ($type) {
+                            $query->where('type', $type);
+                        })->when($classification, function ($query) use ($classification) {
+                            $query->where('classification', $classification);
+                        })
+                        ->get()
+                        ->map(function ($q) {
+                            return [
+                                'id' => $q->id,
+                                'name' => $q->name,
+                            ];
+                        });
                 break;
             case 'distinct':
 
                 return
                     ListReferences::where('is_active', true)->where('is_delete', false)
-                    ->select($type . ' as name')
-                    ->distinct()
-                    ->get()
-                    ->map(function ($q) {
-                        return [
-                            'id' => $q->name,
-                            'name' => $q->name,
-                        ];
-                    });
+                        ->select($type.' as name')
+                        ->distinct()
+                        ->get()
+                        ->map(function ($q) {
+                            return [
+                                'id' => $q->name,
+                                'name' => $q->name,
+                            ];
+                        });
                 break;
-
 
             default:
                 return ListReferences::where('is_delete', false)->when($search, function ($query) {
@@ -206,7 +202,6 @@ class ListClass
         }
     }
 
-
     public function getSchools(string $typemenu = 'table', $search = null)
     {
         switch ($typemenu) {
@@ -220,7 +215,6 @@ class ListClass
                 break;
             default:
 
-
                 return
                     SchoolCampuses::select('id', 'school_id', 'term_id', 'grading_id', 'agency_id', 'name', 'generated_name', 'is_main')->where([
                         'is_delete' => false,
@@ -232,49 +226,51 @@ class ListClass
                                 ->orWhereRaw('LOWER(shortcut) LIKE ?', ["%{$search}%"]);
                         });
                     })
-                    ->orderBy('id', 'desc')
-                    ->orderBy('school_id', 'asc')
-                    ->orderBy('is_main', 'desc')
-                    ->orderBy('agency_id', 'asc')
-                    ->with([
-                        'school:id,name,reference_id,shortcut,photo',
-                        'address:id,campus_id,municipality_code,barangay_code,region_code',
-                        'term',
-                        'grading',
-                        'agency',
-                        'semesters' => fn($q) => $q
-                            ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
-                            ->whereDate('start_date', '<=', now())
-                            ->whereDate('end_date', '>=', now()),
-                    ])
-                    ->paginate(10)
-                    ->through(fn($q) => [
-                        'id'             => $q->id,
-                        'name'           => $q->name,
-                        'generated_name' => $q->generated_name,
-                        'is_main'        => $q->is_main,
-                        'school'         => [
-                            'id'           => $q->school?->id,
-                            'name'         => $q->school?->name,
-                            'shortcut'     => $q->school?->shortcut,
-                            'photo'        => $q->school?->photo,
-                            'reference'    => $q->school?->reference_array,
-                        ],
-                        'address'        => [
-                            'region'       => $q->address?->region_array,
-                            'municipality' => $q->address?->municipality_array,
-                            'barangay'     => $q->address?->barangay_array,
-                        ],
-                        'term'           => $q->term?->name,
-                        'grading'        => $q->grading?->name,
-                        'agency'         => $q->agency?->name,
-                        'semester'       => $q->semesters->first() ? [
-                            'acad_term'      =>  $q->semesters->first()->semester_array,
-                            'start_date'      =>  Carbon::parse($q->semesters->first()->start_date)->format('M Y'),
-                            'end_date'        => Carbon::parse($q->semesters->first()->end_date)->format('M Y'),
-                            'submission_date' => Carbon::parse($q->semesters->first()->submission_date)->format('M d, Y'),
-                        ] : null,
-                    ]);
+                        ->orderBy('id', 'desc')
+                        ->orderBy('school_id', 'asc')
+                        ->orderBy('is_main', 'desc')
+                        ->orderBy('agency_id', 'asc')
+                        ->with([
+                            'school:id,name,reference_id,shortcut,photo',
+                            'address:id,campus_id,municipality_code,barangay_code,region_code',
+                            'term',
+                            'grading',
+                            'agency',
+                            'semesters' => fn ($q) => $q
+                                ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
+                                ->whereDate('start_date', '<=', now())
+                                ->whereDate('end_date', '>=', now()),
+                            'coordinators' => fn ($q) => $q->select('id')->with('profile'),
+                        ])
+                        ->paginate(10)
+                        ->through(fn ($q) => [
+                            'id' => $q->id,
+                            'name' => $q->name,
+                            'generated_name' => $q->generated_name,
+                            'is_main' => $q->is_main,
+                            'school' => [
+                                'id' => $q->school?->id,
+                                'name' => $q->school?->name,
+                                'shortcut' => $q->school?->shortcut,
+                                'photo' => $q->school?->photo,
+                                'reference' => $q->school?->reference_array,
+                            ],
+                            'address' => [
+                                'region' => $q->address?->region_array,
+                                'municipality' => $q->address?->municipality_array,
+                                'barangay' => $q->address?->barangay_array,
+                            ],
+                            'coordinators' => $q->coordinators,
+                            'term' => $q->term?->name,
+                            'grading' => $q->grading?->name,
+                            'agency' => $q->agency?->name,
+                            'semester' => $q->semesters->first() ? [
+                                'acad_term' => $q->semesters->first()->semester_array,
+                                'start_date' => Carbon::parse($q->semesters->first()->start_date)->format('M Y'),
+                                'end_date' => Carbon::parse($q->semesters->first()->end_date)->format('M Y'),
+                                'submission_date' => Carbon::parse($q->semesters->first()->submission_date)->format('M d, Y'),
+                            ] : null,
+                        ]);
                 break;
                 // if (Auth::user()->role_array['name'] == 'regional staff') {
                 //     return
@@ -317,7 +313,6 @@ class ListClass
         }
     }
 
-
     public function getMenu(string $typemenu = 'table', $search = null)
     {
         switch ($typemenu) {
@@ -347,38 +342,38 @@ class ListClass
                     ->get()
                     ->map(function ($route) {
                         return [
-                            'key'   => (string) $route->id,
-                            'icon'  => $route->icon,
+                            'key' => (string) $route->id,
+                            'icon' => $route->icon,
                             'label' => $route->label,
-                            'slug'  => $route->slug,
+                            'slug' => $route->slug,
                             'route' => $route->route,
                             'component' => $route->component,
                             'is_active' => $route->is_active,
                             'items' => $route->children
                                 ->filter(function ($child) {
-                                    if (empty($child->roles)) return false;
+                                    if (empty($child->roles)) {
+                                        return false;
+                                    }
 
                                     // Decode roles if stored as JSON
                                     $roles = is_string($child->roles) ? json_decode($child->roles, true) : $child->roles;
 
                                     // Check if current user's role exists in roles
-                                    $hasAccess = !empty($roles) && collect($roles)->pluck('id')->contains(Auth::user()->role_id);
+                                    $hasAccess = ! empty($roles) && collect($roles)->pluck('id')->contains(Auth::user()->role_id);
 
                                     return $child->is_active && $hasAccess;
                                 })
 
                                 ->map(function ($child, $index) use ($route) {
 
-
-
                                     return [
-                                        'key'     => "{$route->id}-{$index}",
-                                        'icon'    => $child->icon,
-                                        'label'   => $child->label,
-                                        'roleId'  => $roles ?? [],
+                                        'key' => "{$route->id}-{$index}",
+                                        'icon' => $child->icon,
+                                        'label' => $child->label,
+                                        'roleId' => $roles ?? [],
                                         'parent_id' => $child->main_id,
-                                        'slug'    => $child->slug,
-                                        'route'   => $child->route,
+                                        'slug' => $child->slug,
+                                        'route' => $child->route,
                                         'subItem' => $child->is_submenu,
                                         'component' => $child->component,
                                         'is_active' => $child->is_active,
@@ -408,11 +403,11 @@ class ListClass
                             'key' => (string) $route->id,
                             'icon' => $route->icon,
                             'name' => $route->label,
-                            'slug'  => $route->slug,
+                            'slug' => $route->slug,
                             'created_by' => $route->created_by,
                             'roles' => $route->roles,
                             'is_active' => $route->is_active,
-                            'is_submenu' =>  $route->is_submenu,
+                            'is_submenu' => $route->is_submenu,
                             'component' => $route->component,
                             'data' => [
                                 'name' => $route->label,
@@ -422,20 +417,21 @@ class ListClass
                             ],
                             'children' => $route->children->map(function ($child, $index) use ($route) {
                                 $child->orderBy('order_no');
+
                                 return [
                                     'id' => $child->id,
                                     'key' => "{$route->id}-{$index}",
                                     'icon' => $child->icon,
                                     'name' => $child->label,
                                     'created_by' => $child->created_by,
-                                    'slug'  => $child->slug,
+                                    'slug' => $child->slug,
                                     'roles' => $child->roles,
                                     'is_active' => $child->is_active,
-                                    'is_submenu' =>  $child->is_submenu,
+                                    'is_submenu' => $child->is_submenu,
                                     'component' => $child->component,
                                     'main_id' => [
-                                        'id'    => $child->main_id,
-                                        'name' => $route->label
+                                        'id' => $child->main_id,
+                                        'name' => $route->label,
                                     ],
                                     'data' => [
                                         'name' => $child->label,

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,7 +11,7 @@ use Illuminate\Support\Carbon;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -30,7 +31,7 @@ class User extends Authenticatable
         'is_delete',
         'password',
         'remember',
-        'activation_token'
+        'activation_token',
     ];
 
     /**
@@ -44,7 +45,9 @@ class User extends Authenticatable
         'activation_token',
         'role',
     ];
-    protected $appends = ['formatted_date', 'role_array'];
+
+    protected $appends = ['formatted_date', 'role_array', 'school_array'];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -74,13 +77,22 @@ class User extends Authenticatable
 
     public function school()
     {
-        return $this->belongsTo(SchoolCampuses::class, 'school_id');
+        return $this->belongsTo(SchoolCampuses::class, 'school_id', 'id');
     }
+
     public function getRoleArrayAttribute()
     {
         return $this->role ? [
             'id' => $this->role->id,
             'name' => $this->role->name,
+        ] : null;
+    }
+
+    public function getSchoolArrayAttribute()
+    {
+        return $this->school_id ? [
+            'id' => $this->school->id,
+            'name' => $this->school->generated_name,
         ] : null;
     }
 }

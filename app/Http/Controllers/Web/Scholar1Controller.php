@@ -119,8 +119,8 @@ class Scholar1Controller extends Controller
             }) : null;
 
         $programOptions = $request->input('id') ? ListPrograms::where('is_active', true)
+            ->whereIn('name', ['RA 7687', 'RA 10612', 'MERIT'])
             ->where('is_delete', false)
-            ->where('is_sub', false)
             ->get()->map(function ($q) {
                 return [
                     'id' => $q->id,
@@ -300,9 +300,15 @@ class Scholar1Controller extends Controller
                     ->when($request->input('search'), fn ($q) => $q->whereHas(
                         'profile',
                         fn ($q) => $q->whereRaw("CONCAT(lname, ' ', fname, ' ', COALESCE(mname, '')) ILIKE ?", ['%'.$request->input('search').'%'])
+                            ->orWhere('spas_no', 'ILIKE', '%'.$request->input('search').'%')
+                            ->orWhere('lname', 'ILIKE', '%'.$request->input('search').'%')
+                            ->orWhere('fname', 'ILIKE', '%'.$request->input('search').'%')
                     ))
                     ->when($request->input('schools'), function ($q, $schools) {
                         $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->whereIn('generated_name', $schools)));
+                    })
+                    ->when(Auth::user()->role_array['name'] == 'School Coordinator', function ($q) {
+                        $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->where('id', Auth::user()->school_id)));
                     })
                     ->when($request->input('programs'), function ($q, $programs) {
                         $q->whereHas('program', fn ($w) => $w->whereIn('name', $programs));
@@ -334,7 +340,7 @@ class Scholar1Controller extends Controller
                         'contact_no' => $q->profile?->contact_no,
                         'sex' => $q->profile?->sex,
                         'activated_at' => $q->activated_at,
-                        'acticationRequest' => ! empty($q->activation_token),
+                        'activationRequested' => ! empty($q->activation_token),
                         'fullname' => trim(collect([
                             $q->profile?->lname.',',
                             $q->profile?->fname,
