@@ -226,6 +226,20 @@
                     >
                 </Divider>
                 <div class="px-5 py-2 gap-2 flex flex-col">
+                    <Message
+                        severity="info"
+                        icon="pi pi-info-circle"
+                        v-if="
+                            page.props?.schoolDetail.grading_array.name ==
+                            'Percent Grading'
+                        "
+                    >
+                        <p class="text-xs">
+                            The grading system is disabled for this school
+                            because it uses percentage-based grading.
+                        </p>
+                    </Message>
+
                     <ToolbarModule
                         v-model="searchInput"
                         @deleteSearch="clearSearch"
@@ -254,6 +268,12 @@
                             <DefaultButton
                                 :icon="IconReport"
                                 outlined
+                                :disabled="
+                                    page.props?.schoolDetail?.grading_array
+                                        .name != 'Percent Grading'
+                                        ? false
+                                        : true
+                                "
                                 @click="gradeSystemDialog = true"
                                 tooltip="Grade System"
                                 size="small"
@@ -389,18 +409,19 @@
         description="Shows how grades are computed, including score ranges, equivalents, and passing requirements."
     >
         <template #forms>
-            <div class="pt-5 gap-5 flex flex-col">
+            <div class="pt-5 gap-1 flex flex-col">
                 <ToolbarModule
                     v-model="searchInput"
+                    hideSearch
                     @deleteSearch="clearSearch"
                     @saveForm="submitForm('grades')"
                     button-label="Create"
                     :dialog-title="
                         !gradeForm.id ? 'Create Grade' : 'Edit Grade'
                     "
-                    dialog-description="Define a new role and configure its access permissions."
+                    dialog-description="Create a new grade entry or modify an existing one. You can define the grade name, set its corresponding value, and configure how it is applied within the school's grading system."
                     :dialog-button-loading="gradeForm.processing"
-                    :dialog-icon="IconUserCog"
+                    :dialog-icon="IconPencilCog"
                     dialog-button-label="Save"
                     :message-has-errors="gradeForm.hasErrors"
                     :message-errors="gradeForm.errors"
@@ -415,15 +436,18 @@
                             <TextInput
                                 v-model="gradeForm.grade"
                                 label="Grade"
+                                placeholder="e.g. A, B, C, etc."
                             ></TextInput>
                             <div class="flex gap-5 items-center">
                                 <TextInput
                                     v-model="gradeForm.lower"
                                     label="Lower Limit"
+                                    placeholder="e.g. 90, 80, etc."
                                 ></TextInput>
                                 <TextInput
                                     v-model="gradeForm.upper"
                                     label="Upper Limit"
+                                    placeholder="e.g. 100, 89, etc."
                                 ></TextInput>
                             </div>
                         </div>

@@ -240,7 +240,7 @@ class ListClass
                                 ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
                                 ->whereDate('start_date', '<=', now())
                                 ->whereDate('end_date', '>=', now()),
-                            'coordinators' => fn ($q) => $q->select('id')->with('profile'),
+                            'coordinators' => fn ($q) => $q->select('id', 'school_id', 'email')->with(['profile'])->where('is_active', true),
                         ])
                         ->paginate(10)
                         ->through(fn ($q) => [
@@ -260,7 +260,7 @@ class ListClass
                                 'municipality' => $q->address?->municipality_array,
                                 'barangay' => $q->address?->barangay_array,
                             ],
-                            'coordinators' => $q->coordinators,
+                            'coordinators' => $q->coordinators->pluck('profile.fullname'),
                             'term' => $q->term?->name,
                             'grading' => $q->grading?->name,
                             'agency' => $q->agency?->name,

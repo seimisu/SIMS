@@ -5,7 +5,7 @@
                 :icon="IconSearch"
                 placeholder="Search keywords..."
                 v-model="modelValue"
-                class="w-64 lg:w-96"
+                :class="['w-64 lg:w-96', hideSearch ? '!hidden' : '']"
             />
             <DefaultButton
                 rounded
@@ -73,6 +73,10 @@ defineProps({
     buttonLabel: String,
     messageHasErrors: Boolean,
     messageErrors: Object,
+    hideSearch: {
+        type: Boolean,
+        default: false,
+    },
     messageType: String,
 });
 

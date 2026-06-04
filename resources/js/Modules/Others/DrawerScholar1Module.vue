@@ -16,7 +16,7 @@
             </div>
         </template>
         <template #default>
-            <div class="flex flex-col lg:flex-row w-full pt-5 gap-3 h-full">
+            <div class="flex flex-col lg:flex-row w-full my-5 gap-3 h-full">
                 <div class="lg:flex-2 flex flex-col bg-white p-2 rounded-2xl">
                     <div class="flex-1">
                         <div class="flex gap-2 items-center">
@@ -293,7 +293,34 @@
                                         Personal Records
                                     </h3>
                                 </div>
-                                <div class="flex w-full justify-end">
+                                <div class="flex w-full justify-end gap-2">
+                                    <div>
+                                        <DefaultButton
+                                            :icon="TablerIcons.IconTransfer"
+                                            @click="opTransfer.toggle($event)"
+                                            outlined
+                                            severity="secondary"
+                                            label="Transfer School/Course"
+                                            size="small"
+                                            class-name="!rounded-xl !px-5"
+                                            rounded
+                                        />
+                                        <Popover ref="opTransfer">
+                                            <div>dadasd</div>
+                                        </Popover>
+                                    </div>
+
+                                    <DefaultButton
+                                        :icon="TablerIcons.IconCreditCard"
+                                        @click="storePersonalInfo"
+                                        outlined
+                                        severity="secondary"
+                                        label="View Landbank Details"
+                                        size="small"
+                                        rounded
+                                        class-name="!rounded-xl !px-5"
+                                    />
+                                    <Divider layout="vertical" />
                                     <DefaultButton
                                         :icon="TablerIcons.IconUserEdit"
                                         label="Edit Details"
@@ -394,6 +421,7 @@
                                     >
                                     </TextInput>
                                 </div>
+
                                 <TextInput
                                     v-model="personalInfo.address"
                                     label="Address"
@@ -460,7 +488,27 @@
                                         :options="page.props?.statusOptions"
                                     ></SelectInput>
                                 </div>
+
                                 <Divider align="left">
+                                    <span class="text-xs font-semibold"
+                                        >Landbank Information</span
+                                    >
+                                </Divider>
+                                <TextInput
+                                    v-model="personalInfo.acc_name"
+                                    label="Account Name"
+                                    capitalize
+                                    :disabled="!editBtn.info"
+                                ></TextInput>
+                                <TextInput
+                                    v-model="personalInfo.acc_no"
+                                    capitalize
+                                    label="Account Number"
+                                    :disabled="!editBtn.info"
+                                >
+                                </TextInput>
+
+                                <!-- <Divider align="left">
                                     <span class="text-xs font-semibold"
                                         >Guardian Information</span
                                     >
@@ -495,7 +543,7 @@
                                         :disabled="!editBtn.info"
                                     >
                                     </TextInput>
-                                </div>
+                                </div> -->
                             </div>
                         </template>
                     </Panel>
@@ -1622,6 +1670,7 @@ import { useToast } from "primevue";
 
 const toast = useToast();
 const page = usePage();
+const opTransfer = ref(null);
 const modelValue = defineModel("modelValue");
 const selectedTab = ref({
     label: "Personal Records",
@@ -1668,6 +1717,8 @@ const personalInfo = useForm({
     formatBD: null,
     birth_place: null,
     religion: null,
+    acc_name: null,
+    acc_no: null,
     civil_status: null,
     address: null,
     fulladdress: null,
@@ -1751,6 +1802,13 @@ const autoSearch = (event) => {
             },
         },
     );
+};
+
+const toggle = (type, event) => {
+    console.log(event);
+    if (type === "transfer") {
+        opTransfer.value.toggle(event);
+    }
 };
 
 const opToggle = (event, index) => {

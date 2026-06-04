@@ -375,20 +375,51 @@
                             </div>
                         </template>
                     </Column>
-                    <Column>
-                        <template #header>
-                            <div
-                                class="flex justify-center font-semibold w-full"
-                            >
-                                <div>Coordinators</div>
+                    <Column header="Coordinators">
+                        <template #body="props">
+                            <div v-if="props.data.coordinators?.length != 0">
+                                <AvatarGroup>
+                                    <Avatar
+                                        v-for="coordinator in props.data.coordinators.slice(
+                                            0,
+                                            5,
+                                        )"
+                                        :key="coordinator"
+                                        :label="
+                                            coordinator.charAt(0).toUpperCase()
+                                        "
+                                        v-tooltip.top="coordinator"
+                                        shape="circle"
+                                        size="small"
+                                        :style="{
+                                            backgroundColor: '#ece9fc',
+                                            color: '#2a1261',
+                                        }"
+                                    />
+
+                                    <Avatar
+                                        v-if="
+                                            props.data.coordinators.length > 5
+                                        "
+                                        :label="`+${
+                                            props.data.coordinators.length - 5
+                                        }`"
+                                        shape="circle"
+                                        size="small"
+                                        :style="{
+                                            backgroundColor: '#d3d3d3',
+                                            color: '#333',
+                                            fontWeight: 'bold',
+                                        }"
+                                    />
+                                </AvatarGroup>
                             </div>
-                        </template>
-                        <template #body="prop">
-                            {{
-                                prop.data.coordinators
-                                    .map((item) => item.name)
-                                    .join(", ")
-                            }}
+                            <div v-else>
+                                <span
+                                    class="text-gray-400 font-light text-[12px] italic"
+                                    >No assign coordinators</span
+                                >
+                            </div>
                         </template>
                     </Column>
                     <Column>

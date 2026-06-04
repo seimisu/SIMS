@@ -480,7 +480,7 @@
                                             v-if="
                                                 selectedRow.personalRequest
                                                     .hasRequest &&
-                                                item.label == 'Details Request'
+                                                item.label == 'Profile Request'
                                             "
                                             class="ml-auto"
                                             size="small"
@@ -608,7 +608,7 @@ const menuItems = computed((item) => {
             },
         },
         {
-            label: "Details Request",
+            label: "Profile Request",
             icon: TablerIcons.IconUserQuestion,
             class: "text-cyan-500",
             command: () => {
@@ -625,7 +625,24 @@ const menuItems = computed((item) => {
             },
         },
         {
-            label: "Subjects & Grades- Request",
+            label: "Landbank Request",
+            icon: TablerIcons.IconCreditCard,
+            class: "text-cyan-500",
+            command: () => {
+                router.reload({
+                    only: ["personalRequest"],
+                    data: { id: selectedRow.value.id },
+                    preserveState: false,
+                    showProgress: true,
+                    replace: true,
+                    onFinish: () => {
+                        drawerDetailsRequest.value = true;
+                    },
+                });
+            },
+        },
+        {
+            label: "Subjects & Grades Request",
             icon: TablerIcons.IconId,
             class: "text-cyan-500",
             command: () => {
