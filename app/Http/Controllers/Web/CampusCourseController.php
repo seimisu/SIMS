@@ -18,7 +18,8 @@ class CampusCourseController extends Controller
             ->first();
         if ($check) {
             $check->update([
-                'is_delete' => true,
+                'is_delete' => false,
+                'years' => $data['years'],
             ]);
 
             return redirect()->back()->with('flash', [
