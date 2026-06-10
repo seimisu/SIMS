@@ -29,6 +29,11 @@ class Scholars extends Model
         return $this->hasMany(StudentProfileRequest::class, 'spas_no', 'spas_no');
     }
 
+    public function landbankRequest()
+    {
+        return $this->hasMany(studentLandbankRequest::class, 'spas_no', 'spas_no');
+    }
+
     public function status()
     {
         return $this->belongsTo(ListStatuses::class, 'status_id');

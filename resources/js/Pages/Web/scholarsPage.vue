@@ -517,6 +517,10 @@
             v-model="drawerGradeRequest"
         />
         <DrawerScholar1Module v-if="drawerScholar" v-model="drawerScholar" />
+        <DialogScholarLandbankRequest
+            v-if="dialogLandbankRequest"
+            v-model="dialogLandbankRequest"
+        />
     </AuthLayout>
 </template>
 <script setup>
@@ -542,6 +546,7 @@ import {
 import { Head, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
+import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
 
 const toast = useToast();
 const page = usePage();
@@ -564,6 +569,7 @@ const filterGradeRequest = ref(false);
 const drawerDetailsRequest = ref(false);
 const drawerGradeRequest = ref(false);
 const drawerScholar = ref(false);
+const dialogLandbankRequest = ref(false);
 const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
@@ -630,13 +636,13 @@ const menuItems = computed((item) => {
             class: "text-cyan-500",
             command: () => {
                 router.reload({
-                    only: ["personalRequest"],
+                    only: ["landbankRequest"],
                     data: { id: selectedRow.value.id },
                     preserveState: false,
                     showProgress: true,
                     replace: true,
                     onFinish: () => {
-                        drawerDetailsRequest.value = true;
+                        dialogLandbankRequest.value = true;
                     },
                 });
             },
@@ -714,11 +720,14 @@ const toggleScholarDetails = (event) => {
             "schoolOptions",
             "courseOptions",
         ],
-        data: { id: event.id },
+        data: { id: event.id, campus: null },
         preserveState: false,
         showProgress: true,
         replace: true,
         onFinish: () => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("campus");
+            window.history.replaceState({}, "", url);
             drawerScholar.value = true;
         },
     });

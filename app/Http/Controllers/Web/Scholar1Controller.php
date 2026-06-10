@@ -127,6 +127,7 @@ class Scholar1Controller extends Controller
                     'name' => $q->name,
                 ];
             }) : null;
+
         $subProgramOptions = $request->input('id') ? ListReferences::where('is_active', true)
             ->where('classification', 'Type')
             ->where('is_delete', false)
@@ -201,11 +202,28 @@ class Scholar1Controller extends Controller
         ])
             ->whereHas(
                 'campus',
-                fn ($q) => $q->where(
-                    'generated_name',
-                    'like',
-                    '%'.Scholars::find(Hashids::decode($request->input('id'))[0] ?? 0)->schoolInfo->first()?->campus->generated_name.'%'
-                )
+                fn ($q) => $q->when($request->input('campus'), function ($q) use ($request) {
+                    $q->where('generated_name', 'like', '%'.$request->input('campus').'%');
+                })
+            )
+            ->get()
+            ->map(function ($course) {
+                return [
+                    'id' => $course->id,
+                    'name' => $course->course?->name,
+                    'campus' => $course->campus?->generated_name,
+                ];
+            }) : [];
+
+        $transferCourseOptions = $request->input('id') ? SchoolCampusCourses::with(['course', 'campus'])->where([
+            'is_delete' => false,
+            'is_active' => true,
+        ])
+            ->whereHas(
+                'campus',
+                fn ($q) => $q->when($request->input('tcampus'), function ($q) use ($request) {
+                    $q->where('generated_name', 'like', '%'.$request->input('tcampus').'%');
+                })
             )
             ->get()
             ->map(function ($course) {
@@ -429,6 +447,35 @@ class Scholar1Controller extends Controller
                         })
                         ->values()
                 ),
+                'landbankRequest' => Inertia::optional(
+                    fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
+                        ->with([
+                            'landbankRequest',
+                        ])
+                        ->get()
+                        ->flatMap(function ($scholar) {
+                            return $scholar->landbankRequest->map(function ($q, $index) {
+
+                                return [
+                                    'count' => Carbon::parse($q->requested_at)->format('Ymd')
+                                        .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+
+                                    'address' => $q,
+                                    'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
+                                    'reviewed_at' => $q->reviewed_at
+                                        ? Carbon::parse($q->reviewed_at)->diffForHumans()
+                                        : null,
+                                    'request_date' => Carbon::parse($q->requested_at)->format('F d, Y h:i A'),
+                                    'reviewed_by' => $q->reviewed_by,
+                                    'status' => $q->status,
+                                    'name' => $q->acc_name,
+                                    'no' => $q->acc_no,
+                                    'remarks' => $q->request_purpose,
+                                    'type' => $q->uploaded_type,
+                                ];
+                            });
+                        })
+                        ->values()),
                 'details' => $request->input('id') ?
                     function () use ($request) {
                         $id = Hashids::decode($request->input('id'))[0] ?? 0;
@@ -645,6 +692,7 @@ class Scholar1Controller extends Controller
                 'programOptions' => $programOptions,
                 'subProgramOptions' => $subProgramOptions,
                 'yearOptions' => $yearOptions,
+                'transferCourseOptions' => $transferCourseOptions,
                 'termOptions' => $termOptions,
                 'subjectOptions' => $subjectOptions,
                 'gradeOptions' => $gradeOptions,
@@ -1036,5 +1084,39 @@ class Scholar1Controller extends Controller
                 ? 'The change request has been approved.'
                 : 'The change request has been declined.',
         ]);
+    }
+
+    public function transfer(string $id, string $type, Request $request)
+    {
+        $decodedId = Hashids::decode($id)[0] ?? 0;
+        $scholar = Scholars::findOrFail($decodedId);
+        if ($type == 'school') {
+            $data = $request->validate([
+                'school' => 'required',
+                'course' => 'required',
+            ]);
+            $scholar->schoolInfo()->create(
+                [
+                    'campus_id' => $data['school']['id'],
+                    'campus_course_id' => $data['course']['id'],
+                ]
+            );
+
+            return redirect()->back()->with([
+                'flash' => [
+                    'status' => 'success',
+                    'title' => 'Course Transferred',
+                    'message' => 'Course transfer successful.',
+                ],
+            ]);
+        } else {
+            return redirect()->back()->with([
+                'flash' => [
+                    'status' => 'error',
+                    'title' => 'Transfer Failed',
+                    'message' => 'Invalid transfer type.',
+                ],
+            ]);
+        }
     }
 }

@@ -306,7 +306,168 @@
                                             rounded
                                         />
                                         <Popover ref="opTransfer">
-                                            <div>dadasd</div>
+                                            <div
+                                                class="w-100 flex flex-col text-sm"
+                                            >
+                                                <div
+                                                    class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1"
+                                                >
+                                                    <div>
+                                                        <IconExclamationCircleFilled
+                                                            :size="20"
+                                                        />
+                                                    </div>
+
+                                                    <p
+                                                        class="text-xs leading-5 text-justify"
+                                                    >
+                                                        Update the scholar's
+                                                        school and course
+                                                        information based on the
+                                                        approved transfer
+                                                        request. Ensure that all
+                                                        changes are accurate
+                                                        before saving.
+                                                    </p>
+                                                </div>
+                                                <Tabs :value="transferTab">
+                                                    <TabList>
+                                                        <Tab value="school">
+                                                            <div
+                                                                class="flex items-center gap-2"
+                                                            >
+                                                                <IconSchool />
+                                                                <div>
+                                                                    School
+                                                                </div>
+                                                            </div>
+                                                        </Tab>
+                                                        <Tab value="course">
+                                                            <div
+                                                                class="flex items-center gap-2"
+                                                            >
+                                                                <IconBook2 />
+                                                                <div>
+                                                                    Course
+                                                                </div>
+                                                            </div></Tab
+                                                        >
+                                                    </TabList>
+                                                    <TabPanels
+                                                        :pt="{
+                                                            root: {
+                                                                class: '!p-0 !pt-3',
+                                                            },
+                                                        }"
+                                                    >
+                                                        <TabPanel
+                                                            value="school"
+                                                        >
+                                                            <div
+                                                                class="flex flex-col gap-3"
+                                                            >
+                                                                <SelectInput
+                                                                    label="School"
+                                                                    :error-mark="
+                                                                        transferInfo
+                                                                            .errors
+                                                                            .school !=
+                                                                        null
+                                                                            ? true
+                                                                            : false
+                                                                    "
+                                                                    v-model="
+                                                                        transferInfo.school
+                                                                    "
+                                                                    @update:model-value="
+                                                                        rendertCourse
+                                                                    "
+                                                                    :options="
+                                                                        page
+                                                                            .props
+                                                                            ?.schoolOptions
+                                                                    "
+                                                                ></SelectInput>
+                                                                <SelectInput
+                                                                    label="Course"
+                                                                    v-model="
+                                                                        transferInfo.course
+                                                                    "
+                                                                    :loading="
+                                                                        loading.transferCourse
+                                                                    "
+                                                                    :disable="
+                                                                        transferInfo.school !=
+                                                                        null
+                                                                            ? false
+                                                                            : true
+                                                                    "
+                                                                    :options="
+                                                                        page
+                                                                            .props
+                                                                            ?.transferCourseOptions
+                                                                    "
+                                                                ></SelectInput>
+
+                                                                <DefaultButton
+                                                                    :icon="
+                                                                        TablerIcons.IconTransfer
+                                                                    "
+                                                                    @click="
+                                                                        transferSubmit
+                                                                    "
+                                                                    raised
+                                                                    :loading="
+                                                                        loading.transferSubmit
+                                                                    "
+                                                                    label="Transfer"
+                                                                    size="small"
+                                                                    class-name="!rounded-xl !px-5"
+                                                                />
+                                                            </div>
+                                                        </TabPanel>
+                                                        <TabPanel
+                                                            value="course"
+                                                        >
+                                                            <p class="m-0">
+                                                                Sed ut
+                                                                perspiciatis
+                                                                unde omnis iste
+                                                                natus error sit
+                                                                voluptatem
+                                                                accusantium
+                                                                doloremque
+                                                                laudantium,
+                                                                totam rem
+                                                                aperiam, eaque
+                                                                ipsa quae ab
+                                                                illo inventore
+                                                                veritatis et
+                                                                quasi architecto
+                                                                beatae vitae
+                                                                dicta sunt
+                                                                explicabo. Nemo
+                                                                enim ipsam
+                                                                voluptatem quia
+                                                                voluptas sit
+                                                                aspernatur aut
+                                                                odit aut fugit,
+                                                                sed quia
+                                                                consequuntur
+                                                                magni dolores
+                                                                eos qui ratione
+                                                                voluptatem sequi
+                                                                nesciunt.
+                                                                Consectetur,
+                                                                adipisci velit,
+                                                                sed quia non
+                                                                numquam eius
+                                                                modi.
+                                                            </p>
+                                                        </TabPanel>
+                                                    </TabPanels>
+                                                </Tabs>
+                                            </div>
                                         </Popover>
                                     </div>
 
@@ -326,7 +487,7 @@
                                         label="Edit Details"
                                         size="small"
                                         v-if="!editBtn.info"
-                                        @click="editBtn.info = true"
+                                        @click="EditMode"
                                         raised
                                         class-name="!rounded-xl !px-5"
                                     />
@@ -336,7 +497,7 @@
                                             label="Cancel Edit"
                                             size="small"
                                             severity="danger"
-                                            @click="editBtn.info = false"
+                                            @click="cancelEdit"
                                             outlined
                                             class-name="!rounded-xl !px-5"
                                         />
@@ -437,7 +598,6 @@
                                     @complete="autoSearch"
                                     selection
                                 ></AutoCompleteInput>
-
                                 <Divider align="left">
                                     <span class="text-xs font-semibold"
                                         >Scholarship Assignment</span
@@ -463,6 +623,7 @@
                                         label="School"
                                         v-model="personalInfo.school"
                                         :disable="!editBtn.info"
+                                        @update:model-value="renderCourse"
                                         :options="page.props?.schoolOptions"
                                     ></SelectInput>
                                     <SelectInput
@@ -1641,10 +1802,9 @@
     </Drawer>
 </template>
 <script setup>
-import { router, useForm, usePage } from "@inertiajs/vue3";
-
 import {
     IconCopy,
+    IconBook2,
     IconId,
     IconUserFilled,
     IconAt,
@@ -1655,22 +1815,26 @@ import {
     IconCalendar,
     IconUserQuestion,
     IconScript,
+    IconExclamationCircleFilled,
     IconHistory,
     IconUserExclamation,
     IconChevronRight,
 } from "@tabler/icons-vue";
-import * as TablerIcons from "@tabler/icons-vue";
+
 import { ref, watch } from "vue";
-import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+import { useToast } from "primevue";
+import * as TablerIcons from "@tabler/icons-vue";
+import { router, useForm, usePage } from "@inertiajs/vue3";
 import TextInput from "../../Components/inputs/TextInput.vue";
+import SelectInput from "../../Components/inputs/SelectInput.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DatePickerInput from "../../Components/inputs/DatePickerInput.vue";
 import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
-import SelectInput from "../../Components/inputs/SelectInput.vue";
-import { useToast } from "primevue";
 
 const toast = useToast();
 const page = usePage();
 const opTransfer = ref(null);
+const transferTab = ref("school");
 const modelValue = defineModel("modelValue");
 const selectedTab = ref({
     label: "Personal Records",
@@ -1679,6 +1843,11 @@ const selectedTab = ref({
 });
 const opRequest = ref([]);
 const opGradeRequest = ref([]);
+
+const transferInfo = useForm({
+    school: null,
+    course: null,
+});
 
 const createBtn = ref({
     tr: false,
@@ -1696,6 +1865,9 @@ const loading = ref({
     storePersonalInfo: false,
     validateReject: false,
     validateGrade: false,
+    course: false,
+    transferCourse: false,
+    transferSubmit: false,
 });
 
 const torInfo = useForm({
@@ -2021,6 +2193,89 @@ watch(
     },
     { immediate: true },
 );
+
+const renderCourse = (event) => {
+    router.reload({
+        only: ["courseOptions"],
+        data: { campus: event.name },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+    });
+};
+
+const rendertCourse = (event) => {
+    loading.value.transferCourse = true;
+    router.reload({
+        only: ["transferCourseOptions"],
+        data: { tcampus: event.name },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+        onFinish: () => {
+            loading.value.transferCourse = false;
+        },
+    });
+};
+
+const transferSubmit = () => {
+    loading.value.transferSubmit = true;
+    transferInfo.post(
+        route("scholars.transfer", {
+            id: page.props?.details.id,
+            type: transferTab.value,
+        }),
+        {
+            onSuccess: () => {
+                toast.add({
+                    severity: page.props.flash?.status,
+                    summary: page.props.flash?.title,
+                    detail: page.props.flash?.message,
+                    life: 3000,
+                });
+                if (page.props.flash?.status == "success") {
+                    transferInfo.value.school = null;
+                    transferInfo.value.course = null;
+                    opTransfer.value.hide();
+                }
+            },
+            onError: (errors) => {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to transfer course.",
+                    life: 3000,
+                });
+            },
+            onFinish: () => {
+                loading.value.transferSubmit = false;
+            },
+        },
+    );
+};
+
+const EditMode = () => {
+    editBtn.value.info = true;
+};
+
+const cancelEdit = () => {
+    editBtn.value.info = false;
+
+    router.reload({
+        only: ["courseOptions"],
+        data: { campus: page.props?.details.schoolInput.name },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+        onFinish: () => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("campus");
+            window.history.replaceState({}, "", url);
+            personalInfo.school = page.props?.details.schoolInput ?? null;
+            personalInfo.course = page.props?.details.courseInput ?? null;
+        },
+    });
+};
 
 watch(
     () => page.props?.generateSubjects,
