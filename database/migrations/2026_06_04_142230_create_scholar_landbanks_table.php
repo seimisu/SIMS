@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('scholar_id')
                 ->nullable()
-                ->constrained('users')
+                ->constrained('scholars')
                 ->nullOnDelete();
             $table->string('account_number')->nullable();
             $table->string('account_name')->nullable();

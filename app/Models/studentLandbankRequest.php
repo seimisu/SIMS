@@ -11,6 +11,8 @@ class studentLandbankRequest extends Model
 
     protected $table = 'lbp_requests';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'request_type',
         'acc_name',

@@ -24,6 +24,11 @@ class Scholars extends Model
         'validate_status',
     ];
 
+    public function requestHistory()
+    {
+        return $this->hasMany(requestHistory::class, 'scholar_id', 'id');
+    }
+
     public function profileRequest()
     {
         return $this->hasMany(StudentProfileRequest::class, 'spas_no', 'spas_no');
@@ -47,6 +52,11 @@ class Scholars extends Model
     public function mainProgram()
     {
         return $this->belongsTo(ListReferences::class, 'category_id');
+    }
+
+    public function landbank()
+    {
+        return $this->hasOne(scholarLandbank::class, 'scholar_id');
     }
 
     public function type()

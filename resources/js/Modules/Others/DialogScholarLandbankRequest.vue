@@ -381,7 +381,7 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-3" v-show="selectedRow">
+                        <div class="flex flex-col gap-3" v-if="selectedRow">
                             <div class="leading-none">
                                 <label for="remarks" class="text-sm"
                                     >Remarks</label
@@ -393,16 +393,24 @@
                                     fluid
                                     rows="5"
                                     v-model="selectedRow.reject"
+                                    :disabled="
+                                        selectedRow.reviewed_at ? true : false
+                                    "
                                 />
                             </div>
                             <div class="flex flex-col gap-4">
-                                <div class="flex justify-end">
+                                <div
+                                    class="flex justify-end"
+                                    v-if="!selectedRow.reviewed_at"
+                                >
                                     <div class="flex items-center gap-3">
                                         <Button
                                             size="small"
                                             class="!text-xs !rounded-xl"
                                             outlined
+                                            :loading="loading.reject"
                                             severity="danger"
+                                            @click="validationRequest('reject')"
                                         >
                                             <template #default>
                                                 <div
@@ -411,6 +419,12 @@
                                                     <IconCircleXFilled
                                                         :stroke-width="1.5"
                                                         :size="20"
+                                                        v-if="!loading.reject"
+                                                    />
+                                                    <IconLoader2
+                                                        v-else
+                                                        :size="20"
+                                                        class="animate-spin"
                                                     />
                                                     <p>Reject</p>
                                                 </div>
@@ -420,7 +434,8 @@
                                             size="small"
                                             class="!text-xs !rounded-xl"
                                             raised
-                                            :disabled="rejectionField"
+                                            :loading="loading.approve"
+                                            @click="validationRequest('accept')"
                                         >
                                             <template #default>
                                                 <div
@@ -429,6 +444,12 @@
                                                     <IconCircleCheckFilled
                                                         :stroke-width="1.5"
                                                         :size="20"
+                                                        v-if="!loading.approve"
+                                                    />
+                                                    <IconLoader2
+                                                        v-else
+                                                        :size="20"
+                                                        class="animate-spin"
                                                     />
                                                     <p>Accept</p>
                                                 </div>
@@ -463,6 +484,8 @@ import {
     IconEye,
     IconCircleCheckFilled,
     IconCircleXFilled,
+    IconLoader,
+    IconLoader2,
 } from "@tabler/icons-vue";
 
 import UploadInput from "../../Components/inputs/UploadInput.vue";
@@ -480,7 +503,7 @@ const loading = ref({
     approve: false,
     reject: false,
 });
-const rejectionField = ref(false);
+
 const landbankRequest = ref(null);
 
 const selectedRequest = (item, index) => {
@@ -488,9 +511,9 @@ const selectedRequest = (item, index) => {
     selectedRow.value.index = index;
 };
 
-const approveRequest = (decision) => {
+const validationRequest = (decision) => {
     router.post(
-        route("profile.request", { type: decision }),
+        route("landbank.request", { type: decision }),
         {
             data: selectedRow.value,
         },
@@ -513,7 +536,7 @@ const approveRequest = (decision) => {
                 });
 
                 if (page.props.flash?.status === "success") {
-                    personalRequest.value[selectedRow.value.index].status =
+                    landbankRequest.value[selectedRow.value.index].status =
                         decision === "accept" ? "approved" : "rejected";
                     selectedRow.value.reviewed_at = "Just now";
                     selectedRow.value.reviewed_by =

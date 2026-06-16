@@ -400,9 +400,7 @@ class Scholar1Controller extends Controller
                             'profile',
                             'address',
                         ])
-
                         ->get()
-
                         ->flatMap(function ($scholar) {
                             return $scholar->profileRequest->map(function ($q, $index) use ($scholar) {
 
@@ -430,12 +428,10 @@ class Scholar1Controller extends Controller
                                     'fullAddressStored' => $scholar?->address?->full_address,
                                     'proof' => $q->proof,
                                     'remarks' => $q->remarks,
-
                                     'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
                                     'reviewed_at' => $q->reviewed_at
                                         ? Carbon::parse($q->reviewed_at)->diffForHumans()
                                         : null,
-
                                     'reviewed_by' => $q->reviewed_by,
                                     'status' => $q->status,
                                     'emailStored' => $scholar->profile->email,
@@ -459,8 +455,7 @@ class Scholar1Controller extends Controller
                                 return [
                                     'count' => Carbon::parse($q->requested_at)->format('Ymd')
                                         .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT),
-
-                                    'address' => $q,
+                                    'spas_no' => $q->spas_no,
                                     'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
                                     'reviewed_at' => $q->reviewed_at
                                         ? Carbon::parse($q->reviewed_at)->diffForHumans()
@@ -469,7 +464,9 @@ class Scholar1Controller extends Controller
                                     'reviewed_by' => $q->reviewed_by,
                                     'status' => $q->status,
                                     'name' => $q->acc_name,
+                                    'reject' => $q->rejection_reason,
                                     'no' => $q->acc_no,
+                                    'file' => $q->uploaded_file,
                                     'remarks' => $q->request_purpose,
                                     'type' => $q->uploaded_type,
                                 ];
@@ -1074,6 +1071,68 @@ class Scholar1Controller extends Controller
                 'reviewed_at' => Carbon::now(),
                 'reviewed_by' => Auth::user()->profile->fullname,
                 'remarks' => $data['remarks'],
+            ]);
+        }
+
+        return redirect()->back()->with('flash', [
+            'status' => 'success',
+            'title' => 'Action Completed',
+            'message' => $type === 'accept'
+                ? 'The change request has been approved.'
+                : 'The change request has been declined.',
+        ]);
+    }
+
+    public function landbankRequest(string $type, Request $request)
+    {
+        $data = $request->input('data');
+        $scholar = Scholars::where('spas_no', $data['spas_no'])->firstOrFail();
+
+        if ($type == 'accept') {
+
+            $landbank = $scholar->landbank()->updateOrCreate(
+                [
+                ],
+                [
+                    'account_number' => $data['no'],
+                    'account_name' => $data['name'],
+                    'uploaded_type' => $data['type'],
+                    'uploaded_file' => $data['file'],
+                ]
+            );
+            $scholar->requestHistories()->create([
+                'request_type' => 'landbank',
+                'previous' => $landbank->getOriginal(),
+                'changes' => $landbank->getChanges(),
+                'created_by' => Auth::user()->profile->fullname,
+                'created_at' => Carbon::now(),
+
+            ]);
+
+            $scholar->profileRequest()->update([
+                'status' => 'approved',
+                'reviewed_at' => Carbon::now(),
+                'reviewed_by' => Auth::user()->profile->fullname,
+            ]);
+
+        } else {
+
+            $validation = Validator::make($data, [
+                'reject' => 'required|string|max:255',
+            ]);
+
+            if ($validation->fails()) {
+                return redirect()->back()->with('flash', [
+                    'status' => 'error',
+                    'title' => 'Validation Failed',
+                    'message' => 'Please fill in the remarks field.',
+                ]);
+            }
+            $scholar->landbankRequest()->update([
+                'status' => 'rejected',
+                'reviewed_at' => Carbon::now(),
+                'reviewed_by' => Auth::user()->profile->fullname,
+                'rejection_reason' => $data['reject'],
             ]);
         }
 

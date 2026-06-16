@@ -4,16 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class scholarLandbank extends Model
+class requestHistory extends Model
 {
     protected $fillable = [
         'scholar_id',
-        'account_number',
-        'account_name',
-        'uploaded_type',
-        'uploaded_file',
+        'request_type',
+        'previous',
+        'changes',
+        'created_at',
         'created_by',
-        'updated_by',
+    ];
+
+    protected $casts = [
+        'prevous',
+        'changes',
     ];
 
     public function scholar()
