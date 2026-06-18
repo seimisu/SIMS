@@ -11,6 +11,7 @@ use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
 use App\Models\LocationRegions;
+use App\Models\requestHistory;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
@@ -19,6 +20,8 @@ use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
 use App\Models\StudentGrade;
 use App\Models\StudentGradeRequest;
+use App\Models\studentLandbankRequest;
+use App\Models\StudentProfileRequest;
 use App\Models\StudentSubject;
 use App\Models\StudentSubjectRequest;
 use App\References\LocationClass;
@@ -262,9 +265,11 @@ class Scholar1Controller extends Controller
         return Inertia::render(
             'Web/scholarsPage',
             [
-                'request_cnt' => Str::of(
-                    StudentSubject::where('status', 'pending')->count()
-                )->toString(),
+                'request_cnt' => collect([
+                    'landbank' => studentLandbankRequest::where('status', 'pending')->count(),
+                    'profile' => StudentProfileRequest::where('status', 'pending')->count(),
+                    'grades' => ,
+                ]),
                 'grade_request_cnt' => Str::of(
                     StudentGrade::whereHas('gradeRequests', function ($q) {
                         $q->where('status', 'submitted');
@@ -407,13 +412,12 @@ class Scholar1Controller extends Controller
                                 return [
                                     'count' => Carbon::parse($q->requested_at)->format('Ymd')
                                         .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT),
-
+                                    'purpose' => $q->purpose,
                                     'address' => $q->address,
                                     'barangay' => $q->barangay,
                                     'municipality' => $q->municipality,
                                     'province' => $q->province,
                                     'region' => $q->region,
-
                                     'civil_status' => $q->civil_status,
                                     'contact_no' => $q->contact_no,
                                     'email' => $q->email,
@@ -426,18 +430,22 @@ class Scholar1Controller extends Controller
                                         $q->region,
                                     ])->filter()->implode(', '),
                                     'fullAddressStored' => $scholar?->address?->full_address,
-                                    'proof' => $q->proof,
+                                    'file_type' => $q->proof_type,
                                     'remarks' => $q->remarks,
                                     'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
+                                    'request_date' => Carbon::parse($q->requested_at)->format('F d, Y h:i A'),
                                     'reviewed_at' => $q->reviewed_at
                                         ? Carbon::parse($q->reviewed_at)->diffForHumans()
                                         : null,
                                     'reviewed_by' => $q->reviewed_by,
                                     'status' => $q->status,
+                                    'file' => $q->proof,
                                     'emailStored' => $scholar->profile->email,
                                     'contactStored' => $scholar->profile->contact_no,
                                     'civilStored' => $scholar->profile->civil_status,
                                     'spas_no' => $scholar->spas_no,
+                                    'records' => requestHistory::where('request_no', Carbon::parse($q->requested_at)->format('Ymd')
+                                       .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT))->where('request_type', 'profile')->first(),
                                 ];
                             });
                         })
@@ -447,10 +455,11 @@ class Scholar1Controller extends Controller
                     fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
                         ->with([
                             'landbankRequest',
+                            'landbank',
                         ])
                         ->get()
                         ->flatMap(function ($scholar) {
-                            return $scholar->landbankRequest->map(function ($q, $index) {
+                            return $scholar->landbankRequest->map(function ($q, $index) use ($scholar) {
 
                                 return [
                                     'count' => Carbon::parse($q->requested_at)->format('Ymd')
@@ -462,6 +471,8 @@ class Scholar1Controller extends Controller
                                         : null,
                                     'request_date' => Carbon::parse($q->requested_at)->format('F d, Y h:i A'),
                                     'reviewed_by' => $q->reviewed_by,
+                                    'nameStored' => $scholar->landbank?->account_name,
+                                    'noStored' => $scholar->landbank?->account_number,
                                     'status' => $q->status,
                                     'name' => $q->acc_name,
                                     'reject' => $q->rejection_reason,
@@ -469,6 +480,8 @@ class Scholar1Controller extends Controller
                                     'file' => $q->uploaded_file,
                                     'remarks' => $q->request_purpose,
                                     'type' => $q->uploaded_type,
+                                    'records' => requestHistory::where('request_no', Carbon::parse($q->requested_at)->format('Ymd')
+                                        .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT))->where('request_type', 'landbank')->first(),
                                 ];
                             });
                         })
@@ -1034,6 +1047,40 @@ class Scholar1Controller extends Controller
 
         if ($type == 'accept') {
 
+            $profile = $scholar->profile;
+            $address = $scholar->address;
+
+            $previous = array_merge(
+                $profile ? $profile->only([
+                    'email',
+                    'contact_no',
+                    'civil_status',
+                ]) : [],
+                $address ? $address->only([
+                    'address',
+                    'barangay_code',
+                    'municipality_code',
+                    'province_code',
+                    'region_code',
+                ]) : []
+            );
+
+            $input = [
+                'email' => $data['email'],
+                'contact_no' => $data['contact_no'],
+                'civil_status' => $data['civil_status'],
+                'address' => $data['address'],
+                'barangay_code' => LocationBarangays::firstWhere('name', $data['barangay'])?->code,
+                'municipality_code' => LocationCity::firstWhere('name', $data['municipality'])?->code,
+                'province_code' => LocationProvinces::firstWhere('name', $data['province'])?->code,
+                'region_code' => LocationRegions::firstWhere('name', $data['region'])?->code,
+            ];
+            $filteredInput = collect($input)
+                ->except(['created_by', 'created_at'])
+                ->toArray();
+
+            $changes = array_diff_assoc($filteredInput, $previous);
+
             $scholar->profile()->update([
                 'email' => $data['email'],
                 'contact_no' => $data['contact_no'],
@@ -1048,12 +1095,20 @@ class Scholar1Controller extends Controller
                 'region_code' => LocationRegions::firstWhere('name', $data['region'])?->code,
             ]);
 
-            $scholar->profileRequest()->update([
-                'status' => 'approved',
-                'reviewed_at' => Carbon::now(),
-                'reviewed_by' => Auth::user()->profile->fullname,
+            $scholar->requestHistory()->create([
+                'request_type' => 'profile',
+                'previous' => array_intersect_key($previous, $changes),
+                'changes' => $changes,
+                'created_by' => Auth::user()->profile->fullname,
+                'created_at' => now(),
+                'request_no' => $data['count'],
             ]);
 
+            $scholar->profileRequest()->update([
+                'status' => 'approved',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::user()->profile->fullname,
+            ]);
         } else {
 
             $validation = Validator::make($data, [
@@ -1090,31 +1145,55 @@ class Scholar1Controller extends Controller
 
         if ($type == 'accept') {
 
+            $landbank = $scholar->landbank()->first();
+
+            // Capture previous values BEFORE update
+            $previous = $landbank ? $landbank->only([
+                'account_number',
+                'account_name',
+                'uploaded_type',
+                'uploaded_file',
+            ]) : [];
+
+            // New input
+            $input = [
+                'account_number' => $data['no'],
+                'account_name' => $data['name'],
+                'uploaded_type' => $data['type'],
+                'uploaded_file' => $data['file'],
+                'created_by' => Auth::user()->profile->fullname,
+                'updated_by' => Auth::user()->profile->fullname,
+            ];
+
+            $filteredInput = collect($input)
+                ->except(['created_by', 'updated_by'])
+                ->toArray();
+            $changes = $landbank
+                ? array_diff_assoc($filteredInput, $previous)
+                : $input;
+
+            // Save / update record
             $landbank = $scholar->landbank()->updateOrCreate(
-                [
-                ],
-                [
-                    'account_number' => $data['no'],
-                    'account_name' => $data['name'],
-                    'uploaded_type' => $data['type'],
-                    'uploaded_file' => $data['file'],
-                ]
+                [],
+                $input
             );
-            $scholar->requestHistories()->create([
+
+            // Store history
+            $scholar->requestHistory()->create([
                 'request_type' => 'landbank',
-                'previous' => $landbank->getOriginal(),
-                'changes' => $landbank->getChanges(),
+                'previous' => $previous,
+                'changes' => $changes,
                 'created_by' => Auth::user()->profile->fullname,
                 'created_at' => Carbon::now(),
-
+                'request_no' => $data['count'],
             ]);
 
-            $scholar->profileRequest()->update([
+            // Update request status
+            $scholar->landbankRequest()->update([
                 'status' => 'approved',
                 'reviewed_at' => Carbon::now(),
                 'reviewed_by' => Auth::user()->profile->fullname,
             ]);
-
         } else {
 
             $validation = Validator::make($data, [

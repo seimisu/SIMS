@@ -12,7 +12,7 @@
             <div
                 class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
             >
-                <IconUserUp :size="18" :stroke-width="2" />
+                <IconUserEdit :size="18" :stroke-width="2" />
                 <div class="uppercase font-medium text-sm">
                     Scholar Detail request
                 </div>
@@ -21,7 +21,7 @@
         <template #default>
             <div class="">
                 <div
-                    class="flex flex-col lg:flex-row h-full w-full lg:h-[40rem]"
+                    class="flex flex-col lg:flex-row h-full w-full lg:min-h-150"
                 >
                     <div
                         class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col max-h-[95vw] gap-3 p-3"
@@ -41,16 +41,26 @@
                                 class="border rounded-xl gap-3 hover:shadow border-gray-200 bg-white flex flex-col text-sm p-2"
                             >
                                 <div class="flex justify-between items-center">
-                                    <div class="font-medium">
-                                        Request #<span class="text-slate-500">{{
-                                            item.count
-                                        }}</span>
+                                    <div class="flex items-center gap-1">
+                                        <Avatar
+                                            class="!w-[40px] !h-[40px] shadow border border-slate-400 !rounded-xl"
+                                        >
+                                            <IconUserEdit :size="23" />
+                                        </Avatar>
+                                        <div class="text-sm">
+                                            <div class="text-xs text-slate-500">
+                                                Request ID
+                                            </div>
+                                            <div class="font-medium">
+                                                #{{ item.count }}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div
                                         v-if="item.status == 'pending'"
                                         class="text-xs bg-amber-100 text-amber-500 border capitalize rounded-xl px-3 py-1"
                                     >
-                                        {{ item.status }}
+                                        {{ item.status }} Review
                                     </div>
                                     <div
                                         v-else-if="item.status == 'approved'"
@@ -66,49 +76,25 @@
                                     </div>
                                 </div>
                                 <div class="flex-1 flex flex-col p-1">
-                                    <div class="flex-1">
-                                        <table class="table table-auto">
-                                            <tbody>
-                                                <tr>
-                                                    <td
-                                                        class="w-32 font-medium"
-                                                    >
-                                                        Email
-                                                    </td>
-                                                    <td>{{ item.email }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td
-                                                        class="w-32 font-medium"
-                                                    >
-                                                        Contact No
-                                                    </td>
-                                                    <td>
-                                                        {{ item.contact_no }}
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td
-                                                        class="w-32 font-medium"
-                                                    >
-                                                        Civil Status
-                                                    </td>
-                                                    <td>
-                                                        {{ item.civil_status }}
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td
-                                                        class="w-32 font-medium align-top"
-                                                    >
-                                                        Address
-                                                    </td>
-                                                    <td>
-                                                        {{ item.fullAddress }}
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    <div
+                                        class="flex-1 flex flex-col p-1 gap-2 text-sm"
+                                    >
+                                        <div class="flex-1">
+                                            <div class="text-xs text-slate-500">
+                                                Requested On
+                                            </div>
+                                            <p class="font-medium">
+                                                {{ item.request_date }}
+                                            </p>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="text-xs text-slate-500">
+                                                Reason for Change
+                                            </div>
+                                            <p class="font-medium">
+                                                {{ item.purpose }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                                 <div
@@ -162,7 +148,7 @@
                         </template>
                     </div>
                     <div
-                        class="flex flex-col gap-5 p-3 h-full w-full lg:w-8/12"
+                        class="flex flex-col gap-2 p-3 h-full w-full lg:w-8/12"
                     >
                         <div
                             class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1"
@@ -180,10 +166,15 @@
                             </p>
                         </div>
                         <div
-                            class="flex items-center w-full h-full justify-center gap-1"
+                            class="flex items-center w-full h-full gap-1"
                             v-if="selectedRow"
                         >
-                            <Fieldset :pt="{ root: '!p-2' }">
+                            <Fieldset
+                                :pt="{
+                                    root: '!p-2 w-full ',
+                                    content: '!h-full',
+                                }"
+                            >
                                 <template #legend>
                                     <p class="text-sm font-medium">
                                         Req# {{ selectedRow.count }}
@@ -191,157 +182,278 @@
                                 </template>
                                 <template #default>
                                     <div
-                                        class="flex items-center justify-evenly gap-3 w-full"
+                                        class="flex flex-col justify-between h-90"
                                     >
-                                        <div class="flex flex-col gap-2">
+                                        <div
+                                            class="flex-1 flex w-full justify-evenly"
+                                        >
                                             <div
-                                                class="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2"
+                                                class="flex-2 flex flex-col gap-2"
                                             >
-                                                <IconDatabase
-                                                    class="text-amber-500"
-                                                    :size="18"
-                                                />
+                                                <div
+                                                    class="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2"
+                                                >
+                                                    <IconDatabase
+                                                        class="text-amber-500"
+                                                        :size="18"
+                                                    />
 
+                                                    <div
+                                                        class="text-sm font-semibold text-amber-700"
+                                                    >
+                                                        Stored Data
+                                                    </div>
+                                                </div>
                                                 <div
-                                                    class="text-sm font-semibold text-amber-700"
+                                                    class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1"
                                                 >
-                                                    Stored Data
+                                                    <div class="leading-none">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Email
+                                                        </div>
+                                                        <p>
+                                                            {{
+                                                                selectedRow.emailStored
+                                                            }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="leading-none">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Contact No.
+                                                        </div>
+                                                        <p
+                                                            v-if="
+                                                                selectedRow.reviewed_at
+                                                            "
+                                                        >
+                                                            {{
+                                                                selectedRow
+                                                                    .records
+                                                                    ?.previous
+                                                                    ?.contact_no ??
+                                                                "No record"
+                                                            }}
+                                                        </p>
+                                                        <p v-else>
+                                                            {{
+                                                                selectedRow.contactStored ??
+                                                                "No record"
+                                                            }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Civil Status
+                                                        </div>
+                                                        <p
+                                                            class="uppercase"
+                                                            v-if="
+                                                                selectedRow.reviewed_at
+                                                            "
+                                                        >
+                                                            {{
+                                                                selectedRow
+                                                                    .records
+                                                                    ?.previous
+                                                                    ?.contact_no ??
+                                                                "No record"
+                                                            }}
+                                                        </p>
+                                                        <p v-else>
+                                                            {{
+                                                                selectedRow.contactStored ??
+                                                                "No record"
+                                                            }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Address
+                                                        </div>
+                                                        <p>
+                                                            {{
+                                                                selectedRow.fullAddress
+                                                            }}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div
-                                                class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1"
+                                                class="flex-1 flex items-center justify-center"
                                             >
-                                                <div class="leading-none">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Email
-                                                    </div>
-                                                    <p>
-                                                        {{
-                                                            selectedRow.emailStored
-                                                        }}
-                                                    </p>
-                                                </div>
-                                                <div class="leading-none">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Contact No.
-                                                    </div>
-                                                    <p>
-                                                        {{
-                                                            selectedRow.contactStored ??
-                                                            "No data"
-                                                        }}
-                                                    </p>
-                                                </div>
-                                                <div class="">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Civil Status
-                                                    </div>
-                                                    <p class="uppercase">
-                                                        {{
-                                                            selectedRow.civilStored
-                                                        }}
-                                                    </p>
-                                                </div>
-                                                <div class="">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Address
-                                                    </div>
-                                                    <p>
-                                                        {{
-                                                            selectedRow.fullAddress
-                                                        }}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="">
-                                            <div
-                                                class="flex flex-col items-center text-gray-500"
-                                            >
-                                                <IconArrowBigRightLines
-                                                    :size="35"
-                                                />
                                                 <div
-                                                    class="text-xs text-nowrap"
+                                                    class="flex flex-col items-center text-gray-500"
                                                 >
-                                                    Change to
+                                                    <IconArrowBigRightLines
+                                                        :size="35"
+                                                    />
+                                                    <div
+                                                        class="text-xs text-nowrap"
+                                                    >
+                                                        Change to
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="flex flex-col gap-2">
                                             <div
-                                                class="bg-green-50 border-b border-green-200 px-4 py-2 flex items-center gap-2"
+                                                class="flex-2 flex flex-col gap-2"
                                             >
-                                                <IconDatabaseEdit
-                                                    class="text-green-500"
-                                                    :size="18"
-                                                />
+                                                <div
+                                                    class="bg-green-50 border-b border-green-200 px-4 py-2 flex items-center gap-2"
+                                                >
+                                                    <IconDatabaseEdit
+                                                        class="text-green-500"
+                                                        :size="18"
+                                                    />
 
+                                                    <div
+                                                        class="text-sm font-semibold text-green-700"
+                                                    >
+                                                        Requested Changes
+                                                    </div>
+                                                </div>
                                                 <div
-                                                    class="text-sm font-semibold text-green-700"
+                                                    class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1"
                                                 >
-                                                    Requested Changes
-                                                </div>
-                                            </div>
-                                            <div
-                                                class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1"
-                                            >
-                                                <div class="leading-none">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Email
+                                                    <div class="leading-none">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Email
+                                                        </div>
+                                                        <p>
+                                                            {{
+                                                                selectedRow.email
+                                                            }}
+                                                        </p>
                                                     </div>
-                                                    <p>
-                                                        {{ selectedRow.email }}
-                                                    </p>
-                                                </div>
-                                                <div class="leading-none">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Contact No.
+                                                    <div class="leading-none">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Contact No.
+                                                        </div>
+                                                        <p>
+                                                            {{
+                                                                selectedRow.contact_no
+                                                            }}
+                                                        </p>
                                                     </div>
-                                                    <p>
-                                                        {{
-                                                            selectedRow.contact_no
-                                                        }}
-                                                    </p>
-                                                </div>
-                                                <div class="">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Civil Status
+                                                    <div class="">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Civil Status
+                                                        </div>
+                                                        <p>
+                                                            {{
+                                                                selectedRow.civil_status
+                                                            }}
+                                                        </p>
                                                     </div>
-                                                    <p>
-                                                        {{
-                                                            selectedRow.civil_status
-                                                        }}
-                                                    </p>
-                                                </div>
-                                                <div class="">
-                                                    <div
-                                                        class="text-sm text-gray-500 font-light"
-                                                    >
-                                                        Address
+                                                    <div class="">
+                                                        <div
+                                                            class="text-sm text-gray-500 font-light"
+                                                        >
+                                                            Address
+                                                        </div>
+                                                        <p>
+                                                            {{
+                                                                selectedRow.fullAddress
+                                                            }}
+                                                        </p>
                                                     </div>
-                                                    <p>
-                                                        {{
-                                                            selectedRow.fullAddress
-                                                        }}
-                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
+                                        <Divider type="dashed" />
+                                        <div class="flex flex-col w-full gap-2">
+                                            <div
+                                                class="flex items-center gap-1 text-slate-500"
+                                            >
+                                                <IconPaperclip :size="15" />
+                                                <div class="text-xs">
+                                                    Attachment (Optional)
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="flex-1 gap-3 flex justify-between"
+                                                v-if="selectedRow.file_type"
+                                            >
+                                                <div class="flex items-center">
+                                                    <div
+                                                        class="flex items-center gap-1"
+                                                    >
+                                                        <Avatar
+                                                            class="!w-[35px] !h-[35px] border !text-slate-500 border-slate-400 !rounded-xl"
+                                                        >
+                                                            <IconFileTypePdf
+                                                                :size="20"
+                                                            />
+                                                        </Avatar>
+                                                        <div class="text-sm">
+                                                            <div
+                                                                class="text-xs"
+                                                            >
+                                                                File Type
+                                                            </div>
+                                                            <div
+                                                                class="font-medium"
+                                                            >
+                                                                {{
+                                                                    selectedRow.file_type
+                                                                }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    size="small"
+                                                    class="!text-xs !rounded-full"
+                                                    :loading="loading.approve"
+                                                    text
+                                                >
+                                                    <template #default>
+                                                        <div
+                                                            class="flex gap-1 items-center"
+                                                        >
+                                                            <IconEye
+                                                                :stroke-width="
+                                                                    1.5
+                                                                "
+                                                                :size="20"
+                                                            />
+                                                            <p>
+                                                                View uploaded
+                                                                file
+                                                            </p>
+                                                        </div>
+                                                    </template>
+                                                </Button>
+                                            </div>
+                                            <div
+                                                v-else
+                                                class="flex justify-center"
+                                            >
+                                                <div
+                                                    class="flex items-center gap-2 text-gray-500"
+                                                >
+                                                    <IconFileOff :size="20" />
+                                                    <div class="text-sm">
+                                                        No attachment file
+                                                        available.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div></div>
                                     </div>
                                 </template>
                             </Fieldset>
@@ -359,49 +471,84 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-4" v-if="selectedRow">
+                        <div
+                            class="flex flex-col gap-3"
+                            v-if="selectedRow && !selectedRow.requested_at"
+                        >
                             <div class="leading-none">
                                 <label for="remarks" class="text-sm"
                                     >Remarks</label
                                 >
                                 <Textarea
                                     id="remarks"
+                                    class="!text-sm"
+                                    placeholder="Help the user understand why this request was rejected and what needs to be corrected."
                                     fluid
                                     rows="5"
-                                    v-model="selectedRow.remarks"
-                                    :disabled="selectedRow.reviewed_at"
+                                    v-model="selectedRow.reject"
+                                    :disabled="
+                                        selectedRow.reviewed_at ? true : false
+                                    "
                                 />
                             </div>
-
-                            <div class="flex justify-end">
-                                <div class="flex items-center gap-5">
-                                    <Button
-                                        label="Reject Request"
-                                        size="small"
-                                        :disabled="
-                                            selectedRow.reviewed_at
-                                                ? true
-                                                : false
-                                        "
-                                        class="!text-xs !rounded-lg"
-                                        severity="danger"
-                                        outlined
-                                        :loading="loading.reject"
-                                        @click="approveRequest('reject')"
-                                    />
-                                    <Button
-                                        label="Approve Request"
-                                        :disabled="
-                                            selectedRow.reviewed_at
-                                                ? true
-                                                : false
-                                        "
-                                        size="small"
-                                        class="!text-xs !rounded-lg"
-                                        :loading="loading.approve"
-                                        @click="approveRequest('accept')"
-                                        raised
-                                    />
+                            <div class="flex flex-col gap-4">
+                                <div
+                                    class="flex justify-end"
+                                    v-if="!selectedRow.reviewed_at"
+                                >
+                                    <div class="flex items-center mb-3 gap-3">
+                                        <Button
+                                            size="small"
+                                            class="!text-xs !rounded-xl"
+                                            outlined
+                                            :loading="loading.reject"
+                                            severity="danger"
+                                            @click="approveRequest('reject')"
+                                        >
+                                            <template #default>
+                                                <div
+                                                    class="flex gap-1 items-center"
+                                                >
+                                                    <IconCircleXFilled
+                                                        :stroke-width="1.5"
+                                                        :size="20"
+                                                        v-if="!loading.reject"
+                                                    />
+                                                    <IconLoader2
+                                                        v-else
+                                                        :size="20"
+                                                        class="animate-spin"
+                                                    />
+                                                    <p>Reject</p>
+                                                </div>
+                                            </template>
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            class="!text-xs !rounded-xl"
+                                            raised
+                                            :loading="loading.approve"
+                                            @click="approveRequest('accept')"
+                                        >
+                                            <template #default>
+                                                <div
+                                                    class="flex gap-1 items-center"
+                                                >
+                                                    <IconCircleCheckFilled
+                                                        :stroke-width="1.5"
+                                                        :size="20"
+                                                        v-if="!loading.approve"
+                                                    />
+                                                    <IconLoader2
+                                                        v-else
+                                                        :size="20"
+                                                        class="animate-spin"
+                                                    />
+                                                    <p>Accept</p>
+                                                </div>
+                                            </template>
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -424,6 +571,13 @@ import {
     IconArrowBigRightLines,
     IconDatabase,
     IconDatabaseEdit,
+    IconCircleCheckFilled,
+    IconLoader2,
+    IconCircleXFilled,
+    IconFileTypePdf,
+    IconEye,
+    IconUserEdit,
+    IconFileOff,
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";

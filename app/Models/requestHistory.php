@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class requestHistory extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'scholar_id',
         'request_type',
@@ -13,11 +15,12 @@ class requestHistory extends Model
         'changes',
         'created_at',
         'created_by',
+        'request_no',
     ];
 
     protected $casts = [
-        'prevous',
-        'changes',
+        'previous' => 'array',
+        'changes' => 'array',
     ];
 
     public function scholar()

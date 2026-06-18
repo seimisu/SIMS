@@ -212,9 +212,21 @@
                                                         >
                                                             Account Name
                                                         </div>
-                                                        <p>
+                                                        <p
+                                                            v-if="
+                                                                !selectedRow.reviewed_at
+                                                            "
+                                                        >
                                                             {{
-                                                                selectedRow.emailStored ??
+                                                                selectedRow
+                                                                    .record
+                                                                    ?.account_name ??
+                                                                "No record"
+                                                            }}
+                                                        </p>
+                                                        <p v-else>
+                                                            {{
+                                                                selectedRow.nameStored ??
                                                                 "No record"
                                                             }}
                                                         </p>
@@ -225,9 +237,21 @@
                                                         >
                                                             Account No.
                                                         </div>
-                                                        <p>
+                                                        <p
+                                                            v-if="
+                                                                !selectedRow.reviewed_at
+                                                            "
+                                                        >
                                                             {{
-                                                                selectedRow.contactStored ??
+                                                                selectedRow
+                                                                    .record
+                                                                    ?.account_number ??
+                                                                "No record"
+                                                            }}
+                                                        </p>
+                                                        <p v-else>
+                                                            {{
+                                                                selectedRow.noStored ??
                                                                 "No record"
                                                             }}
                                                         </p>
@@ -306,7 +330,7 @@
                                             >
                                                 <IconPaperclip :size="15" />
                                                 <div class="text-xs">
-                                                    Attachment
+                                                    Attachment (Optional)
                                                 </div>
                                             </div>
                                             <div
