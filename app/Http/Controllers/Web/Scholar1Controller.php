@@ -268,7 +268,7 @@ class Scholar1Controller extends Controller
                 'request_cnt' => collect([
                     'landbank' => studentLandbankRequest::where('status', 'pending')->count(),
                     'profile' => StudentProfileRequest::where('status', 'pending')->count(),
-                    'grades' => ,
+                    'grades' => '',
                 ]),
                 'grade_request_cnt' => Str::of(
                     StudentGrade::whereHas('gradeRequests', function ($q) {
