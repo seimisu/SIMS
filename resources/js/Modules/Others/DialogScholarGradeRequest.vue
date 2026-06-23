@@ -471,6 +471,7 @@ const approveRequest = (decision) => {
                     loading.value.reject = false;
                 } else {
                     loading.value.approve = false;
+                    modelValue.value = false;
                 }
             },
         },

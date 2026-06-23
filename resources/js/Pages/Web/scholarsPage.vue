@@ -595,6 +595,7 @@ const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
 const toggleOption = (event, rowData) => {
     selectedRow.value = rowData;
+
     menu.value.toggle(event);
 };
 
@@ -637,6 +638,7 @@ const menuItems = computed((item) => {
             label: "Profile Request",
             icon: TablerIcons.IconUserQuestion,
             class: "text-cyan-500",
+
             command: () => {
                 router.reload({
                     only: ["personalRequest"],
@@ -670,6 +672,7 @@ const menuItems = computed((item) => {
         {
             label: "Subjects & Grades Request",
             icon: TablerIcons.IconId,
+            disabled: selectedRow.value.count.grades == "0" ? true : false,
             class: "text-cyan-500",
             command: () => {
                 router.reload({

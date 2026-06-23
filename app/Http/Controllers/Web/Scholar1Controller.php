@@ -285,7 +285,7 @@ class Scholar1Controller extends Controller
                 'request_cnt' => collect([
                     'landbank' => strval(studentLandbankRequest::where('status', 'pending')->count()),
                     'profile' => strval(StudentProfileRequest::where('status', 'pending')->count()),
-                    'grades' => '',
+                    'grades' => strval(ScholarTerm::where('verification_status', 'submitted')->count()),
                 ]),
                 'grade_request_cnt' => Str::of(
                     StudentGrade::whereHas('gradeRequests', function ($q) {
@@ -362,9 +362,10 @@ class Scholar1Controller extends Controller
                         'count' => [
                             'profile' => (string) $q->profileRequest->where('status', 'pending')->count(),
                             'landbank' => (string) $q->landbankRequest->where('status', 'pending')->count(),
+                            'grades' => (string) $q->termRecords->where('verification_status', 'submitted')->count(),
                         ],
                         'hasRequest' => $q->profileRequest()->where('status', 'pending')->exists()
-                                        || $q->landbankRequest()->where('status', 'pending')->exists(),
+                                        || $q->landbankRequest()->where('status', 'pending')->exists() || $q->termRecords()->where('verification_status', 'submitted')->exists(),
                         'id' => Hashids::encode($q->id),
                         'spas_no' => $q->spas_no,
                         'photo' => $q->profile?->photo,

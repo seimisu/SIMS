@@ -470,7 +470,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div
                             class="flex flex-col gap-3"
                             v-if="selectedRow && !selectedRow.requested_at"
