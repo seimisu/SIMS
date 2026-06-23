@@ -713,690 +713,32 @@
                         v-if="selectedTab.key == 2"
                     >
                         <div
-                            class="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-2"
-                        >
-                            <div class="flex items-center gap-2">
-                                <Avatar
-                                    class="rounded-full !bg-blue-100 !text-blue-500"
-                                    size="small"
-                                >
-                                    <IconScript :size="20" stroke-width="2" />
-                                </Avatar>
-                                <h3 class="text-lg font-bold text-nowrap">
-                                    Transcript of Records
-                                </h3>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <DefaultButton
-                                    :icon="TablerIcons.IconPlus"
-                                    v-if="!createBtn.tr"
-                                    label="Create TOR"
-                                    size="small"
-                                    raised
-                                    class-name="!rounded-xl !px-5"
-                                    @click="createBtn.tr = true"
-                                />
-                                <div class="flex items-center gap-2" v-else>
-                                    <DefaultButton
-                                        :icon="TablerIcons.IconScriptX"
-                                        label="Cancel Create"
-                                        size="small"
-                                        severity="danger"
-                                        @click="createBtn.tr = false"
-                                        outlined
-                                        class-name="!rounded-xl !px-5"
-                                    />
-                                    <DefaultButton
-                                        :icon="TablerIcons.IconScriptPlus"
-                                        @click="storeTor"
-                                        raised
-                                        label="Save TOR"
-                                        size="small"
-                                        class-name="!rounded-xl !px-5"
-                                    />
-                                </div>
-                                <!-- <DefaultButton :icon="TablerIcons.IconTransfer" label="Transfer school" size="small"
-                                    raised class-name="!rounded-xl !px-5" /> -->
-                            </div>
-                        </div>
-
-                        <Panel
-                            class="!rounded-xl"
-                            v-if="createBtn.tr"
-                            :pt="{
-                                header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                            }"
-                        >
-                            <template #header>
-                                <div class="p-2 w-full flex justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <SelectInput
-                                            v-model="torInfo.year"
-                                            @update="checkChangesYearAndTerm"
-                                            class="!w-60"
-                                            placeholder="Year"
-                                            :options="page.props?.yearOptions"
-                                        >
-                                        </SelectInput>
-                                        /
-                                        <SelectInput
-                                            v-model="torInfo.term"
-                                            @update="checkChangesYearAndTerm"
-                                            :options="page.props?.termOptions"
-                                            placeholder="Term"
-                                        >
-                                        </SelectInput>
-                                    </div>
-                                    <div class="">
-                                        <TextInput
-                                            v-model="torInfo.academic_year"
-                                            placeholder="Academic Year"
-                                            size="small"
-                                        >
-                                        </TextInput>
-                                    </div>
-                                </div>
-                            </template>
-                            <template #default>
-                                <div class="w-full flex flex-col pt-5 gap-3">
-                                    <div
-                                        class="flex items-center justify-between"
-                                    >
-                                        <div class="flex flex-col">
-                                            <div class="text-xs">
-                                                {{
-                                                    page.props?.details?.course
-                                                }}
-                                            </div>
-                                            <div>
-                                                {{
-                                                    page.props?.details?.school
-                                                }}
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="flex items-center gap-2"
-                                        ></div>
-                                    </div>
-                                    <table
-                                        class="min-w-full !border-none text-sm"
-                                        v-if="torInfo.term && torInfo.year"
-                                    >
-                                        <thead>
-                                            <tr class="bg-gray-100">
-                                                <th
-                                                    class="px-3 py-2 text-left"
-                                                ></th>
-                                                <th class="px-3 py-2 text-left">
-                                                    Subject Name
-                                                </th>
-                                                <th class="px-3 py-2 text-left">
-                                                    Subject Code
-                                                </th>
-                                                <th
-                                                    class="px-3 py-2 text-right"
-                                                >
-                                                    Unit
-                                                </th>
-                                                <th
-                                                    class="px-3 py-2 text-right"
-                                                >
-                                                    Grades
-                                                </th>
-                                                <th
-                                                    class="px-3 py-2 text-right"
-                                                >
-                                                    Remarks
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr
-                                                v-for="(
-                                                    item, index
-                                                ) in torInfo.subjects"
-                                                :key="index"
-                                                class="hover:bg-gray-50"
-                                            >
-                                                <td class="px-3 py-2">
-                                                    <DefaultButton
-                                                        :icon="
-                                                            TablerIcons.IconTrash
-                                                        "
-                                                        size="small"
-                                                        severity="danger"
-                                                        outlined
-                                                        rounded
-                                                        :icon-size="15"
-                                                        class-name="!p-1"
-                                                        @click="
-                                                            torInfo.subjects.splice(
-                                                                index,
-                                                                1,
-                                                            )
-                                                        "
-                                                    />
-                                                </td>
-                                                <td
-                                                    class="px-3 py-2 uppercase max-w-70"
-                                                >
-                                                    <SelectInput
-                                                        v-model="item.subject"
-                                                        filter
-                                                        :options="
-                                                            page.props
-                                                                ?.subjectOptions
-                                                        "
-                                                        capitalize
-                                                        option-label="name"
-                                                        placeholder="Select subject"
-                                                    >
-                                                    </SelectInput>
-                                                </td>
-                                                <td class="px-3 py-2">
-                                                    {{
-                                                        item.subject?.code ??
-                                                        item.code
-                                                    }}
-                                                </td>
-                                                <td
-                                                    class="px-3 py-2 text-right"
-                                                >
-                                                    {{
-                                                        item.subject?.unit ??
-                                                        item.unit
-                                                    }}
-                                                </td>
-                                                <td
-                                                    class="px-3 py-2 text-right max-w-35"
-                                                >
-                                                    <SelectInput
-                                                        v-model="item.grade"
-                                                        :options="
-                                                            page.props
-                                                                ?.gradeOptions
-                                                        "
-                                                        capitalize
-                                                        option-label="name"
-                                                        placeholder="Select Grade"
-                                                    >
-                                                    </SelectInput>
-                                                </td>
-                                                <td
-                                                    class="px-3 py-2 text-right"
-                                                >
-                                                    <div
-                                                        v-if="
-                                                            item.grade?.is_drop
-                                                        "
-                                                        class="text-red-600"
-                                                    >
-                                                        Dropped
-                                                    </div>
-                                                    <div
-                                                        v-else-if="
-                                                            item.grade
-                                                                ?.is_failed
-                                                        "
-                                                        class="text-rose-600"
-                                                    >
-                                                        Failed
-                                                    </div>
-                                                    <div
-                                                        v-else-if="
-                                                            item.grade
-                                                                ?.is_incomplete
-                                                        "
-                                                        class="text-amber-600"
-                                                    >
-                                                        Incompleted
-                                                    </div>
-                                                    <div
-                                                        v-else-if="
-                                                            item.grade
-                                                                ?.is_active
-                                                        "
-                                                        class="text-green-600"
-                                                    >
-                                                        Passed
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </template>
-                            <template #footer>
-                                <div class="flex w-full justify-between">
-                                    <DefaultButton
-                                        :icon="TablerIcons.IconFileUpload"
-                                        label="Upload TOR"
-                                        size="small"
-                                        severity="warning"
-                                        class-name="!rounded-xl !px-5"
-                                    />
-                                    <DefaultButton
-                                        :icon="TablerIcons.IconBook2"
-                                        @click="addSubject"
-                                        :disabled="
-                                            !torInfo.term || !torInfo.year
-                                        "
-                                        raised
-                                        label="Add Subjects"
-                                        class-name="!rounded-xl !px-5"
-                                        size="small"
-                                    />
-                                </div>
-                            </template>
-                        </Panel>
-                        <div
-                            class="bg-red-200 px-1 rounded-lg py-3"
+                            class="rounded-2xl border border-slate-200 bg-slate-50 p-3"
                             v-if="
-                                parseInt(page.props?.details?.tr_request) > 0 &&
-                                page.props?.details?.requestGrades?.length > 0
+                                page.props?.details?.termGrades?.length > 0
                             "
                         >
                             <div
-                                v-for="(termRecord, index) in page.props
-                                    ?.details?.requestGrades"
-                                class="my-1"
+                                class="mb-3 flex flex-col gap-1 rounded-xl bg-white p-3 text-gray-700 shadow-sm"
                             >
-                                <div
-                                    v-if="index == 0"
-                                    class="flex items-center mb-2 gap-1"
-                                >
-                                    <IconUserExclamation :size="18" />
-                                    <span class="text-sm text-nowrap">
-                                        Scholar Requested for Transcript of
-                                        Records
+                                <div class="flex items-center gap-2">
+                                    <IconHistory :size="18" />
+                                    <span class="text-sm font-semibold">
+                                    Academic Records
                                     </span>
                                 </div>
-                                <Panel
-                                    v-if="
-                                        termRecord.subjects?.length > 0 &&
-                                        termRecord.subjects.some(
-                                            (s) => s.subject?.name,
-                                        )
-                                    "
-                                    class="!rounded-xl"
-                                    :pt="{
-                                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                                    }"
-                                >
-                                    <template #header>
-                                        <div
-                                            class="p-3 w-full flex justify-between"
-                                        >
-                                            <div
-                                                class="flex items-center gap-2 text-md font-medium text-gray-700"
-                                            >
-                                                <IconSchool
-                                                    class="text-gray-500"
-                                                    :size="20"
-                                                />
-                                                <span
-                                                    class="px-2 py-0.5 rounded-md bg-gray-100"
-                                                >
-                                                    {{ termRecord.level.name }}
-                                                </span>
-                                                <IconChevronRight
-                                                    class="w-5 h-5 text-gray-400"
-                                                />
-                                                <span
-                                                    class="px-2 py-0.5 rounded-md bg-gray-100"
-                                                >
-                                                    {{ termRecord.term.name }}
-                                                </span>
-                                            </div>
-                                            <div
-                                                class="flex items-center gap-2 px-2 bg-slate-200 shadow rounded-lg"
-                                            >
-                                                <IconCalendar :size="18" />
-                                                <div>
-                                                    {{
-                                                        termRecord.academic_year
-                                                    }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <template #default>
-                                        <div
-                                            class="w-full flex flex-col pt-5 gap-3"
-                                        >
-                                            <div
-                                                class="flex items-center justify-between"
-                                            >
-                                                <div class="flex flex-col">
-                                                    <div class="text-xs">
-                                                        {{
-                                                            page.props?.details
-                                                                ?.course
-                                                        }}
-                                                    </div>
-                                                    <div>
-                                                        {{
-                                                            page.props?.details
-                                                                ?.school
-                                                        }}
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="flex items-center gap-2"
-                                                >
-                                                    <DefaultButton
-                                                        :icon="
-                                                            TablerIcons.IconFileUpload
-                                                        "
-                                                        label="View Uploaded TOR"
-                                                        size="small"
-                                                        severity="warning"
-                                                        class-name="!rounded-xl !px-5"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <table
-                                                class="min-w-full !border-none text-sm"
-                                            >
-                                                <thead>
-                                                    <tr class="bg-gray-100">
-                                                        <th
-                                                            class="px-3 py-2 rounded-l-xl text-left"
-                                                        >
-                                                            Subject Name
-                                                        </th>
-                                                        <th
-                                                            class="px-3 py-2 text-left"
-                                                        >
-                                                            Subject Code
-                                                        </th>
-                                                        <th
-                                                            class="px-3 py-2 text-right"
-                                                        >
-                                                            Unit
-                                                        </th>
-                                                        <th
-                                                            class="px-3 py-2 text-right"
-                                                        >
-                                                            Grades
-                                                        </th>
-                                                        <th
-                                                            class="px-3 py-2 text-center rounded-r-xl"
-                                                        >
-                                                            Remarks
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr
-                                                        v-for="(
-                                                            item, index
-                                                        ) in termRecord.subjects"
-                                                        :key="index"
-                                                        class="hover:bg-gray-50"
-                                                    >
-                                                        <td
-                                                            class="px-3 py-2 uppercase max-w-70 truncate"
-                                                        >
-                                                            {{
-                                                                item.subject
-                                                                    .name
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2">
-                                                            {{
-                                                                item.subject
-                                                                    ?.code ??
-                                                                item.code
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-3 py-2 text-right"
-                                                        >
-                                                            {{
-                                                                item.subject
-                                                                    ?.unit ??
-                                                                item.unit
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-3 py-2 text-right max-w-35"
-                                                        >
-                                                            {{
-                                                                item.grade.grade
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-3 py-2 text-right"
-                                                        >
-                                                            <div
-                                                                v-if="
-                                                                    item.grade
-                                                                        ?.is_drop
-                                                                "
-                                                                class="text-red-600"
-                                                            >
-                                                                Dropped
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.grade
-                                                                        ?.is_failed
-                                                                "
-                                                                class="text-rose-600"
-                                                            >
-                                                                Failed
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.grade
-                                                                        ?.is_incomplete
-                                                                "
-                                                                class="text-amber-600"
-                                                            >
-                                                                Incompleted
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.grade
-                                                                        ?.is_active
-                                                                "
-                                                                class="text-green-600"
-                                                            >
-                                                                Passed
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                            <!-- Group Action Buttons -->
-                                            <div
-                                                class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200"
-                                            >
-                                                <div>
-                                                    <DefaultButton
-                                                        @click="
-                                                            (e) =>
-                                                                opToggle(
-                                                                    e,
-                                                                    index,
-                                                                )
-                                                        "
-                                                        :icon="
-                                                            TablerIcons.IconX
-                                                        "
-                                                        label="Reject All"
-                                                        severity="danger"
-                                                        :icon-size="15"
-                                                        rounded
-                                                        outlined
-                                                        size="small"
-                                                        class-name="!px-5"
-                                                    />
-                                                    <Popover
-                                                        :ref="
-                                                            (el) =>
-                                                                (opRequest[
-                                                                    index
-                                                                ] = el)
-                                                        "
-                                                    >
-                                                        <div
-                                                            class="w-[26rem] p-1 flex flex-col gap-4"
-                                                        >
-                                                            <!-- Header -->
-                                                            <div
-                                                                class="flex items-start justify-between"
-                                                            >
-                                                                <div>
-                                                                    <h3
-                                                                        class="text-sm font-semibold text-gray-800"
-                                                                    >
-                                                                        Reject
-                                                                        Subject
-                                                                        Request
-                                                                    </h3>
-                                                                    <p
-                                                                        class="text-xs text-gray-500 mt-1"
-                                                                    >
-                                                                        Provide
-                                                                        a reason
-                                                                        for
-                                                                        rejecting
-                                                                        all
-                                                                        subject
-                                                                        requests.
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Divider -->
-                                                            <div
-                                                                class="border-t"
-                                                            ></div>
-
-                                                            <!-- Form -->
-                                                            <div
-                                                                class="flex flex-col gap-2"
-                                                            >
-                                                                <label
-                                                                    class="text-xs font-medium text-gray-600 leading-0"
-                                                                >
-                                                                    Remarks
-                                                                    <span
-                                                                        class="text-red-500"
-                                                                        >*</span
-                                                                    >
-                                                                </label>
-
-                                                                <Textarea
-                                                                    v-model="
-                                                                        validateRequestForm.reason
-                                                                    "
-                                                                    rows="4"
-                                                                    placeholder="Enter your reason here..."
-                                                                    class="w-full !text-sm"
-                                                                    size="small"
-                                                                />
-                                                            </div>
-
-                                                            <!-- Actions -->
-                                                            <div
-                                                                class="flex justify-end gap-2 pt-2"
-                                                            >
-                                                                <DefaultButton
-                                                                    @click="
-                                                                        (e) =>
-                                                                            opToggle(
-                                                                                e,
-                                                                                index,
-                                                                            )
-                                                                    "
-                                                                    label="Cancel"
-                                                                    rounded
-                                                                    outlined
-                                                                    size="small"
-                                                                    class-name="!px-4"
-                                                                />
-
-                                                                <DefaultButton
-                                                                    label="Reject Request"
-                                                                    :icon="
-                                                                        TablerIcons.IconX
-                                                                    "
-                                                                    :loading="
-                                                                        loading.validateReject
-                                                                    "
-                                                                    :disabled="
-                                                                        loading.validateReject
-                                                                    "
-                                                                    @click="
-                                                                        validateRequest(
-                                                                            {
-                                                                                id: termRecord.id,
-                                                                                type: 'reject',
-                                                                            },
-                                                                        )
-                                                                    "
-                                                                    severity="danger"
-                                                                    rounded
-                                                                    size="small"
-                                                                    class-name="!px-5"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </Popover>
-                                                </div>
-
-                                                <DefaultButton
-                                                    @click="
-                                                        validateRequest({
-                                                            id: termRecord.id,
-                                                            type: 'accept',
-                                                        })
-                                                    "
-                                                    label="Approve All"
-                                                    :icon="
-                                                        TablerIcons.IconCheck
-                                                    "
-                                                    :loading="
-                                                        loading.validateReject
-                                                    "
-                                                    :disabled="
-                                                        loading.validateReject
-                                                    "
-                                                    severity="success"
-                                                    :icon-size="15"
-                                                    rounded
-                                                    size="small"
-                                                    class-name="!px-5"
-                                                />
-                                            </div>
-                                        </div>
-                                    </template>
-                                </Panel>
+                                <p class="text-xs text-gray-500">
+                                    Records are arranged from oldest to newest.
+                                    Totals and semester average use academic
+                                    subjects only.
+                                </p>
                             </div>
-                        </div>
-                        <div
-                            class="bg-slate-200 px-1 rounded-lg py-3"
-                            v-if="page.props?.details?.termGrades"
-                        >
                             <div
                                 v-for="(termRecord, index) in page.props
                                     ?.details?.termGrades"
-                                class="my-1"
+                                class="my-3"
                             >
-                                <div
-                                    v-if="index == 0"
-                                    class="flex items-center mb-2 gap-1 text-gray-500"
-                                >
-                                    <IconHistory :size="18" />
-                                    <span class="text-sm text-nowrap">
-                                        Previous Transcript of Records
-                                    </span>
-                                </div>
                                 <Panel
-                                    v-if="termRecord.subjects?.length > 0"
                                     class="!rounded-xl"
                                     :pt="{
                                         header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
@@ -1404,38 +746,91 @@
                                 >
                                     <template #header>
                                         <div
-                                            class="p-3 w-full flex justify-between"
+                                            class="p-3 w-full flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
                                         >
                                             <div
-                                                class="flex items-center gap-2 text-md font-medium text-gray-700"
+                                                class="flex items-center gap-3 text-md font-medium text-gray-700"
                                             >
                                                 <IconSchool
                                                     class="text-gray-500"
                                                     :size="20"
                                                 />
                                                 <span
-                                                    class="px-2 py-0.5 rounded-md bg-gray-100"
+                                                    class="px-2 py-0.5 rounded-md bg-slate-200"
                                                 >
-                                                    {{ termRecord.level.name }}
-                                                </span>
-                                                <IconChevronRight
-                                                    class="w-5 h-5 text-gray-400"
-                                                />
-                                                <span
-                                                    class="px-2 py-0.5 rounded-md bg-gray-100"
-                                                >
-                                                    {{ termRecord.term.name }}
-                                                </span>
-                                            </div>
-                                            <div
-                                                class="flex items-center gap-2 px-2 bg-slate-200 shadow rounded-lg"
-                                            >
-                                                <IconCalendar :size="18" />
-                                                <div>
                                                     {{
                                                         termRecord.academic_year
                                                     }}
-                                                </div>
+                                                </span>
+                                                <span
+                                                    class="px-2 py-0.5 rounded-md bg-gray-100"
+                                                >
+                                                    {{
+                                                        termRecord.term
+                                                            ?.name ?? "Term"
+                                                    }}
+                                                </span>
+                                            </div>
+                                            <div
+                                                class="flex flex-wrap items-center gap-2 lg:justify-end"
+                                            >
+                                                <span
+                                                    class="text-xs font-semibold uppercase text-gray-400"
+                                                >
+                                                    Documents
+                                                </span>
+                                                <a
+                                                    v-if="
+                                                        termRecord.documents
+                                                            ?.cor
+                                                    "
+                                                    :href="
+                                                        `/${termRecord.documents.cor.file_path}`.replace(
+                                                            '//',
+                                                            '/',
+                                                        )
+                                                    "
+                                                    target="_blank"
+                                                    class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                >
+                                                    COR:
+                                                    {{
+                                                        termRecord.documents
+                                                            .cor.file_name
+                                                    }}
+                                                </a>
+                                                <a
+                                                    v-if="
+                                                        termRecord.documents
+                                                            ?.grades_proof
+                                                    "
+                                                    :href="
+                                                        `/${termRecord.documents.grades_proof.file_path}`.replace(
+                                                            '//',
+                                                            '/',
+                                                        )
+                                                    "
+                                                    target="_blank"
+                                                    class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                >
+                                                    Proof:
+                                                    {{
+                                                        termRecord.documents
+                                                            .grades_proof
+                                                            .file_name
+                                                    }}
+                                                </a>
+                                                <span
+                                                    v-if="
+                                                        !termRecord.documents
+                                                            ?.cor &&
+                                                        !termRecord.documents
+                                                            ?.grades_proof
+                                                    "
+                                                    class="rounded-lg bg-gray-100 px-2 py-1 text-xs text-gray-500"
+                                                >
+                                                    No attached documents
+                                                </span>
                                             </div>
                                         </div>
                                     </template>
@@ -1490,6 +885,11 @@
                                                             Grades
                                                         </th>
                                                         <th
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            Total
+                                                        </th>
+                                                        <th
                                                             class="px-3 py-2 text-center rounded-r-xl"
                                                         >
                                                             Remarks
@@ -1497,6 +897,24 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
+                                                    <tr
+                                                        v-if="
+                                                            !termRecord
+                                                                .subjects
+                                                                ?.length
+                                                        "
+                                                    >
+                                                        <td
+                                                            colspan="6"
+                                                            class="px-3 py-6 text-center text-gray-500"
+                                                        >
+                                                            Approved academic
+                                                            record found, but
+                                                            no subjects are
+                                                            loaded for this
+                                                            term yet.
+                                                        </td>
+                                                    </tr>
                                                     <tr
                                                         v-for="(
                                                             item, index
@@ -1536,6 +954,14 @@
                                                                     ?.grade ??
                                                                 item.grade
                                                                     ?.grade
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            {{
+                                                                item.total ??
+                                                                "-"
                                                             }}
                                                         </td>
                                                         <td
@@ -1614,6 +1040,46 @@
                                                                 Passed
                                                             </div>
                                                         </td>
+                                                    </tr>
+                                                    <tr
+                                                        v-if="
+                                                            termRecord.subjects
+                                                                ?.length
+                                                        "
+                                                        class="bg-blue-50 font-semibold text-gray-700"
+                                                    >
+                                                        <td
+                                                            class="px-3 py-2"
+                                                            colspan="2"
+                                                        >
+                                                            Semester Average
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            {{
+                                                                termRecord
+                                                                    .summary
+                                                                    ?.units ??
+                                                                0
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2"
+                                                        ></td>
+                                                        <td
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            {{
+                                                                termRecord
+                                                                    .summary
+                                                                    ?.average ??
+                                                                "-"
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2"
+                                                        ></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -1783,15 +1249,6 @@
                                             </div>
                                         </div>
                                     </template>
-                                    <!-- <template #footer>
-                                    <div class="flex w-full justify-between">
-                                        <DefaultButton :icon="TablerIcons.IconFileUpload" label="Upload TOR"
-                                            size="small" severity="warning" class-name="!rounded-xl !px-5" />
-                                        <DefaultButton :icon="TablerIcons.IconBook2" @click="addSubject"
-                                            :disabled="!torInfo.term || !torInfo.year" raised label="Add Subjects"
-                                            class-name="!rounded-xl !px-5" size="small" />
-                                    </div>
-                                </template> -->
                                 </Panel>
                             </div>
                         </div>
@@ -1817,8 +1274,6 @@ import {
     IconScript,
     IconExclamationCircleFilled,
     IconHistory,
-    IconUserExclamation,
-    IconChevronRight,
 } from "@tabler/icons-vue";
 
 import { ref, watch } from "vue";
@@ -1870,12 +1325,6 @@ const loading = ref({
     transferSubmit: false,
 });
 
-const torInfo = useForm({
-    term: null,
-    year: null,
-    academic_year: null,
-    subjects: [],
-});
 
 const personalInfo = useForm({
     schoolId: null,
@@ -1919,11 +1368,8 @@ const tabs = ref([
         separator: true,
     },
     {
-        label: "Transcript of Records",
+        label: "Academic Records",
         icon: "IconScript",
-        badge:
-            parseInt(page.props?.details?.tr_request) +
-            parseInt(page.props?.details?.grade_request),
         key: 2,
     },
     {
@@ -1948,12 +1394,6 @@ const tabs = ref([
     },
 ]);
 
-const addSubject = () => {
-    torInfo.subjects.push({
-        subject: null,
-        grade: null,
-    });
-};
 
 const changeMenu = (item) => {
     selectedTab.value = item;
@@ -2081,35 +1521,6 @@ const validateGradeRequest = (data) => {
     }
 };
 
-const storeTor = () => {
-    torInfo.post(
-        route("scholars.update", {
-            id: page.props?.details.id,
-            type: "grades",
-        }),
-        {
-            onSuccess: () => {
-                toast.add({
-                    severity: page.props.flash?.status,
-                    summary: page.props.flash?.title,
-                    detail: page.props.flash?.message,
-                    life: 3000,
-                });
-                if (page.props.flash?.status == "success") {
-                    createBtn.value.tr = false;
-                }
-            },
-            onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to save grade record.",
-                    life: 3000,
-                });
-            },
-        },
-    );
-};
 
 const storePersonalInfo = async () => {
     loading.value.storePersonalInfo = true;
@@ -2144,19 +1555,6 @@ const storePersonalInfo = async () => {
     );
 };
 
-const checkChangesYearAndTerm = () => {
-    if (!torInfo.year || !torInfo.term) return;
-
-    router.reload({
-        preserveState: true,
-        preserveScroll: true,
-        only: ["generateSubjects", "subjectOptions", "gradeOptions"],
-        data: {
-            year: torInfo.year.number,
-            term: torInfo.term.id,
-        },
-    });
-};
 
 watch(
     () => page.props?.details,
@@ -2277,20 +1675,4 @@ const cancelEdit = () => {
     });
 };
 
-watch(
-    () => page.props?.generateSubjects,
-    (newVal) => {
-        if (!newVal) return;
-        torInfo.subjects = newVal.map((item) => ({
-            subject: {
-                id: item.id,
-                name: item.name,
-                code: item.code,
-                unit: item.unit,
-            },
-            grade: [],
-        }));
-    },
-    { immediate: true },
-);
 </script>
