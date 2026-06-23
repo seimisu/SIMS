@@ -466,8 +466,8 @@ class Scholar1Controller extends Controller
                                         'unit' => $subject->subject->unit,
                                         'grade' => $subject->grade,
                                         'total' => $subject->subject->subject_class === 'Academic'
-    ? ((float) $subject->grade?->grade * (float) $subject->grade?->unit)
-    : null,
+    ? ((float) $subject->grade?->grade * (int) $subject->grade?->unit)
+    : 0,
                                     ];
                                 }),
 
