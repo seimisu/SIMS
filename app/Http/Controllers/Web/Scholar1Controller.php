@@ -1267,7 +1267,7 @@ class Scholar1Controller extends Controller
         if ($type == 'accept') {
 
             // Capture previous values BEFORE update
-            $term = ScholarTerm::findOrFail($data['id']);
+            $term = ScholarTerm::findOrFail($data[0]['id']);
 
             $term->update([
                 'verification_status' => 'approved',
