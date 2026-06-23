@@ -123,7 +123,13 @@
                                     </Column>
                                     <Column header="Account No" field="account_no" />
                                     <Column header="Program" field="program" />
-                                    <Column header="University" field="university" />
+                                    <Column header="University" field="university">
+                                        <template #body="props">
+                                            <div class="min-w-56">
+                                                {{ props.data.university || "N/A" }}
+                                            </div>
+                                        </template>
+                                    </Column>
                                     <Column header="Status" field="status" />
 
                                     <template #empty>
@@ -200,7 +206,7 @@
                                             outlined
                                             :icon="IconX"
                                             :loading="statusForm.processing"
-                                            @click="updateBatchStatus('rejected_payroll')"
+                                            @click="openRejectDialog"
                                         />
                                         <DefaultButton
                                             v-if="details?.status === 'submitted_payroll'"
@@ -212,6 +218,26 @@
                                             :loading="statusForm.processing"
                                             @click="updateBatchStatus('approved_payroll')"
                                         />
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="details?.status === 'rejected_payroll' && details?.remarks"
+                                    class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                                >
+                                    <div class="font-semibold">Rejection Remarks</div>
+                                    <div class="mt-1 whitespace-pre-line text-xs leading-5">
+                                        {{ details.remarks }}
+                                    </div>
+                                    <div
+                                        v-if="details?.remarks_by || details?.remarks_at"
+                                        class="mt-1 text-[11px] text-red-500"
+                                    >
+                                        {{ details.remarks_by }}
+                                        <span v-if="details?.remarks_by && details?.remarks_at">
+                                            |
+                                        </span>
+                                        {{ details.remarks_at }}
                                     </div>
                                 </div>
 
@@ -353,6 +379,46 @@
             </div>
         </template>
     </Drawer>
+
+    <Dialog
+        v-model:visible="rejectDialog"
+        modal
+        header="Reject Payroll"
+        :style="{ width: '32rem' }"
+    >
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium" for="reject-remarks">Remarks</label>
+            <Textarea
+                id="reject-remarks"
+                v-model="rejectRemarks"
+                rows="5"
+                class="w-full !text-sm"
+                placeholder="Explain why this payroll is rejected."
+                autoResize
+            />
+            <small v-if="rejectRemarksError" class="text-red-500">
+                Remarks are required when rejecting a payroll.
+            </small>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="Cancel"
+                severity="secondary"
+                outlined
+                @click="rejectDialog = false"
+            />
+            <DefaultButton
+                size="small"
+                label="Reject"
+                severity="danger"
+                :icon="IconX"
+                :loading="statusForm.processing"
+                @click="submitReject"
+            />
+        </template>
+    </Dialog>
 </template>
 
 <script setup>
@@ -385,6 +451,9 @@ const payrollSearch = ref(null);
 const payrollProgram = ref(null);
 const payrollUniversity = ref(null);
 const payrollStatus = ref(null);
+const rejectDialog = ref(false);
+const rejectRemarks = ref("");
+const rejectRemarksError = ref(false);
 
 const details = computed(() => page.props.details);
 const eligibleScholars = computed(
@@ -533,10 +602,10 @@ const addSelectedScholars = () => {
     });
 };
 
-const savePayroll = () => {
-    if (!details.value?.id) return;
+const buildPayrollRecipients = async () => {
+    await nextTick();
 
-    payrollForm.recipients = payrollRows.value.map((row) => ({
+    return payrollRows.value.map((row) => ({
         id: row.id,
         account_no: row.account_no,
         scholarship_status: row.scholarship_status,
@@ -551,10 +620,23 @@ const savePayroll = () => {
         learning_materials_amount: row.learning_materials_amount ?? 0,
         clothing_amount: row.clothing_amount ?? 0,
     }));
+};
 
+const savePayroll = async (onSuccess = null) => {
+    if (!details.value?.id) return;
+
+    payrollForm.recipients = await buildPayrollRecipients();
+    payrollForm.clearErrors();
     payrollForm.put(route("stipends.payroll.update", details.value.id), {
         preserveScroll: true,
-        onSuccess: () => reloadBatch(),
+        onSuccess: () => {
+            if (onSuccess) {
+                onSuccess();
+                return;
+            }
+
+            reloadBatch();
+        },
     });
 };
 
@@ -571,13 +653,39 @@ const removeRecipient = (row) => {
     });
 };
 
-const updateBatchStatus = (status) => {
+const openRejectDialog = () => {
+    rejectRemarks.value = "";
+    rejectRemarksError.value = false;
+    rejectDialog.value = true;
+};
+
+const submitReject = () => {
+    if (!rejectRemarks.value?.trim()) {
+        rejectRemarksError.value = true;
+        return;
+    }
+
+    rejectRemarksError.value = false;
+    updateBatchStatus("rejected_payroll", false, rejectRemarks.value.trim());
+};
+
+const updateBatchStatus = async (status, shouldSaveFirst = true, remarks = null) => {
     if (!details.value?.id) return;
 
+    if (status === "submitted_payroll" && isEditable.value && shouldSaveFirst) {
+        savePayroll(() => updateBatchStatus(status, false));
+        return;
+    }
+
     statusForm.status = status;
+    statusForm.remarks = remarks;
     statusForm.put(route("stipends.update", { id: details.value.id, type: "status" }), {
         preserveScroll: true,
-        onSuccess: () => reloadBatch(),
+        onSuccess: () => {
+            rejectDialog.value = false;
+            rejectRemarks.value = "";
+            reloadBatch();
+        },
     });
 };
 
@@ -589,9 +697,9 @@ const rowTotal = (row) => {
 
     return (
         stipend +
+        Number(row.total_withheld ?? 0) +
         Number(row.learning_materials_amount ?? 0) +
-        Number(row.clothing_amount ?? 0) -
-        Number(row.total_withheld ?? 0)
+        Number(row.clothing_amount ?? 0)
     );
 };
 

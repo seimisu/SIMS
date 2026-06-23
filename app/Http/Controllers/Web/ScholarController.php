@@ -773,6 +773,9 @@ class ScholarController extends Controller
 
                     'status_id' => ListStatuses::whereRaw('LOWER(name) = ?', [strtolower(trim($data['status']))])
                         ->value('id') ?? null,
+                    'academic_status' => in_array(trim($data['status'] ?? ''), ['Ongoing', 'Graduating', 'Graduated', 'LOA', 'Terminated'], true)
+                        ? trim($data['status'])
+                        : 'Ongoing',
                     'created_by' => Auth::user()->profile->fullname,
                     'award_year' => $data['year_awarded'],
                 ]);
