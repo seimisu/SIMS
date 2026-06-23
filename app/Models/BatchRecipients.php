@@ -50,4 +50,9 @@ class BatchRecipients extends Model
     {
         return $this->hasMany(RecipientWithheld::class, 'recipient_id');
     }
+
+    public function allowances()
+    {
+        return $this->hasMany(RecipientAllowance::class, 'recipient_id');
+    }
 }
