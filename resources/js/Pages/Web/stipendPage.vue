@@ -269,11 +269,7 @@ const submitForm = () => {
     v$.value.$validate();
 
     if (!v$.value.$error) {
-        form.post(route("stipends.store"), {
-            onSuccess: () => {
-                toastRef.value.show(page.props.flash);
-            },
-        });
+        form.post(route("stipends.store"));
     }
 };
 
@@ -295,7 +291,6 @@ const deleteBatch = (event, batch) => {
     deleteForm.delete(route("stipends.destroy", { id: batch.id, type: "batch" }), {
         preserveScroll: true,
         onSuccess: () => {
-            toastRef.value.show(page.props.flash);
             loadPage(page.props.batches.current_page);
         },
         onFinish: () => {

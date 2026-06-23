@@ -610,7 +610,11 @@ class Scholar1Controller extends Controller
                                 $q?->profile?->suffix,
                             ])->filter()->implode(' ')),
 
-                            'status' => $this->academicStatusMeta($q?->academic_status),
+                            'academic_status' => $q?->academic_status ?? 'Ongoing',
+                            'status' => [
+                                'id' => $q?->academic_status ?? 'Ongoing',
+                                'name' => $q?->academic_status ?? 'Ongoing',
+                            ],
                             'address' => [
                                 'address' => $q?->address?->address,
                                 'province' => $q?->address?->province_array,
