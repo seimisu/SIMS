@@ -30,6 +30,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -535,7 +536,7 @@ class Scholar1Controller extends Controller
                                     ->latest()
                                     ->limit(1),
                                 'termRecords' => fn ($q) => $q
-                                    ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id')
+                                    ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id', 'verification_status')
                                     ->with([
                                         'requests' => fn ($q) => $q
                                             ->select('id', 'spas_no', 'term_record_id', 'status', 'requested_at', 'updated_at', 'updated_by', 'remarks')
@@ -543,6 +544,7 @@ class Scholar1Controller extends Controller
                                                 'subjectRequests.subject:id,name,year,subject_code,unit,subject_class,semester_id',
                                             ]),
                                         'termType:id,name',
+                                        'term:id,name',
                                         'level:id,name,others',
                                         'subjects' => fn ($q) => $q
                                             ->select('id', 'term_record_id', 'subject_id', 'grade_id')
@@ -628,51 +630,111 @@ class Scholar1Controller extends Controller
                                 'date_issue' => $q?->parent?->id_date,
 
                             ],
-                            'termGrades' => $q?->termRecords->sortBy([
-                                fn ($term) => $term?->level?->others,
-                                fn ($term) => $term?->term?->name,
+                            'termGrades' => (function () use ($q) {
+                                $approvedTerms = $q?->termRecords
+                                    ->filter(fn ($term) => in_array($term->verification_status, ['approved', 'approved_payroll'], true))
+                                    ->sortBy(function ($term) {
+                                        $academicYearStart = (int) explode('-', (string) $term?->academic_year)[0];
+                                        $termName = strtolower((string) $term?->term?->name);
+                                        $termSequence = match (true) {
+                                            str_contains($termName, 'first') || str_contains($termName, '1st') => 1,
+                                            str_contains($termName, 'second') || str_contains($termName, '2nd') => 2,
+                                            str_contains($termName, 'third') || str_contains($termName, '3rd') => 3,
+                                            str_contains($termName, 'fourth') || str_contains($termName, '4th') => 4,
+                                            str_contains($termName, 'summer') || str_contains($termName, 'midyear') || str_contains($termName, 'mid-year') => 5,
+                                            default => (int) $term?->term_id,
+                                        };
 
-                            ])->values()->map(function ($term) {
-                                return [
-                                    'id' => $term->id,
-                                    'term' => $term->id
-                                        ? $term->only('id', 'name')
-                                        : null,
-                                    'level' => $term?->level ? $term?->level?->only('id', 'name', 'others') : null,
-                                    'academic_year' => $term->academic_year,
-                                    'gradeRequest' => $term->gradeRequests->isNotEmpty(),
-                                    'subjects' => $term->subjects->map(function ($sub) {
+                                        return sprintf('%04d-%02d-%010d', $academicYearStart, $termSequence, $term?->id);
+                                    })
+                                    ->values() ?? collect();
+
+                                $gradeRows = ScholarSchoolGrades::with([
+                                    'subject:id,name,subject_code,unit,subject_class',
+                                    'grade:id,grade,is_failed,is_incomplete,is_drop,is_active',
+                                ])
+                                    ->whereIn('term_record_id', $approvedTerms->pluck('id'))
+                                    ->where('is_deleted', false)
+                                    ->orderBy('id')
+                                    ->get()
+                                    ->groupBy('term_record_id');
+
+                                $documents = DB::connection('scholars')
+                                    ->table('student_documents')
+                                    ->select('term', 'document_type', 'file_name', 'file_path', 'uploaded_at')
+                                    ->where('spas_no', $q?->spas_no)
+                                    ->whereIn('term', $approvedTerms->pluck('id'))
+                                    ->orderByDesc('uploaded_at')
+                                    ->get()
+                                    ->groupBy('term')
+                                    ->map(fn ($docs) => $docs->unique('document_type')->keyBy('document_type'));
+
+                                return $approvedTerms->map(function ($term, $termIndex) use ($gradeRows, $documents) {
+                                    $subjects = $gradeRows->get($term->id, collect())->map(function ($gradeRow) {
+                                        $unit = (float) ($gradeRow->subject?->unit ?? 0);
+                                        $grade = is_numeric($gradeRow->grade?->grade) ? (float) $gradeRow->grade?->grade : null;
+                                        $isAcademic = strtoupper((string) $gradeRow->subject?->subject_class) === 'ACADEMIC';
+
                                         return [
                                             'subject' => [
-                                                'id' => $sub->id,
-                                                'name' => $sub->subject?->name,
-                                                'code' => $sub->subject?->subject_code,
-                                                'unit' => $sub->subject?->unit,
+                                                'id' => $gradeRow->subject?->id,
+                                                'name' => $gradeRow->subject?->name,
+                                                'code' => $gradeRow->subject?->subject_code,
+                                                'unit' => $gradeRow->subject?->unit,
+                                                'class' => $gradeRow->subject?->subject_class,
                                             ],
                                             'grade' => [
-                                                'id' => $sub->grade?->id,
-                                                'grade' => $sub->grade?->grade,
-                                                'is_failed' => $sub->grade?->is_failed,
-                                                'is_incomplete' => $sub->grade?->is_incomplete,
-                                                'is_drop' => $sub->grade?->is_drop,
-                                                'is_active' => $sub->grade?->is_active,
+                                                'id' => $gradeRow->grade?->id,
+                                                'grade' => $gradeRow->grade?->grade,
+                                                'is_failed' => $gradeRow->grade?->is_failed,
+                                                'is_incomplete' => $gradeRow->grade?->is_incomplete,
+                                                'is_drop' => $gradeRow->grade?->is_drop,
+                                                'is_active' => $gradeRow->grade?->is_active,
                                             ],
-                                            'request' => (function () use ($sub) {
-                                                $gradeRequest = $sub->gradeRequests()->where('status', 'submitted')->first();
-
-                                                return [
-                                                    'id' => $gradeRequest?->id,
-                                                    'grade' => $gradeRequest?->grade?->grade,
-                                                    'is_failed' => $gradeRequest?->grade?->is_failed,
-                                                    'is_incomplete' => $gradeRequest?->grade?->is_incomplete,
-                                                    'is_drop' => $gradeRequest?->grade?->is_drop,
-                                                    'is_active' => $gradeRequest?->grade?->is_active,
-                                                ];
-                                            }),
+                                            'request' => null,
+                                            'total' => $isAcademic && $grade !== null ? round($unit * $grade, 2) : null,
                                         ];
-                                    }),
-                                ];
-                            }),
+                                    })->values();
+                                    $summary = $subjects->reduce(function ($carry, $item) {
+                                        if ($item['total'] === null) {
+                                            return $carry;
+                                        }
+
+                                        $carry['units'] += (float) ($item['subject']['unit'] ?? 0);
+                                        $carry['total'] += (float) $item['total'];
+
+                                        return $carry;
+                                    }, ['units' => 0, 'total' => 0]);
+                                    $termDocuments = $documents->get($term->id, collect());
+
+                                    return [
+                                        'id' => $term->id,
+                                        'term' => $term?->term
+                                            ? $term?->term?->only('id', 'name')
+                                            : null,
+                                        'level' => $term?->level
+                                            ? $term?->level?->only('id', 'name', 'others')
+                                            : [
+                                                'id' => null,
+                                                'name' => 'Year '.($termIndex + 1),
+                                                'others' => $termIndex + 1,
+                                            ],
+                                        'academic_year' => $term->academic_year,
+                                        'verification_status' => $term->verification_status,
+                                        'gradeRequest' => false,
+                                        'documents' => [
+                                            'cor' => $termDocuments->get('cor'),
+                                            'grades_proof' => $termDocuments->get('grades_proof'),
+                                        ],
+                                        'summary' => [
+                                            'units' => $summary['units'],
+                                            'total' => round($summary['total'], 2),
+                                            'average' => $summary['units'] > 0 ? round($summary['total'] / $summary['units'], 2) : null,
+                                        ],
+                                        'subjects' => $subjects,
+                                    ];
+                                });
+                            })(),
                             'requestGrades' => $q->termRecords
                                 ->map(function ($term) {
                                     return [
@@ -851,54 +913,6 @@ class Scholar1Controller extends Controller
                         'status' => 'success',
                         'title' => 'Scholar Updated',
                         'message' => 'Scholar information successfully updated.',
-                    ],
-                ]);
-            }
-            if ($type == 'grades') {
-
-                $data = $request->validate([
-                    'school' => 'nullable',
-                    'course' => 'nullable',
-                    'term' => 'required',
-                    'year' => 'required',
-                    'academic_year' => 'required',
-                    'subjects' => 'required',
-                    'subjects.*.grade' => 'required',
-                    'subjects.*.subject' => 'required',
-                ]);
-
-                $termRecord = $scholar->termRecords()->updateOrCreate(
-                    [
-                        'term_id' => $data['term']['id'],
-                        'level_id' => $data['year']['id'],
-                        'academic_year' => $data['academic_year'],
-                    ],
-                    [
-                        'scholar_school_id' => $scholar->schoolInfo->first()?->id,
-                        'term_type_id' => $scholar->schoolInfo->first()->campus->term?->id ?? null,
-                        'level_id' => $data['year']['id'] ?? null,
-                        'term_id' => $data['term']['id'] ?? null,
-                        'academic_year' => $data['academic_year'] ?? null,
-                    ]
-                );
-                foreach ($data['subjects'] as $key => $value) {
-                    $termRecord->subjects()->updateOrCreate(
-                        [
-                            'subject_id' => $value['subject']['id'],
-                            'grade_id' => $value['grade']['id'],
-                        ],
-                        [
-                            'grade_id' => $value['grade']['id'],
-                            'remarks' => 'created by system',
-                        ]
-                    );
-                }
-
-                return redirect()->back()->with([
-                    'flash' => [
-                        'status' => 'success',
-                        'title' => 'Grade Saved',
-                        'message' => 'Grade record saved successfully.',
                     ],
                 ]);
             }
