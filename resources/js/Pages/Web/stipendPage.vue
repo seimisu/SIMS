@@ -42,14 +42,6 @@
                                 :errorMark="v$.term.$error"
                                 :tooltip="v$.term.$errors[0]?.$message"
                             />
-                            <SelectInput
-                                v-model="form.level"
-                                label="Year Level"
-                                :options="page.props.levelOptions"
-                                :clearable="true"
-                                :errorMark="v$.level.$error"
-                                :tooltip="v$.level.$errors[0]?.$message"
-                            />
                             <TextInput
                                 v-model="form.academic_year"
                                 label="Academic year"
@@ -104,11 +96,11 @@
                                 <span class="font-medium">{{
                                     props.data.term
                                 }}</span>
-                                <span class="text-gray-400">/</span>
-                                <span class="text-gray-600">{{
+                                <span v-if="props.data.level" class="text-gray-400">/</span>
+                                <span v-if="props.data.level" class="text-gray-600">{{
                                     props.data.level
                                 }}</span>
-                                <span class="text-gray-400">/</span>
+                                <span v-if="props.data.level" class="text-gray-400">/</span>
                                 <span class="text-gray-600">{{
                                     props.data.sy
                                 }}</span>
@@ -221,7 +213,6 @@ const form = useForm({
     region: page.props.user.profile.agency_array ?? null,
     academic_year: null,
     term: null,
-    level: null,
     batch: null,
 });
 const deleteForm = useForm({});
@@ -260,9 +251,6 @@ const rules = computed(() => ({
     },
     term: {
         required: helpers.withMessage("Term is required", required),
-    },
-    level: {
-        required: helpers.withMessage("Year level is required", required),
     },
     batch: { required: helpers.withMessage("Batch is required", required) },
 }));

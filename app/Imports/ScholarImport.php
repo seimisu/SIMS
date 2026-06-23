@@ -67,6 +67,9 @@ class ScholarImport implements OnEachRow, WithHeadingRow, WithStartRow, SkipsEmp
                 'program_id'  => ListPrograms::where('name', trim($data['scholarship_subprogram']))->value('id') ?? null,
                 'category_id' =>  ListReferences::where('name', trim($data['scholarship_program']))->value('id') ?? null,
                 'status_id'   => ListStatuses::where('name', trim($data['status']))->value('id') ?? null,
+                'academic_status' => in_array(trim($data['status'] ?? ''), ['Ongoing', 'Graduating', 'Graduated', 'LOA', 'Terminated'], true)
+                    ? trim($data['status'])
+                    : 'Ongoing',
                 'created_by'  => Auth::user()->profile->fullname,
                 'award_year' => $data['year_award']
             ]);

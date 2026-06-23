@@ -9,6 +9,7 @@ class Scholars extends Model
     protected $fillable = [
         'spas_no',
         'status_id',
+        'academic_status',
         'program_id',
         'type_id',
         'category_id',

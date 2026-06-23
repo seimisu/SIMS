@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Mail\activationLinkMail;
 use App\Models\ListPrograms;
 use App\Models\ListReferences;
-use App\Models\ListStatuses;
 use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
@@ -39,6 +38,37 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class Scholar1Controller extends Controller
 {
+    private function academicStatusMeta(?string $status): array
+    {
+        $status = $status ?: 'Ongoing';
+
+        return [
+            'id' => $status,
+            'name' => $status,
+            'bcolor' => match ($status) {
+                'Graduating' => 'bg-blue-100',
+                'Graduated' => 'bg-green-100',
+                'LOA' => 'bg-amber-100',
+                'Terminated' => 'bg-red-100',
+                default => 'bg-slate-100',
+            },
+            'tcolor' => match ($status) {
+                'Graduating' => 'text-blue-600',
+                'Graduated' => 'text-green-600',
+                'LOA' => 'text-amber-600',
+                'Terminated' => 'text-red-600',
+                default => 'text-slate-600',
+            },
+            'icon' => match ($status) {
+                'Graduating' => 'IconSchool',
+                'Graduated' => 'IconRosetteDiscountCheck',
+                'LOA' => 'IconClockPause',
+                'Terminated' => 'IconCircleX',
+                default => 'IconProgressCheck',
+            },
+        ];
+    }
+
     public function index(Request $request, LocationClass $location)
     {
         $schoolFilter = Inertia::optional(
@@ -94,34 +124,15 @@ class Scholar1Controller extends Controller
                 ->values()
         );
 
-        $statusFilter = Inertia::optional(
-            fn () => Scholars::with([
-                'status:id,name',
+        $academicStatusOptions = collect(['Ongoing', 'Graduating', 'Graduated', 'LOA', 'Terminated'])
+            ->map(fn ($status) => [
+                'id' => $status,
+                'name' => $status,
             ])
-                ->get()
-                ->map(function ($q) {
-                    return [
-                        'id' => $q->status->id,
-                        'name' => $q->status->name,
-                    ];
-                })
-                ->filter()
-                ->unique('id')
-                ->values()
-        );
+            ->values();
 
-        $statusOptions = $request->input('id') ? ListStatuses::where('type', 'progress')
-            ->where('is_active', true)
-            ->where('is_delete', false)
-            ->get()->map(function ($q) {
-                return [
-                    'id' => $q->id,
-                    'name' => $q->name,
-                    'icon' => $q->icon,
-                    'bcolor' => $q->color?->background_color,
-                    'tcolor' => $q->color?->text_color,
-                ];
-            }) : null;
+        $statusFilter = Inertia::optional(fn () => $academicStatusOptions);
+        $statusOptions = $request->input('id') ? $academicStatusOptions : null;
 
         $programOptions = $request->input('id') ? ListPrograms::where('is_active', true)
             ->whereIn('name', ['RA 7687', 'RA 10612', 'MERIT'])
@@ -285,6 +296,7 @@ class Scholar1Controller extends Controller
                     'scholars.id',
                     'scholars.spas_no',
                     'scholars.status_id',
+                    'scholars.academic_status',
                     'scholars.program_id',
                     'scholars.category_id',
                     'scholars.type_id',
@@ -336,7 +348,7 @@ class Scholar1Controller extends Controller
                         $q->whereHas('type', fn ($w) => $w->whereIn('name', $sub));
                     })
                     ->when($request->input('status'), function ($q, $status) {
-                        $q->whereHas('status', fn ($w) => $w->whereIn('name', $status));
+                        $q->whereIn('academic_status', $status);
                     })
                     ->when($request->input('profileRequest'), function ($q) use ($profileRequestIds) {
                         $q->whereIn('spas_no', $profileRequestIds);
@@ -370,12 +382,7 @@ class Scholar1Controller extends Controller
                         'type' => $q->type?->name,
                         'subProgram' => $q->program?->name,
                         'mainProgram' => $q->mainProgram?->name,
-                        'status' => [
-                            'name' => Str::ucfirst($q->status?->name),
-                            'bcolor' => $q->status?->color?->background_color,
-                            'tcolor' => $q->status?->color?->text_color,
-                            'icon' => $q->status?->icon,
-                        ],
+                        'status' => $this->academicStatusMeta($q->academic_status),
                         'course' => $q->schoolInfo?->first()?->course?->course?->name,
                         'school' => $q->schoolInfo?->first()?->campus?->generated_name,
                         'awardyear' => $q->award_year,
@@ -521,6 +528,7 @@ class Scholar1Controller extends Controller
                             'scholars.id',
                             'scholars.spas_no',
                             'scholars.status_id',
+                            'scholars.academic_status',
                             'scholars.program_id',
                             'scholars.type_id',
                             'scholars.award_year'
@@ -600,13 +608,7 @@ class Scholar1Controller extends Controller
                                 $q?->profile?->suffix,
                             ])->filter()->implode(' ')),
 
-                            'status' => [
-                                'id' => $q?->status?->id,
-                                'name' => $q?->status?->name,
-                                'bcolor' => $q?->status?->color?->background_color,
-                                'tcolor' => $q?->status?->color?->text_color,
-                                'icon' => $q?->status?->icon,
-                            ],
+                            'status' => $this->academicStatusMeta($q?->academic_status),
                             'address' => [
                                 'address' => $q?->address?->address,
                                 'province' => $q?->address?->province_array,
@@ -807,8 +809,7 @@ class Scholar1Controller extends Controller
                     'program_id' => $data['program']['id'],
                     'type_id' => $data['sub_program']['id'],
                     'award_year' => Carbon::parse($data['award_year'])->format('Y') + 1,
-                    'status_id' => $data['status']['id'],
-                    '',
+                    'academic_status' => $data['status']['name'] ?? $data['status']['id'] ?? 'Ongoing',
                 ]);
                 $scholar->profile()->updateOrCreate(
                     ['scholar_id' => $scholar->id],

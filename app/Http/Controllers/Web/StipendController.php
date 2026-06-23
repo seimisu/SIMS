@@ -8,6 +8,7 @@ use App\Models\BatchRecipients;
 use App\Models\Batches;
 use App\Models\ListAgencies;
 use App\Models\ListReferences;
+use App\Models\RecipientAllowance;
 use App\Models\RecipientStipend;
 use App\Models\RecipientWithheld;
 use App\Models\Scholars;
@@ -105,6 +106,30 @@ class StipendController extends Controller
         }
     }
 
+    private function payrollItemStatus(string $batchStatus): string
+    {
+        return match ($batchStatus) {
+            'submitted_payroll' => 'submitted',
+            'approved_payroll' => 'approved',
+            'rejected_payroll' => 'rejected',
+            default => 'pending',
+        };
+    }
+
+    private function syncBatchFinancialStatuses(Batches $batch, string $batchStatus): void
+    {
+        $status = $this->payrollItemStatus($batchStatus);
+
+        $batch->loadMissing('recipients.stipends', 'recipients.withhelds', 'recipients.allowances');
+
+        foreach ($batch->recipients as $recipient) {
+            $recipient->update(['status' => $status]);
+            $recipient->stipends()->update(['status' => $status]);
+            $recipient->allowances()->where('amount', '>', 0)->update(['status' => $status]);
+            $recipient->withhelds()->where('total_amount', '>', 0)->update(['status' => $status]);
+        }
+    }
+
     public function index(Request $request): Response
     {
         return Inertia::render('Web/stipendPage', [
@@ -127,15 +152,6 @@ class StipendController extends Controller
                     'id' => $term->id,
                     'name' => trim($term->classification . ' - ' . $term->name),
                     'term_name' => $term->name,
-                ]),
-            'levelOptions' => ListReferences::where('is_active', true)
-                ->where('is_delete', false)
-                ->where('classification', 'Level')
-                ->orderBy('id')
-                ->get()
-                ->map(fn($level) => [
-                    'id' => $level->id,
-                    'name' => trim($level->name . ' Year'),
                 ]),
             'batches' => Batches::whereNull('deleted_at')
                 ->with([
@@ -196,6 +212,11 @@ class StipendController extends Controller
             'level_id' => $batch->level_id,
             'school_year' => $batch->school_year,
             'status' => $batch->logs->first()?->status ?? 'draft',
+            'remarks' => $batch->logs->first()?->remarks,
+            'remarks_by' => $batch->logs->first()?->action_by,
+            'remarks_at' => $batch->logs->first()?->created_at
+                ? Carbon::parse($batch->logs->first()->created_at)->format('M d, Y | h:i a')
+                : null,
             'is_editable' => in_array($batch->logs->first()?->status ?? 'draft', $this->payrollEditableStatuses(), true),
         ];
     }
@@ -236,17 +257,16 @@ class StipendController extends Controller
             ->with([
                 'profile:scholar_id,fname,mname,lname,suffix,email,birthdate',
                 'program:id,name',
-                'status:id,name',
                 'landbank:scholar_id,account_number',
                 'schoolInfo' => fn($q) => $q
                     ->select('id', 'scholar_id', 'campus_id')
                     ->latest('id')
-                    ->with('campus:id,name,agency_id'),
+                    ->with('campus:id,name,generated_name,agency_id'),
             ])
             ->where('is_active', true)
             ->where('is_delete', false)
             ->whereHas('termRecords', function ($termQuery) use ($batch) {
-                $termQuery->where('verification_status', 'submitted')
+                $termQuery->where('verification_status', 'approved')
                     ->where('academic_year', $batch->school_year);
 
                 if ($batch->term_id) {
@@ -255,10 +275,6 @@ class StipendController extends Controller
                     $termQuery->whereHas('term', function ($term) use ($batch) {
                         $term->whereRaw('LOWER(name) = ?', [Str::lower($batch->academic_term)]);
                     });
-                }
-
-                if ($batch->level_id) {
-                    $termQuery->where('level_id', $batch->level_id);
                 }
             })
             ->when(!Str::contains(Str::lower($batch->region), 'science education institute'), function ($query) use ($batch) {
@@ -282,13 +298,11 @@ class StipendController extends Controller
             })
             ->when($university, function ($query) use ($university) {
                 $query->whereHas('schoolInfo.campus', function ($campusQuery) use ($university) {
-                    $campusQuery->whereRaw('LOWER(name) = ?', [$university]);
+                    $campusQuery->whereRaw('LOWER(COALESCE(generated_name, name)) = ?', [$university]);
                 });
             })
             ->when($status, function ($query) use ($status) {
-                $query->whereHas('status', function ($statusQuery) use ($status) {
-                    $statusQuery->whereRaw('LOWER(name) = ?', [$status]);
-                });
+                $query->whereRaw('LOWER(academic_status) = ?', [$status]);
             })
             ->paginate(10, ['*'], 'eligible_page')
             ->through(fn($scholar) => [
@@ -304,8 +318,9 @@ class StipendController extends Controller
                 'birthday' => $scholar->profile?->birthdate,
                 'account_no' => $scholar->landbank?->account_number,
                 'program' => $scholar->program?->name,
-                'university' => $scholar->schoolInfo->first()?->campus?->name,
-                'status' => $scholar->status?->name,
+                'university' => $scholar->schoolInfo->first()?->campus?->generated_name
+                    ?? $scholar->schoolInfo->first()?->campus?->name,
+                'status' => $scholar->academic_status ?? 'Ongoing',
             ]);
     }
 
@@ -316,42 +331,52 @@ class StipendController extends Controller
         return BatchRecipients::with([
             'scholar.profile:scholar_id,fname,mname,lname,suffix,email,birthdate',
             'scholar.program:id,name',
-            'scholar.status:id,name',
             'scholar.schoolInfo' => fn($q) => $q
                 ->select('id', 'scholar_id', 'campus_id')
                 ->latest('id')
-                ->with('campus:id,name,agency_id'),
+                ->with('campus:id,name,generated_name,agency_id'),
             'stipends' => fn($q) => $q->orderBy('month_no'),
             'withhelds' => fn($q) => $q->orderBy('month_no'),
+            'allowances',
         ])
             ->where('batch_id', $batchId)
             ->orderBy('id')
             ->get()
-            ->map(fn($recipient) => [
-                'id' => Hashids::encode($recipient->id),
-                'scholar_id' => Hashids::encode($recipient->scholar_id),
-                'spas_no' => $recipient->scholar?->spas_no,
-                'account_no' => $recipient->account_no,
-                'name' => trim(collect([
-                    $recipient->scholar?->profile?->lname,
-                    $recipient->scholar?->profile?->fname,
-                    $recipient->scholar?->profile?->mname,
-                    $recipient->scholar?->profile?->suffix,
-                ])->filter()->join(' ')),
-                'program' => $recipient->scholar?->program?->name,
-                'university' => $recipient->scholar?->schoolInfo->first()?->campus?->name,
-                'scholarship_status' => $recipient->scholarship_status ?? $recipient->scholar?->status?->name,
-                'period' => $recipient->period,
-                'months' => collect(range(1, 5))->mapWithKeys(fn($month) => [
-                    "month_{$month}" => (float) ($recipient->stipends->firstWhere('month_no', $month)?->amount ?? 0),
-                ]),
-                'total_withheld' => (float) $recipient->total_withheld,
-                'remarks' => $recipient->remarks,
-                'learning_materials_amount' => (float) $recipient->learning_materials_amount,
-                'clothing_amount' => (float) $recipient->clothing_amount,
-                'grand_total' => (float) $recipient->grand_total,
-                'status' => $recipient->status,
-            ]);
+            ->map(function ($recipient) {
+                $learningMaterials = $recipient->allowances
+                    ->firstWhere('classification', 'connectivity')?->amount
+                    ?? $recipient->learning_materials_amount;
+                $clothing = $recipient->allowances
+                    ->firstWhere('classification', 'clothing')?->amount
+                    ?? $recipient->clothing_amount;
+
+                return [
+                    'id' => Hashids::encode($recipient->id),
+                    'scholar_id' => Hashids::encode($recipient->scholar_id),
+                    'spas_no' => $recipient->scholar?->spas_no,
+                    'account_no' => $recipient->account_no,
+                    'name' => trim(collect([
+                        $recipient->scholar?->profile?->lname,
+                        $recipient->scholar?->profile?->fname,
+                        $recipient->scholar?->profile?->mname,
+                        $recipient->scholar?->profile?->suffix,
+                    ])->filter()->join(' ')),
+                    'program' => $recipient->scholar?->program?->name,
+                    'university' => $recipient->scholar?->schoolInfo->first()?->campus?->generated_name
+                        ?? $recipient->scholar?->schoolInfo->first()?->campus?->name,
+                    'scholarship_status' => $recipient->scholarship_status ?? $recipient->scholar?->academic_status ?? 'Ongoing',
+                    'period' => $recipient->period,
+                    'months' => collect(range(1, 5))->mapWithKeys(fn($month) => [
+                        "month_{$month}" => (float) ($recipient->stipends->firstWhere('month_no', $month)?->amount ?? 0),
+                    ]),
+                    'total_withheld' => (float) $recipient->total_withheld,
+                    'remarks' => $recipient->remarks,
+                    'learning_materials_amount' => (float) $learningMaterials,
+                    'clothing_amount' => (float) $clothing,
+                    'grand_total' => (float) $recipient->grand_total,
+                    'status' => $recipient->status,
+                ];
+            });
     }
 
     public function store(Request $request): RedirectResponse
@@ -365,8 +390,6 @@ class StipendController extends Controller
                 'term.id' => ['required', 'integer', 'exists:list_references,id'],
                 'term.term_name' => ['nullable', 'string'],
                 'term.name' => ['required', 'string'],
-                'level' => ['required', 'array'],
-                'level.id' => ['required', 'integer', 'exists:list_references,id'],
                 'academic_year' => ['required', 'regex:/^\d{4}-\d{4}$/'],
                 'batch' => ['required', 'string'],
             ]);
@@ -387,7 +410,6 @@ class StipendController extends Controller
                 'region'        => $data['region']['name'],
                 'academic_term' => $termName,
                 'term_id'       => $data['term']['id'],
-                'level_id'      => $data['level']['id'],
                 'school_year'   => $data['academic_year'],
                 'name'          => $name
             ]);
@@ -426,7 +448,7 @@ class StipendController extends Controller
         $batchId = Hashids::decode($id)[0] ?? 0;
         $data = $request->validate([
             'status' => ['required', 'in:submitted_payroll,rejected_payroll,approved_payroll'],
-            'remarks' => ['nullable', 'string'],
+            'remarks' => ['required_if:status,rejected_payroll', 'nullable', 'string'],
         ]);
 
         $batch = Batches::findOrFail($batchId);
@@ -447,6 +469,7 @@ class StipendController extends Controller
         ]);
 
         $this->syncBatchRecipientTermStatuses($batch, $data['status']);
+        $this->syncBatchFinancialStatuses($batch, $data['status']);
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
@@ -485,7 +508,7 @@ class StipendController extends Controller
                     continue;
                 }
 
-                $scholar = Scholars::with(['profile', 'status', 'landbank'])->find($scholarId);
+                $scholar = Scholars::with(['profile', 'landbank'])->find($scholarId);
                 if (!$scholar) {
                     continue;
                 }
@@ -522,7 +545,7 @@ class StipendController extends Controller
                         'account_no' => $scholar->landbank?->account_number,
                         'birthday' => $scholar->profile?->birthdate,
                         'period' => trim($batch->academic_term . ' AY ' . $batch->school_year),
-                        'scholarship_status' => $scholar->status?->name,
+                        'scholarship_status' => $scholar->academic_status ?? 'Ongoing',
                         'status' => 'pending',
                     ]
                 );
@@ -642,6 +665,7 @@ class StipendController extends Controller
                 $totalWithheld = (float) ($item['total_withheld'] ?? 0);
                 $learningMaterials = (float) ($item['learning_materials_amount'] ?? 0);
                 $clothing = (float) ($item['clothing_amount'] ?? 0);
+                $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing;
 
                 $recipient->update([
                     'account_no' => $item['account_no'] ?? null,
@@ -651,18 +675,49 @@ class StipendController extends Controller
                     'total_withheld' => $totalWithheld,
                     'learning_materials_amount' => $learningMaterials,
                     'clothing_amount' => $clothing,
-                    'grand_total' => $totalStipend + $learningMaterials + $clothing - $totalWithheld,
+                    'grand_total' => $grandTotal,
                     'remarks' => $item['remarks'] ?? null,
                 ]);
 
-                RecipientWithheld::updateOrCreate(
-                    ['recipient_id' => $recipient->id, 'month_no' => null],
-                    [
-                        'total_amount' => $totalWithheld,
-                        'remarks' => $item['remarks'] ?? null,
-                        'status' => $totalWithheld > 0 ? 'pending' : 'none',
-                    ]
-                );
+                foreach ([
+                    'connectivity' => $learningMaterials,
+                    'clothing' => $clothing,
+                ] as $classification => $amount) {
+                    if ($amount <= 0) {
+                        RecipientAllowance::where('recipient_id', $recipient->id)
+                            ->where('classification', $classification)
+                            ->delete();
+
+                        continue;
+                    }
+
+                    RecipientAllowance::updateOrCreate(
+                        [
+                            'recipient_id' => $recipient->id,
+                            'classification' => $classification,
+                        ],
+                        [
+                            'amount' => $amount,
+                            'remarks' => $item['remarks'] ?? null,
+                            'status' => 'pending',
+                        ]
+                    );
+                }
+
+                if ($totalWithheld > 0) {
+                    RecipientWithheld::updateOrCreate(
+                        ['recipient_id' => $recipient->id, 'month_no' => null],
+                        [
+                            'total_amount' => $totalWithheld,
+                            'remarks' => $item['remarks'] ?? null,
+                            'status' => 'pending',
+                        ]
+                    );
+                } else {
+                    RecipientWithheld::where('recipient_id', $recipient->id)
+                        ->whereNull('month_no')
+                        ->delete();
+                }
             }
 
             DB::commit();
@@ -691,7 +746,7 @@ class StipendController extends Controller
             try {
                 DB::beginTransaction();
 
-                $batch = Batches::with('recipients.stipends', 'recipients.withhelds')->findOrFail($batchId);
+                $batch = Batches::with('recipients.stipends', 'recipients.withhelds', 'recipients.allowances')->findOrFail($batchId);
                 $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
 
                 if (!in_array($latestStatus, $this->payrollEditableStatuses(), true)) {
@@ -711,6 +766,7 @@ class StipendController extends Controller
 
                     $recipient->stipends()->delete();
                     $recipient->withhelds()->delete();
+                    $recipient->allowances()->delete();
                     $recipient->delete();
                 }
 
@@ -767,6 +823,7 @@ class StipendController extends Controller
 
             $recipient->stipends()->delete();
             $recipient->withhelds()->delete();
+            $recipient->allowances()->delete();
             $recipient->delete();
 
             DB::commit();
