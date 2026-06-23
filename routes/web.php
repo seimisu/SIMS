@@ -134,6 +134,8 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::post('geolocation', [GeolocationController::class, 'store'])->name('geolocation.store');
 
     Route::post('stipends', [StipendController::class, 'store'])->name('stipends.store');
+    Route::post('stipends/{id}/recipients', [StipendController::class, 'addRecipients'])->name('stipends.recipients.store');
+    Route::put('stipends/{id}/payroll', [StipendController::class, 'savePayroll'])->name('stipends.payroll.update');
     Route::put('stipends/{id}/{type}', [StipendController::class, 'update'])->name('stipends.update');
     Route::delete('stipends/{id}/{type}', [StipendController::class, 'destroy'])->name('stipends.destroy');
 

@@ -14,7 +14,8 @@ class ScholarTerm extends Model
         'level_id',
         'academic_year',
         'scholar_school_id',
-        'term_type_id'
+        'term_type_id',
+        'verification_status',
     ];
 
     public function term()
