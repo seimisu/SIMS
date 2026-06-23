@@ -8,6 +8,7 @@ class RecipientAllowance extends Model
 {
     protected $fillable = [
         'recipient_id',
+        'allowance_type_id',
         'classification',
         'amount',
         'remarks',
@@ -21,5 +22,10 @@ class RecipientAllowance extends Model
     public function recipient()
     {
         return $this->belongsTo(BatchRecipients::class, 'recipient_id');
+    }
+
+    public function allowanceType()
+    {
+        return $this->belongsTo(AllowanceType::class);
     }
 }

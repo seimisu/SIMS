@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use Illuminate\Http\RedirectResponse;
 use App\Http\Controllers\Controller;
+use App\Models\AllowanceType;
 use App\Models\BatchRecipients;
 use App\Models\Batches;
 use App\Models\ListAgencies;
@@ -130,6 +131,55 @@ class StipendController extends Controller
         }
     }
 
+    private function allowanceTypeIds(): array
+    {
+        return AllowanceType::whereIn('code', [
+            'connectivity',
+            'clothing',
+            'tuition_school_fees',
+            'transportation',
+            'thesis',
+            'graduation',
+        ])
+            ->pluck('id', 'code')
+            ->all();
+    }
+
+    private function customAllowanceCodes(): array
+    {
+        return [
+            'tuition_school_fees',
+            'transportation',
+            'thesis',
+            'graduation',
+        ];
+    }
+
+    private function visibleFixedAllowanceDefaults(): array
+    {
+        return AllowanceType::whereIn('code', [
+            'monthly_living',
+            'connectivity',
+            'clothing',
+        ])
+            ->where('is_variable', false)
+            ->where('is_active', true)
+            ->pluck('default_amount', 'code')
+            ->map(fn($amount) => (float) $amount)
+            ->all();
+    }
+
+    private function recipientAllowanceAmount(BatchRecipients $recipient, string $code, string $legacyClassification, float $fallback): float
+    {
+        $allowance = $recipient->allowances->first(function ($allowance) use ($code, $legacyClassification) {
+            return $allowance->allowanceType?->code === $code
+                || $allowance->classification === $legacyClassification
+                || $allowance->classification === $code;
+        });
+
+        return (float) ($allowance?->amount ?? $fallback);
+    }
+
     public function index(Request $request): Response
     {
         return Inertia::render('Web/stipendPage', [
@@ -184,7 +234,26 @@ class StipendController extends Controller
             'payrollRecipients' => request('id')
                 ? $this->payrollRecipients(request('id'))
                 : null,
+            'allowanceOptions' => request('id')
+                ? $this->allowanceOptions()
+                : [],
         ]);
+    }
+
+    private function allowanceOptions()
+    {
+        return AllowanceType::whereIn('code', $this->customAllowanceCodes())
+            ->where('is_active', true)
+            ->get()
+            ->sortBy(fn($allowance) => array_search($allowance->code, $this->customAllowanceCodes(), true))
+            ->values()
+            ->map(fn($allowance) => [
+                'code' => $allowance->code,
+                'name' => $allowance->name,
+                'default_amount' => (float) ($allowance->default_amount ?? 0),
+                'max_amount' => $allowance->max_amount !== null ? (float) $allowance->max_amount : null,
+                'is_variable' => (bool) $allowance->is_variable,
+            ]);
     }
 
     private function batchDetails(string $hashId): ?array
@@ -337,18 +406,29 @@ class StipendController extends Controller
                 ->with('campus:id,name,generated_name,agency_id'),
             'stipends' => fn($q) => $q->orderBy('month_no'),
             'withhelds' => fn($q) => $q->orderBy('month_no'),
-            'allowances',
+            'allowances.allowanceType',
         ])
             ->where('batch_id', $batchId)
             ->orderBy('id')
             ->get()
             ->map(function ($recipient) {
-                $learningMaterials = $recipient->allowances
-                    ->firstWhere('classification', 'connectivity')?->amount
-                    ?? $recipient->learning_materials_amount;
-                $clothing = $recipient->allowances
-                    ->firstWhere('classification', 'clothing')?->amount
-                    ?? $recipient->clothing_amount;
+                $learningMaterials = $this->recipientAllowanceAmount(
+                    $recipient,
+                    'connectivity',
+                    'connectivity',
+                    (float) $recipient->learning_materials_amount
+                );
+                $clothing = $this->recipientAllowanceAmount(
+                    $recipient,
+                    'clothing',
+                    'clothing',
+                    (float) $recipient->clothing_amount
+                );
+                $customAllowances = $recipient->allowances
+                    ->filter(fn($allowance) => in_array($allowance->allowanceType?->code ?? $allowance->classification, $this->customAllowanceCodes(), true))
+                    ->mapWithKeys(fn($allowance) => [
+                        ($allowance->allowanceType?->code ?? $allowance->classification) => (float) $allowance->amount,
+                    ]);
 
                 return [
                     'id' => Hashids::encode($recipient->id),
@@ -373,6 +453,7 @@ class StipendController extends Controller
                     'remarks' => $recipient->remarks,
                     'learning_materials_amount' => (float) $learningMaterials,
                     'clothing_amount' => (float) $clothing,
+                    'custom_allowances' => $customAllowances,
                     'grand_total' => (float) $recipient->grand_total,
                     'status' => $recipient->status,
                 ];
@@ -405,6 +486,20 @@ class StipendController extends Controller
             $result = substr($years[0], -2) . substr($years[1], -2);
             $termName = $data['term']['term_name'] ?? $data['term']['name'];
             $name =  Auth::user()->profile?->agency?->code . '_' . Str::of($termName)->replace(' ', '') . 'AY' .   $result . '_Batch' . $data['batch'];
+
+            $exists = Batches::where('name', $name)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($exists) {
+                DB::rollBack();
+
+                return redirect()->back()->with('flash', [
+                    'status' => 'error',
+                    'title'  => 'Batch already exists',
+                    'message' => 'A payroll batch with the same region, term, academic year, and batch number already exists.',
+                ]);
+            }
 
             $parent = Batches::create([
                 'region'        => $data['region']['name'],
@@ -501,6 +596,12 @@ class StipendController extends Controller
             DB::beginTransaction();
             $addedCount = 0;
             $attachedCount = 0;
+            $allowanceDefaults = $this->visibleFixedAllowanceDefaults();
+            $allowanceTypeIds = $this->allowanceTypeIds();
+            $monthlyLiving = $allowanceDefaults['monthly_living'] ?? 0;
+            $totalMonthlyLiving = $monthlyLiving * 5;
+            $defaultConnectivity = $allowanceDefaults['connectivity'] ?? 0;
+            $defaultClothing = $allowanceDefaults['clothing'] ?? 0;
 
             foreach ($data['scholar_ids'] as $hashScholarId) {
                 $scholarId = Hashids::decode($hashScholarId)[0] ?? null;
@@ -546,6 +647,10 @@ class StipendController extends Controller
                         'birthday' => $scholar->profile?->birthdate,
                         'period' => trim($batch->academic_term . ' AY ' . $batch->school_year),
                         'scholarship_status' => $scholar->academic_status ?? 'Ongoing',
+                        'total_stipend' => $totalMonthlyLiving,
+                        'learning_materials_amount' => $defaultConnectivity,
+                        'clothing_amount' => $defaultClothing,
+                        'grand_total' => $totalMonthlyLiving + $defaultConnectivity + $defaultClothing,
                         'status' => 'pending',
                     ]
                 );
@@ -560,10 +665,34 @@ class StipendController extends Controller
                         ['month_no' => $month],
                         [
                             'month' => 'Month ' . $month,
-                            'amount' => 0,
+                            'amount' => $monthlyLiving,
                             'status' => 'pending',
                         ]
                     );
+                }
+
+                if ($recipient->wasRecentlyCreated) {
+                    foreach ([
+                        'connectivity' => [
+                            'classification' => 'connectivity',
+                            'amount' => $allowanceDefaults['connectivity'] ?? 0,
+                        ],
+                        'clothing' => [
+                            'classification' => 'clothing',
+                            'amount' => $allowanceDefaults['clothing'] ?? 0,
+                        ],
+                    ] as $code => $allowanceData) {
+                        if ($allowanceData['amount'] <= 0) {
+                            continue;
+                        }
+
+                        $recipient->allowances()->create([
+                            'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
+                            'classification' => $allowanceData['classification'],
+                            'amount' => $allowanceData['amount'],
+                            'status' => 'pending',
+                        ]);
+                    }
                 }
 
                 $this->updateScholarTermPayrollStatus($batch, $scholar->id, $latestStatus);
@@ -635,10 +764,13 @@ class StipendController extends Controller
             'recipients.*.remarks' => ['nullable', 'string'],
             'recipients.*.learning_materials_amount' => ['nullable', 'numeric', 'min:0'],
             'recipients.*.clothing_amount' => ['nullable', 'numeric', 'min:0'],
+            'recipients.*.custom_allowances' => ['nullable', 'array'],
+            'recipients.*.custom_allowances.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         try {
             DB::beginTransaction();
+            $allowanceTypeIds = $this->allowanceTypeIds();
 
             foreach ($data['recipients'] as $item) {
                 $recipientId = Hashids::decode($item['id'])[0] ?? 0;
@@ -665,7 +797,10 @@ class StipendController extends Controller
                 $totalWithheld = (float) ($item['total_withheld'] ?? 0);
                 $learningMaterials = (float) ($item['learning_materials_amount'] ?? 0);
                 $clothing = (float) ($item['clothing_amount'] ?? 0);
-                $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing;
+                $customAllowances = collect($item['custom_allowances'] ?? [])
+                    ->only($this->customAllowanceCodes())
+                    ->map(fn($amount) => (float) ($amount ?? 0));
+                $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing + $customAllowances->sum();
 
                 $recipient->update([
                     'account_no' => $item['account_no'] ?? null,
@@ -680,12 +815,28 @@ class StipendController extends Controller
                 ]);
 
                 foreach ([
-                    'connectivity' => $learningMaterials,
-                    'clothing' => $clothing,
-                ] as $classification => $amount) {
+                    'connectivity' => [
+                        'classification' => 'connectivity',
+                        'amount' => $learningMaterials,
+                    ],
+                    'clothing' => [
+                        'classification' => 'clothing',
+                        'amount' => $clothing,
+                    ],
+                ] as $code => $allowanceData) {
+                    $amount = $allowanceData['amount'];
+                    $classification = $allowanceData['classification'];
+
                     if ($amount <= 0) {
                         RecipientAllowance::where('recipient_id', $recipient->id)
-                            ->where('classification', $classification)
+                            ->where(function ($query) use ($classification, $code, $allowanceTypeIds) {
+                                $query->where('classification', $classification)
+                                    ->orWhere('classification', $code);
+
+                                if (!empty($allowanceTypeIds[$code])) {
+                                    $query->orWhere('allowance_type_id', $allowanceTypeIds[$code]);
+                                }
+                            })
                             ->delete();
 
                         continue;
@@ -697,6 +848,38 @@ class StipendController extends Controller
                             'classification' => $classification,
                         ],
                         [
+                            'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
+                            'amount' => $amount,
+                            'remarks' => $item['remarks'] ?? null,
+                            'status' => 'pending',
+                        ]
+                    );
+                }
+
+                foreach ($this->customAllowanceCodes() as $code) {
+                    $amount = (float) ($customAllowances[$code] ?? 0);
+
+                    if ($amount <= 0) {
+                        RecipientAllowance::where('recipient_id', $recipient->id)
+                            ->where(function ($query) use ($code, $allowanceTypeIds) {
+                                $query->where('classification', $code);
+
+                                if (!empty($allowanceTypeIds[$code])) {
+                                    $query->orWhere('allowance_type_id', $allowanceTypeIds[$code]);
+                                }
+                            })
+                            ->delete();
+
+                        continue;
+                    }
+
+                    RecipientAllowance::updateOrCreate(
+                        [
+                            'recipient_id' => $recipient->id,
+                            'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
+                        ],
+                        [
+                            'classification' => $code,
                             'amount' => $amount,
                             'remarks' => $item['remarks'] ?? null,
                             'status' => 'pending',

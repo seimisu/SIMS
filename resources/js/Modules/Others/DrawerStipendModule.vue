@@ -180,6 +180,16 @@
                                             showClear
                                             class="!text-sm min-w-44"
                                         />
+                                        <MultiSelect
+                                            v-model="selectedCustomAllowanceCodes"
+                                            :options="customAllowanceOptions"
+                                            optionLabel="name"
+                                            optionValue="code"
+                                            placeholder="Add allowance column"
+                                            display="chip"
+                                            :disabled="!isEditable"
+                                            class="!text-sm min-w-72 max-w-[28rem]"
+                                        />
                                         <DefaultButton
                                             size="small"
                                             label="Save Payroll"
@@ -262,6 +272,13 @@
                                                 <th class="border px-2 py-2 text-left">Remarks</th>
                                                 <th class="border px-2 py-2 text-right">LMA/Connectivity</th>
                                                 <th class="border px-2 py-2 text-right">Clothing</th>
+                                                <th
+                                                    v-for="allowance in selectedCustomAllowanceOptions"
+                                                    :key="allowance.code"
+                                                    class="border px-2 py-2 text-right"
+                                                >
+                                                    {{ allowance.name }}
+                                                </th>
                                                 <th class="border px-2 py-2 text-right">Total</th>
                                                 <th class="border px-2 py-2 text-center">Action</th>
                                             </tr>
@@ -347,6 +364,21 @@
                                                         :disabled="!isEditable"
                                                     />
                                                 </td>
+                                                <td
+                                                    v-for="allowance in selectedCustomAllowanceOptions"
+                                                    :key="allowance.code"
+                                                    class="border px-2 py-1"
+                                                >
+                                                    <InputNumber
+                                                        v-model="row.custom_allowances[allowance.code]"
+                                                        inputClass="!text-xs !text-right w-28"
+                                                        :min="0"
+                                                        :max="allowance.max_amount ?? undefined"
+                                                        :minFractionDigits="2"
+                                                        :maxFractionDigits="2"
+                                                        :disabled="!isEditable"
+                                                    />
+                                                </td>
                                                 <td class="border px-2 py-1 text-right font-semibold">
                                                     {{ formatMoney(rowTotal(row)) }}
                                                 </td>
@@ -365,7 +397,10 @@
                                                 </td>
                                             </tr>
                                             <tr v-if="!filteredPayrollRows.length">
-                                                <td colspan="16" class="py-8 text-center text-gray-500">
+                                                <td
+                                                    :colspan="16 + selectedCustomAllowanceOptions.length"
+                                                    class="py-8 text-center text-gray-500"
+                                                >
                                                     No payroll recipients found.
                                                 </td>
                                             </tr>
@@ -451,6 +486,7 @@ const payrollSearch = ref(null);
 const payrollProgram = ref(null);
 const payrollUniversity = ref(null);
 const payrollStatus = ref(null);
+const selectedCustomAllowanceCodes = ref([]);
 const rejectDialog = ref(false);
 const rejectRemarks = ref("");
 const rejectRemarksError = ref(false);
@@ -507,6 +543,22 @@ const statusMeta = computed(() => {
     };
 });
 
+const customAllowanceOptions = computed(() => page.props.allowanceOptions ?? []);
+const selectedCustomAllowanceOptions = computed(() =>
+    customAllowanceOptions.value.filter((allowance) =>
+        selectedCustomAllowanceCodes.value.includes(allowance.code),
+    ),
+);
+
+const customAllowanceDefaults = computed(() =>
+    Object.fromEntries(
+        customAllowanceOptions.value.map((allowance) => [
+            allowance.code,
+            allowance.is_variable ? 0 : Number(allowance.default_amount ?? 0),
+        ]),
+    ),
+);
+
 const syncPayrollRows = () => {
     payrollRows.value = (page.props.payrollRecipients ?? []).map((row) => ({
         ...row,
@@ -515,7 +567,24 @@ const syncPayrollRows = () => {
         month_3: row.months?.month_3 ?? 0,
         month_4: row.months?.month_4 ?? 0,
         month_5: row.months?.month_5 ?? 0,
+        custom_allowances: row.custom_allowances ?? {},
     }));
+
+    const savedCustomAllowanceCodes = [
+        ...new Set(
+            payrollRows.value.flatMap((row) =>
+                Object.entries(row.custom_allowances ?? {})
+                    .filter(
+                        ([code, amount]) =>
+                            Number(amount ?? 0) > 0 &&
+                            customAllowanceOptions.value.some((option) => option.code === code),
+                    )
+                    .map(([code]) => code),
+            ),
+        ),
+    ];
+
+    selectedCustomAllowanceCodes.value = savedCustomAllowanceCodes;
 };
 
 const uniqueOptions = (items, key) =>
@@ -570,7 +639,7 @@ const reloadBatch = (extra = {}) => {
             eligible_status: eligibleStatus.value,
             ...extra,
         },
-        only: ["details", "eligibleScholars", "payrollRecipients"],
+        only: ["details", "eligibleScholars", "payrollRecipients", "allowanceOptions"],
         preserveScroll: true,
         onSuccess: () => {
             selectedEligible.value = [];
@@ -619,6 +688,12 @@ const buildPayrollRecipients = async () => {
         remarks: row.remarks,
         learning_materials_amount: row.learning_materials_amount ?? 0,
         clothing_amount: row.clothing_amount ?? 0,
+        custom_allowances: Object.fromEntries(
+            selectedCustomAllowanceCodes.value.map((code) => [
+                code,
+                row.custom_allowances?.[code] ?? 0,
+            ]),
+        ),
     }));
 };
 
@@ -695,13 +770,35 @@ const rowTotal = (row) => {
         0,
     );
 
+    const customAllowances = selectedCustomAllowanceCodes.value.reduce(
+        (sum, code) => sum + Number(row.custom_allowances?.[code] ?? 0),
+        0,
+    );
+
     return (
         stipend +
         Number(row.total_withheld ?? 0) +
         Number(row.learning_materials_amount ?? 0) +
-        Number(row.clothing_amount ?? 0)
+        Number(row.clothing_amount ?? 0) +
+        customAllowances
     );
 };
+
+watch(
+    selectedCustomAllowanceCodes,
+    (codes) => {
+        payrollRows.value.forEach((row) => {
+            row.custom_allowances ??= {};
+
+            codes.forEach((code) => {
+                if (row.custom_allowances[code] === undefined) {
+                    row.custom_allowances[code] = customAllowanceDefaults.value[code] ?? 0;
+                }
+            });
+        });
+    },
+    { deep: true },
+);
 
 const formatMoney = (value) =>
     new Intl.NumberFormat("en-PH", {

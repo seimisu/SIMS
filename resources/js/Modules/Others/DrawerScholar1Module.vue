@@ -173,7 +173,7 @@
                                     <IconMapPin :size="20" stroke-width="2" />
                                 </Avatar>
                                 <div class="text-sm">
-                                    {{ page.props?.details?.region["name"] }}
+                                    {{ scholarLocationDisplay }}
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -205,14 +205,14 @@
                                 <div
                                     :class="[
                                         'rounded-full border p-[5px]',
-                                        page.props?.details?.status?.bcolor,
-                                        page.props?.details?.status?.tcolor,
+                                        academicStatusDisplay.bcolor,
+                                        academicStatusDisplay.tcolor,
                                     ]"
                                 >
                                     <component
                                         :is="
                                             TablerIcons[
-                                                page.props?.details?.status.icon
+                                                academicStatusDisplay.icon
                                             ]
                                         "
                                         :size="20"
@@ -220,7 +220,7 @@
                                     />
                                 </div>
                                 <div class="text-sm uppercase">
-                                    {{ page.props?.details?.status.name }}
+                                    {{ academicStatusDisplay.name }}
                                 </div>
                             </div>
                         </div>
@@ -515,159 +515,163 @@
                             </div>
                         </template>
                         <template #default>
-                            <div class="w-full flex flex-col pt-5 gap-3">
-                                <div class="flex items-center gap-3">
-                                    <TextInput
-                                        v-model="personalInfo.first_name"
-                                        label="First Name"
-                                        :disabled="!editBtn.info"
-                                    ></TextInput>
+                            <div class="w-full flex flex-col pt-2 gap-4">
+                                <section class="flex flex-col gap-2">
+                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                        Personal Information
+                                    </h3>
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+                                        <TextInput
+                                            v-model="personalInfo.first_name"
+                                            label="First Name"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.middle_name"
+                                            label="Middle Name"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.last_name"
+                                            label="Last Name"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.suffix"
+                                            label="Suffix"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.email"
+                                            label="Email"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.contact_no"
+                                            label="Contact No"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <DatePickerInput
+                                            v-model="personalInfo.birth_date"
+                                            label="Birth Date"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.birth_place"
+                                            label="Birth Place"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.religion"
+                                            label="Religion"
+                                            capitalize
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.civil_status"
+                                            capitalize
+                                            label="Civil Status"
+                                            :disabled="!editBtn.info"
+                                        />
+                                    </div>
+                                </section>
 
-                                    <TextInput
-                                        v-model="personalInfo.middle_name"
-                                        label="Middle Name"
-                                        :disabled="!editBtn.info"
-                                    ></TextInput>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <TextInput
-                                        v-model="personalInfo.last_name"
-                                        label="Last Name"
-                                        :disabled="!editBtn.info"
-                                    ></TextInput>
-                                    <TextInput
-                                        v-model="personalInfo.suffix"
-                                        label="Suffix"
-                                        :disabled="!editBtn.info"
-                                    >
-                                    </TextInput>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <TextInput
-                                        v-model="personalInfo.email"
-                                        label="Email"
-                                        :disabled="!editBtn.info"
-                                    >
-                                    </TextInput>
-                                    <TextInput
-                                        v-model="personalInfo.contact_no"
-                                        label="Contact No"
-                                        :disabled="!editBtn.info"
-                                    ></TextInput>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <DatePickerInput
-                                        v-model="personalInfo.birth_date"
-                                        label="Birth Date"
-                                        :disabled="!editBtn.info"
-                                    ></DatePickerInput>
-                                    <TextInput
-                                        v-model="personalInfo.birth_place"
-                                        label="Birth Place"
-                                        :disabled="!editBtn.info"
-                                    ></TextInput>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <TextInput
-                                        v-model="personalInfo.religion"
-                                        label="Religion"
-                                        capitalize
-                                        :disabled="!editBtn.info"
-                                    ></TextInput>
-                                    <TextInput
-                                        v-model="personalInfo.civil_status"
-                                        capitalize
-                                        label="Civil Status"
-                                        :disabled="!editBtn.info"
-                                    >
-                                    </TextInput>
-                                </div>
+                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
+                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                        School Information
+                                    </h3>
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                                        <SelectInput
+                                            label="School"
+                                            v-model="personalInfo.school"
+                                            :disable="!editBtn.info"
+                                            @update:model-value="renderCourse"
+                                            :options="page.props?.schoolOptions"
+                                        />
+                                        <SelectInput
+                                            label="Course"
+                                            v-model="personalInfo.course"
+                                            :disable="!editBtn.info"
+                                            :options="page.props?.courseOptions"
+                                        />
+                                    </div>
+                                </section>
 
-                                <TextInput
-                                    v-model="personalInfo.address"
-                                    label="Address"
-                                    :disabled="!editBtn.info"
-                                    placeholder="Street, Subdivision, etc."
-                                ></TextInput>
-                                <AutoCompleteInput
-                                    v-model="personalInfo.fulladdress"
-                                    :options="page.props?.resultSearch"
-                                    :disabled="!editBtn.info"
-                                    :loading="loading.address"
-                                    placeholder="Find by Barangay, Municipality, Province, or Region"
-                                    @complete="autoSearch"
-                                    selection
-                                ></AutoCompleteInput>
-                                <Divider align="left">
-                                    <span class="text-xs font-semibold"
-                                        >Scholarship Assignment</span
-                                    >
-                                </Divider>
-                                <div class="flex items-center gap-3">
-                                    <SelectInput
-                                        label="Scholar Program"
-                                        v-model="personalInfo.program"
-                                        :disable="!editBtn.info"
-                                        :options="page.props?.programOptions"
-                                    ></SelectInput>
+                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
+                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                        Scholarship Information
+                                    </h3>
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+                                        <SelectInput
+                                            label="Scholar Program"
+                                            v-model="personalInfo.program"
+                                            :disable="!editBtn.info"
+                                            :options="page.props?.programOptions"
+                                        />
+                                        <SelectInput
+                                            label="Type"
+                                            v-model="personalInfo.sub_program"
+                                            :disable="!editBtn.info"
+                                            :options="page.props?.subProgramOptions"
+                                        />
+                                        <DatePickerInput
+                                            v-model="personalInfo.award_year"
+                                            label="Award Year"
+                                            view="year"
+                                            :disabled="!editBtn.info"
+                                            format-date="yy"
+                                        />
+                                        <SelectInput
+                                            label="Academic Status"
+                                            v-model="personalInfo.status"
+                                            :disable="!editBtn.info"
+                                            class="capitalize"
+                                            :options="page.props?.statusOptions"
+                                        />
+                                    </div>
+                                </section>
 
-                                    <SelectInput
-                                        label="Type"
-                                        v-model="personalInfo.sub_program"
-                                        :disable="!editBtn.info"
-                                        :options="page.props?.subProgramOptions"
-                                    ></SelectInput>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <SelectInput
-                                        label="School"
-                                        v-model="personalInfo.school"
-                                        :disable="!editBtn.info"
-                                        @update:model-value="renderCourse"
-                                        :options="page.props?.schoolOptions"
-                                    ></SelectInput>
-                                    <SelectInput
-                                        label="Course"
-                                        v-model="personalInfo.course"
-                                        :disable="!editBtn.info"
-                                        :options="page.props?.courseOptions"
-                                    ></SelectInput>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <DatePickerInput
-                                        v-model="personalInfo.award_year"
-                                        label="Award Year"
-                                        view="year"
+                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
+                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                        Address
+                                    </h3>
+                                    <TextInput
+                                        v-model="personalInfo.address"
+                                        label="Street Address"
                                         :disabled="!editBtn.info"
-                                        format-date="yy"
-                                    ></DatePickerInput>
-                                    <SelectInput
-                                        label="Status"
-                                        v-model="personalInfo.status"
-                                        :disable="!editBtn.info"
-                                        class="capitalize"
-                                        :options="page.props?.statusOptions"
-                                    ></SelectInput>
-                                </div>
+                                        placeholder="Street, Subdivision, etc."
+                                    />
+                                    <AutoCompleteInput
+                                        v-model="personalInfo.fulladdress"
+                                        label="Barangay / Municipality / Province / Region"
+                                        :options="page.props?.resultSearch"
+                                        :disabled="!editBtn.info"
+                                        :loading="loading.address"
+                                        placeholder="Find by Barangay, Municipality, Province, or Region"
+                                        @complete="autoSearch"
+                                        selection
+                                    />
+                                </section>
 
-                                <Divider align="left">
-                                    <span class="text-xs font-semibold"
-                                        >Landbank Information</span
-                                    >
-                                </Divider>
-                                <TextInput
-                                    v-model="personalInfo.acc_name"
-                                    label="Account Name"
-                                    capitalize
-                                    :disabled="!editBtn.info"
-                                ></TextInput>
-                                <TextInput
-                                    v-model="personalInfo.acc_no"
-                                    capitalize
-                                    label="Account Number"
-                                    :disabled="!editBtn.info"
-                                >
-                                </TextInput>
+                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
+                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                        Other Information
+                                    </h3>
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                                        <TextInput
+                                            v-model="personalInfo.acc_name"
+                                            label="Landbank Account Name"
+                                            capitalize
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.acc_no"
+                                            capitalize
+                                            label="Landbank Account Number"
+                                            :disabled="!editBtn.info"
+                                        />
+                                    </div>
+                                </section>
 
                                 <!-- <Divider align="left">
                                     <span class="text-xs font-semibold"
@@ -1276,7 +1280,7 @@ import {
     IconHistory,
 } from "@tabler/icons-vue";
 
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useToast } from "primevue";
 import * as TablerIcons from "@tabler/icons-vue";
 import { router, useForm, usePage } from "@inertiajs/vue3";
@@ -1393,6 +1397,63 @@ const tabs = ref([
         status: "Ongoing",
     },
 ]);
+
+const academicStatusStyles = {
+    Ongoing: {
+        name: "Ongoing",
+        icon: "IconCircleCheck",
+        bcolor: "bg-slate-50",
+        tcolor: "text-slate-700",
+    },
+    Graduating: {
+        name: "Graduating",
+        icon: "IconSchool",
+        bcolor: "bg-blue-50",
+        tcolor: "text-blue-600",
+    },
+    Graduated: {
+        name: "Graduated",
+        icon: "IconAward",
+        bcolor: "bg-indigo-50",
+        tcolor: "text-indigo-600",
+    },
+    LOA: {
+        name: "LOA",
+        icon: "IconClockPause",
+        bcolor: "bg-amber-50",
+        tcolor: "text-amber-600",
+    },
+    Terminated: {
+        name: "Terminated",
+        icon: "IconCircleX",
+        bcolor: "bg-rose-50",
+        tcolor: "text-rose-600",
+    },
+};
+
+const academicStatusDisplay = computed(() => {
+    const rawStatus =
+        page.props?.details?.academic_status ??
+        page.props?.details?.status?.name ??
+        "Ongoing";
+    return academicStatusStyles[rawStatus] ?? {
+        name: rawStatus,
+        icon: "IconCircleCheck",
+        bcolor: "bg-slate-50",
+        tcolor: "text-slate-600",
+    };
+});
+
+const scholarLocationDisplay = computed(() => {
+    const details = page.props?.details;
+    const parts = [
+        details?.address?.barangay?.name,
+        details?.address?.municipality?.name,
+        details?.address?.province?.name,
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(", ") : "N/A";
+});
 
 
 const changeMenu = (item) => {
@@ -1579,7 +1640,14 @@ watch(
         personalInfo.award_year = newVal.awardYear
             ? new Date(parseInt(newVal.awardYear), 0, 1)
             : null;
-        personalInfo.status = newVal.status ?? null;
+        personalInfo.status =
+            page.props?.statusOptions?.find(
+                (status) =>
+                    status.name === newVal.academic_status ||
+                    status.id === newVal.academic_status,
+            ) ??
+            newVal.status ??
+            null;
         personalInfo.school = newVal.schoolInput ?? null;
         personalInfo.course = newVal.courseInput ?? null;
         ((personalInfo.schoolId = newVal.schoolInfoId ?? null),
