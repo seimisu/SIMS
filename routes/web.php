@@ -145,10 +145,14 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::post('scholars/{id}/{type}/transfer', [Scholar1Controller::class, 'transfer'])->name('scholars.transfer');
     Route::post('scholars/{id}/{type}/SubjectRequest', [Scholar1Controller::class, 'validate'])->name('scholars.validate');
     Route::post('scholars/{id}/{type}/GradeRequest', [Scholar1Controller::class, 'gradeValidate'])->name('scholars.gradeValidate');
+
+    // scholar preview
     Route::post('scholar-review/{id}/validate', [ScholarController::class, 'validate'])->name('review.validate');
     Route::post('scholar-review/{id}/publish', [ScholarController::class, 'publish'])->name('review.publish');
+
     Route::post('profileRequest/{type}', [Scholar1Controller::class, 'profileRequest'])->name('profile.request');
     Route::post('landbankRequest/{type}', [Scholar1Controller::class, 'landbankRequest'])->name('landbank.request');
+    Route::post('gradeRequest/{type}', [Scholar1Controller::class, 'gradeRequest'])->name('grades.request');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -462,7 +462,7 @@ class Scholar1Controller extends Controller
                         ->values()
                         ->map(function ($q) {
                             return [
-                                'id' => $q,
+                                'id' => $q->id,
                                 'term' => $q->term?->name,
                                 'termType' => $q->termType?->name,
                                 'subjects' => $q->subjects->map(function ($subject) {
@@ -472,17 +472,19 @@ class Scholar1Controller extends Controller
                                         'code' => $subject->subject->subject_code,
                                         'unit' => $subject->subject->unit,
                                         'grade' => $subject->grade,
-                                        'total' => $subject->subject->subject_class === 'Academic'
-    ? ((float) $subject->grade?->grade * (int) $subject->grade?->unit)
-    : 0,
+
                                     ];
+                                }),
+                                'totalUnit' => $q->subjects->sum(function ($subject) {
+                                    return (int) ($subject->subject->unit ?? 0);
                                 }),
 
                                 'school' => $q->schoolInfo?->campus?->generated_name,
                                 'course' => $q->schoolInfo?->course?->course?->name,
                                 'academicYear' => $q->academic_year,
                                 'status' => $q->verification_status,
-                                'file' => StudentDocument::where('term', $q->id)->first(),
+                                'remarks' => null,
+                                'files' => StudentDocument::where('term', $q->id)->get(),
                             ];
                         })
                 ),
@@ -1242,6 +1244,49 @@ class Scholar1Controller extends Controller
                 'reviewed_by' => Auth::user()->profile->fullname,
                 'rejection_reason' => $data['reject'],
             ]);
+        }
+
+        return redirect()->back()->with('flash', [
+            'status' => 'success',
+            'title' => 'Action Completed',
+            'message' => $type === 'accept'
+                ? 'The change request has been approved.'
+                : 'The change request has been declined.',
+        ]);
+    }
+
+    public function gradeRequest(string $type, Request $request)
+    {
+
+        $data = $request->input('data');
+
+        if ($type == 'accept') {
+
+            // Capture previous values BEFORE update
+            $term = ScholarTerm::findOrFail($data['id']);
+
+            $term->update([
+                'verification_status' => 'approved',
+            ]);
+        } else {
+
+            $validation = Validator::make($data, [
+                'reject' => 'required|string|max:255',
+            ]);
+
+            // if ($validation->fails()) {
+            //     return redirect()->back()->with('flash', [
+            //         'status' => 'error',
+            //         'title' => 'Validation Failed',
+            //         'message' => 'Please fill in the remarks field.',
+            //     ]);
+            // }
+            // $scholar->landbankRequest()->update([
+            //     'status' => 'rejected',
+            //     'reviewed_at' => Carbon::now(),
+            //     'reviewed_by' => Auth::user()->profile->fullname,
+            //     'rejection_reason' => $data['reject'],
+            // ]);
         }
 
         return redirect()->back()->with('flash', [
