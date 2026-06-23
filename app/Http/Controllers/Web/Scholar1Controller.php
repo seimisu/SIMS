@@ -240,6 +240,10 @@ class Scholar1Controller extends Controller
         $termSubjectRecordIds = StudentSubject::whereHas('subjectRequests', function ($q) {
             $q->where('status', 'pending');
         })->pluck('term_record_id')->toArray();
+
+        $profileRequestIds = StudentProfileRequest::where('status', 'pending')->pluck('spas_no')->toArray();
+        $landbankRequestIds = studentLandbankRequest::where('status', 'pending')->pluck('spas_no')->toArray();
+
         $termGradeRecordIds = StudentGrade::whereHas('gradeRequests', function ($q) {
             $q->where('status', 'submitted');
         })->pluck('term_record_id')->toArray();
@@ -266,9 +270,9 @@ class Scholar1Controller extends Controller
             'Web/scholarsPage',
             [
                 'request_cnt' => collect([
-                    'landbank' => studentLandbankRequest::where('status', 'pending')->count(),
-                    'profile' => StudentProfileRequest::where('status', 'pending')->count(),
-                    'grades' => ,
+                    'landbank' => strval(studentLandbankRequest::where('status', 'pending')->count()),
+                    'profile' => strval(StudentProfileRequest::where('status', 'pending')->count()),
+                    'grades' => '',
                 ]),
                 'grade_request_cnt' => Str::of(
                     StudentGrade::whereHas('gradeRequests', function ($q) {
@@ -342,7 +346,12 @@ class Scholar1Controller extends Controller
                     ->when($request->input('status'), function ($q, $status) {
                         $q->whereHas('status', fn ($w) => $w->whereIn('name', $status));
                     })
-
+                    ->when($request->input('profileRequest'), function ($q) use ($profileRequestIds) {
+                        $q->whereIn('spas_no', $profileRequestIds);
+                    })
+                    ->when($request->input('landbankRequest'), function ($q) use ($landbankRequestIds) {
+                        $q->whereIn('spas_no', $landbankRequestIds);
+                    })
                     ->when($request->input('subjectRequest'), function ($q) use ($termSubjectRecordIds) {
                         $q->whereHas('termRecords', function ($w) use ($termSubjectRecordIds) {
                             $w->whereIn('id', $termSubjectRecordIds);
@@ -356,6 +365,12 @@ class Scholar1Controller extends Controller
                     ->orderBy('scholar_profiles.lname', 'ASC')
                     ->paginate(10)
                     ->through(fn ($q) => [
+                        'count' => [
+                            'profile' => (string) $q->profileRequest->where('status', 'pending')->count(),
+                            'landbank' => (string) $q->landbankRequest->where('status', 'pending')->count(),
+                        ],
+                        'hasRequest' => $q->profileRequest()->where('status', 'pending')->exists()
+                                        || $q->landbankRequest()->where('status', 'pending')->exists(),
                         'id' => Hashids::encode($q->id),
                         'spas_no' => $q->spas_no,
                         'photo' => $q->profile?->photo,
@@ -384,18 +399,14 @@ class Scholar1Controller extends Controller
                         'awardyear' => $q->award_year,
                         'agency' => $q->schoolInfo?->first()?->campus?->agency?->slug,
                         'region' => $q->schoolInfo?->first()?->campus?->address?->region_array,
-                        'request' => $q->termRecords
-                            ->pluck('requests')
-                            ->flatten()
-                            ->isNotEmpty(),
-                        'gradeRequest' => $q->termRecords
-                            ->pluck('gradeRequests')
-                            ->flatten()
-                            ->isNotEmpty(),
-                        'personalRequest' => [
-                            'count' => $q->profileRequest->where('status', 'pending')->count(),
-                            'hasRequest' => $q->profileRequest->where('status', 'pending')->isNotEmpty(),
-                        ],
+                        // 'request' => $q->termRecords
+                        //     ->pluck('requests')
+                        //     ->flatten()
+                        //     ->isNotEmpty(),
+                        // 'gradeRequest' => $q->termRecords
+                        //     ->pluck('gradeRequests')
+                        //     ->flatten()
+                        //     ->isNotEmpty(),
 
                     ]),
                 'personalRequest' => Inertia::optional(
@@ -450,6 +461,13 @@ class Scholar1Controller extends Controller
                             });
                         })
                         ->values()
+                ),
+
+                'subjectRequest' => Inertia::optional(
+                    fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
+                        ->with([
+                            '',
+                        ])->get()
                 ),
                 'landbankRequest' => Inertia::optional(
                     fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
@@ -654,7 +672,7 @@ class Scholar1Controller extends Controller
                                                     'is_drop' => $gradeRequest?->grade?->is_drop,
                                                     'is_active' => $gradeRequest?->grade?->is_active,
                                                 ];
-                                            })(),
+                                            }),
                                         ];
                                     }),
                                 ];

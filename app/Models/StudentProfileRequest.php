@@ -36,6 +36,7 @@ class StudentProfileRequest extends Model
         'municipality' => 'encrypted',
         'province' => 'encrypted',
         'region' => 'encrypted',
+
     ];
 
     protected function civilStatus(): Attribute

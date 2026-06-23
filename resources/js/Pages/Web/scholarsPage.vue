@@ -205,18 +205,18 @@
 
                 <div class="flex items-center gap-2">
                     <ToggleButton
-                        v-model="filterGradeRequest"
+                        v-model="filterProfileRequest"
                         size="small"
-                        :disabled="page.props?.grade_request_cnt == '0'"
+                        :disabled="page.props?.request_cnt?.profile == 0"
                         class="!rounded-xl h-8.5"
-                        @update:model-value="toggleSubjectRequest"
+                        @update:model-value="toggleRequest"
                     >
                         <template #default>
                             <div class="flex items-center gap-2">
-                                <div class="text-xs">Grade Request</div>
+                                <div class="text-xs">Profile Request</div>
                                 <Badge
-                                    v-if="page.props?.grade_request_cnt != '0'"
-                                    :value="page.props?.grade_request_cnt"
+                                    v-if="page.props?.request_cnt?.profile != 0"
+                                    :value="page.props?.request_cnt?.profile"
                                     size="small"
                                     severity="danger"
                                 ></Badge>
@@ -224,32 +224,47 @@
                         </template>
                     </ToggleButton>
                     <ToggleButton
-                        v-model="filterSubjectRequest"
+                        v-model="filterLandbankRequest"
                         size="small"
-                        :disabled="page.props?.request_cnt == '0'"
+                        :disabled="page.props?.request_cnt?.landbank == 0"
                         class="!rounded-xl h-8.5"
-                        @update:model-value="toggleSubjectRequest"
+                        @update:model-value="toggleRequest"
                     >
                         <template #default>
                             <div class="flex items-center gap-2">
-                                <div class="text-xs">Subject Request</div>
+                                <div class="text-xs">Landbank Request</div>
                                 <Badge
-                                    v-if="page.props?.request_cnt != '0'"
-                                    :value="page.props?.request_cnt"
+                                    v-if="
+                                        page.props?.request_cnt?.landbank != '0'
+                                    "
+                                    :value="page.props?.request_cnt?.landbank"
                                     size="small"
                                     severity="danger"
                                 ></Badge>
                             </div>
                         </template>
                     </ToggleButton>
-                    <!-- <DefaultButton
-                        :icon="TablerIcons.IconPlus"
-                        label="Create"
-                        @click="dialogUploadScholar = true"
-                        class-name="w-30  !rounded-xl"
+                    <ToggleButton
+                        v-model="filterTorRequest"
                         size="small"
-                        raised
-                    /> -->
+                        :disabled="page.props?.request_cnt?.landbank == 0"
+                        class="!rounded-xl h-8.5"
+                        @update:model-value="toggleRequest"
+                    >
+                        <template #default>
+                            <div class="flex items-center gap-2">
+                                <div class="text-xs">Grade Submitted</div>
+                                <Badge
+                                    v-if="
+                                        page.props?.request_cnt?.landbank != '0'
+                                    "
+                                    :value="page.props?.request_cnt?.landbank"
+                                    size="small"
+                                    severity="danger"
+                                ></Badge>
+                            </div>
+                        </template>
+                    </ToggleButton>
                 </div>
             </div>
             <DefaultSelectionTable
@@ -270,10 +285,7 @@
                                 <OverlayBadge
                                     severity="danger"
                                     class="inline-flex"
-                                    v-if="
-                                        props.data.request ||
-                                        props.data.gradeRequest
-                                    "
+                                    v-if="props.data.hasRequest"
                                 >
                                     <Avatar
                                         :label="
@@ -396,7 +408,6 @@
                         </div>
                     </template>
                 </Column>
-
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
@@ -478,19 +489,28 @@
                                         }}</span>
                                         <Badge
                                             v-if="
-                                                selectedRow.personalRequest
-                                                    .hasRequest &&
+                                                selectedRow?.count?.profile !=
+                                                    '0' &&
                                                 item.label == 'Profile Request'
                                             "
                                             class="ml-auto"
                                             size="small"
                                             severity="danger"
+                                            :value="selectedRow?.count?.profile"
+                                        />
+                                        <Badge
+                                            v-if="
+                                                selectedRow?.count?.landbank !=
+                                                    '0' &&
+                                                item.label == 'Landbank Request'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            severity="danger"
                                             :value="
-                                                selectedRow.personalRequest
-                                                    .count
+                                                selectedRow?.count?.landbank
                                             "
                                         />
-
                                         <Badge
                                             v-if="
                                                 selectedRow.activationRequested &&
@@ -566,6 +586,9 @@ const filterSub = ref(null);
 const filterStatus = ref(null);
 const filterSubjectRequest = ref(false);
 const filterGradeRequest = ref(false);
+const filterProfileRequest = ref(false);
+const filterLandbankRequest = ref(false);
+const filterTorRequest = ref(false);
 const drawerDetailsRequest = ref(false);
 const drawerGradeRequest = ref(false);
 const drawerScholar = ref(false);
@@ -653,7 +676,7 @@ const menuItems = computed((item) => {
             class: "text-cyan-500",
             command: () => {
                 router.reload({
-                    only: ["gradeRequest"],
+                    only: ["subjectRequest"],
                     data: { id: selectedRow.value.id },
 
                     preserveState: false,
@@ -692,11 +715,11 @@ const loadPage = (page) => {
             ...(filterProgram.value ? { programs: filterProgram.value } : {}),
             ...(filterSub.value ? { sub: filterSub.value } : {}),
             ...(filterStatus.value ? { status: filterStatus.value } : {}),
-            ...(filterSubjectRequest.value
-                ? { subjectRequest: filterSubjectRequest.value }
+            ...(filterProfileRequest.value
+                ? { profileRequest: filterProfileRequest.value }
                 : {}),
-            ...(filterGradeRequest.value
-                ? { gradeRequest: filterGradeRequest.value }
+            ...(filterLandbankRequest.value
+                ? { landbankRequest: filterLandbankRequest.value }
                 : {}),
         },
         {
@@ -829,7 +852,7 @@ const statusFilterClear = (event) => {
     }, 300);
 };
 
-const toggleSubjectRequest = (event) => {
+const toggleRequest = (event) => {
     clearTimeout(timerBounce.value);
     timerBounce.value = setTimeout(() => {
         loadPage(1);

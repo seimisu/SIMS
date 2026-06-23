@@ -29,6 +29,11 @@ class Scholars extends Model
         return $this->hasMany(requestHistory::class, 'scholar_id', 'id');
     }
 
+    public function subjectRequest()
+    {
+        return $this->hasMany(StudentSubject::class, 'spas_no', 'spas_no');
+    }
+
     public function profileRequest()
     {
         return $this->hasMany(StudentProfileRequest::class, 'spas_no', 'spas_no');
