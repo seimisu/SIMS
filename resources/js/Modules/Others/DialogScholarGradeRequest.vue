@@ -4,7 +4,7 @@
         modal
         :pt="{
             header: 'border-b-1 border-gray-300 border-dashed',
-            root: 'w-[99%] lg:w-[90rem]',
+            root: 'w-[99%] lg:w-[110rem]',
             content: '!p-0',
         }"
     >
@@ -19,7 +19,180 @@
             </div>
         </template>
         <template #default>
-            <div class="p-3 w-full"></div>
+            <div class="p-3 w-full flex gap-3">
+                <div class="flex-6 flex flex-col gap-3">
+                    <div class="flex flex-col gap-5" v-if="details">
+                        <template v-for="(item, index) in details" :key="index">
+                            <Divider>
+                                <span class="text-sm font-semibold"
+                                    >{{ item.academicYear }} /
+                                    {{ item.term }}</span
+                                >
+                            </Divider>
+                            <div>
+                                <div class="flex-1 flex justify-between">
+                                    <div>
+                                        <div class="text-xs text-slate-500">
+                                            School/Course
+                                        </div>
+                                        <div class="text-sm">
+                                            <p class="">
+                                                {{ item.school }}
+                                            </p>
+                                            <p class="">
+                                                {{ item.course }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="">
+                                        <div class="text-xs text-slate-500">
+                                            document
+                                        </div>
+                                        <p class="font-medium">
+                                            {{ details.academicYear }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <table class="min-w-full !border-none text-sm">
+                                    <thead>
+                                        <tr class="bg-gray-100">
+                                            <th
+                                                class="px-3 py-2 text-left rounded-l-xl"
+                                            >
+                                                Subject Name
+                                            </th>
+                                            <th class="px-3 py-2 text-left">
+                                                Subject Code
+                                            </th>
+                                            <th class="px-3 py-2 text-right">
+                                                Unit
+                                            </th>
+                                            <th class="px-3 py-2 text-right">
+                                                Grades
+                                            </th>
+                                            <th class="px-3 py-2 text-right">
+                                                Total
+                                            </th>
+                                            <th
+                                                class="px-3 py-2 text-center rounded-r-xl"
+                                            >
+                                                Remarks
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr
+                                            v-for="(
+                                                subject, key
+                                            ) in item.subjects"
+                                            :key="key"
+                                            class="hover:bg-gray-50"
+                                        >
+                                            <td
+                                                class="px-3 py-2 uppercase max-w-70 align-text-top"
+                                            >
+                                                {{ subject.subject }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 uppercase max-w-70 align-text-top"
+                                            >
+                                                {{ subject.code }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 text-right align-text-top"
+                                            >
+                                                {{ subject.unit }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 text-right max-w-35 align-text-top"
+                                            >
+                                                <p v-if="subject.grade?.grade">
+                                                    {{ subject.grade?.grade }}
+                                                </p>
+                                                <p
+                                                    class="text-xs text-gray-400"
+                                                    v-else
+                                                >
+                                                    No Grade yet
+                                                </p>
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 text-right align-text-top"
+                                            >
+                                                {{ subject.total ?? "-" }}
+                                            </td>
+                                            <td class="px-3 py-2 text-center">
+                                                <div
+                                                    v-if="subject?.is_drop"
+                                                    class="text-red-600"
+                                                >
+                                                    Dropped
+                                                </div>
+                                                <div
+                                                    v-else-if="
+                                                        subject?.is_failed
+                                                    "
+                                                    class="text-rose-600"
+                                                >
+                                                    Failed
+                                                </div>
+                                                <div
+                                                    v-else-if="
+                                                        subject?.is_incomplete
+                                                    "
+                                                    class="text-amber-600"
+                                                >
+                                                    Incompleted
+                                                </div>
+                                                <div
+                                                    v-else-if="subject?.grade"
+                                                    class="text-green-600"
+                                                >
+                                                    Passed
+                                                </div>
+                                                <div
+                                                    v-else-if="
+                                                        subject.grade?.is_drop
+                                                    "
+                                                    class="text-red-600"
+                                                >
+                                                    Dropped
+                                                </div>
+                                                <div
+                                                    v-else-if="
+                                                        subject.grade?.is_failed
+                                                    "
+                                                    class="text-rose-600"
+                                                >
+                                                    Failed
+                                                </div>
+                                                <div
+                                                    v-else-if="
+                                                        subject.grade
+                                                            ?.is_incomplete
+                                                    "
+                                                    class="text-amber-600"
+                                                >
+                                                    Incompleted
+                                                </div>
+                                                <div
+                                                    v-else-if="
+                                                        subject.grade?.is_active
+                                                    "
+                                                    class="text-green-600"
+                                                >
+                                                    Passed
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="flex-5">dasda</div>
+            </div>
         </template>
     </Dialog>
 </template>
@@ -47,63 +220,7 @@ import { route } from "ziggy-js";
 const modelValue = defineModel("modelValue");
 const page = usePage();
 const toast = useToast();
-const selectedRow = ref(null);
-const loading = ref({
-    approve: false,
-    reject: false,
-});
-const personalRequest = ref(null);
+const details = ref(null);
 
-const selectedRequest = (item, index) => {
-    selectedRow.value = item;
-    selectedRow.value.index = index;
-};
-
-const approveRequest = (decision) => {
-    router.post(
-        route("profile.request", { type: decision }),
-        {
-            data: selectedRow.value,
-        },
-        {
-            onBefore: () => {
-                if (decision === "reject") {
-                    loading.value.reject = true;
-                } else {
-                    loading.value.approve = true;
-                }
-            },
-            onSuccess: () => {
-                toast.add({
-                    severity: page.props.flash?.status || "success",
-                    summary: page.props.flash?.title || "Success",
-                    detail:
-                        page.props.flash?.message ||
-                        "Request has been processed successfully.",
-                    life: 3000,
-                });
-
-                if (page.props.flash?.status === "success") {
-                    personalRequest.value[selectedRow.value.index].status =
-                        decision === "accept" ? "approved" : "rejected";
-                    selectedRow.value.reviewed_at = "Just now";
-                    selectedRow.value.reviewed_by =
-                        page.props.user.profile.fullname;
-                }
-            },
-
-            onFinish: () => {
-                if (decision === "reject") {
-                    loading.value.reject = false;
-                } else {
-                    loading.value.approve = false;
-                }
-            },
-        },
-    );
-};
-
-onMounted(() => {
-    personalRequest.value = page.props?.personalRequest;
-});
+onMounted(() => (details.value = page.props?.subjectRequest));
 </script>
