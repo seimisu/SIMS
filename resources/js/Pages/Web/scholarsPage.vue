@@ -327,10 +327,7 @@
                             <div class="flex-1 flex flex-col">
                                 <div
                                     :class="[
-                                        'text-xs flex items-center',
-                                        props.data.sex == 'M'
-                                            ? '!text-blue-600'
-                                            : '!text-rose-600',
+                                        'text-xs flex items-center text-blue-600',
                                     ]"
                                 >
                                     <div># {{ props.data.spas_no }}</div>

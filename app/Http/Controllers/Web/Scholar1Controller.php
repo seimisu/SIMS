@@ -14,6 +14,7 @@ use App\Models\LocationRegions;
 use App\Models\requestHistory;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
+use App\Models\ScholarTerm;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
 use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
@@ -312,17 +313,7 @@ class Scholar1Controller extends Controller
                             ])
                             ->latest()
                             ->limit(1),
-                        'termRecords' => fn ($q) => $q
-                            ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id')
-                            ->with([
-                                'requests' => fn ($q) => $q
-                                    ->select('id', 'spas_no', 'term_record_id', 'status', 'requested_at', 'updated_at', 'updated_by', 'remarks')
-                                    ->with([
-                                        'subjectRequests.subject:id,name,year,subject_code,unit,subject_class,semester_id',
-                                    ]),
-                                'gradeRequests' => fn ($q) => $q
-                                    ->where('status', 'submitted'),
-                            ]),
+
                     ])
                     ->when($request->input('search'), fn ($q) => $q->whereHas(
                         'profile',
@@ -351,16 +342,6 @@ class Scholar1Controller extends Controller
                     })
                     ->when($request->input('landbankRequest'), function ($q) use ($landbankRequestIds) {
                         $q->whereIn('spas_no', $landbankRequestIds);
-                    })
-                    ->when($request->input('subjectRequest'), function ($q) use ($termSubjectRecordIds) {
-                        $q->whereHas('termRecords', function ($w) use ($termSubjectRecordIds) {
-                            $w->whereIn('id', $termSubjectRecordIds);
-                        });
-                    })
-                    ->when($request->input('gradeRequest'), function ($q) use ($termGradeRecordIds) {
-                        $q->whereHas('termRecords', function ($w) use ($termGradeRecordIds) {
-                            $w->whereIn('id', $termGradeRecordIds);
-                        });
                     })
                     ->orderBy('scholar_profiles.lname', 'ASC')
                     ->paginate(10)
@@ -464,10 +445,25 @@ class Scholar1Controller extends Controller
                 ),
 
                 'subjectRequest' => Inertia::optional(
-                    fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
-                        ->with([
-                            '',
-                        ])->get()
+                    fn () => ScholarTerm::where('scholar_id', Hashids::decode($request->input('id'))[0] ?? 0)
+                        ->get()
+                        ->map(function ($q) {
+                            return [
+                                'id' => $q,
+                                'term' => $q->term?->name,
+                                'termType' => $q->termType?->name,
+                                'subjects' => $q->subjects->map(function ($subject) {
+                                    return [
+                                        'id' => $subject->id,
+                                        'subject' => $subject->subject,
+                                    ];
+                                }),
+                                'school' => $q->schoolInfo?->campus?->generated_name,
+                                'course' => $q->schoolInfo?->course?->course?->name,
+                                'academicYear' => $q->academic_year,
+                                'status' => $q->verification_status,
+                            ];
+                        })
                 ),
                 'landbankRequest' => Inertia::optional(
                     fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
