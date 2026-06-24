@@ -290,6 +290,21 @@
                         <div class="flex flex-col gap-3">
                             <div class="leading-none">
                                 <label
+                                    for="standing"
+                                    class="text-sm font-semibold"
+                                    >Standing</label
+                                >
+                                <Dropdown
+                                    id="standing"
+                                    v-model="standing"
+                                    :options="standingOptions"
+                                    placeholder="Select Scholar Standing"
+                                    class="w-full !text-sm"
+                                    :disabled="loading.approve || loading.reject"
+                                />
+                            </div>
+                            <div class="leading-none">
+                                <label
                                     for="remarks"
                                     class="text-sm font-semibold"
                                     >Remarks</label
@@ -418,6 +433,7 @@ import {
     IconFileOff,
     IconFileSearch,
     IconCircleCheckFilled,
+    IconLoader2,
     IconCircleXFilled,
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
@@ -426,7 +442,6 @@ import { ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import PDF from "pdf-vue3";
 import { useToast } from "primevue";
-import { route } from "ziggy-js";
 
 const modelValue = defineModel("modelValue");
 const page = usePage();
@@ -438,16 +453,38 @@ const toast = useToast();
 const details = ref(null);
 const remarks = ref(null);
 const selectedFile = ref(null);
+const standing = ref(null);
+const standingOptions = [
+    "GOOD STANDING",
+    "CONTINUED",
+    "CUP - Continued Under Probation",
+    "CPA - Continued with Partial Allowance",
+    "TERMINATED",
+    "NO REPORT",
+    "NON-COMPLIANCE",
+    "GRADUATED",
+];
 
 const selectFile = (file) => {
     selectedFile.value = file;
 };
 
 const approveRequest = (decision) => {
+    if (decision === "accept" && !standing.value) {
+        toast.add({
+            severity: "warn",
+            summary: "Standing Required",
+            detail: "Please select the scholar standing before accepting.",
+            life: 3000,
+        });
+        return;
+    }
+
     router.post(
-        route("grades.request", { type: decision }),
+        `/scholar-grade-request/${decision}`,
         {
             data: details.value.filter((item) => item.status === "submitted"),
+            standing: standing.value,
         },
         {
             onBefore: () => {

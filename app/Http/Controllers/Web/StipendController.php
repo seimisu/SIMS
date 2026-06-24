@@ -40,60 +40,100 @@ class StipendController extends Controller
         };
     }
 
-    private function updateScholarTermPayrollStatus(Batches $batch, int $scholarId, string $batchStatus): void
+    private function payrollProcessStatus(string $batchStatus): string
+    {
+        return match ($batchStatus) {
+            'rejected_payroll' => 'REJECTED',
+            'submitted_payroll' => 'SUBMITTED',
+            'approved_payroll' => 'APPROVED',
+            default => 'DRAFT',
+        };
+    }
+
+    private function scholarTermPayrollQuery(Batches $batch, int $scholarId)
     {
         $query = DB::table('scholar_term_records')
             ->where('scholar_id', $scholarId)
-            ->where('academic_year', $batch->school_year)
-            ->whereIn('verification_status', [
+            ->where('academic_year', $batch->school_year);
+
+        if ($batch->term_id) {
+            $query->where('term_id', $batch->term_id);
+        } else {
+            $query->whereExists(function ($query) use ($batch) {
+                $query->select(DB::raw(1))
+                    ->from('list_references')
+                    ->whereColumn('list_references.id', 'scholar_term_records.term_id')
+                    ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
+            });
+        }
+
+        if ($batch->level_id) {
+            $query->where('level_id', $batch->level_id);
+        }
+
+        return $query;
+    }
+
+    private function syncScholarProcessPayrollStatus(iterable $terms, string $payrollStatus): void
+    {
+        foreach ($terms as $term) {
+            DB::connection('scholars')
+                ->table('scholar_processes')
+                ->updateOrInsert(
+                    ['term_record_id' => $term->id],
+                    [
+                        'spas_no' => $term->spas_no,
+                        'payroll' => $payrollStatus,
+                        'updated_at' => now(),
+                        'updated_by' => Auth::user()->profile?->fullname,
+                    ]
+                );
+        }
+    }
+
+    private function updateScholarTermPayrollStatus(Batches $batch, int $scholarId, string $batchStatus): void
+    {
+        $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
+            ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
+            ->whereIn('scholar_term_records.verification_status', [
                 'submitted',
+                'approved',
                 'draft_payroll',
                 'submitted_payroll',
                 'rejected_payroll',
                 'approved_payroll',
-            ]);
+            ])
+            ->select('scholar_term_records.id', 'scholars.spas_no')
+            ->get();
 
-        if ($batch->term_id) {
-            $query->where('term_id', $batch->term_id);
-        } else {
-            $query->whereExists(function ($query) use ($batch) {
-                $query->select(DB::raw(1))
-                    ->from('list_references')
-                    ->whereColumn('list_references.id', 'scholar_term_records.term_id')
-                    ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
-            });
+        if ($terms->isEmpty()) {
+            return;
         }
 
-        if ($batch->level_id) {
-            $query->where('level_id', $batch->level_id);
-        }
+        DB::table('scholar_term_records')
+            ->whereIn('id', $terms->pluck('id'))
+            ->update(['verification_status' => $this->payrollTermStatus($batchStatus)]);
 
-        $query->update(['verification_status' => $this->payrollTermStatus($batchStatus)]);
+        $this->syncScholarProcessPayrollStatus($terms, $this->payrollProcessStatus($batchStatus));
     }
 
     private function resetScholarTermToSubmitted(Batches $batch, int $scholarId): void
     {
-        $query = DB::table('scholar_term_records')
-            ->where('scholar_id', $scholarId)
-            ->where('academic_year', $batch->school_year)
-            ->whereIn('verification_status', ['draft_payroll', 'rejected_payroll']);
+        $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
+            ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
+            ->whereIn('scholar_term_records.verification_status', ['draft_payroll', 'rejected_payroll'])
+            ->select('scholar_term_records.id', 'scholars.spas_no')
+            ->get();
 
-        if ($batch->term_id) {
-            $query->where('term_id', $batch->term_id);
-        } else {
-            $query->whereExists(function ($query) use ($batch) {
-                $query->select(DB::raw(1))
-                    ->from('list_references')
-                    ->whereColumn('list_references.id', 'scholar_term_records.term_id')
-                    ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
-            });
+        if ($terms->isEmpty()) {
+            return;
         }
 
-        if ($batch->level_id) {
-            $query->where('level_id', $batch->level_id);
-        }
+        DB::table('scholar_term_records')
+            ->whereIn('id', $terms->pluck('id'))
+            ->update(['verification_status' => 'submitted']);
 
-        $query->update(['verification_status' => 'submitted']);
+        $this->syncScholarProcessPayrollStatus($terms, 'NOT SUBMITTED');
     }
 
     private function syncBatchRecipientTermStatuses(Batches $batch, string $batchStatus): void
@@ -396,8 +436,9 @@ class StipendController extends Controller
     private function payrollRecipients(string $hashId)
     {
         $batchId = Hashids::decode($hashId)[0] ?? 0;
+        $batch = Batches::find($batchId);
 
-        return BatchRecipients::with([
+        $recipients = BatchRecipients::with([
             'scholar.profile:scholar_id,fname,mname,lname,suffix,email,birthdate',
             'scholar.program:id,name',
             'scholar.schoolInfo' => fn($q) => $q
@@ -410,8 +451,48 @@ class StipendController extends Controller
         ])
             ->where('batch_id', $batchId)
             ->orderBy('id')
-            ->get()
-            ->map(function ($recipient) {
+            ->get();
+
+        $processStandingsByScholar = collect();
+
+        if ($batch && $recipients->isNotEmpty()) {
+            $termQuery = DB::table('scholar_term_records')
+                ->whereIn('scholar_id', $recipients->pluck('scholar_id')->filter()->unique())
+                ->where('academic_year', $batch->school_year);
+
+            if ($batch->term_id) {
+                $termQuery->where('term_id', $batch->term_id);
+            } else {
+                $termQuery->whereExists(function ($query) use ($batch) {
+                    $query->select(DB::raw(1))
+                        ->from('list_references')
+                        ->whereColumn('list_references.id', 'scholar_term_records.term_id')
+                        ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
+                });
+            }
+
+            if ($batch->level_id) {
+                $termQuery->where('level_id', $batch->level_id);
+            }
+
+            $termRows = $termQuery
+                ->select('id', 'scholar_id')
+                ->get();
+
+            $processStandings = DB::connection('scholars')
+                ->table('scholar_processes')
+                ->whereIn('term_record_id', $termRows->pluck('id'))
+                ->pluck('standing', 'term_record_id');
+
+            $processStandingsByScholar = $termRows
+                ->mapWithKeys(fn($term) => [
+                    $term->scholar_id => $processStandings[$term->id] ?? null,
+                ])
+                ->filter();
+        }
+
+        return $recipients
+            ->map(function ($recipient) use ($processStandingsByScholar) {
                 $learningMaterials = $this->recipientAllowanceAmount(
                     $recipient,
                     'connectivity',
@@ -444,7 +525,7 @@ class StipendController extends Controller
                     'program' => $recipient->scholar?->program?->name,
                     'university' => $recipient->scholar?->schoolInfo->first()?->campus?->generated_name
                         ?? $recipient->scholar?->schoolInfo->first()?->campus?->name,
-                    'scholarship_status' => $recipient->scholarship_status ?? $recipient->scholar?->academic_status ?? 'Ongoing',
+                    'scholarship_status' => $processStandingsByScholar[$recipient->scholar_id] ?? $recipient->scholarship_status ?? 'NO DATA',
                     'period' => $recipient->period,
                     'months' => collect(range(1, 5))->mapWithKeys(fn($month) => [
                         "month_{$month}" => (float) ($recipient->stipends->firstWhere('month_no', $month)?->amount ?? 0),

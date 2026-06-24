@@ -30,6 +30,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -1266,13 +1267,39 @@ class Scholar1Controller extends Controller
         $data = $request->input('data');
 
         if ($type == 'accept') {
-
-            // Capture previous values BEFORE update
-            $term = ScholarTerm::findOrFail($data[0]['id']);
-
-            $term->update([
-                'verification_status' => 'approved',
+            $validated = $request->validate([
+                'data' => ['required', 'array', 'min:1'],
+                'data.*.id' => ['required', 'integer'],
+                'standing' => [
+                    'required',
+                    'string',
+                    'in:GOOD STANDING,CONTINUED,CUP - Continued Under Probation,CPA - Continued with Partial Allowance,TERMINATED,NO REPORT,NON-COMPLIANCE,GRADUATED',
+                ],
             ]);
+
+            $terms = ScholarTerm::with('scholar:id,spas_no')
+                ->whereIn('id', collect($validated['data'])->pluck('id'))
+                ->get();
+
+            foreach ($terms as $term) {
+                $term->update([
+                    'verification_status' => 'approved',
+                ]);
+
+                DB::connection('scholars')
+                    ->table('scholar_processes')
+                    ->updateOrInsert(
+                        ['term_record_id' => $term->id],
+                        [
+                            'spas_no' => $term->scholar?->spas_no,
+                            'standing' => $validated['standing'],
+                            'submission' => 'APPROVED',
+                            'payroll' => 'NOT SUBMITTED',
+                            'updated_at' => now(),
+                            'updated_by' => Auth::user()->profile->fullname,
+                        ]
+                    );
+            }
         } else {
 
             $validation = Validator::make($data, [
