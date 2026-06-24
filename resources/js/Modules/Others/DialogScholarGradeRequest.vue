@@ -292,15 +292,17 @@
                                 <label
                                     for="standing"
                                     class="text-sm font-semibold"
-                                    >Standing</label
+                                    >Scholarship status</label
                                 >
                                 <Dropdown
                                     id="standing"
                                     v-model="standing"
                                     :options="standingOptions"
-                                    placeholder="Select Scholar Standing"
+                                    placeholder="Select Option"
                                     class="w-full !text-sm"
-                                    :disabled="loading.approve || loading.reject"
+                                    :disabled="
+                                        loading.approve || loading.reject
+                                    "
                                 />
                             </div>
                             <div class="leading-none">
@@ -408,7 +410,7 @@
                         </div>
                     </div>
                     <div v-else>
-                        <PDF src="/demo.pdf" />
+                        <PDF :src="selectFile.file_path" />
                     </div>
                 </div>
             </div>
@@ -434,6 +436,7 @@ import {
     IconFileSearch,
     IconCircleCheckFilled,
     IconLoader2,
+    IconArrowLeft,
     IconCircleXFilled,
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
@@ -467,6 +470,7 @@ const standingOptions = [
 
 const selectFile = (file) => {
     selectedFile.value = file;
+    console.log(file);
 };
 
 const approveRequest = (decision) => {
@@ -474,7 +478,7 @@ const approveRequest = (decision) => {
         toast.add({
             severity: "warn",
             summary: "Standing Required",
-            detail: "Please select the scholar standing before accepting.",
+            detail: "Please select the scholarship status before accepting.",
             life: 3000,
         });
         return;

@@ -460,7 +460,7 @@ class Scholar1Controller extends Controller
                         ->take(2)
 
                         ->get()
-                        ->sortBy('term_id')
+                        ->sortBy('verification_status')
                         ->values()
                         ->map(function ($q) {
                             return [
