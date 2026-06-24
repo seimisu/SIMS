@@ -410,7 +410,10 @@
                         </div>
                     </div>
                     <div v-else>
-                        <PDF :src="selectFile.file_path" />
+                        <PDF
+                            class="!w-full !h-full"
+                            :src="selectFile.file_path"
+                        />
                     </div>
                 </div>
             </div>
