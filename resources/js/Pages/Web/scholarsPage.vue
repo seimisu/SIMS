@@ -247,7 +247,7 @@
                     <ToggleButton
                         v-model="filterTorRequest"
                         size="small"
-                        :disabled="page.props?.request_cnt?.landbank == 0"
+                        :disabled="page.props?.request_cnt?.grades == 0"
                         class="!rounded-xl h-8.5"
                         @update:model-value="toggleRequest"
                     >
@@ -256,9 +256,9 @@
                                 <div class="text-xs">Grade Submitted</div>
                                 <Badge
                                     v-if="
-                                        page.props?.request_cnt?.landbank != '0'
+                                        page.props?.request_cnt?.grades != '0'
                                     "
-                                    :value="page.props?.request_cnt?.landbank"
+                                    :value="page.props?.request_cnt?.grades"
                                     size="small"
                                     severity="danger"
                                 ></Badge>
@@ -510,6 +510,17 @@
                                         />
                                         <Badge
                                             v-if="
+                                                selectedRow?.count?.grades !=
+                                                    '0' &&
+                                                item.label == 'Grade Submitted'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            severity="danger"
+                                            :value="selectedRow?.count?.grades"
+                                        />
+                                        <Badge
+                                            v-if="
                                                 selectedRow.activationRequested &&
                                                 item.label == 'Activation Link'
                                             "
@@ -670,7 +681,7 @@ const menuItems = computed((item) => {
             },
         },
         {
-            label: "Subjects & Grades Request",
+            label: "Grade Submitted",
             icon: TablerIcons.IconId,
             disabled: selectedRow.value.count.grades == "0" ? true : false,
             class: "text-cyan-500",
@@ -720,6 +731,9 @@ const loadPage = (page) => {
                 : {}),
             ...(filterLandbankRequest.value
                 ? { landbankRequest: filterLandbankRequest.value }
+                : {}),
+            ...(filterTorRequest.value
+                ? { gradeRequest: filterTorRequest.value }
                 : {}),
         },
         {

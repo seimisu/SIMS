@@ -392,7 +392,9 @@
                             Select a file on the left panel
                         </div>
                     </div>
-                    <div v-else></div>
+                    <div v-else>
+                        <PDF src="/demo.pdf" />
+                    </div>
                 </div>
             </div>
         </template>
@@ -422,7 +424,7 @@ import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import { ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
-import { VPdfViewer } from "@vue-pdf-viewer/viewer";
+import PDF from "pdf-vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
 
