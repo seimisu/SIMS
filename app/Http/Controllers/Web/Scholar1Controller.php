@@ -1266,16 +1266,9 @@ class Scholar1Controller extends Controller
 
         $data = $request->input('data');
 
+        dd($data);
+
         if ($type == 'accept') {
-            $validated = $request->validate([
-                'data' => ['required', 'array', 'min:1'],
-                'data.*.id' => ['required', 'integer'],
-                'standing' => [
-                    'required',
-                    'string',
-                    'in:GOOD STANDING,CONTINUED,CUP - Continued Under Probation,CPA - Continued with Partial Allowance,TERMINATED,NO REPORT,NON-COMPLIANCE,GRADUATED',
-                ],
-            ]);
 
             $terms = ScholarTerm::with('scholar:id,spas_no')
                 ->whereIn('id', collect($validated['data'])->pluck('id'))

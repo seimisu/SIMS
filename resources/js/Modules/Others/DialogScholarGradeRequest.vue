@@ -62,7 +62,8 @@
                                             >
                                                 <div
                                                     v-if="
-                                                        index == 0 &&
+                                                        item.status !=
+                                                            'submitted' &&
                                                         file.document_type ==
                                                             'grades_proof'
                                                     "
@@ -91,7 +92,8 @@
                                                 </div>
                                                 <div
                                                     v-if="
-                                                        index == 1 &&
+                                                        item.status ==
+                                                            'submitted' &&
                                                         file.document_type ==
                                                             'cor'
                                                     "
@@ -296,7 +298,7 @@
                                 >
                                 <Dropdown
                                     id="standing"
-                                    v-model="standing"
+                                    v-model="details.inputStatus"
                                     :options="standingOptions"
                                     placeholder="Select Option"
                                     class="w-full !text-sm"
@@ -410,9 +412,12 @@
                         </div>
                     </div>
                     <div v-else>
-                        <PDF
-                            class="!w-full !h-full"
-                            :src="selectFile.file_path"
+                        <VPdfViewer
+                            class="p-2 w-full"
+                            :src="
+                                'https://172.16.8.98:85/' +
+                                selectedFile.file_path
+                            "
                         />
                     </div>
                 </div>
@@ -446,8 +451,8 @@ import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import { ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
-import PDF from "pdf-vue3";
 import { useToast } from "primevue";
+import { VPdfViewer } from "@vue-pdf-viewer/viewer";
 
 const modelValue = defineModel("modelValue");
 const page = usePage();
@@ -473,7 +478,6 @@ const standingOptions = [
 
 const selectFile = (file) => {
     selectedFile.value = file;
-    console.log(file);
 };
 
 const approveRequest = (decision) => {
@@ -491,7 +495,6 @@ const approveRequest = (decision) => {
         `/scholar-grade-request/${decision}`,
         {
             data: details.value.filter((item) => item.status === "submitted"),
-            standing: standing.value,
         },
         {
             onBefore: () => {
