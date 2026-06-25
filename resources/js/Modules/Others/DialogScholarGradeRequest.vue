@@ -62,8 +62,8 @@
                                             >
                                                 <div
                                                     v-if="
-                                                        item.status !=
-                                                            'submitted' &&
+                                                        item.status ==
+                                                            'approved' &&
                                                         file.document_type ==
                                                             'grades_proof'
                                                     "
@@ -290,38 +290,6 @@
                             >
                         </Divider>
                         <div class="flex flex-col gap-3">
-                            <!-- <div class="leading-none">
-                                <label
-                                    for="standing"
-                                    class="text-sm font-semibold"
-                                    >Scholarship status</label
-                                >
-                                <Dropdown
-                                    id="standing"
-                                    v-model="details.inputStatus"
-                                    :options="standingOptions"
-                                    placeholder="Select Option"
-                                    class="w-full !text-sm"
-                                    :disabled="
-                                        loading.approve || loading.reject
-                                    "
-                                />
-                            </div>
-                            <div class="leading-none">
-                                <label
-                                    for="remarks"
-                                    class="text-sm font-semibold"
-                                    >Remarks</label
-                                >
-                                <Textarea
-                                    id="remarks"
-                                    class="!text-sm"
-                                    placeholder="Help the user understand why this request was rejected and what needs to be corrected."
-                                    fluid
-                                    rows="5"
-                                    v-model="details.remarks"
-                                />
-                            </div> -->
                             <div class="flex flex-col gap-4">
                                 <div class="flex justify-end">
                                     <div class="flex items-center mb-3 gap-3">
@@ -395,7 +363,11 @@
 
                                                         <Textarea
                                                             v-model="
-                                                                details.remarks
+                                                                details.find(
+                                                                    (item) =>
+                                                                        item.status ===
+                                                                        'submitted',
+                                                                ).remarks
                                                             "
                                                             rows="4"
                                                             placeholder="Enter your reason here..."
@@ -428,6 +400,9 @@
                                                                     'reject',
                                                                 )
                                                             "
+                                                            :loading="
+                                                                loading.reject
+                                                            "
                                                             rounded
                                                             size="small"
                                                             class-name="!px-5"
@@ -441,7 +416,6 @@
                                                 size="small"
                                                 class="!text-xs !rounded-xl"
                                                 raised
-                                                :loading="loading.approve"
                                                 @click="toggleOpAccept"
                                             >
                                                 <template #default>
@@ -504,7 +478,12 @@
 
                                                         <SelectInput
                                                             v-model="
-                                                                details.inputStatus
+                                                                details.find(
+                                                                    (item) =>
+                                                                        item.status ===
+                                                                        'submitted',
+                                                                )
+                                                                    .scholarshipStatus
                                                             "
                                                             :options="
                                                                 standingOptions
@@ -531,6 +510,9 @@
                                                         <DefaultButton
                                                             label="Ready for payroll"
                                                             rounded
+                                                            :loading="
+                                                                loading.approve
+                                                            "
                                                             @click="
                                                                 approveRequest(
                                                                     'accept',
@@ -636,14 +618,20 @@ const remarks = ref(null);
 const selectedFile = ref(null);
 const standing = ref(null);
 const standingOptions = [
-    { name: "GOOD STANDING" },
-    { name: "CONTINUED" },
-    { name: "CUP - Continued Under Probation" },
-    { name: "CPA - Continued with Partial Allowance" },
-    { name: "TERMINATED" },
-    { name: "NO REPORT" },
-    { name: "NON-COMPLIANCE" },
-    { name: "GRADUATED" },
+    { id: "GOOD STANDING", name: "GOOD STANDING" },
+    { id: "CONTINUED", name: "CONTINUED" },
+    {
+        id: "CUP - Continued Under Probation",
+        name: "CUP - Continued Under Probation",
+    },
+    {
+        id: "CPA - Continued with Partial Allowance",
+        name: "CPA - Continued with Partial Allowance",
+    },
+    { id: "TERMINATED", name: "TERMINATED" },
+    { id: "NO REPORT", name: "NO REPORT" },
+    { id: "NON-COMPLIANCE", name: "NON-COMPLIANCE" },
+    { id: "GRADUATED", name: "GRADUATED" },
 ];
 
 const selectFile = (file) => {
@@ -657,7 +645,11 @@ const toggleOpAccept = (event) => {
 };
 
 const approveRequest = (decision) => {
-    if (decision === "accept" && !details.value?.inputStatus) {
+    if (
+        decision === "accept" &&
+        !details.value.find((item) => item.status === "submitted")
+            .scholarshipStatus
+    ) {
         toast.add({
             severity: "warn",
             summary: "Standing Required",
@@ -666,7 +658,10 @@ const approveRequest = (decision) => {
         });
         return;
     }
-    if (decision === "reject" && !details.value?.remarks) {
+    if (
+        decision === "reject" &&
+        !details.value.find((item) => item.status === "submitted").remarks
+    ) {
         toast.add({
             severity: "warn",
             summary: "Standing Required",
@@ -705,8 +700,8 @@ const approveRequest = (decision) => {
                     loading.value.reject = false;
                 } else {
                     loading.value.approve = false;
-                    modelValue.value = false;
                 }
+                modelValue.value = false;
             },
         },
     );

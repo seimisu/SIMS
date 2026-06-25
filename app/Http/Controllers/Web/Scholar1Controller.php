@@ -493,6 +493,7 @@ class Scholar1Controller extends Controller
                                 'academicYear' => $q->academic_year,
                                 'status' => $q->verification_status,
                                 'remarks' => null,
+                                'scholarshipStatus' => null,
                                 'files' => StudentDocument::where('term', $q->id)->get(),
                             ];
                         })
@@ -666,10 +667,8 @@ class Scholar1Controller extends Controller
                             ])->values()->map(function ($term) {
                                 return [
                                     'id' => $term->id,
-                                    'term' => $term->id
-                                        ? $term->only('id', 'name')
-                                        : null,
-                                    'level' => $term?->level ? $term?->level?->only('id', 'name', 'others') : null,
+                                    'termType' => $term->term->name,
+                                    'files' => StudentDocument::where('term', $term->id)->get(),
                                     'academic_year' => $term->academic_year,
                                     'gradeRequest' => $term->gradeRequests->isNotEmpty(),
                                     'subjects' => $term->subjects->map(function ($sub) {
@@ -1273,17 +1272,28 @@ class Scholar1Controller extends Controller
 
         $data = $request->input('data');
 
-        dd($data);
-
         if ($type == 'accept') {
 
+            $validation = Validator::make($data[0], [
+                'scholarshipStatus' => 'required|array|max:255',
+            ]);
+
+            if ($validation->fails()) {
+                return redirect()->back()->with('flash', [
+                    'status' => 'error',
+                    'title' => 'Validation Failed',
+                    'message' => 'Please fill in the scholarship status.',
+                ]);
+            }
+
             $terms = ScholarTerm::with('scholar:id,spas_no')
-                ->whereIn('id', collect($validated['data'])->pluck('id'))
+                ->whereIn('id', collect($data)->pluck('id'))
                 ->get();
 
             foreach ($terms as $term) {
                 $term->update([
                     'verification_status' => 'approved',
+                    'verified_by' => Auth::user()->profile->fullname,
                 ]);
 
                 DB::connection('scholars')
@@ -1292,7 +1302,7 @@ class Scholar1Controller extends Controller
                         ['term_record_id' => $term->id],
                         [
                             'spas_no' => $term->scholar?->spas_no,
-                            'standing' => $validated['standing'],
+                            'standing' => $validation['scholarshipStatus'],
                             'submission' => 'APPROVED',
                             'payroll' => 'NOT SUBMITTED',
                             'updated_at' => now(),
@@ -1302,17 +1312,26 @@ class Scholar1Controller extends Controller
             }
         } else {
 
-            $validation = Validator::make($data, [
-                'reject' => 'required|string|max:255',
+            $validation = Validator::make($data[0], [
+                'remarks' => 'required|string|max:255',
             ]);
 
-            // if ($validation->fails()) {
-            //     return redirect()->back()->with('flash', [
-            //         'status' => 'error',
-            //         'title' => 'Validation Failed',
-            //         'message' => 'Please fill in the remarks field.',
-            //     ]);
-            // }
+            if ($validation->fails()) {
+                return redirect()->back()->with('flash', [
+                    'status' => 'error',
+                    'title' => 'Validation Failed',
+                    'message' => 'Please fill in the remarks field.',
+                ]);
+            }
+
+            $terms = ScholarTerm::where(
+                'id',
+                collect($data)->firstWhere('status', 'submitted')['id']
+            )->update([
+                'verification_status' => 'rejected',
+                'rejection_reason' => collect($data)->firstWhere('status', 'submitted')['remarks'],
+            ]);
+
             // $scholar->landbankRequest()->update([
             //     'status' => 'rejected',
             //     'reviewed_at' => Carbon::now(),

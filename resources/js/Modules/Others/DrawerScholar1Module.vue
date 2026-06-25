@@ -517,10 +517,14 @@
                         <template #default>
                             <div class="w-full flex flex-col pt-2 gap-4">
                                 <section class="flex flex-col gap-2">
-                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
                                         Personal Information
                                     </h3>
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2"
+                                    >
                                         <TextInput
                                             v-model="personalInfo.first_name"
                                             label="First Name"
@@ -576,11 +580,17 @@
                                     </div>
                                 </section>
 
-                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
-                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
                                         School Information
                                     </h3>
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 gap-2"
+                                    >
                                         <SelectInput
                                             label="School"
                                             v-model="personalInfo.school"
@@ -597,22 +607,32 @@
                                     </div>
                                 </section>
 
-                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
-                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
                                         Scholarship Information
                                     </h3>
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2"
+                                    >
                                         <SelectInput
                                             label="Scholar Program"
                                             v-model="personalInfo.program"
                                             :disable="!editBtn.info"
-                                            :options="page.props?.programOptions"
+                                            :options="
+                                                page.props?.programOptions
+                                            "
                                         />
                                         <SelectInput
                                             label="Type"
                                             v-model="personalInfo.sub_program"
                                             :disable="!editBtn.info"
-                                            :options="page.props?.subProgramOptions"
+                                            :options="
+                                                page.props?.subProgramOptions
+                                            "
                                         />
                                         <DatePickerInput
                                             v-model="personalInfo.award_year"
@@ -631,8 +651,12 @@
                                     </div>
                                 </section>
 
-                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
-                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
                                         Address
                                     </h3>
                                     <TextInput
@@ -653,11 +677,17 @@
                                     />
                                 </section>
 
-                                <section class="flex flex-col gap-2 border-t border-slate-200 pt-3">
-                                    <h3 class="text-xs font-semibold uppercase text-slate-500">
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
                                         Other Information
                                     </h3>
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 gap-2"
+                                    >
                                         <TextInput
                                             v-model="personalInfo.acc_name"
                                             label="Landbank Account Name"
@@ -718,9 +748,7 @@
                     >
                         <div
                             class="rounded-2xl border border-slate-200 bg-slate-50 p-3"
-                            v-if="
-                                page.props?.details?.termGrades?.length > 0
-                            "
+                            v-if="page.props?.details?.termGrades?.length > 0"
                         >
                             <div
                                 class="mb-3 flex flex-col gap-1 rounded-xl bg-white p-3 text-gray-700 shadow-sm"
@@ -728,7 +756,7 @@
                                 <div class="flex items-center gap-2">
                                     <IconHistory :size="18" />
                                     <span class="text-sm font-semibold">
-                                    Academic Records
+                                        Academic Records
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-500">
@@ -770,8 +798,8 @@
                                                     class="px-2 py-0.5 rounded-md bg-gray-100"
                                                 >
                                                     {{
-                                                        termRecord.term
-                                                            ?.name ?? "Term"
+                                                        termRecord.termType ??
+                                                        "Term"
                                                     }}
                                                 </span>
                                             </div>
@@ -783,58 +811,46 @@
                                                 >
                                                     Documents
                                                 </span>
-                                                <a
-                                                    v-if="
-                                                        termRecord.documents
-                                                            ?.cor
-                                                    "
-                                                    :href="
-                                                        `/${termRecord.documents.cor.file_path}`.replace(
-                                                            '//',
-                                                            '/',
-                                                        )
-                                                    "
-                                                    target="_blank"
-                                                    class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                <div
+                                                    class="flex items-center gap-1"
+                                                    v-if="termRecord.files"
                                                 >
-                                                    COR:
-                                                    {{
-                                                        termRecord.documents
-                                                            .cor.file_name
-                                                    }}
-                                                </a>
-                                                <a
-                                                    v-if="
-                                                        termRecord.documents
-                                                            ?.grades_proof
-                                                    "
-                                                    :href="
-                                                        `/${termRecord.documents.grades_proof.file_path}`.replace(
-                                                            '//',
-                                                            '/',
-                                                        )
-                                                    "
-                                                    target="_blank"
-                                                    class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
-                                                >
-                                                    Proof:
-                                                    {{
-                                                        termRecord.documents
-                                                            .grades_proof
-                                                            .file_name
-                                                    }}
-                                                </a>
-                                                <span
-                                                    v-if="
-                                                        !termRecord.documents
-                                                            ?.cor &&
-                                                        !termRecord.documents
-                                                            ?.grades_proof
-                                                    "
-                                                    class="rounded-lg bg-gray-100 px-2 py-1 text-xs text-gray-500"
-                                                >
-                                                    No attached documents
-                                                </span>
+                                                    <template
+                                                        v-for="(
+                                                            file, index
+                                                        ) in termRecord.files"
+                                                        :key="index"
+                                                    >
+                                                        <a
+                                                            v-if="
+                                                                file.document_type ==
+                                                                'cor'
+                                                            "
+                                                            :href="
+                                                                file.file_path
+                                                            "
+                                                            target="_blank"
+                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                        >
+                                                            COR:
+                                                            {{ file.file_name }}
+                                                        </a>
+                                                        <a
+                                                            v-if="
+                                                                file.document_type ==
+                                                                'grades_proof'
+                                                            "
+                                                            :href="
+                                                                file.file_path
+                                                            "
+                                                            target="_blank"
+                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                        >
+                                                            Proof of Grades:
+                                                            {{ file.file_name }}
+                                                        </a>
+                                                    </template>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
@@ -903,8 +919,7 @@
                                                 <tbody>
                                                     <tr
                                                         v-if="
-                                                            !termRecord
-                                                                .subjects
+                                                            !termRecord.subjects
                                                                 ?.length
                                                         "
                                                     >
@@ -913,10 +928,9 @@
                                                             class="px-3 py-6 text-center text-gray-500"
                                                         >
                                                             Approved academic
-                                                            record found, but
-                                                            no subjects are
-                                                            loaded for this
-                                                            term yet.
+                                                            record found, but no
+                                                            subjects are loaded
+                                                            for this term yet.
                                                         </td>
                                                     </tr>
                                                     <tr
@@ -1064,8 +1078,7 @@
                                                             {{
                                                                 termRecord
                                                                     .summary
-                                                                    ?.units ??
-                                                                0
+                                                                    ?.units ?? 0
                                                             }}
                                                         </td>
                                                         <td
@@ -1329,7 +1342,6 @@ const loading = ref({
     transferSubmit: false,
 });
 
-
 const personalInfo = useForm({
     schoolId: null,
     last_name: null,
@@ -1436,12 +1448,14 @@ const academicStatusDisplay = computed(() => {
         page.props?.details?.academic_status ??
         page.props?.details?.status?.name ??
         "Ongoing";
-    return academicStatusStyles[rawStatus] ?? {
-        name: rawStatus,
-        icon: "IconCircleCheck",
-        bcolor: "bg-slate-50",
-        tcolor: "text-slate-600",
-    };
+    return (
+        academicStatusStyles[rawStatus] ?? {
+            name: rawStatus,
+            icon: "IconCircleCheck",
+            bcolor: "bg-slate-50",
+            tcolor: "text-slate-600",
+        }
+    );
 });
 
 const scholarLocationDisplay = computed(() => {
@@ -1454,7 +1468,6 @@ const scholarLocationDisplay = computed(() => {
 
     return parts.length ? parts.join(", ") : "N/A";
 });
-
 
 const changeMenu = (item) => {
     selectedTab.value = item;
@@ -1478,7 +1491,6 @@ const autoSearch = (event) => {
 };
 
 const toggle = (type, event) => {
-    console.log(event);
     if (type === "transfer") {
         opTransfer.value.toggle(event);
     }
@@ -1582,7 +1594,6 @@ const validateGradeRequest = (data) => {
     }
 };
 
-
 const storePersonalInfo = async () => {
     loading.value.storePersonalInfo = true;
 
@@ -1615,7 +1626,6 @@ const storePersonalInfo = async () => {
         },
     );
 };
-
 
 watch(
     () => page.props?.details,
@@ -1742,5 +1752,4 @@ const cancelEdit = () => {
         },
     });
 };
-
 </script>
