@@ -290,7 +290,7 @@
                             >
                         </Divider>
                         <div class="flex flex-col gap-3">
-                            <div class="leading-none">
+                            <!-- <div class="leading-none">
                                 <label
                                     for="standing"
                                     class="text-sm font-semibold"
@@ -321,61 +321,228 @@
                                     rows="5"
                                     v-model="details.remarks"
                                 />
-                            </div>
+                            </div> -->
                             <div class="flex flex-col gap-4">
                                 <div class="flex justify-end">
                                     <div class="flex items-center mb-3 gap-3">
-                                        <Button
-                                            size="small"
-                                            class="!text-xs !rounded-xl"
-                                            outlined
-                                            :loading="loading.reject"
-                                            severity="danger"
-                                            @click="approveRequest('reject')"
-                                        >
-                                            <template #default>
+                                        <div>
+                                            <Button
+                                                size="small"
+                                                class="!text-xs !rounded-xl"
+                                                outlined
+                                                severity="danger"
+                                                @click="toggleOpReject"
+                                            >
+                                                <template #default>
+                                                    <div
+                                                        class="flex gap-1 items-center"
+                                                    >
+                                                        <IconCircleXFilled
+                                                            :stroke-width="1.5"
+                                                            :size="20"
+                                                        />
+
+                                                        <p>
+                                                            Return for Revision
+                                                        </p>
+                                                    </div>
+                                                </template>
+                                            </Button>
+                                            <Popover ref="opReject">
                                                 <div
-                                                    class="flex gap-1 items-center"
+                                                    class="w-[26rem] p-1 flex flex-col gap-4"
                                                 >
-                                                    <IconCircleXFilled
-                                                        :stroke-width="1.5"
-                                                        :size="20"
-                                                        v-if="!loading.reject"
-                                                    />
-                                                    <IconLoader2
-                                                        v-else
-                                                        :size="20"
-                                                        class="animate-spin"
-                                                    />
-                                                    <p>Reject</p>
+                                                    <!-- Header -->
+                                                    <div
+                                                        class="flex items-start justify-between"
+                                                    >
+                                                        <div>
+                                                            <h3
+                                                                class="text-sm font-semibold text-gray-800"
+                                                            >
+                                                                Reject Grade
+                                                                Request
+                                                            </h3>
+                                                            <p
+                                                                class="text-xs text-gray-500 mt-1"
+                                                            >
+                                                                Provide a reason
+                                                                for returning
+                                                                the grade
+                                                                request to the
+                                                                scholar for
+                                                                revision.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Divider -->
+                                                    <div class="border-t"></div>
+
+                                                    <!-- Form -->
+                                                    <div
+                                                        class="flex flex-col gap-2"
+                                                    >
+                                                        <label
+                                                            class="text-xs font-semibold text-gray-600 leading-0"
+                                                        >
+                                                            Remarks
+                                                            <span
+                                                                class="text-red-500"
+                                                                >*</span
+                                                            >
+                                                        </label>
+
+                                                        <Textarea
+                                                            v-model="
+                                                                details.remarks
+                                                            "
+                                                            rows="4"
+                                                            placeholder="Enter your reason here..."
+                                                            class="w-full !text-sm"
+                                                            size="small"
+                                                        />
+                                                    </div>
+
+                                                    <!-- Actions -->
+                                                    <div
+                                                        class="flex justify-end gap-2 pt-2"
+                                                    >
+                                                        <DefaultButton
+                                                            label="Cancel"
+                                                            rounded
+                                                            @click="
+                                                                toggleOpReject
+                                                            "
+                                                            severity="secondary"
+                                                            outlined
+                                                            size="small"
+                                                            class-name="!px-4"
+                                                        />
+
+                                                        <DefaultButton
+                                                            label="Reject Submission"
+                                                            severity="danger"
+                                                            @click="
+                                                                approveRequest(
+                                                                    'reject',
+                                                                )
+                                                            "
+                                                            rounded
+                                                            size="small"
+                                                            class-name="!px-5"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </template>
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            class="!text-xs !rounded-xl"
-                                            raised
-                                            :loading="loading.approve"
-                                            @click="approveRequest('accept')"
-                                        >
-                                            <template #default>
+                                            </Popover>
+                                        </div>
+                                        <div>
+                                            <Button
+                                                size="small"
+                                                class="!text-xs !rounded-xl"
+                                                raised
+                                                :loading="loading.approve"
+                                                @click="toggleOpAccept"
+                                            >
+                                                <template #default>
+                                                    <div
+                                                        class="flex gap-1 items-center"
+                                                    >
+                                                        <IconCircleCheckFilled
+                                                            :stroke-width="1.5"
+                                                            :size="20"
+                                                        />
+
+                                                        <p>Approve Request</p>
+                                                    </div>
+                                                </template>
+                                            </Button>
+                                            <Popover ref="opApprove">
                                                 <div
-                                                    class="flex gap-1 items-center"
+                                                    class="w-[26rem] p-1 flex flex-col gap-4"
                                                 >
-                                                    <IconCircleCheckFilled
-                                                        :stroke-width="1.5"
-                                                        :size="20"
-                                                        v-if="!loading.approve"
-                                                    />
-                                                    <IconLoader2
-                                                        v-else
-                                                        :size="20"
-                                                        class="animate-spin"
-                                                    />
-                                                    <p>Accept</p>
+                                                    <!-- Header -->
+                                                    <div
+                                                        class="flex items-start justify-between"
+                                                    >
+                                                        <div>
+                                                            <h3
+                                                                class="text-sm font-semibold text-gray-800"
+                                                            >
+                                                                Accept grades
+                                                                submitted
+                                                            </h3>
+                                                            <p
+                                                                class="text-xs text-gray-500 mt-1"
+                                                            >
+                                                                Provide a reason
+                                                                for returning
+                                                                the grade
+                                                                request to the
+                                                                scholar for
+                                                                revision.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Divider -->
+                                                    <div class="border-t"></div>
+
+                                                    <!-- Form -->
+                                                    <div
+                                                        class="flex flex-col gap-2"
+                                                    >
+                                                        <label
+                                                            class="text-xs font-semibold text-gray-600 leading-0"
+                                                        >
+                                                            Scholarship Status
+                                                            <span
+                                                                class="text-red-500"
+                                                                >*</span
+                                                            >
+                                                        </label>
+
+                                                        <SelectInput
+                                                            v-model="
+                                                                details.inputStatus
+                                                            "
+                                                            :options="
+                                                                standingOptions
+                                                            "
+                                                        />
+                                                    </div>
+
+                                                    <!-- Actions -->
+                                                    <div
+                                                        class="flex justify-end gap-2 pt-2"
+                                                    >
+                                                        <DefaultButton
+                                                            label="Cancel"
+                                                            rounded
+                                                            severity="secondary"
+                                                            @click="
+                                                                toggleOpAccept
+                                                            "
+                                                            outlined
+                                                            size="small"
+                                                            class-name="!px-4"
+                                                        />
+
+                                                        <DefaultButton
+                                                            label="Ready for payroll"
+                                                            rounded
+                                                            @click="
+                                                                approveRequest(
+                                                                    'accept',
+                                                                )
+                                                            "
+                                                            size="small"
+                                                            class-name="!px-5"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </template>
-                                        </Button>
+                                            </Popover>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -412,10 +579,11 @@
                         </div>
                     </div>
                     <div v-else>
-                        <VPdfViewer
-                            class="p-2 w-full"
-                            :src="
-                                'https://172.16.8.98:85/' +
+                        <VuePdfEmbed
+                            annotation-layer
+                            text-layer
+                            :source="
+                                'http://172.16.8.98:85/' +
                                 selectedFile.file_path
                             "
                         />
@@ -452,8 +620,8 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import { ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
-import { VPdfViewer } from "@vue-pdf-viewer/viewer";
-
+import VuePdfEmbed from "vue-pdf-embed";
+import SelectInput from "../../Components/inputs/SelectInput.vue";
 const modelValue = defineModel("modelValue");
 const page = usePage();
 const loading = ref({
@@ -461,31 +629,48 @@ const loading = ref({
     approve: false,
 });
 const toast = useToast();
+const opReject = ref(null);
+const opApprove = ref(null);
 const details = ref(null);
 const remarks = ref(null);
 const selectedFile = ref(null);
 const standing = ref(null);
 const standingOptions = [
-    "GOOD STANDING",
-    "CONTINUED",
-    "CUP - Continued Under Probation",
-    "CPA - Continued with Partial Allowance",
-    "TERMINATED",
-    "NO REPORT",
-    "NON-COMPLIANCE",
-    "GRADUATED",
+    { name: "GOOD STANDING" },
+    { name: "CONTINUED" },
+    { name: "CUP - Continued Under Probation" },
+    { name: "CPA - Continued with Partial Allowance" },
+    { name: "TERMINATED" },
+    { name: "NO REPORT" },
+    { name: "NON-COMPLIANCE" },
+    { name: "GRADUATED" },
 ];
 
 const selectFile = (file) => {
     selectedFile.value = file;
 };
+const toggleOpReject = (event) => {
+    opReject.value.toggle(event);
+};
+const toggleOpAccept = (event) => {
+    opApprove.value.toggle(event);
+};
 
 const approveRequest = (decision) => {
-    if (decision === "accept" && !standing.value) {
+    if (decision === "accept" && !details.value?.inputStatus) {
         toast.add({
             severity: "warn",
             summary: "Standing Required",
             detail: "Please select the scholarship status before accepting.",
+            life: 3000,
+        });
+        return;
+    }
+    if (decision === "reject" && !details.value?.remarks) {
+        toast.add({
+            severity: "warn",
+            summary: "Standing Required",
+            detail: "Please enter your remarks",
             life: 3000,
         });
         return;

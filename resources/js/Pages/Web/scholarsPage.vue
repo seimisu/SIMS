@@ -552,6 +552,7 @@
     </AuthLayout>
 </template>
 <script setup>
+import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
 import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
 import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Module.vue";
@@ -574,7 +575,6 @@ import {
 import { Head, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
-import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
 
 const toast = useToast();
 const page = usePage();

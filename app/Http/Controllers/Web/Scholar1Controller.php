@@ -354,6 +354,13 @@ class Scholar1Controller extends Controller
                     ->when($request->input('profileRequest'), function ($q) use ($profileRequestIds) {
                         $q->whereIn('spas_no', $profileRequestIds);
                     })
+                    ->when(
+                        $request->input('gradeRequest'),
+                        fn ($q) => $q->whereHas(
+                            'termRecords',
+                            fn ($q) => $q->where('verification_status', 'submitted')
+                        )
+                    )
                     ->when($request->input('landbankRequest'), function ($q) use ($landbankRequestIds) {
                         $q->whereIn('spas_no', $landbankRequestIds);
                     })
