@@ -275,9 +275,15 @@ const submitForm = () => {
 };
 
 const openModal = (event) => {
+    const payloads = ["details", "payrollRecipients", "allowanceOptions"];
+
+    if (event.permissions?.canEdit) {
+        payloads.push("eligibleScholars");
+    }
+
     router.reload({
         data: { id: event.id },
-        only: ["details", "eligibleScholars", "payrollRecipients"],
+        only: payloads,
         onSuccess: () => {
             stipendDrawer.value = true;
         },

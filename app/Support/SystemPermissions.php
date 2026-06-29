@@ -26,6 +26,19 @@ class SystemPermissions
             'geolocation.upload',
         ],
 
+        'regional supervisor' => [
+            'dashboard.view',
+            'schools.view',
+            'scholars.view',
+            'scholars.update',
+            'payroll.view',
+            'payroll.create',
+            'payroll.edit',
+            'payroll.submit',
+            'payroll.delete',
+            'geolocation.upload',
+        ],
+
         'scholarship staff' => [
             'dashboard.view',
             'schools.view',
@@ -234,6 +247,31 @@ class SystemPermissions
         return $this->hasRole($user, 'regional staff');
     }
 
+    public function isRegionalSupervisor(?User $user): bool
+    {
+        return $this->hasRole($user, 'regional supervisor');
+    }
+
+    public function isRegionalRole(?User $user): bool
+    {
+        return $this->isRegionalStaff($user) || $this->isRegionalSupervisor($user);
+    }
+
+    public function shouldScopeToRegion(?User $user): bool
+    {
+        return $this->isRegionalRole($user);
+    }
+
+    public function regionCodeFor(?User $user): ?string
+    {
+        return $user?->profile?->agency?->region_code;
+    }
+
+    public function agencyNameFor(?User $user): ?string
+    {
+        return $user?->profile?->agency?->name;
+    }
+
     public function isSchoolCoordinator(?User $user): bool
     {
         return $this->hasRole($user, 'school coordinator');
@@ -247,7 +285,7 @@ class SystemPermissions
 
     public function dashboardType(?User $user): string
     {
-        if ($this->isRegionalStaff($user)) {
+        if ($this->isRegionalRole($user)) {
             return 'regional';
         }
 
@@ -272,7 +310,7 @@ class SystemPermissions
             return true;
         }
 
-        if ($this->isRegionalStaff($user)) {
+        if ($this->isRegionalRole($user)) {
             return (int) $user->profile?->agency_id === (int) $agencyId;
         }
 
@@ -289,8 +327,8 @@ class SystemPermissions
             return true;
         }
 
-        if ($this->isRegionalStaff($user)) {
-            return Str::lower($user->profile?->agency?->name ?? '') === Str::lower($agencyName ?? '');
+        if ($this->isRegionalRole($user)) {
+            return Str::lower($this->agencyNameFor($user) ?? '') === Str::lower($agencyName ?? '');
         }
 
         return true;
@@ -344,11 +382,11 @@ class SystemPermissions
             return true;
         }
 
-        if (! $this->can($user, 'payroll.edit')) {
-            return true;
+        if ($this->shouldScopeToRegion($user)) {
+            return Str::lower($batch->region ?? '') === Str::lower($this->agencyNameFor($user) ?? '');
         }
 
-        return Str::lower($batch->region ?? '') === Str::lower($user->profile?->agency?->name ?? '');
+        return true;
     }
 
     private function roleName(User $user): string

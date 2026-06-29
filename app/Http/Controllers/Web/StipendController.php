@@ -251,8 +251,8 @@ class StipendController extends Controller
                     'term_name' => $term->name,
                 ]),
             'batches' => Batches::whereNull('deleted_at')
-                ->when($permissions->isRegionalStaff($user), function ($query) use ($user) {
-                    $query->whereRaw('LOWER(region) = ?', [Str::lower($user->profile?->agency?->name ?? '')]);
+                ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
+                    $query->whereRaw('LOWER(region) = ?', [Str::lower($permissions->agencyNameFor($user) ?? '')]);
                 })
                 ->when($permissions->isScholarshipReviewer($user), function ($query) {
                     $query->whereRaw("(
@@ -335,6 +335,10 @@ class StipendController extends Controller
         $status = $batch->logs->first()?->status ?? 'draft';
         $permissions = $this->permissions()->payrollBatchPermissions(Auth::user(), $batch, $status);
 
+        if (! $permissions['canView']) {
+            return null;
+        }
+
         return [
             'id' => Hashids::encode($batch->id),
             'name' => $batch->name,
@@ -364,6 +368,16 @@ class StipendController extends Controller
         $status = Str::lower($request->input('eligible_status'));
 
         if (!$batch) {
+            return Scholars::whereRaw('1 = 0')->paginate(10, ['*'], 'eligible_page');
+        }
+
+        $batchPermissions = $this->permissions()->payrollBatchPermissions(
+            Auth::user(),
+            $batch,
+            $batch->logs()->latest('created_at')->value('status') ?? 'draft'
+        );
+
+        if (! $batchPermissions['canView']) {
             return Scholars::whereRaw('1 = 0')->paginate(10, ['*'], 'eligible_page');
         }
 
@@ -461,6 +475,20 @@ class StipendController extends Controller
     {
         $batchId = Hashids::decode($hashId)[0] ?? 0;
         $batch = Batches::find($batchId);
+
+        if (! $batch) {
+            return collect();
+        }
+
+        $batchPermissions = $this->permissions()->payrollBatchPermissions(
+            Auth::user(),
+            $batch,
+            $batch->logs()->latest('created_at')->value('status') ?? 'draft'
+        );
+
+        if (! $batchPermissions['canView']) {
+            return collect();
+        }
 
         $recipients = BatchRecipients::with([
             'scholar.profile:scholar_id,fname,mname,lname,suffix,email,birthdate',

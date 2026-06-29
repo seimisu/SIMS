@@ -32,12 +32,12 @@
             <div class="flex flex-col w-full h-full gap-3">
                 <Tabs v-model:value="activeTab" class="flex-1 flex flex-col min-h-0">
                     <TabList>
-                        <Tab value="eligible">Eligible Scholars</Tab>
+                        <Tab v-if="canBuildPayroll" value="eligible">Eligible Scholars</Tab>
                         <Tab value="payroll">Payroll</Tab>
                     </TabList>
 
                     <TabPanels class="flex-1 min-h-0 !px-0">
-                        <TabPanel value="eligible" class="h-full">
+                        <TabPanel v-if="canBuildPayroll" value="eligible" class="h-full">
                             <div class="flex flex-col h-full gap-3">
                                 <div
                                     class="flex flex-col lg:flex-row lg:items-center justify-between gap-3"
@@ -149,7 +149,7 @@
                                             Payroll Recipients
                                         </div>
                                         <div class="text-xs text-gray-500">
-                                            Edit month amounts, withheld amounts, allowances, and remarks.
+                                            {{ payrollDescription }}
                                         </div>
                                     </div>
 
@@ -181,6 +181,7 @@
                                             class="!text-sm min-w-44"
                                         />
                                         <MultiSelect
+                                            v-if="canBuildPayroll"
                                             v-model="selectedCustomAllowanceCodes"
                                             :options="customAllowanceOptions"
                                             optionLabel="name"
@@ -191,6 +192,7 @@
                                             class="!text-sm min-w-72 max-w-[28rem]"
                                         />
                                         <DefaultButton
+                                            v-if="canBuildPayroll"
                                             size="small"
                                             label="Save Payroll"
                                             :icon="IconDeviceFloppy"
@@ -280,7 +282,12 @@
                                                     {{ allowance.name }}
                                                 </th>
                                                 <th class="border px-2 py-2 text-right">Total</th>
-                                                <th class="border px-2 py-2 text-center">Action</th>
+                                                <th
+                                                    v-if="canBuildPayroll"
+                                                    class="border px-2 py-2 text-center"
+                                                >
+                                                    Action
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -382,7 +389,7 @@
                                                 <td class="border px-2 py-1 text-right font-semibold">
                                                     {{ formatMoney(rowTotal(row)) }}
                                                 </td>
-                                                <td class="border px-2 py-1 text-center">
+                                                <td v-if="canBuildPayroll" class="border px-2 py-1 text-center">
                                                     <DefaultButton
                                                         size="small"
                                                         severity="danger"
@@ -526,6 +533,12 @@ const batchPermissions = computed(
             canDelete: false,
         },
 );
+const canBuildPayroll = computed(() => batchPermissions.value.canEdit);
+const payrollDescription = computed(() =>
+    canBuildPayroll.value
+        ? "Edit month amounts, withheld amounts, allowances, and remarks."
+        : "Review the submitted payroll details.",
+);
 const statusMeta = computed(() => {
     const status = details.value?.status ?? "draft";
 
@@ -658,11 +671,13 @@ const reloadBatch = (extra = {}) => {
 };
 
 const loadEligiblePage = (event) => {
+    if (!canBuildPayroll.value) return;
+
     reloadBatch({ eligible_page: event.page + 1 });
 };
 
 const addSelectedScholars = () => {
-    if (!details.value?.id) return;
+    if (!details.value?.id || !canBuildPayroll.value) return;
 
     addForm.scholar_ids = selectedEligible.value.map((item) => item.id);
     addForm.post(route("stipends.recipients.store", details.value.id), {
@@ -707,7 +722,7 @@ const buildPayrollRecipients = async () => {
 };
 
 const savePayroll = async (onSuccess = null) => {
-    if (!details.value?.id) return;
+    if (!details.value?.id || !canBuildPayroll.value) return;
 
     payrollForm.recipients = await buildPayrollRecipients();
     payrollForm.clearErrors();
@@ -725,7 +740,7 @@ const savePayroll = async (onSuccess = null) => {
 };
 
 const removeRecipient = (row) => {
-    if (!row?.id) return;
+    if (!row?.id || !canBuildPayroll.value) return;
 
     removingId.value = row.id;
     removeForm.delete(route("stipends.destroy", { id: row.id, type: "recipient" }), {
@@ -817,7 +832,23 @@ const formatMoney = (value) =>
 
 watch(
     () => page.props.payrollRecipients,
-    () => syncPayrollRows(),
+    () => {
+        syncPayrollRows();
+
+        if (!canBuildPayroll.value) {
+            activeTab.value = "payroll";
+        }
+    },
+    { immediate: true },
+);
+
+watch(
+    canBuildPayroll,
+    (canEdit) => {
+        if (!canEdit) {
+            activeTab.value = "payroll";
+        }
+    },
     { immediate: true },
 );
 
@@ -829,6 +860,8 @@ watch(
         eligibleStatus.value,
     ],
     () => {
+        if (!canBuildPayroll.value) return;
+
         clearTimeout(searchTimer.value);
         searchTimer.value = setTimeout(() => reloadBatch({ eligible_page: 1 }), 350);
     },

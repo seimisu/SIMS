@@ -84,6 +84,11 @@ class Scholar1Controller extends Controller
                     ->latest()
                     ->limit(1),
             ])
+                ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                    $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                        $address->where('region_code', $permissions->regionCodeFor($user));
+                    });
+                })
                 ->get()
                 ->map(function ($q) {
                     $school = $q->schoolInfo->first()?->campus;
@@ -101,6 +106,11 @@ class Scholar1Controller extends Controller
             fn () => Scholars::with([
                 'program:id,name',
             ])
+                ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                    $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                        $address->where('region_code', $permissions->regionCodeFor($user));
+                    });
+                })
                 ->get()
                 ->map(function ($q) {
 
@@ -117,6 +127,11 @@ class Scholar1Controller extends Controller
             fn () => Scholars::with([
                 'type:id,name',
             ])
+                ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                    $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                        $address->where('region_code', $permissions->regionCodeFor($user));
+                    });
+                })
                 ->get()
                 ->map(function ($q) {
                     return [
@@ -210,7 +225,13 @@ class Scholar1Controller extends Controller
         $schoolOptions = $request->input('id') ? SchoolCampuses::where([
             'is_delete' => false,
             'is_active' => true,
-        ])->get()->map(function ($campus) {
+        ])
+            ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                $q->whereHas('address', function ($address) use ($permissions, $user) {
+                    $address->where('region_code', $permissions->regionCodeFor($user));
+                });
+            })
+            ->get()->map(function ($campus) {
             return [
                 'id' => $campus->id,
                 'name' => $campus->generated_name,
@@ -346,6 +367,11 @@ class Scholar1Controller extends Controller
                     ->when($permissions->isSchoolCoordinator($user), function ($q) use ($user) {
                         $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->where('id', $user->school_id)));
                     })
+                    ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                        $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                            $address->where('region_code', $permissions->regionCodeFor($user));
+                        });
+                    })
                     ->when($request->input('programs'), function ($q, $programs) {
                         $q->whereHas('program', fn ($w) => $w->whereIn('name', $programs));
                     })
@@ -413,6 +439,11 @@ class Scholar1Controller extends Controller
                     ]),
                 'personalRequest' => Inertia::optional(
                     fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
+                        ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                            $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                                $address->where('region_code', $permissions->regionCodeFor($user));
+                            });
+                        })
                         ->with([
                             'profileRequest',
                             'profile',
@@ -504,6 +535,11 @@ class Scholar1Controller extends Controller
                 ),
                 'landbankRequest' => Inertia::optional(
                     fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
+                        ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                            $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                                $address->where('region_code', $permissions->regionCodeFor($user));
+                            });
+                        })
                         ->with([
                             'landbankRequest',
                             'landbank',
@@ -538,7 +574,7 @@ class Scholar1Controller extends Controller
                         })
                         ->values()),
                 'details' => $request->input('id') ?
-                    function () use ($request) {
+                    function () use ($request, $permissions, $user) {
                         $id = Hashids::decode($request->input('id'))[0] ?? 0;
                         $q = Scholars::select(
                             'scholars.id',
@@ -594,7 +630,16 @@ class Scholar1Controller extends Controller
                                     ]),
                             ])
                             ->where('scholars.id', $id)
+                            ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                                $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                                    $address->where('region_code', $permissions->regionCodeFor($user));
+                                });
+                            })
                             ->first();
+
+                        if (! $q) {
+                            return null;
+                        }
 
                         return [
                             'id' => Hashids::encode($q->id),

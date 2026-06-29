@@ -131,7 +131,7 @@ class LocationClass
             ->with(['cityCode.provinceCode.regionCode'])
             ->when(
                 Auth::check() &&
-                    app(SystemPermissions::class)->isRegionalStaff(Auth::user()) &&
+                    app(SystemPermissions::class)->shouldScopeToRegion(Auth::user()) &&
                     Auth::user()->is_verified && $filterRegion,
                 function ($query) {
                     $region = Auth::user()->profile->agency->region_code;

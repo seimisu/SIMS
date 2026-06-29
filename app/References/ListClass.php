@@ -98,7 +98,7 @@ class ListClass
 
             $permissions = app(SystemPermissions::class);
 
-            if (Auth::check() && $permissions->isRegionalStaff(Auth::user()) && Auth::user()->is_verified) {
+            if (Auth::check() && $permissions->shouldScopeToRegion(Auth::user()) && Auth::user()->is_verified) {
                 return
                     ListAgencies::where('is_active', true)->where('is_delete', false)->where('id', Auth::user()->profile->agency_array['id'])->get()->map(function ($role) {
                         return [
@@ -222,7 +222,13 @@ class ListClass
                     SchoolCampuses::select('id', 'school_id', 'term_id', 'grading_id', 'agency_id', 'name', 'generated_name', 'is_main')->where([
                         'is_delete' => false,
                         'is_active' => true,
-                    ])->when($search, function ($query) {
+                    ])
+                        ->when(Auth::check() && app(SystemPermissions::class)->shouldScopeToRegion(Auth::user()), function ($query) {
+                            $query->whereHas('address', function ($q) {
+                                $q->where('region_code', app(SystemPermissions::class)->regionCodeFor(Auth::user()));
+                            });
+                        })
+                        ->when($search, function ($query) {
                         $search = strtolower(request('search'));
                         $query->whereHas('school', function ($q) use ($search) {
                             $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])

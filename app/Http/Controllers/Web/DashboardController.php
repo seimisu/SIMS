@@ -67,10 +67,10 @@ class DashboardController extends Controller
             ->values()
             ->toArray();
         $campuses = SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')
-            ->where([
-                'agency_id' => Auth::user()->profile->agency_id,
-                'is_delete' => false,
-            ])
+            ->where('is_delete', false)
+            ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+            })
             ->with([
                 'school' => fn ($q) => $q
                     ->select('id', 'shortcut')
@@ -85,13 +85,20 @@ class DashboardController extends Controller
 
         // Duplicate for testing
         $campuses = $campuses->merge($campuses);
-        if ($permissions->isRegionalStaff($user)) {
+        if ($permissions->isRegionalRole($user)) {
             return Inertia::render('Web/dashboardPage', [
                 'dashboardType' => $permissions->dashboardType($user),
-                'campus_cnt' => SchoolCampuses::when(! $permissions->isAdministrator($user), function ($q) {
-                    $q->where('agency_id', Auth::user()->profile->agency_id);
-                })->count(),
-                'campuses_details' => ! $permissions->isAdministrator($user) && SchoolCampuses::where(['agency_id' => Auth::user()->profile->agency_id, 'is_delete' => false])->exists() ? SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')->where(['agency_id' => Auth::user()->profile->agency_id, 'is_delete' => false])
+                'campus_cnt' => SchoolCampuses::where('is_delete', false)
+                    ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                        $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                    })->count(),
+                'campuses_details' => SchoolCampuses::where('is_delete', false)
+                    ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                        $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                    })->exists() ? SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')->where('is_delete', false)
+                    ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                        $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                    })
                     ->with([
                         'school' => fn ($q) => $q
                             ->select('id', 'shortcut')

@@ -98,8 +98,10 @@ class SchoolController extends Controller
                     ->toArray()
                 : null,
             'regionAccess' => request('id') ?
-                SchoolCampuses::when(Auth::check() && $permissions->isRegionalStaff($user), function ($query) use ($user) {
-                    $query->where('agency_id', Auth::user()->profile->agency_array['id']);
+                SchoolCampuses::when(Auth::check() && $permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
+                    $query->whereHas('address', function ($q) use ($permissions, $user) {
+                        $q->where('region_code', $permissions->regionCodeFor($user));
+                    });
                 })
                     ->where('id', request('id'))
                     ->exists()
@@ -107,9 +109,9 @@ class SchoolController extends Controller
 
             'schoolEdit' => request('school_id')
                 ? Schools::with(['campuses' => function ($query) use ($permissions, $user) {
-                    if (! $permissions->isAdministrator($user)) {
-                        $query->whereHas('agency', function ($q) use ($user) {
-                            $q->where('id', $user->profile?->agency_id);
+                    if ($permissions->shouldScopeToRegion($user)) {
+                        $query->whereHas('address', function ($q) use ($permissions, $user) {
+                            $q->where('region_code', $permissions->regionCodeFor($user));
                         });
                     }
                     $query->with('address');
