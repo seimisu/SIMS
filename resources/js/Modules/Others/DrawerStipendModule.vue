@@ -86,7 +86,7 @@
                                             label="Add to Payroll"
                                             :icon="IconUserPlus"
                                             :loading="addForm.processing"
-                                            :disabled="!selectedEligible.length || !isEditable"
+                                            :disabled="!selectedEligible.length || !batchPermissions.canEdit"
                                             @click="addSelectedScholars"
                                         />
                                     </div>
@@ -187,7 +187,7 @@
                                             optionValue="code"
                                             placeholder="Add allowance column"
                                             display="chip"
-                                            :disabled="!isEditable"
+                                            :disabled="!batchPermissions.canEdit"
                                             class="!text-sm min-w-72 max-w-[28rem]"
                                         />
                                         <DefaultButton
@@ -195,11 +195,11 @@
                                             label="Save Payroll"
                                             :icon="IconDeviceFloppy"
                                             :loading="payrollForm.processing"
-                                            :disabled="!payrollRows.length || !isEditable"
+                                            :disabled="!payrollRows.length || !batchPermissions.canEdit"
                                             @click="savePayroll"
                                         />
                                         <DefaultButton
-                                            v-if="isEditable"
+                                            v-if="batchPermissions.canSubmit"
                                             size="small"
                                             label="Submit"
                                             severity="success"
@@ -209,7 +209,7 @@
                                             @click="updateBatchStatus('submitted_payroll')"
                                         />
                                         <DefaultButton
-                                            v-if="details?.status === 'submitted_payroll'"
+                                            v-if="batchPermissions.canReject"
                                             size="small"
                                             label="Reject"
                                             severity="danger"
@@ -219,7 +219,7 @@
                                             @click="openRejectDialog"
                                         />
                                         <DefaultButton
-                                            v-if="details?.status === 'submitted_payroll'"
+                                            v-if="batchPermissions.canApprove"
                                             size="small"
                                             label="Approve"
                                             severity="success"
@@ -289,7 +289,7 @@
                                                     <InputText
                                                         v-model="row.account_no"
                                                         class="!text-xs w-36"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td class="border px-2 py-1 uppercase min-w-56">
@@ -303,14 +303,14 @@
                                                     <InputText
                                                         v-model="row.scholarship_status"
                                                         class="!text-xs w-44"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td class="border px-2 py-1">
                                                     <InputText
                                                         v-model="row.period"
                                                         class="!text-xs w-44"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td
@@ -324,7 +324,7 @@
                                                         :min="0"
                                                         :minFractionDigits="2"
                                                         :maxFractionDigits="2"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td class="border px-2 py-1">
@@ -334,14 +334,14 @@
                                                         :min="0"
                                                         :minFractionDigits="2"
                                                         :maxFractionDigits="2"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td class="border px-2 py-1">
                                                     <InputText
                                                         v-model="row.remarks"
                                                         class="!text-xs w-56"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td class="border px-2 py-1">
@@ -351,7 +351,7 @@
                                                         :min="0"
                                                         :minFractionDigits="2"
                                                         :maxFractionDigits="2"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td class="border px-2 py-1">
@@ -361,7 +361,7 @@
                                                         :min="0"
                                                         :minFractionDigits="2"
                                                         :maxFractionDigits="2"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td
@@ -376,7 +376,7 @@
                                                         :max="allowance.max_amount ?? undefined"
                                                         :minFractionDigits="2"
                                                         :maxFractionDigits="2"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                     />
                                                 </td>
                                                 <td class="border px-2 py-1 text-right font-semibold">
@@ -390,7 +390,7 @@
                                                         rounded
                                                         :icon="IconTrash"
                                                         tooltip="Remove from payroll"
-                                                        :disabled="!isEditable"
+                                                        :disabled="!batchPermissions.canEdit"
                                                         :loading="removeForm.processing && removingId === row.id"
                                                         @click="removeRecipient(row)"
                                                     />
@@ -516,7 +516,16 @@ const statusForm = useForm({
 });
 const removingId = ref(null);
 
-const isEditable = computed(() => details.value?.is_editable ?? true);
+const batchPermissions = computed(
+    () =>
+        details.value?.permissions ?? {
+            canEdit: false,
+            canSubmit: false,
+            canApprove: false,
+            canReject: false,
+            canDelete: false,
+        },
+);
 const statusMeta = computed(() => {
     const status = details.value?.status ?? "draft";
 
@@ -747,7 +756,7 @@ const submitReject = () => {
 const updateBatchStatus = async (status, shouldSaveFirst = true, remarks = null) => {
     if (!details.value?.id) return;
 
-    if (status === "submitted_payroll" && isEditable.value && shouldSaveFirst) {
+    if (status === "submitted_payroll" && batchPermissions.value.canEdit && shouldSaveFirst) {
         savePayroll(() => updateBatchStatus(status, false));
         return;
     }

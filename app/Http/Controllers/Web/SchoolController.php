@@ -10,6 +10,7 @@ use App\Models\SchoolCampuses;
 use App\Models\Schools;
 use App\References\ListClass;
 use App\References\LocationClass;
+use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +22,8 @@ class SchoolController extends Controller
 {
     public function index(ListClass $ref, Request $request, LocationClass $location)
     {
+        $permissions = app(SystemPermissions::class);
+        $user = Auth::user();
 
         $schoolDetail = null;
 
@@ -95,7 +98,7 @@ class SchoolController extends Controller
                     ->toArray()
                 : null,
             'regionAccess' => request('id') ?
-                SchoolCampuses::when(Auth::check() && Auth::user()->role_array['name'] == 'regional staff', function ($query) {
+                SchoolCampuses::when(Auth::check() && $permissions->isRegionalStaff($user), function ($query) use ($user) {
                     $query->where('agency_id', Auth::user()->profile->agency_array['id']);
                 })
                     ->where('id', request('id'))
@@ -103,10 +106,10 @@ class SchoolController extends Controller
                 : false,
 
             'schoolEdit' => request('school_id')
-                ? Schools::with(['campuses' => function ($query) {
-                    if (Auth::user()->role_array['name'] != 'Administrator') {
-                        $query->whereHas('agency', function ($q) {
-                            $q->where('name', Auth::user()->profile->agency->name);
+                ? Schools::with(['campuses' => function ($query) use ($permissions, $user) {
+                    if (! $permissions->isAdministrator($user)) {
+                        $query->whereHas('agency', function ($q) use ($user) {
+                            $q->where('id', $user->profile?->agency_id);
                         });
                     }
                     $query->with('address');

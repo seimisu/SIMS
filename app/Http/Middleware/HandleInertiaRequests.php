@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\References\ListClass;
+use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -65,7 +66,8 @@ class HandleInertiaRequests extends Middleware
                         : null;
                     return $notification;
                 }),
-            'menu' => fn() => $this->menu?->getMenu('sidebar')
+            'menu' => fn() => $this->menu?->getMenu('sidebar'),
+            'permissions' => fn() => app(SystemPermissions::class)->permissionsFor(Auth::user()),
         ]);
     }
 }

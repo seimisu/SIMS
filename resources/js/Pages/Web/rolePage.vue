@@ -196,6 +196,73 @@
                 </DefaultTable>
             </div>
         </div>
+        <DefaultDialog
+            v-model:visible="permissionModal"
+            :icon="IconShieldCog"
+            width-set="lg:!w-[55%]"
+            title="Role Permissions"
+            :description="permissionDialogDescription"
+            button-label="Save"
+            :loading="permissionForm.processing"
+            :hide-footer="isSelectedAdministrator"
+            absolute-div
+            @submit-form="submitPermissions"
+        >
+            <template #forms>
+                <div class="mt-5 flex flex-col gap-5">
+                    <div
+                        v-if="isSelectedAdministrator"
+                        class="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-700"
+                    >
+                        Administrator always has full system access. The checks
+                        below are shown for reference.
+                    </div>
+                    <div
+                        v-for="(permissions, groupName) in page.props.permissionGroups"
+                        :key="groupName"
+                        class="rounded-md border border-gray-200 p-4"
+                    >
+                        <div class="mb-3 flex items-center justify-between">
+                            <div>
+                                <div class="text-sm font-semibold capitalize">
+                                    {{ groupName }}
+                                </div>
+                                <div class="text-xs text-gray-400">
+                                    {{ permissions.length }} permissions
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <label
+                                v-for="permission in permissions"
+                                :key="permission.id"
+                                class="flex min-h-18 cursor-pointer gap-3 rounded-md border border-gray-100 p-3 text-sm hover:bg-gray-50"
+                                :class="{
+                                    'cursor-default opacity-70':
+                                        isSelectedAdministrator,
+                                }"
+                            >
+                                <input
+                                    v-model="permissionForm.permissions"
+                                    type="checkbox"
+                                    :value="permission.id"
+                                    :disabled="isSelectedAdministrator"
+                                    class="mt-1 h-4 w-4"
+                                />
+                                <span class="flex flex-col gap-1">
+                                    <span class="font-medium">
+                                        {{ permission.label }}
+                                    </span>
+                                    <span class="text-xs text-gray-400">
+                                        {{ permission.description }}
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </DefaultDialog>
         <DefaultToast ref="toastRef" />
         <DefaultConfirmDialog ref="confirmRef" />
     </AuthLayout>
@@ -208,10 +275,12 @@ import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
+import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
 import { computed, ref, watch } from "vue";
 import {
     IconCheck,
     IconLock,
+    IconShieldCog,
     IconUserCog,
     IconX,
     IconPencilCog,
@@ -228,6 +297,7 @@ const toolbarRef = ref(null);
 const toastRef = ref(null);
 const confirmRef = ref(null);
 const menu = ref(null);
+const permissionModal = ref(false);
 const roleForm = useForm({
     id: null,
     name: null,
@@ -235,6 +305,28 @@ const roleForm = useForm({
     description: null,
     isLock: false,
     isActive: false,
+});
+const permissionForm = useForm({
+    permissions: [],
+});
+
+const allPermissionIds = computed(() => {
+    return Object.values(page.props.permissionGroups ?? {})
+        .flat()
+        .map((permission) => permission.id);
+});
+
+const isSelectedAdministrator = computed(() => {
+    return (
+        selectedRow.value?.slug === "admin" ||
+        selectedRow.value?.name?.toLowerCase() === "administrator"
+    );
+});
+
+const permissionDialogDescription = computed(() => {
+    if (!selectedRow.value) return "Assign the permissions for this role.";
+
+    return `Assign access rules for ${selectedRow.value.name}. Users with this role will inherit these permissions.`;
 });
 
 const toggleOption = (event, rowData) => {
@@ -246,6 +338,14 @@ const menuItems = computed(() => {
     if (!selectedRow.value) return [];
 
     return [
+        {
+            label: "Permissions",
+            icon: IconShieldCog,
+            class: "text-emerald-600",
+            command: () => {
+                openPermissionModal(selectedRow.value);
+            },
+        },
         {
             label: "Edit",
             icon: IconPencilCog,
@@ -284,6 +384,15 @@ const toggleModal = (res) => {
     toolbarRef.value.openModal();
 };
 
+const openPermissionModal = (role) => {
+    permissionForm.resetAndClearErrors();
+    selectedRow.value = role;
+    permissionForm.permissions = isSelectedAdministrator.value
+        ? [...allPermissionIds.value]
+        : (role.permissions ?? []).map((permission) => permission.id);
+    permissionModal.value = true;
+};
+
 const deleteRow = (id) => {
     confirmRef.value.popupDialog(() => {
         roleForm.delete(route("roles.destroy", id), {
@@ -312,6 +421,24 @@ const submitForm = () => {
             },
         });
     }
+};
+const submitPermissions = () => {
+    if (!selectedRow.value || isSelectedAdministrator.value) return;
+
+    permissionForm.put(
+        route("roles.update", {
+            id: selectedRow.value.id,
+            type: "permissions",
+        }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                permissionModal.value = false;
+                permissionForm.resetAndClearErrors();
+                toastRef.value.show(page.props.flash);
+            },
+        }
+    );
 };
 const updateStatus = (result) => {
     roleForm.isActive = result.is_active;

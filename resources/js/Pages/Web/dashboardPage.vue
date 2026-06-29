@@ -3,7 +3,7 @@
     <AuthLayout>
         <div
             class="mx-auto"
-            v-if="page.props.user?.role_array.name == 'Administrator'"
+            v-if="page.props.dashboardType === 'admin'"
         >
             <h1 class="text-2xl font-bold mb-4">Welcome to the Dashboard</h1>
             <p class="text-gray-700">
@@ -12,7 +12,7 @@
         </div>
         <div
             class="mx-auto flex flex-col"
-            v-else-if="page.props.user?.role_array.name == 'regional staff'"
+            v-else-if="page.props.dashboardType === 'regional'"
         >
             <div class="w-full flex items-center justify-between">
                 <div class="flex-1">
@@ -29,7 +29,7 @@
         </div>
         <div
             class="mx-auto flex flex-col"
-            v-else-if="page.props.user?.role_array.name == 'School Coordinator'"
+            v-else-if="page.props.dashboardType === 'school_coordinator'"
         >
             <div class="w-full flex items-center justify-between">
                 <div class="flex items-center gap-2">

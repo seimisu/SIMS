@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Scholars;
 use App\Models\SchoolCampuses;
+use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -13,8 +14,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $user = Auth::user();
+        $permissions = app(SystemPermissions::class);
 
-        $regionCode = Auth::user()->profile->agency->region_code;
+        $regionCode = $user->profile->agency->region_code;
         $currentYear = Carbon::now()->year;
 
         $scholars = Scholars::with([
@@ -82,12 +85,13 @@ class DashboardController extends Controller
 
         // Duplicate for testing
         $campuses = $campuses->merge($campuses);
-        if (Auth::user()->role_array['name'] == 'regional staff') {
+        if ($permissions->isRegionalStaff($user)) {
             return Inertia::render('Web/dashboardPage', [
-                'campus_cnt' => SchoolCampuses::when(Auth::check() && Auth::user()->role_array['name'] != 'Administrator', function ($q) {
+                'dashboardType' => $permissions->dashboardType($user),
+                'campus_cnt' => SchoolCampuses::when(! $permissions->isAdministrator($user), function ($q) {
                     $q->where('agency_id', Auth::user()->profile->agency_id);
                 })->count(),
-                'campuses_details' => Auth::user()->role_array['name'] != 'Administrator' && SchoolCampuses::where(['agency_id' => Auth::user()->profile->agency_id, 'is_delete' => false])->exists() ? SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')->where(['agency_id' => Auth::user()->profile->agency_id, 'is_delete' => false])
+                'campuses_details' => ! $permissions->isAdministrator($user) && SchoolCampuses::where(['agency_id' => Auth::user()->profile->agency_id, 'is_delete' => false])->exists() ? SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')->where(['agency_id' => Auth::user()->profile->agency_id, 'is_delete' => false])
                     ->with([
                         'school' => fn ($q) => $q
                             ->select('id', 'shortcut')
@@ -156,14 +160,16 @@ class DashboardController extends Controller
                     })->values()->toArray(),
                 ],
             ]);
-        } elseif (Auth::user()->role_array['name'] == 'School Coordinator') {
+        } elseif ($permissions->isSchoolCoordinator($user)) {
             return Inertia::render('Web/dashboardPage', [
+                'dashboardType' => $permissions->dashboardType($user),
                 'schoolDetails' => SchoolCampuses::where(['id' => Auth::user()->school_id])
                     ->with(['address'])
                     ->first(),
             ]);
         } else {
             return Inertia::render('Web/dashboardPage', [
+                'dashboardType' => $permissions->dashboardType($user),
                 'result' => [],
             ]);
         }

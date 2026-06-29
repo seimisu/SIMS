@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\RoleRequest;
+use App\Models\ListPermission;
 use App\Models\ListRole;
 use App\References\ListClass;
 use Illuminate\Http\Request;
@@ -16,7 +17,12 @@ class RoleController extends Controller
     function index(ListClass $reference, Request $request)
     {
         return Inertia::render('Web/rolePage', [
-            'roles' => $reference->getRoles(true, $request->input('search'))
+            'roles' => $reference->getRoles(true, $request->input('search')),
+            'permissionGroups' => ListPermission::where('is_active', true)
+                ->orderBy('group_name')
+                ->orderBy('label')
+                ->get(['id', 'name', 'label', 'group_name', 'description'])
+                ->groupBy('group_name'),
         ]);
     }
 
@@ -58,6 +64,8 @@ class RoleController extends Controller
                 'updated_by'    => Auth::user()->profile->fullname,
                 'updated_at'    => now()
             ]);
+        } elseif ($type == 'permissions') {
+            $find->permissions()->sync($data['permissions'] ?? []);
         } else {
             $find->update([
                 'is_active' => $data['isActive'],

@@ -26,6 +26,7 @@ use App\Models\StudentProfileRequest;
 use App\Models\StudentSubject;
 use App\Models\StudentSubjectRequest;
 use App\References\LocationClass;
+use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -72,6 +73,9 @@ class Scholar1Controller extends Controller
 
     public function index(Request $request, LocationClass $location)
     {
+        $permissions = app(SystemPermissions::class);
+        $user = Auth::user();
+
         $schoolFilter = Inertia::optional(
             fn () => Scholars::with([
                 'schoolInfo' => fn ($q) => $q
@@ -339,8 +343,8 @@ class Scholar1Controller extends Controller
                     ->when($request->input('schools'), function ($q, $schools) {
                         $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->whereIn('generated_name', $schools)));
                     })
-                    ->when(Auth::user()->role_array['name'] == 'School Coordinator', function ($q) {
-                        $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->where('id', Auth::user()->school_id)));
+                    ->when($permissions->isSchoolCoordinator($user), function ($q) use ($user) {
+                        $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->where('id', $user->school_id)));
                     })
                     ->when($request->input('programs'), function ($q, $programs) {
                         $q->whereHas('program', fn ($w) => $w->whereIn('name', $programs));

@@ -13,6 +13,7 @@ use App\Models\RecipientAllowance;
 use App\Models\RecipientStipend;
 use App\Models\RecipientWithheld;
 use App\Models\Scholars;
+use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,9 +26,9 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class StipendController extends Controller
 {
-    private function payrollEditableStatuses(): array
+    private function permissions(): SystemPermissions
     {
-        return ['draft', 'rejected_payroll'];
+        return app(SystemPermissions::class);
     }
 
     private function payrollTermStatus(string $batchStatus): string
@@ -222,7 +223,13 @@ class StipendController extends Controller
 
     public function index(Request $request): Response
     {
+        $user = Auth::user();
+        $permissions = $this->permissions();
+
         return Inertia::render('Web/stipendPage', [
+            'payrollPermissions' => [
+                'canCreate' => $permissions->can($user, 'payroll.create'),
+            ],
             'agencyOption' =>  ListAgencies::where('is_active', true)
                 ->where('is_delete', false)
                 ->get()
@@ -244,6 +251,18 @@ class StipendController extends Controller
                     'term_name' => $term->name,
                 ]),
             'batches' => Batches::whereNull('deleted_at')
+                ->when($permissions->isRegionalStaff($user), function ($query) use ($user) {
+                    $query->whereRaw('LOWER(region) = ?', [Str::lower($user->profile?->agency?->name ?? '')]);
+                })
+                ->when($permissions->isScholarshipReviewer($user), function ($query) {
+                    $query->whereRaw("(
+                        SELECT status
+                        FROM batches_logs
+                        WHERE batches_logs.batch_id = batches.id
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    ) = ?", ['submitted_payroll']);
+                })
                 ->with([
                     'level:id,name',
                     'logs' => fn($q) => $q
@@ -264,6 +283,7 @@ class StipendController extends Controller
                         : null,
                     'remarks'       => $q->logs->first()?->remarks,
                     'status'        => $q->logs->first()?->status ?? 'draft',
+                    'permissions'   => $permissions->payrollBatchPermissions($user, $q, $q->logs->first()?->status ?? 'draft'),
                 ]),
             'details' => request('id')
                 ? $this->batchDetails(request('id'))
@@ -312,6 +332,9 @@ class StipendController extends Controller
             return null;
         }
 
+        $status = $batch->logs->first()?->status ?? 'draft';
+        $permissions = $this->permissions()->payrollBatchPermissions(Auth::user(), $batch, $status);
+
         return [
             'id' => Hashids::encode($batch->id),
             'name' => $batch->name,
@@ -320,13 +343,14 @@ class StipendController extends Controller
             'term_id' => $batch->term_id,
             'level_id' => $batch->level_id,
             'school_year' => $batch->school_year,
-            'status' => $batch->logs->first()?->status ?? 'draft',
+            'status' => $status,
             'remarks' => $batch->logs->first()?->remarks,
             'remarks_by' => $batch->logs->first()?->action_by,
             'remarks_at' => $batch->logs->first()?->created_at
                 ? Carbon::parse($batch->logs->first()->created_at)->format('M d, Y | h:i a')
                 : null,
-            'is_editable' => in_array($batch->logs->first()?->status ?? 'draft', $this->payrollEditableStatuses(), true),
+            'is_editable' => $permissions['canEdit'],
+            'permissions' => $permissions,
         ];
     }
 
@@ -543,6 +567,14 @@ class StipendController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if (! $this->permissions()->can(Auth::user(), 'payroll.create')) {
+            return redirect()->back()->with('flash', [
+                'status' => 'error',
+                'title' => 'Unauthorized',
+                'message' => 'You are not allowed to create payroll batches.',
+            ]);
+        }
+
         try {
             DB::beginTransaction();
             $data = $request->validate([
@@ -629,6 +661,23 @@ class StipendController extends Controller
 
         $batch = Batches::findOrFail($batchId);
         $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
+        $permissions = $this->permissions();
+        $isAllowed = match ($data['status']) {
+            'submitted_payroll' => $permissions->canEditPayroll(Auth::user(), $batch, $latestStatus),
+            'approved_payroll' => $permissions->can(Auth::user(), 'payroll.approve')
+                && $permissions->canReviewPayroll(Auth::user(), $latestStatus),
+            'rejected_payroll' => $permissions->can(Auth::user(), 'payroll.reject')
+                && $permissions->canReviewPayroll(Auth::user(), $latestStatus),
+            default => false,
+        };
+
+        if (! $isAllowed) {
+            return redirect()->back()->with('flash', [
+                'status' => 'error',
+                'title' => 'Unauthorized',
+                'message' => 'You are not allowed to perform this payroll action.',
+            ]);
+        }
 
         if ($latestStatus === 'approved_payroll') {
             return redirect()->back()->with('flash', [
@@ -660,11 +709,11 @@ class StipendController extends Controller
         $batch = Batches::findOrFail($batchId);
         $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
 
-        if (!in_array($latestStatus, $this->payrollEditableStatuses(), true)) {
+        if (! $this->permissions()->canEditPayroll(Auth::user(), $batch, $latestStatus)) {
             return redirect()->back()->with('flash', [
                 'status' => 'error',
-                'title' => 'Batch locked',
-                'message' => 'Submitted or verified payroll batches cannot be edited.',
+                'title' => 'Unauthorized',
+                'message' => 'You are not allowed to edit this payroll batch.',
             ]);
         }
 
@@ -822,11 +871,11 @@ class StipendController extends Controller
         $batch = Batches::findOrFail($batchId);
         $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
 
-        if (!in_array($latestStatus, $this->payrollEditableStatuses(), true)) {
+        if (! $this->permissions()->canEditPayroll(Auth::user(), $batch, $latestStatus)) {
             return redirect()->back()->with('flash', [
                 'status' => 'error',
-                'title' => 'Batch locked',
-                'message' => 'Submitted or verified payroll batches cannot be edited.',
+                'title' => 'Unauthorized',
+                'message' => 'You are not allowed to edit this payroll batch.',
             ]);
         }
 
@@ -1013,13 +1062,13 @@ class StipendController extends Controller
                 $batch = Batches::with('recipients.stipends', 'recipients.withhelds', 'recipients.allowances')->findOrFail($batchId);
                 $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
 
-                if (!in_array($latestStatus, $this->payrollEditableStatuses(), true)) {
+                if (! $this->permissions()->payrollBatchPermissions(Auth::user(), $batch, $latestStatus)['canDelete']) {
                     DB::rollBack();
 
                     return redirect()->back()->with('flash', [
                         'status' => 'error',
-                        'title' => 'Batch locked',
-                        'message' => 'Submitted or verified payroll batches cannot be deleted.',
+                        'title' => 'Unauthorized',
+                        'message' => 'You are not allowed to delete this payroll batch.',
                     ]);
                 }
 
@@ -1071,13 +1120,13 @@ class StipendController extends Controller
                 $recipient = BatchRecipients::findOrFail($recipientId);
                 $latestStatus = $recipient->batch?->logs()->latest('created_at')->value('status') ?? 'draft';
 
-                if (!in_array($latestStatus, $this->payrollEditableStatuses(), true)) {
+                if (! $recipient->batch || ! $this->permissions()->canEditPayroll(Auth::user(), $recipient->batch, $latestStatus)) {
                     DB::rollBack();
 
                     return redirect()->back()->with('flash', [
                         'status' => 'error',
-                        'title' => 'Batch locked',
-                        'message' => 'Submitted or verified payroll batches cannot be edited.',
+                        'title' => 'Unauthorized',
+                        'message' => 'You are not allowed to edit this payroll batch.',
                     ]);
                 }
             $batch = $recipient->batch;

@@ -22,6 +22,7 @@
             <slot name="add2"></slot>
             <slot name="add1"></slot>
             <DefaultButton
+                v-if="buttonVisible"
                 :icon="IconCirclePlusFilled"
                 :label="buttonLabel"
                 size="small"
@@ -71,6 +72,10 @@ defineProps({
     dialogButtonLabel: String,
     dialogButtonLoading: Boolean,
     buttonLabel: String,
+    buttonVisible: {
+        type: Boolean,
+        default: true,
+    },
     messageHasErrors: Boolean,
     messageErrors: Object,
     hideSearch: {

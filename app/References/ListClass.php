@@ -11,6 +11,7 @@ use App\Models\ListRoutes;
 use App\Models\ListStatuses;
 use App\Models\SchoolCampuses;
 use App\Models\Schools;
+use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -71,7 +72,7 @@ class ListClass
                     $query->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
                         ->orWhereRaw('LOWER(description) LIKE ?', ["%{$search}%"]);
                 });
-            })->with('users')->orderBy('id')->paginate(10);
+            })->with(['users', 'permissions:id,name,label,group_name'])->orderBy('id')->paginate(10);
         } else {
             return
                 ListRole::where('is_active', true)->where('is_delete', false)->get()->map(function ($role) {
@@ -95,7 +96,9 @@ class ListClass
             })->orderBy('id', 'desc')->paginate(10);
         } else {
 
-            if (Auth::check() && Auth::user()->role_array['name'] == 'regional staff' && Auth::user()->is_verified) {
+            $permissions = app(SystemPermissions::class);
+
+            if (Auth::check() && $permissions->isRegionalStaff(Auth::user()) && Auth::user()->is_verified) {
                 return
                     ListAgencies::where('is_active', true)->where('is_delete', false)->where('id', Auth::user()->profile->agency_array['id'])->get()->map(function ($role) {
                         return [

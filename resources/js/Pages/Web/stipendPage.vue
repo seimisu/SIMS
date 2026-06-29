@@ -22,6 +22,7 @@
                     :message-has-errors="form.hasErrors"
                     :message-errors="form.errors"
                     @buttonOpenModal="toggleModal({ type: 'create' })"
+                    :button-visible="can('payroll.create')"
                     message-type="error"
                     ref="toolbarRef"
                 >
@@ -155,9 +156,7 @@
                                     :icon="IconTrash"
                                     tooltip="Delete batch"
                                     :disabled="
-                                        !['draft', 'rejected_payroll'].includes(
-                                            props.data.status,
-                                        )
+                                        !props.data.permissions?.canDelete
                                     "
                                     :loading="
                                         deleteForm.processing &&
@@ -198,8 +197,10 @@ import { helpers, required } from "@vuelidate/validators";
 import { computed, ref, watch } from "vue";
 import { route } from "ziggy-js";
 import DrawerStipendModule from "../../Modules/Others/DrawerStipendModule.vue";
+import { usePermissions } from "../../Composables/usePermissions";
 
 const page = usePage();
+const { can } = usePermissions();
 const toolbarRef = ref(null);
 const toastRef = ref(null);
 const timerBounce = ref(null);

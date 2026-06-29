@@ -44,7 +44,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/activate/{id}', [ActivationController::class, 'update'])->name('activation.update');
 });
 
-Route::middleware(['auth', 'web'])->group(function () {
+Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
     Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
     Route::put('roles/{id}/{type}', [RoleController::class, 'update'])->name('roles.update');

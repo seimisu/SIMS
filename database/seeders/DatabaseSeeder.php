@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ListProgramSeeder::class);
         $this->call(ListCourseSeeder::class);
         $this->call(ListRoleSeeder::class);
+        $this->call(ListPermissionSeeder::class);
         $this->call(ListRouteSeeder::class);
         $this->call(LocationRegionSeeder::class);
         $this->call(LocationProvinceSeeder::class);
@@ -38,9 +39,6 @@ class DatabaseSeeder extends Seeder
             'email'         => 'jmdalit@sei.dost.gov.ph',
             'role_id'       => 1,
             'password'      => bcrypt('@dmin123'),
-            'can_edit'      => true,
-            'can_create'    => true,
-            'can_delete'    => true,
             'is_verified'   => true,
             'created_at'    => now(),
             'updated_at'    => now(),
@@ -61,9 +59,6 @@ class DatabaseSeeder extends Seeder
             'email'         => 'mrcapistrano@sei.dost.gov.ph',
             'role_id'       => 1,
             'password'      => bcrypt('mrcapistrano'),
-            'can_edit'      => true,
-            'can_create'    => true,
-            'can_delete'    => true,
             'is_verified'   => true,
             'created_at'    => now(),
             'updated_at'    => now(),

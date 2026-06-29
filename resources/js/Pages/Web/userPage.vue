@@ -53,42 +53,6 @@
                                 capitalize
                             ></SelectInput>
                         </div>
-                        <div class="flex flex-col">
-                            <Divider type="dashed" />
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">Can create?</div>
-
-                                <DefaultToggle
-                                    v-model="userForm.canCreate"
-                                    :check-icon="IconCheck"
-                                    :un-check-icon="IconX"
-                                />
-                            </div>
-                        </div>
-                        <div class="flex flex-col">
-                            <Divider type="dashed" />
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">Can edit?</div>
-
-                                <DefaultToggle
-                                    v-model="userForm.canEdit"
-                                    :check-icon="IconCheck"
-                                    :un-check-icon="IconX"
-                                />
-                            </div>
-                        </div>
-                        <div class="flex flex-col">
-                            <Divider type="dashed" />
-                            <div class="flex justify-between items-center">
-                                <div class="text-sm">Can delete?</div>
-
-                                <DefaultToggle
-                                    v-model="userForm.canDelete"
-                                    :check-icon="IconCheck"
-                                    :un-check-icon="IconX"
-                                />
-                            </div>
-                        </div>
                     </template>
                 </ToolbarModule>
                 <DefaultTable
@@ -178,69 +142,6 @@
                                 >
                                     {{ props.data.role_array.name }}
                                 </p>
-                            </div>
-                        </template>
-                    </Column>
-                    <Column field="can_create">
-                        <template #header>
-                            <div class="w-full flex justify-center">
-                                <p class="font-semibold">Can Create</p>
-                            </div>
-                        </template>
-                        <template #body="props">
-                            <div
-                                class="flex items-center justify-center w-full"
-                            >
-                                <IconCircleCheckFilled
-                                    v-if="props.data.can_create"
-                                    class="text-green-600"
-                                />
-                                <IconCircleXFilled
-                                    v-else
-                                    class="text-secondary-600"
-                                />
-                            </div>
-                        </template>
-                    </Column>
-                    <Column field="can_edit">
-                        <template #header>
-                            <div class="w-full flex justify-center">
-                                <p class="font-semibold">Can Edit</p>
-                            </div>
-                        </template>
-                        <template #body="props">
-                            <div
-                                class="flex items-center justify-center w-full"
-                            >
-                                <IconCircleCheckFilled
-                                    v-if="props.data.can_edit"
-                                    class="text-green-600"
-                                />
-                                <IconCircleXFilled
-                                    v-else
-                                    class="text-secondary-600"
-                                />
-                            </div>
-                        </template>
-                    </Column>
-                    <Column field="can_delete">
-                        <template #header>
-                            <div class="w-full flex justify-center">
-                                <p class="font-semibold">Can Delete</p>
-                            </div>
-                        </template>
-                        <template #body="props">
-                            <div
-                                class="flex items-center justify-center w-full"
-                            >
-                                <IconCircleCheckFilled
-                                    v-if="props.data.can_delete"
-                                    class="text-green-600"
-                                />
-                                <IconCircleXFilled
-                                    v-else
-                                    class="text-secondary-600"
-                                />
                             </div>
                         </template>
                     </Column>
@@ -346,8 +247,6 @@ import {
     IconUserPlus,
     IconCircleDashedCheck,
     IconRosetteDiscountCheckFilled,
-    IconCircleCheckFilled,
-    IconCircleXFilled,
     IconMailForward,
 } from "@tabler/icons-vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
@@ -369,9 +268,6 @@ const userForm = useForm({
     email: null,
     role: null,
     school: null,
-    canCreate: true,
-    canEdit: true,
-    canDelete: true,
     isActive: false,
 });
 
@@ -430,9 +326,6 @@ const toggleModal = (res) => {
         userForm.lname = res.data.profile.lname;
         userForm.email = res.data.email;
         userForm.role = res.data.role_array;
-        userForm.canCreate = res.data.can_create;
-        userForm.canEdit = res.data.can_edit;
-        userForm.canDelete = res.data.can_delete;
         userForm.school = res.data.school_array;
     }
 

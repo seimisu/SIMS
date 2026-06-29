@@ -67,10 +67,7 @@ class UserController extends Controller
         $user = User::create([
             'email' => $data['email'],
             'role_id' => $data['role']['id'],
-            'can_create' => $data['canCreate'],
-            'can_edit' => $data['canEdit'],
             'activation_token' => $activation,
-            'can_delete' => $data['canDelete'],
 
         ]);
 
@@ -120,21 +117,6 @@ class UserController extends Controller
         $find = User::findOrFail($id);
 
         switch ($type) {
-            case 'create':
-                $find->update([
-                    'can_create' => $data['canCreate'],
-                ]);
-                break;
-            case 'edit':
-                $find->update([
-                    'can_edit' => $data['canEdit'],
-                ]);
-                break;
-            case 'delete':
-                $find->update([
-                    'can_delete' => $data['canDelete'],
-                ]);
-                break;
             case 'status':
                 $find->update([
                     'is_active' => $data['isActive'],
@@ -145,9 +127,6 @@ class UserController extends Controller
                 $find->update([
                     'email' => $data['email'],
                     'role_id' => $data['role']['id'],
-                    'can_create' => $data['canCreate'],
-                    'can_edit' => $data['canEdit'],
-                    'can_delete' => $data['canDelete'],
                 ]);
                 $find->profile()->update([
                     'fname' => $data['fname'],

@@ -24,6 +24,7 @@
                         </div>
 
                         <DefaultButton
+                            v-if="canManageSchools"
                             rounded
                             text
                             size="small"
@@ -61,7 +62,7 @@
                         ></DefaultMessages>
                     </div>
 
-                    <div class="flex items-center">
+                    <div class="flex items-center" v-if="canManageSchools">
                         <DefaultButton
                             size="small"
                             label="Update"
@@ -262,10 +263,12 @@
                             toggleModal({ type: 'create', class: 'course' })
                         "
                         message-type="error"
+                        :button-visible="canManageSchools"
                         ref="toolbarCourseRef"
                     >
                         <template #add1>
                             <DefaultButton
+                                v-if="canManageSchools"
                                 :icon="IconReport"
                                 outlined
                                 :disabled="
@@ -283,6 +286,7 @@
                         </template>
                         <template #add2>
                             <DefaultButton
+                                v-if="canManageSchools"
                                 :icon="IconCalendarWeek"
                                 outlined
                                 @click="semesterDialog = true"
@@ -429,6 +433,7 @@
                         toggleModal({ type: 'create', class: 'grades' })
                     "
                     message-type="error"
+                    :button-visible="canManageSchools"
                     ref="toolbarGradeRef"
                 >
                     <template #form>
@@ -588,6 +593,7 @@
                         <template #body="slotProps">
                             <div class="flex justify-end">
                                 <Button
+                                    v-if="canManageSchools"
                                     text
                                     v-tooltip.top="'Options'"
                                     rounded
@@ -703,6 +709,7 @@
         :submit-form="submitCurriculum"
         :title="selectedRow?.course?.name"
         @submit-form="submitCurriculum"
+        :hide-footer="!canManageSchools"
         absolute-div
         description="View all subjects offered under this course, including their codes, units, and classifications."
     >
@@ -730,6 +737,7 @@
                                 >
                                     <div class="flex items-start">
                                         <Button
+                                            v-if="canManageSchools"
                                             severity="danger"
                                             variant="link"
                                             size="small"
@@ -755,6 +763,7 @@
                                     </div>
                                     <div class="flex items-start">
                                         <Button
+                                            v-if="canManageSchools"
                                             severity="secondary"
                                             variant="link"
                                             size="small"
@@ -794,6 +803,7 @@
                         </Tab>
                         <div class="flex items-end">
                             <DefaultButton
+                                v-if="canManageSchools"
                                 size="small"
                                 rounded
                                 class-name=" !rounded-xl "
@@ -815,7 +825,7 @@
                                 <DefaultButton
                                     label="Make this template"
                                     size="small"
-                                    v-if="curItem.id"
+                                    v-if="canManageSchools && curItem.id"
                                     :disabled="
                                         curItem.has_replication ||
                                         curItem.is_duplicated
@@ -843,6 +853,7 @@
                                         clearable
                                     />
                                     <DefaultButton
+                                        v-if="canManageSchools"
                                         size="small"
                                         raised
                                         :disabled="loading.paste"
@@ -1165,6 +1176,7 @@
                                                                     class="w-[10%] pt-5 gap-2 justify-start flex items-end h-full"
                                                                 >
                                                                     <DefaultButton
+                                                                        v-if="canManageSchools"
                                                                         size="small"
                                                                         rounded
                                                                         text
@@ -1197,6 +1209,7 @@
                                                                     />
 
                                                                     <DefaultButton
+                                                                        v-if="canManageSchools"
                                                                         size="small"
                                                                         rounded
                                                                         text
@@ -1232,6 +1245,7 @@
                                                             type="dashed"
                                                         ></Divider>
                                                         <DefaultButton
+                                                            v-if="canManageSchools"
                                                             size="small"
                                                             :icon="IconPlus"
                                                             @click="
@@ -1317,6 +1331,7 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
 import ToolbarModule from "./ToolbarModule.vue";
+import { usePermissions } from "../../Composables/usePermissions";
 import { router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, reactive, ref, watch } from "vue";
 import { route } from "ziggy-js";
@@ -1339,6 +1354,8 @@ const selectedRow = ref(null);
 const menu = ref(null);
 const menuGrade = ref(null);
 const hideRemoveButton = ref("create");
+const { can } = usePermissions();
+const canManageSchools = computed(() => can("schools.manage"));
 
 const props = defineProps({
     id: [Number, String],
@@ -1665,6 +1682,8 @@ const addSubject = (curriculumKey, year, semester) => {
 };
 
 const deleteCurriculumAndSubject = (res) => {
+    if (!canManageSchools.value) return;
+
     if (res.button == "subject") {
         if (res.type) {
             curriculumForm.multi[res.curriculum].subjects.splice(
@@ -1743,6 +1762,8 @@ const gradeMenuItems = computed(() => {
 });
 
 const openUpdateSchool = () => {
+    if (!canManageSchools.value) return;
+
     updateSchool.value = true;
     detailsForm.campusId = props.id;
     if (page.props.schoolDetail.info.length != 0) {
@@ -1755,6 +1776,8 @@ const openUpdateSchool = () => {
 };
 
 const UpdateDetailsForm = () => {
+    if (!canManageSchools.value) return;
+
     if (!detailsForm.id) {
         detailsForm.post(route("campus.info.store"), {
             onSuccess: () => {
@@ -1781,6 +1804,8 @@ const UpdateDetailsForm = () => {
 };
 
 const submitCurriculum = () => {
+    if (!canManageSchools.value) return;
+
     curriculumForm.post(route("campus.curriculum.store"), {
         onSuccess: () => {
             curriculumForm.resetAndClearErrors();
@@ -1802,6 +1827,8 @@ const submitCurriculum = () => {
 };
 
 const copyTemplate = (curKey) => {
+    if (!canManageSchools.value) return;
+
     router.patch(
         route("campus.curriculum.copy", curriculumForm.multi[curKey].id),
         {},
@@ -1818,6 +1845,8 @@ const copyTemplate = (curKey) => {
 };
 
 const pasteTemplate = (curKey) => {
+    if (!canManageSchools.value) return;
+
     loading.paste = true;
     templateForm.patch(
         route(
@@ -1861,6 +1890,8 @@ const pasteTemplate = (curKey) => {
 };
 
 const submitForm = (res) => {
+    if (!canManageSchools.value) return;
+
     if (res == "courses") {
         courseForm.campusId = props.id;
         if (!courseForm.id) {
@@ -1986,6 +2017,8 @@ const submitForm = (res) => {
 };
 
 const deleteRow = (res) => {
+    if (!canManageSchools.value) return;
+
     switch (res.type) {
         case "subject":
             props.confirmRef.popupDialog(() => {

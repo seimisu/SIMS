@@ -28,6 +28,7 @@
                     :message-errors="universityForm.errors"
                     @buttonOpenModal="toggleModal({ type: 'create' })"
                     message-type="error"
+                    :button-visible="canManageSchools"
                     ref="toolbarRef"
                 >
                     <template #form>
@@ -519,6 +520,7 @@ import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 import DrawerSchoolModule from "../../Modules/Others/DrawerSchoolModule.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
+import { usePermissions } from "../../Composables/usePermissions";
 import { computed, ref, watch } from "vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import {
@@ -548,6 +550,9 @@ const toastRef = ref(null);
 const confirmRef = ref(null);
 const drawerRef = ref(false);
 const menu = ref(null);
+
+const { can } = usePermissions();
+const canManageSchools = computed(() => can("schools.manage"));
 const universityForm = useForm({
     id: null,
     name: null,
@@ -627,7 +632,7 @@ const openDrawer = (res) => {
 };
 
 const menuItems = computed(() => {
-    if (!selectedRow.value) return [];
+    if (!selectedRow.value || !canManageSchools.value) return [];
 
     return [
         {
@@ -653,6 +658,8 @@ const menuItems = computed(() => {
 });
 
 const toggleModal = (res) => {
+    if (!canManageSchools.value) return;
+
     universityForm.resetAndClearErrors();
     hideRemoveButton.value = res.type;
 
@@ -707,6 +714,8 @@ const deleteRow = () => {
 };
 
 const submitForm = () => {
+    if (!canManageSchools.value) return;
+
     if (!universityForm.id) {
         universityForm.post(route("academic.universities.store"), {
             preserveState: true,
