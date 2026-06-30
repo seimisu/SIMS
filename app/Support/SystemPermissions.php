@@ -152,6 +152,7 @@ class SystemPermissions
         'stipends.store' => 'payroll.create',
         'stipends.recipients.store' => 'payroll.edit',
         'stipends.payroll.update' => 'payroll.edit',
+        'stipends.export' => 'payroll.view',
         'stipends.update' => 'payroll.view',
         'stipends.destroy' => 'payroll.delete',
     ];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Exports\PayrollExport;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Controllers\Controller;
 use App\Models\AllowanceType;
@@ -9,6 +10,7 @@ use App\Models\BatchRecipients;
 use App\Models\Batches;
 use App\Models\ListAgencies;
 use App\Models\ListReferences;
+use App\Models\LocationRegions;
 use App\Models\RecipientAllowance;
 use App\Models\RecipientStipend;
 use App\Models\RecipientWithheld;
@@ -22,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 use Vinkla\Hashids\Facades\Hashids;
 
 class StipendController extends Controller
@@ -118,7 +121,7 @@ class StipendController extends Controller
         $this->syncScholarProcessPayrollStatus($terms, $this->payrollProcessStatus($batchStatus));
     }
 
-    private function resetScholarTermToSubmitted(Batches $batch, int $scholarId): void
+    private function resetScholarTermToApproved(Batches $batch, int $scholarId): void
     {
         $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
             ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
@@ -132,7 +135,7 @@ class StipendController extends Controller
 
         DB::table('scholar_term_records')
             ->whereIn('id', $terms->pluck('id'))
-            ->update(['verification_status' => 'submitted']);
+            ->update(['verification_status' => 'approved']);
 
         $this->syncScholarProcessPayrollStatus($terms, 'NOT SUBMITTED');
     }
@@ -221,6 +224,103 @@ class StipendController extends Controller
         return (float) ($allowance?->amount ?? $fallback);
     }
 
+    private function payrollRegionCode(array|string|null $region): string
+    {
+        $regionCode = is_array($region) ? ($region['region_code'] ?? null) : null;
+
+        if (! $regionCode) {
+            throw new \RuntimeException('The selected agency does not have a region code.');
+        }
+
+        $locationRegion = LocationRegions::where('code', $regionCode)->first(['region']);
+
+        if (! $locationRegion?->region) {
+            throw new \RuntimeException('The selected agency region code does not match a location region.');
+        }
+
+        if (! preg_match('/^Region\s+([0-9ivxlcdm]+(?:-[ab])?)$/i', trim($locationRegion->region), $matches)) {
+            throw new \RuntimeException('The matched location region does not use the expected Region format.');
+        }
+
+        return 'R' . $this->regionNumber($matches[1]);
+    }
+
+    private function regionNumber(string $value): string
+    {
+        $value = Str::upper(trim($value));
+        $value = str_replace('-', '', $value);
+
+        if (preg_match('/^(\d+)([A-Z]?)$/', $value, $matches)) {
+            return $matches[1] . ($matches[2] ?? '');
+        }
+
+        if (preg_match('/^([IVXLCDM]+)([AB]?)$/', $value, $matches)) {
+            $roman = $matches[1];
+            $suffix = $matches[2] ?? '';
+            $map = ['I' => 1, 'V' => 5, 'X' => 10, 'L' => 50, 'C' => 100, 'D' => 500, 'M' => 1000];
+            $total = 0;
+            $previous = 0;
+
+            foreach (array_reverse(str_split($roman)) as $char) {
+                $number = $map[$char] ?? 0;
+                $total += $number < $previous ? -$number : $number;
+                $previous = max($previous, $number);
+            }
+
+            return $total . $suffix;
+        }
+
+        return $value;
+    }
+
+    private function payrollTermCode(?string $term): string
+    {
+        $term = trim($term ?? '');
+
+        if (preg_match('/\b(1st|2nd|3rd|4th)\b/i', $term, $matches)) {
+            return Str::lower($matches[1]);
+        }
+
+        if (preg_match('/\b(first|second|third|fourth)\b/i', $term, $matches)) {
+            return [
+                'first' => '1st',
+                'second' => '2nd',
+                'third' => '3rd',
+                'fourth' => '4th',
+            ][Str::lower($matches[1])] ?? Str::of($term)->replace(' ', '')->toString();
+        }
+
+        return Str::of($term)->replaceMatches('/[^A-Za-z0-9]+/', '')->toString();
+    }
+
+    private function payrollBatchName(array|string|null $region, ?string $term, ?string $academicYear, string|int|null $batch): string
+    {
+        if (is_string($region)) {
+            $agency = ListAgencies::whereRaw('LOWER(name) = ?', [Str::lower($region)])
+                ->first(['region_code']);
+
+            if ($agency) {
+                $region = [
+                    'region_code' => $agency->region_code,
+                ];
+            }
+        }
+
+        $years = explode('-', $academicYear ?? '');
+        $ay = count($years) === 2
+            ? substr($years[0], -2) . substr($years[1], -2)
+            : Str::of($academicYear ?? '')->replaceMatches('/[^0-9]+/', '')->substr(-4)->toString();
+        $batchNo = Str::of((string) $batch)->replaceMatches('/^batch\s*/i', '')->replaceMatches('/[^A-Za-z0-9]+/', '')->toString();
+
+        return $this->payrollRegionCode($region)
+            . '_'
+            . $this->payrollTermCode($term)
+            . 'AY'
+            . $ay
+            . '_Batch'
+            . $batchNo;
+    }
+
     public function index(Request $request): Response
     {
         $user = Auth::user();
@@ -237,6 +337,8 @@ class StipendController extends Controller
                     return [
                         'id' => $role->id,
                         'name' => $role->name,
+                        'slug' => $role->slug,
+                        'region_code' => $role->region_code,
                     ];
                 }),
             'termOptions' => ListReferences::where('is_active', true)
@@ -400,7 +502,39 @@ class StipendController extends Controller
             ->pluck('scholar_id')
             ->filter();
 
-        return Scholars::query()
+        $standingScholarIds = null;
+
+        if ($status) {
+            $standingTermRows = DB::table('scholar_term_records')
+                ->where('academic_year', $batch->school_year)
+                ->when($batch->term_id, function ($query) use ($batch) {
+                    $query->where('term_id', $batch->term_id);
+                }, function ($query) use ($batch) {
+                    $query->whereExists(function ($exists) use ($batch) {
+                        $exists->select(DB::raw(1))
+                            ->from('list_references')
+                            ->whereColumn('list_references.id', 'scholar_term_records.term_id')
+                            ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
+                    });
+                })
+                ->when($batch->level_id, fn($query) => $query->where('level_id', $batch->level_id))
+                ->select('id', 'scholar_id')
+                ->get();
+
+            $standingTermIds = DB::connection('scholars')
+                ->table('scholar_processes')
+                ->whereIn('term_record_id', $standingTermRows->pluck('id'))
+                ->whereRaw('LOWER(standing) = ?', [$status])
+                ->pluck('term_record_id');
+
+            $standingScholarIds = $standingTermRows
+                ->whereIn('id', $standingTermIds)
+                ->pluck('scholar_id')
+                ->unique()
+                ->values();
+        }
+
+        $eligibleScholars = Scholars::query()
             ->with([
                 'profile:scholar_id,fname,mname,lname,suffix,email,birthdate',
                 'program:id,name',
@@ -448,10 +582,47 @@ class StipendController extends Controller
                     $campusQuery->whereRaw('LOWER(COALESCE(generated_name, name)) = ?', [$university]);
                 });
             })
-            ->when($status, function ($query) use ($status) {
-                $query->whereRaw('LOWER(academic_status) = ?', [$status]);
+            ->when($status, function ($query) use ($standingScholarIds) {
+                $standingScholarIds->isNotEmpty()
+                    ? $query->whereIn('id', $standingScholarIds)
+                    : $query->whereRaw('1 = 0');
             })
-            ->paginate(10, ['*'], 'eligible_page')
+            ->paginate(10, ['*'], 'eligible_page');
+
+        $pageScholarIds = $eligibleScholars->getCollection()->pluck('id')->filter()->unique();
+        $standingsByScholar = collect();
+
+        if ($pageScholarIds->isNotEmpty()) {
+            $termRows = DB::table('scholar_term_records')
+                ->whereIn('scholar_id', $pageScholarIds)
+                ->where('academic_year', $batch->school_year)
+                ->when($batch->term_id, function ($query) use ($batch) {
+                    $query->where('term_id', $batch->term_id);
+                }, function ($query) use ($batch) {
+                    $query->whereExists(function ($exists) use ($batch) {
+                        $exists->select(DB::raw(1))
+                            ->from('list_references')
+                            ->whereColumn('list_references.id', 'scholar_term_records.term_id')
+                            ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
+                    });
+                })
+                ->when($batch->level_id, fn($query) => $query->where('level_id', $batch->level_id))
+                ->select('id', 'scholar_id')
+                ->get();
+
+            $processStandings = DB::connection('scholars')
+                ->table('scholar_processes')
+                ->whereIn('term_record_id', $termRows->pluck('id'))
+                ->pluck('standing', 'term_record_id');
+
+            $standingsByScholar = $termRows
+                ->mapWithKeys(fn($term) => [
+                    $term->scholar_id => $processStandings[$term->id] ?? null,
+                ])
+                ->filter();
+        }
+
+        return $eligibleScholars
             ->through(fn($scholar) => [
                 'id' => Hashids::encode($scholar->id),
                 'spas_no' => $scholar->spas_no,
@@ -467,7 +638,7 @@ class StipendController extends Controller
                 'program' => $scholar->program?->name,
                 'university' => $scholar->schoolInfo->first()?->campus?->generated_name
                     ?? $scholar->schoolInfo->first()?->campus?->name,
-                'status' => $scholar->academic_status ?? 'Ongoing',
+                'status' => $standingsByScholar->get($scholar->id),
             ]);
     }
 
@@ -577,7 +748,7 @@ class StipendController extends Controller
                     'program' => $recipient->scholar?->program?->name,
                     'university' => $recipient->scholar?->schoolInfo->first()?->campus?->generated_name
                         ?? $recipient->scholar?->schoolInfo->first()?->campus?->name,
-                    'scholarship_status' => $processStandingsByScholar[$recipient->scholar_id] ?? $recipient->scholarship_status ?? 'NO DATA',
+                    'scholarship_status' => $processStandingsByScholar->get($recipient->scholar_id),
                     'period' => $recipient->period,
                     'months' => collect(range(1, 5))->mapWithKeys(fn($month) => [
                         "month_{$month}" => (float) ($recipient->stipends->firstWhere('month_no', $month)?->amount ?? 0),
@@ -623,10 +794,8 @@ class StipendController extends Controller
                 }
             }
 
-            $years = explode('-', $data['academic_year']);
-            $result = substr($years[0], -2) . substr($years[1], -2);
             $termName = $data['term']['term_name'] ?? $data['term']['name'];
-            $name =  Auth::user()->profile?->agency?->code . '_' . Str::of($termName)->replace(' ', '') . 'AY' .   $result . '_Batch' . $data['batch'];
+            $name = $this->payrollBatchName($data['region'], $termName, $data['academic_year'], $data['batch']);
 
             $exists = Batches::where('name', $name)
                 ->whereNull('deleted_at')
@@ -658,8 +827,8 @@ class StipendController extends Controller
             DB::commit();
             return redirect()->back()->with('flash', [
                 'status' => 'success',
-                'title'  => 'Batch created',
-                'message' => 'Batch successfully created.',
+                'title'  => 'Payroll Batch created',
+                'message' => 'Payroll batch successfully created.',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -669,6 +838,58 @@ class StipendController extends Controller
                 'message' => $th->getMessage(),
             ]);
         }
+    }
+
+    public function export(string $id)
+    {
+        $batchId = Hashids::decode($id)[0] ?? 0;
+        $batch = Batches::with([
+            'logs' => fn($q) => $q
+                ->select('id', 'batch_id', 'status', 'remarks', 'action_by', 'created_at')
+                ->orderBy('created_at', 'desc'),
+            'recipients.scholar.profile:scholar_id,fname,mname,lname,suffix,email,birthdate',
+            'recipients.scholar.program:id,name',
+            'recipients.scholar.schoolInfo' => fn($q) => $q
+                ->select('id', 'scholar_id', 'campus_id')
+                ->latest('id')
+                ->with('campus:id,name,generated_name,agency_id'),
+            'recipients.stipends' => fn($q) => $q->orderBy('month_no'),
+            'recipients.withhelds' => fn($q) => $q->orderBy('month_no'),
+            'recipients.allowances.allowanceType',
+        ])->findOrFail($batchId);
+
+        $latestStatus = $batch->logs->first()?->status ?? 'draft';
+
+        if (! $this->permissions()->payrollBatchPermissions(Auth::user(), $batch, $latestStatus)['canView']) {
+            abort(403);
+        }
+
+        $rows = $this->payrollRecipients($id)
+            ->map(function ($row) {
+                return [
+                    ...$row,
+                    'program' => $row['program'] ?: 'NO PROGRAM',
+                    'university' => $row['university'] ?: '',
+                    'month_1' => (float) ($row['months']['month_1'] ?? 0),
+                    'month_2' => (float) ($row['months']['month_2'] ?? 0),
+                    'month_3' => (float) ($row['months']['month_3'] ?? 0),
+                    'month_4' => (float) ($row['months']['month_4'] ?? 0),
+                    'month_5' => (float) ($row['months']['month_5'] ?? 0),
+                ];
+            })
+            ->groupBy('program')
+            ->sortKeys()
+            ->all();
+
+        preg_match('/Batch([A-Za-z0-9]+)/i', $batch->name ?? '', $batchMatches);
+        $filename = $this->payrollBatchName(
+            $batch->region,
+            $batch->academic_term,
+            $batch->school_year,
+            $batchMatches[1] ?? $batch->id
+        ) . '.xlsx';
+
+        return Excel::download(new PayrollExport($batch, $rows), $filename);
     }
 
     public function update(Request $request, $id, $type)
@@ -726,7 +947,7 @@ class StipendController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Batch status updated',
+            'title' => 'Payroll Batch status updated',
             'message' => 'The payroll batch status was updated.',
         ]);
     }
@@ -804,7 +1025,7 @@ class StipendController extends Controller
                         'account_no' => $scholar->landbank?->account_number,
                         'birthday' => $scholar->profile?->birthdate,
                         'period' => trim($batch->academic_term . ' AY ' . $batch->school_year),
-                        'scholarship_status' => $scholar->academic_status ?? 'Ongoing',
+                        'scholarship_status' => null,
                         'total_stipend' => $totalMonthlyLiving,
                         'learning_materials_amount' => $defaultConnectivity,
                         'clothing_amount' => $defaultClothing,
@@ -1066,7 +1287,7 @@ class StipendController extends Controller
             return redirect()->back()->with('flash', [
                 'status' => 'success',
                 'title' => 'Payroll saved',
-                'message' => 'Payroll amounts were updated.',
+                'message' => 'Payroll informations were saved.',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -1102,7 +1323,7 @@ class StipendController extends Controller
 
                 foreach ($batch->recipients as $recipient) {
                     if ($recipient->scholar_id) {
-                        $this->resetScholarTermToSubmitted($batch, $recipient->scholar_id);
+                        $this->resetScholarTermToApproved($batch, $recipient->scholar_id);
                     }
 
                     $recipient->stipends()->delete();
@@ -1159,7 +1380,7 @@ class StipendController extends Controller
                 }
             $batch = $recipient->batch;
             if ($batch && $recipient->scholar_id) {
-                $this->resetScholarTermToSubmitted($batch, $recipient->scholar_id);
+                $this->resetScholarTermToApproved($batch, $recipient->scholar_id);
             }
 
             $recipient->stipends()->delete();

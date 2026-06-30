@@ -32,7 +32,7 @@
             <div class="flex flex-col w-full h-full gap-3">
                 <Tabs v-model:value="activeTab" class="flex-1 flex flex-col min-h-0">
                     <TabList>
-                        <Tab v-if="canBuildPayroll" value="eligible">Eligible Scholars</Tab>
+                        <Tab v-if="canBuildPayroll" value="eligible">Validated Scholars</Tab>
                         <Tab value="payroll">Payroll</Tab>
                     </TabList>
 
@@ -46,7 +46,7 @@
                                         <IconCircleCheck :size="20" class="text-green-600" />
                                         <div>
                                             <div class="text-sm font-semibold">
-                                                Validated Periodic Reports
+                                                Scholars with VALIDATED Periodic Reports
                                             </div>
                                             <div class="text-xs text-gray-500">
                                                 Scholars shown here are not yet part of this payroll.
@@ -130,7 +130,7 @@
                                             </div>
                                         </template>
                                     </Column>
-                                    <Column header="Status" field="status" />
+                                    <Column header="Scholarship Status" field="status" />
 
                                     <template #empty>
                                         <div class="py-6 text-center text-sm text-gray-500">
@@ -194,11 +194,20 @@
                                         <DefaultButton
                                             v-if="canBuildPayroll"
                                             size="small"
-                                            label="Save Payroll"
+                                            label="Save"
                                             :icon="IconDeviceFloppy"
                                             :loading="payrollForm.processing"
                                             :disabled="!payrollRows.length || !batchPermissions.canEdit"
                                             @click="savePayroll"
+                                        />
+                                        <DefaultButton
+                                            size="small"
+                                            label="Export"
+                                            outlined
+                                            :icon="IconDownload"
+                                            :loading="exportingPayroll"
+                                            :disabled="!payrollRows.length || payrollForm.processing"
+                                            @click="exportPayroll"
                                         />
                                         <DefaultButton
                                             v-if="batchPermissions.canSubmit"
@@ -291,121 +300,201 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr v-for="row in filteredPayrollRows" :key="row.id">
-                                                <td class="border px-2 py-1">
-                                                    <InputText
-                                                        v-model="row.account_no"
-                                                        class="!text-xs w-36"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
-                                                </td>
-                                                <td class="border px-2 py-1 uppercase min-w-56">
-                                                    {{ row.name }}
-                                                </td>
-                                                <td class="border px-2 py-1">{{ row.program }}</td>
-                                                <td class="border px-2 py-1 min-w-56">
-                                                    {{ row.university }}
-                                                </td>
-                                                <td class="border px-2 py-1">
-                                                    <InputText
-                                                        v-model="row.scholarship_status"
-                                                        class="!text-xs w-44"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
-                                                </td>
-                                                <td class="border px-2 py-1">
-                                                    <InputText
-                                                        v-model="row.period"
-                                                        class="!text-xs w-44"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
+                                            <template
+                                                v-for="group in groupedPayrollRows"
+                                                :key="group.program"
+                                            >
+                                                <tr v-for="row in group.rows" :key="row.id">
+                                                    <td class="border px-2 py-1">
+                                                        <InputText
+                                                            v-model="row.account_no"
+                                                            class="!text-xs w-36"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td class="border px-2 py-1 uppercase min-w-56">
+                                                        {{ row.name }}
+                                                    </td>
+                                                    <td class="border px-2 py-1">{{ row.program }}</td>
+                                                    <td class="border px-2 py-1 min-w-56">
+                                                        {{ row.university }}
+                                                    </td>
+                                                    <td class="border px-2 py-1">
+                                                        <InputText
+                                                            v-model="row.scholarship_status"
+                                                            class="!text-xs w-44"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                        <div
+                                                            v-if="!row.scholarship_status"
+                                                            class="mt-1 max-w-44 text-[10px] leading-3 text-amber-600"
+                                                        >
+                                                            Assign a scholar standing before submitting payroll.
+                                                        </div>
+                                                    </td>
+                                                    <td class="border px-2 py-1">
+                                                        <InputText
+                                                            v-model="row.period"
+                                                            class="!text-xs w-44"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td
+                                                        v-for="month in 5"
+                                                        :key="month"
+                                                        class="border px-2 py-1"
+                                                    >
+                                                        <InputNumber
+                                                            v-model="row[`month_${month}`]"
+                                                            inputClass="!text-xs !text-right w-28"
+                                                            :min="0"
+                                                            :minFractionDigits="2"
+                                                            :maxFractionDigits="2"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td class="border px-2 py-1">
+                                                        <InputNumber
+                                                            v-model="row.total_withheld"
+                                                            inputClass="!text-xs !text-right w-28"
+                                                            :min="0"
+                                                            :minFractionDigits="2"
+                                                            :maxFractionDigits="2"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td class="border px-2 py-1">
+                                                        <InputText
+                                                            v-model="row.remarks"
+                                                            class="!text-xs w-56"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td class="border px-2 py-1">
+                                                        <InputNumber
+                                                            v-model="row.learning_materials_amount"
+                                                            inputClass="!text-xs !text-right w-28"
+                                                            :min="0"
+                                                            :minFractionDigits="2"
+                                                            :maxFractionDigits="2"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td class="border px-2 py-1">
+                                                        <InputNumber
+                                                            v-model="row.clothing_amount"
+                                                            inputClass="!text-xs !text-right w-28"
+                                                            :min="0"
+                                                            :minFractionDigits="2"
+                                                            :maxFractionDigits="2"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td
+                                                        v-for="allowance in selectedCustomAllowanceOptions"
+                                                        :key="allowance.code"
+                                                        class="border px-2 py-1"
+                                                    >
+                                                        <InputNumber
+                                                            v-model="row.custom_allowances[allowance.code]"
+                                                            inputClass="!text-xs !text-right w-28"
+                                                            :min="0"
+                                                            :max="allowance.max_amount ?? undefined"
+                                                            :minFractionDigits="2"
+                                                            :maxFractionDigits="2"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                        />
+                                                    </td>
+                                                    <td class="border px-2 py-1 text-right font-semibold">
+                                                        {{ formatMoney(rowTotal(row)) }}
+                                                    </td>
+                                                    <td v-if="canBuildPayroll" class="border px-2 py-1 text-center">
+                                                        <DefaultButton
+                                                            size="small"
+                                                            severity="danger"
+                                                            text
+                                                            rounded
+                                                            :icon="IconTrash"
+                                                            tooltip="Remove from payroll"
+                                                            :disabled="!batchPermissions.canEdit"
+                                                            :loading="removeForm.processing && removingId === row.id"
+                                                            @click="removeRecipient(row)"
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                <tr class="bg-slate-50 font-semibold">
+                                                    <td colspan="6" class="border px-2 py-1 text-right">
+                                                        Sub-Total
+                                                    </td>
+                                                    <td
+                                                        v-for="month in 5"
+                                                        :key="`subtotal-${group.program}-${month}`"
+                                                        class="border px-2 py-1 text-right"
+                                                    >
+                                                        {{ formatMoney(group.totals[`month_${month}`]) }}
+                                                    </td>
+                                                    <td class="border px-2 py-1 text-right">
+                                                        {{ formatMoney(group.totals.total_withheld) }}
+                                                    </td>
+                                                    <td class="border px-2 py-1"></td>
+                                                    <td class="border px-2 py-1 text-right">
+                                                        {{ formatMoney(group.totals.learning_materials_amount) }}
+                                                    </td>
+                                                    <td class="border px-2 py-1 text-right">
+                                                        {{ formatMoney(group.totals.clothing_amount) }}
+                                                    </td>
+                                                    <td
+                                                        v-for="allowance in selectedCustomAllowanceOptions"
+                                                        :key="`subtotal-${group.program}-${allowance.code}`"
+                                                        class="border px-2 py-1 text-right"
+                                                    >
+                                                        {{ formatMoney(group.totals.custom_allowances[allowance.code]) }}
+                                                    </td>
+                                                    <td class="border px-2 py-1 text-right">
+                                                        {{ formatMoney(group.totals.grand_total) }}
+                                                    </td>
+                                                    <td v-if="canBuildPayroll" class="border px-2 py-1"></td>
+                                                </tr>
+                                            </template>
+                                            <tr
+                                                v-if="filteredPayrollRows.length"
+                                                class="bg-slate-100 font-bold"
+                                            >
+                                                <td colspan="6" class="border px-2 py-1 text-right">
+                                                    TOTAL
                                                 </td>
                                                 <td
                                                     v-for="month in 5"
-                                                    :key="month"
-                                                    class="border px-2 py-1"
+                                                    :key="`grand-${month}`"
+                                                    class="border px-2 py-1 text-right"
                                                 >
-                                                    <InputNumber
-                                                        v-model="row[`month_${month}`]"
-                                                        inputClass="!text-xs !text-right w-28"
-                                                        :min="0"
-                                                        :minFractionDigits="2"
-                                                        :maxFractionDigits="2"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
+                                                    {{ formatMoney(payrollGrandTotals[`month_${month}`]) }}
                                                 </td>
-                                                <td class="border px-2 py-1">
-                                                    <InputNumber
-                                                        v-model="row.total_withheld"
-                                                        inputClass="!text-xs !text-right w-28"
-                                                        :min="0"
-                                                        :minFractionDigits="2"
-                                                        :maxFractionDigits="2"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
+                                                <td class="border px-2 py-1 text-right">
+                                                    {{ formatMoney(payrollGrandTotals.total_withheld) }}
                                                 </td>
-                                                <td class="border px-2 py-1">
-                                                    <InputText
-                                                        v-model="row.remarks"
-                                                        class="!text-xs w-56"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
+                                                <td class="border px-2 py-1"></td>
+                                                <td class="border px-2 py-1 text-right">
+                                                    {{ formatMoney(payrollGrandTotals.learning_materials_amount) }}
                                                 </td>
-                                                <td class="border px-2 py-1">
-                                                    <InputNumber
-                                                        v-model="row.learning_materials_amount"
-                                                        inputClass="!text-xs !text-right w-28"
-                                                        :min="0"
-                                                        :minFractionDigits="2"
-                                                        :maxFractionDigits="2"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
-                                                </td>
-                                                <td class="border px-2 py-1">
-                                                    <InputNumber
-                                                        v-model="row.clothing_amount"
-                                                        inputClass="!text-xs !text-right w-28"
-                                                        :min="0"
-                                                        :minFractionDigits="2"
-                                                        :maxFractionDigits="2"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
+                                                <td class="border px-2 py-1 text-right">
+                                                    {{ formatMoney(payrollGrandTotals.clothing_amount) }}
                                                 </td>
                                                 <td
                                                     v-for="allowance in selectedCustomAllowanceOptions"
-                                                    :key="allowance.code"
-                                                    class="border px-2 py-1"
+                                                    :key="`grand-${allowance.code}`"
+                                                    class="border px-2 py-1 text-right"
                                                 >
-                                                    <InputNumber
-                                                        v-model="row.custom_allowances[allowance.code]"
-                                                        inputClass="!text-xs !text-right w-28"
-                                                        :min="0"
-                                                        :max="allowance.max_amount ?? undefined"
-                                                        :minFractionDigits="2"
-                                                        :maxFractionDigits="2"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                    />
+                                                    {{ formatMoney(payrollGrandTotals.custom_allowances[allowance.code]) }}
                                                 </td>
-                                                <td class="border px-2 py-1 text-right font-semibold">
-                                                    {{ formatMoney(rowTotal(row)) }}
+                                                <td class="border px-2 py-1 text-right">
+                                                    {{ formatMoney(payrollGrandTotals.grand_total) }}
                                                 </td>
-                                                <td v-if="canBuildPayroll" class="border px-2 py-1 text-center">
-                                                    <DefaultButton
-                                                        size="small"
-                                                        severity="danger"
-                                                        text
-                                                        rounded
-                                                        :icon="IconTrash"
-                                                        tooltip="Remove from payroll"
-                                                        :disabled="!batchPermissions.canEdit"
-                                                        :loading="removeForm.processing && removingId === row.id"
-                                                        @click="removeRecipient(row)"
-                                                    />
-                                                </td>
+                                                <td v-if="canBuildPayroll" class="border px-2 py-1"></td>
                                             </tr>
                                             <tr v-if="!filteredPayrollRows.length">
                                                 <td
-                                                    :colspan="16 + selectedCustomAllowanceOptions.length"
+                                                    :colspan="payrollColumnCount"
                                                     class="py-8 text-center text-gray-500"
                                                 >
                                                     No payroll recipients found.
@@ -468,6 +557,7 @@ import {
     IconChecks,
     IconCircleCheck,
     IconDeviceFloppy,
+    IconDownload,
     IconFileSpreadsheet,
     IconSend,
     IconTrash,
@@ -497,6 +587,7 @@ const selectedCustomAllowanceCodes = ref([]);
 const rejectDialog = ref(false);
 const rejectRemarks = ref("");
 const rejectRemarksError = ref(false);
+const exportingPayroll = ref(false);
 
 const details = computed(() => page.props.details);
 const eligibleScholars = computed(
@@ -536,7 +627,7 @@ const batchPermissions = computed(
 const canBuildPayroll = computed(() => batchPermissions.value.canEdit);
 const payrollDescription = computed(() =>
     canBuildPayroll.value
-        ? "Edit month amounts, withheld amounts, allowances, and remarks."
+        ? "Edit, export, and submit payroll details ."
         : "Review the submitted payroll details.",
 );
 const statusMeta = computed(() => {
@@ -649,6 +740,73 @@ const filteredPayrollRows = computed(() => {
     });
 });
 
+const payrollColumnCount = computed(
+    () => 16 + selectedCustomAllowanceOptions.value.length + (canBuildPayroll.value ? 1 : 0),
+);
+
+const emptyPayrollTotals = () => ({
+    month_1: 0,
+    month_2: 0,
+    month_3: 0,
+    month_4: 0,
+    month_5: 0,
+    total_withheld: 0,
+    learning_materials_amount: 0,
+    clothing_amount: 0,
+    custom_allowances: Object.fromEntries(
+        selectedCustomAllowanceCodes.value.map((code) => [code, 0]),
+    ),
+    grand_total: 0,
+});
+
+const addRowToTotals = (totals, row) => {
+    [1, 2, 3, 4, 5].forEach((month) => {
+        totals[`month_${month}`] += Number(row[`month_${month}`] ?? 0);
+    });
+
+    totals.total_withheld += Number(row.total_withheld ?? 0);
+    totals.learning_materials_amount += Number(row.learning_materials_amount ?? 0);
+    totals.clothing_amount += Number(row.clothing_amount ?? 0);
+
+    selectedCustomAllowanceCodes.value.forEach((code) => {
+        totals.custom_allowances[code] ??= 0;
+        totals.custom_allowances[code] += Number(row.custom_allowances?.[code] ?? 0);
+    });
+
+    totals.grand_total += rowTotal(row);
+
+    return totals;
+};
+
+const groupedPayrollRows = computed(() => {
+    const groups = new Map();
+
+    filteredPayrollRows.value.forEach((row) => {
+        const program = row.program || "NO PROGRAM";
+
+        if (!groups.has(program)) {
+            groups.set(program, {
+                program,
+                rows: [],
+                totals: emptyPayrollTotals(),
+            });
+        }
+
+        const group = groups.get(program);
+        group.rows.push(row);
+        addRowToTotals(group.totals, row);
+    });
+
+    return [...groups.values()];
+});
+
+const payrollGrandTotals = computed(() =>
+    filteredPayrollRows.value.reduce(
+        (totals, row) => addRowToTotals(totals, row),
+        emptyPayrollTotals(),
+    ),
+);
+
 const reloadBatch = (extra = {}) => {
     if (!details.value?.id) return;
 
@@ -736,7 +894,30 @@ const savePayroll = async (onSuccess = null) => {
 
             reloadBatch();
         },
+        onError: () => {
+            exportingPayroll.value = false;
+        },
     });
+};
+
+const downloadPayroll = () => {
+    if (!details.value?.id) return;
+
+    exportingPayroll.value = false;
+    window.location.href = route("stipends.export", details.value.id);
+};
+
+const exportPayroll = () => {
+    if (!details.value?.id || !payrollRows.value.length) return;
+
+    exportingPayroll.value = true;
+
+    if (canBuildPayroll.value && batchPermissions.value.canEdit) {
+        savePayroll(downloadPayroll);
+        return;
+    }
+
+    downloadPayroll();
 };
 
 const removeRecipient = (row) => {

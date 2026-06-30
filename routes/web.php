@@ -136,6 +136,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('stipends', [StipendController::class, 'store'])->name('stipends.store');
     Route::post('stipends/{id}/recipients', [StipendController::class, 'addRecipients'])->name('stipends.recipients.store');
     Route::put('stipends/{id}/payroll', [StipendController::class, 'savePayroll'])->name('stipends.payroll.update');
+    Route::get('stipends/{id}/export', [StipendController::class, 'export'])->name('stipends.export');
     Route::put('stipends/{id}/{type}', [StipendController::class, 'update'])->name('stipends.update');
     Route::delete('stipends/{id}/{type}', [StipendController::class, 'destroy'])->name('stipends.destroy');
 
