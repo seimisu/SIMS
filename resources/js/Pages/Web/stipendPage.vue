@@ -32,7 +32,8 @@
                                 label="Region"
                                 v-model="form.region"
                                 :options="page.props.agencyOption"
-                                :clearable="true"
+                                :clearable="!isRegionLocked"
+                                :disable="isRegionLocked"
                                 capitalize
                             ></SelectInput>
                             <SelectInput
@@ -111,8 +112,11 @@
 
                     <Column header="Remarks">
                         <template #body="props">
-                            <div class="capitalize">
-                                {{ props.data.remarks }}
+                            <div
+                                class="max-w-56 truncate capitalize"
+                                :title="props.data.remarks"
+                            >
+                                {{ truncateRemarks(props.data.remarks) }}
                             </div>
                         </template>
                     </Column>
@@ -156,7 +160,7 @@
                                     :icon="IconTrash"
                                     tooltip="Delete batch"
                                     :disabled="
-                                        !props.data.permissions?.canDelete
+                                        !canDeleteBatch(props.data)
                                     "
                                     :loading="
                                         deleteForm.processing &&
@@ -211,12 +215,15 @@ const lastFlashKey = ref(null);
 
 const form = useForm({
     id: null,
-    region: page.props.user.profile.agency_array ?? null,
+    region: page.props.payrollPermissions.regionLocked
+        ? (page.props.agencyOption?.[0] ?? page.props.user.profile.agency_array ?? null)
+        : page.props.user.profile.agency_array ?? null,
     academic_year: null,
     term: null,
     batch: null,
 });
 const deleteForm = useForm({});
+const isRegionLocked = computed(() => Boolean(page.props.payrollPermissions.regionLocked));
 
 const batchStatusMeta = (status) =>
     ({
@@ -240,6 +247,15 @@ const batchStatusMeta = (status) =>
         label: status ?? "Draft",
         class: "bg-slate-50 text-slate-500",
     };
+
+const truncateRemarks = (remarks, limit = 24) => {
+    if (!remarks) return "";
+
+    return remarks.length > limit ? `${remarks.slice(0, limit)}...` : remarks;
+};
+
+const canDeleteBatch = (batch) =>
+    Boolean(batch?.permissions?.canDelete) && batch?.status !== "rejected_payroll";
 
 const rules = computed(() => ({
     region: { required: helpers.withMessage("Region is required", required) },
@@ -292,7 +308,7 @@ const openModal = (event) => {
 
 const deleteBatch = (event, batch) => {
     event?.stopPropagation();
-    if (!batch?.id) return;
+    if (!batch?.id || !canDeleteBatch(batch)) return;
 
     deletingId.value = batch.id;
     deleteForm.delete(route("stipends.destroy", { id: batch.id, type: "batch" }), {

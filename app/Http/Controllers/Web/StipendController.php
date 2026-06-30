@@ -34,16 +34,6 @@ class StipendController extends Controller
         return app(SystemPermissions::class);
     }
 
-    private function payrollTermStatus(string $batchStatus): string
-    {
-        return match ($batchStatus) {
-            'rejected_payroll' => 'rejected_payroll',
-            'submitted_payroll' => 'submitted_payroll',
-            'approved_payroll' => 'approved_payroll',
-            default => 'draft_payroll',
-        };
-    }
-
     private function payrollProcessStatus(string $batchStatus): string
     {
         return match ($batchStatus) {
@@ -99,24 +89,12 @@ class StipendController extends Controller
     {
         $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
             ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
-            ->whereIn('scholar_term_records.verification_status', [
-                'submitted',
-                'approved',
-                'draft_payroll',
-                'submitted_payroll',
-                'rejected_payroll',
-                'approved_payroll',
-            ])
             ->select('scholar_term_records.id', 'scholars.spas_no')
             ->get();
 
         if ($terms->isEmpty()) {
             return;
         }
-
-        DB::table('scholar_term_records')
-            ->whereIn('id', $terms->pluck('id'))
-            ->update(['verification_status' => $this->payrollTermStatus($batchStatus)]);
 
         $this->syncScholarProcessPayrollStatus($terms, $this->payrollProcessStatus($batchStatus));
     }
@@ -125,17 +103,12 @@ class StipendController extends Controller
     {
         $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
             ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
-            ->whereIn('scholar_term_records.verification_status', ['draft_payroll', 'rejected_payroll'])
             ->select('scholar_term_records.id', 'scholars.spas_no')
             ->get();
 
         if ($terms->isEmpty()) {
             return;
         }
-
-        DB::table('scholar_term_records')
-            ->whereIn('id', $terms->pluck('id'))
-            ->update(['verification_status' => 'approved']);
 
         $this->syncScholarProcessPayrollStatus($terms, 'NOT SUBMITTED');
     }
@@ -245,6 +218,31 @@ class StipendController extends Controller
         return 'R' . $this->regionNumber($matches[1]);
     }
 
+    private function selectedAgencyRegion(array|string|null $region): array
+    {
+        if (is_array($region) && !empty($region['region_code'])) {
+            return ['region_code' => $region['region_code']];
+        }
+
+        $agency = null;
+
+        if (is_array($region) && !empty($region['id'])) {
+            $agency = ListAgencies::whereKey($region['id'])->first(['region_code']);
+        }
+
+        if (! $agency && is_array($region) && !empty($region['name'])) {
+            $agency = ListAgencies::whereRaw('LOWER(name) = ?', [Str::lower($region['name'])])
+                ->first(['region_code']);
+        }
+
+        if (! $agency && is_string($region)) {
+            $agency = ListAgencies::whereRaw('LOWER(name) = ?', [Str::lower($region)])
+                ->first(['region_code']);
+        }
+
+        return ['region_code' => $agency?->region_code];
+    }
+
     private function regionNumber(string $value): string
     {
         $value = Str::upper(trim($value));
@@ -295,16 +293,7 @@ class StipendController extends Controller
 
     private function payrollBatchName(array|string|null $region, ?string $term, ?string $academicYear, string|int|null $batch): string
     {
-        if (is_string($region)) {
-            $agency = ListAgencies::whereRaw('LOWER(name) = ?', [Str::lower($region)])
-                ->first(['region_code']);
-
-            if ($agency) {
-                $region = [
-                    'region_code' => $agency->region_code,
-                ];
-            }
-        }
+        $region = $this->selectedAgencyRegion($region);
 
         $years = explode('-', $academicYear ?? '');
         $ay = count($years) === 2
@@ -329,9 +318,13 @@ class StipendController extends Controller
         return Inertia::render('Web/stipendPage', [
             'payrollPermissions' => [
                 'canCreate' => $permissions->can($user, 'payroll.create'),
+                'regionLocked' => $permissions->shouldScopeToRegion($user),
             ],
             'agencyOption' =>  ListAgencies::where('is_active', true)
                 ->where('is_delete', false)
+                ->when($permissions->shouldScopeToRegion($user), function ($query) use ($user) {
+                    $query->whereKey($user->profile?->agency_id);
+                })
                 ->get()
                 ->map(function ($role) {
                     return [
@@ -363,7 +356,7 @@ class StipendController extends Controller
                         WHERE batches_logs.batch_id = batches.id
                         ORDER BY created_at DESC
                         LIMIT 1
-                    ) = ?", ['submitted_payroll']);
+                    ) IN (?, ?, ?)", ['submitted_payroll', 'rejected_payroll', 'approved_payroll']);
                 })
                 ->with([
                     'level:id,name',
@@ -778,6 +771,7 @@ class StipendController extends Controller
             DB::beginTransaction();
             $data = $request->validate([
                 'region' => ['required', 'array'],
+                'region.id' => ['required', 'integer', 'exists:list_agencies,id'],
                 'region.name' => ['required', 'string'],
                 'term' => ['required', 'array'],
                 'term.id' => ['required', 'integer', 'exists:list_references,id'],
@@ -787,6 +781,17 @@ class StipendController extends Controller
                 'batch' => ['required', 'string'],
             ]);
 
+            if ($this->permissions()->shouldScopeToRegion(Auth::user())
+                && (int) $data['region']['id'] !== (int) Auth::user()->profile?->agency_id
+            ) {
+                DB::rollBack();
+
+                return redirect()->back()->with('flash', [
+                    'status' => 'error',
+                    'title' => 'Invalid region',
+                    'message' => 'Regional users can only create payroll batches for their assigned region.',
+                ]);
+            }
 
             foreach ($data as $key => $value) {
                 if (is_string($value)) {

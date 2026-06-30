@@ -760,7 +760,7 @@
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-500">
-                                    Records are arranged from oldest to newest.
+                                    Records are arranged from newest to oldest.
                                     Totals and semester average use academic
                                     subjects only.
                                 </p>
@@ -859,25 +859,41 @@
                                             class="w-full flex flex-col pt-5 gap-3"
                                         >
                                             <div
-                                                class="flex items-center justify-between"
+                                                class="flex flex-col gap-3 rounded-xl bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                                             >
                                                 <div class="flex flex-col">
-                                                    <div class="text-xs">
-                                                        {{
-                                                            page.props?.details
-                                                                ?.course
-                                                        }}
-                                                    </div>
-                                                    <div>
+                                                    <div class="text-xs text-gray-500">
                                                         {{
                                                             page.props?.details
                                                                 ?.school
                                                         }}
                                                     </div>
+                                                    <div
+                                                        class="text-base font-semibold text-gray-800"
+                                                    >
+                                                        {{
+                                                            page.props?.details
+                                                                ?.course
+                                                        }}
+                                                    </div>
                                                 </div>
                                                 <div
-                                                    class="flex items-center gap-2"
-                                                ></div>
+                                                    class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-right"
+                                                >
+                                                    <div
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-amber-600"
+                                                    >
+                                                        Scholarship Standing
+                                                    </div>
+                                                    <div
+                                                        class="text-sm font-semibold text-amber-800"
+                                                    >
+                                                        {{
+                                                            termRecord.scholarshipStanding ??
+                                                            "Scholarship standing is not available"
+                                                        }}
+                                                    </div>
+                                                </div>
                                             </div>
                                             <table
                                                 class="min-w-full !border-none text-sm"
