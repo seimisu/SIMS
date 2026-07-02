@@ -338,8 +338,7 @@
                                                                 for returning
                                                                 the grade
                                                                 request to the
-                                                                scholar for
-                                                                revision.
+                                                                scholar.
                                                             </p>
                                                         </div>
                                                     </div>
@@ -446,16 +445,6 @@
                                                                 Accept grades
                                                                 submitted
                                                             </h3>
-                                                            <p
-                                                                class="text-xs text-gray-500 mt-1"
-                                                            >
-                                                                Provide a reason
-                                                                for returning
-                                                                the grade
-                                                                request to the
-                                                                scholar for
-                                                                revision.
-                                                            </p>
                                                         </div>
                                                     </div>
 
@@ -560,15 +549,14 @@
                             Select a file on the left panel
                         </div>
                     </div>
-                    <div v-else>
-                        <VuePdfEmbed
-                            annotation-layer
-                            text-layer
-                            :source="
-                                'http://172.16.8.98:85/' +
-                                selectedFile.file_path
+                    <div v-else class="w-full flex flex-col p-1">
+                        <iframe
+                            :src="
+                                'http://172.16.8.35/' + selectedFile.file_path
                             "
-                        />
+                            class="w-full h-[800px] rounded-xl border"
+                        >
+                        </iframe>
                     </div>
                 </div>
             </div>
@@ -628,9 +616,9 @@ const standingOptions = [
         id: "CPA - Continued with Partial Allowance",
         name: "CPA - Continued with Partial Allowance",
     },
-    { id: "TERMINATED", name: "TERMINATED" },
-    { id: "NO REPORT", name: "NO REPORT" },
-    { id: "NON-COMPLIANCE", name: "NON-COMPLIANCE" },
+    // { id: "TERMINATED", name: "TERMINATED" },
+    // { id: "NO REPORT", name: "NO REPORT" },
+    // { id: "NON-COMPLIANCE", name: "NON-COMPLIANCE" },
     { id: "GRADUATED", name: "GRADUATED" },
 ];
 

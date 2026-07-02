@@ -77,8 +77,11 @@ class ActivationController extends Controller
             $imageData = $data['photo'];
 
             // Extract the file type
-            preg_match("/^data:image\/(.*);base64,/", $imageData, $type);
-            $imageType = $type[1]; // png, jpeg, etc.
+            if (preg_match('/^data:image\/([a-zA-Z0-9+]+);base64,/', $imageData, $matches)) {
+                $imageType = $matches[1];
+            } else {
+                dd('Invalid image format', $imageData);
+            }
 
             // Remove the Base64 prefix
             $imageData = substr($imageData, strpos($imageData, ',') + 1);

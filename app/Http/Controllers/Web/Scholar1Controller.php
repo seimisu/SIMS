@@ -254,11 +254,11 @@ class Scholar1Controller extends Controller
                 });
             })
             ->get()->map(function ($campus) {
-            return [
-                'id' => $campus->id,
-                'name' => $campus->generated_name,
-            ];
-        }) : [];
+                return [
+                    'id' => $campus->id,
+                    'name' => $campus->generated_name,
+                ];
+            }) : [];
 
         $courseOptions = $request->input('id') ? SchoolCampusCourses::with(['course', 'campus'])->where([
             'is_delete' => false,
@@ -650,6 +650,8 @@ class Scholar1Controller extends Controller
                                             ->where('status', 'submitted'),
 
                                     ]),
+                                'payrolls' => fn ($q) => $q->with([]),
+
                             ])
                             ->where('scholars.id', $id)
                             ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
@@ -658,10 +660,6 @@ class Scholar1Controller extends Controller
                                 });
                             })
                             ->first();
-
-                        if (! $q) {
-                            return null;
-                        }
 
                         return [
                             'id' => Hashids::encode($q->id),
@@ -718,11 +716,11 @@ class Scholar1Controller extends Controller
                                 'campus' => $q?->schoolInfo?->first()?->campus?->generated_name,
                             ],
                             'region' => $q?->schoolInfo?->first()?->campus?->address?->region_array,
-                            'tr_request' => $q?->termRecords
-                                ->pluck('requests')
-                                ->flatten()
-                                ->count(),
-                            'grade_request' => $q?->termRecords->pluck('gradeRequests')->flatten()->count(),
+                            // 'tr_request' => $q?->termRecords
+                            //     ->pluck('requests')
+                            //     ->flatten()
+                            //     ->count(),
+                            // 'grade_request' => $q?->termRecords->pluck('gradeRequests')->flatten()->count(),
 
                             'guardian' => [
                                 'name' => $q?->parent?->fname,
@@ -809,38 +807,118 @@ class Scholar1Controller extends Controller
                                     'scholarshipStanding' => $standing,
                                 ];
                             }),
-                            'requestGrades' => $q->termRecords
-                                ->map(function ($term) {
-                                    return [
-                                        'id' => $term->id,
-                                        'term' => $term?->id ? $term?->only('id', 'name') : null,
-                                        'level' => $term?->level ? $term?->level->only('id', 'name', 'others') : null,
-                                        'academic_year' => $term->academic_year,
-                                        'subjects' => $term->requests->flatMap(function ($studentSubject) {
-                                            return $studentSubject->subjectRequests->map(function ($subjectRequest) {
+                            'financialAid' => [
+                                'grandTotal' => number_format(
+                                    $q?->payrolls->sum('grand_total'), 2,
+                                ),
+                                'approvedTotal' => number_format(
+                                    $q?->payrolls()->where('status', 'approved')->get()->values()->sum('grand_total'), 2,
+                                ),
+                                'totalWithheld' => number_format(
+                                    $q?->payrolls->sum('total_withheld'), 2,
+                                ),
+                                'clothing' => number_format(
+                                    $q->payrolls()
+                                        ->with('allowances.allowanceType')
+                                        ->get()
+                                        ->flatMap->allowances
+                                        ->filter(function ($allowance) {
+                                            return $allowance->allowanceType?->code === 'clothing';
+                                        })
+                                        ->sum('amount'),
+                                    2
+                                ),
+
+                                'connectivity' => number_format(
+                                    $q->payrolls()
+                                        ->with('allowances.allowanceType')
+                                        ->get()
+                                        ->flatMap->allowances
+                                        ->filter(function ($allowance) {
+                                            return $allowance->allowanceType?->code === 'connectivity';
+                                        })
+                                        ->sum('amount'),
+                                    2
+                                ),
+                                'totalAllowances' => number_format(
+                                    $q->payrolls()
+                                        ->with('allowances.allowanceType')
+                                        ->get()
+                                        ->flatMap->allowances
+
+                                        ->sum('amount'),
+                                    2
+                                ),
+                                'monthly' => $q?->payrolls()
+                                    ->orderBy('created_at', 'desc')
+                                    ->get()
+                                    ->map(function ($payroll) {
+                                        return [
+                                            'period' => $payroll->period,
+                                            'status' => $payroll->status,
+                                            'grandTotal' => number_format($payroll->grand_total, 2),
+                                            'logs' => $payroll->logs->map(function ($log) {
                                                 return [
-                                                    'subject' => [
-                                                        'id' => $subjectRequest->subject?->id,
-                                                        'name' => $subjectRequest->subject?->name,
-                                                        'code' => $subjectRequest->subject?->subject_code,
-                                                        'unit' => $subjectRequest->subject?->unit,
-                                                    ],
-                                                    'grade' => [
-                                                        'id' => null,
-                                                        'grade' => null,
-                                                        'is_failed' => null,
-                                                        'is_incomplete' => null,
-                                                        'is_drop' => null,
-                                                        'is_active' => null,
-                                                    ],
+
+                                                    'action' => $log->status,
+                                                    'remarks' => $log->remarks,
+                                                    'created_at' => Carbon::parse($log->created_at)->format('F d, Y h:i A'),
+                                                    'created_by' => $log->action_by,
                                                 ];
-                                            });
-                                        }),
-                                    ];
-                                }),
+                                            }),
+                                            'stipends' => $payroll->stipends->map(function ($stipend) {
+                                                return [
+                                                    'month' => $stipend->month,
+                                                    'amount' => number_format($stipend->amount, 2),
+                                                ];
+                                            }),
+                                            'financial' => $payroll->allowances->map(function ($allowance) {
+                                                return [
+                                                    'code' => $allowance->allowanceType?->code,
+                                                    'name' => $allowance->allowanceType?->name,
+                                                    'description' => $allowance->allowanceType?->description,
+                                                    'amount' => number_format($allowance->amount, 2),
+                                                ];
+                                            }),
+                                            'totalStipends' => number_format($payroll->stipends->sum('amount'), 2),
+                                        ];
+                                    }),
+
+                            ],
+
+                            // 'requestGrades' => $q->termRecords
+                            //     ->map(function ($term) {
+                            //         return [
+                            //             'id' => $term->id,
+                            //             'term' => $term?->id ? $term?->only('id', 'name') : null,
+                            //             'level' => $term?->level ? $term?->level->only('id', 'name', 'others') : null,
+                            //             'academic_year' => $term->academic_year,
+                            //             'subjects' => $term->requests->flatMap(function ($studentSubject) {
+                            //                 return $studentSubject->subjectRequests->map(function ($subjectRequest) {
+                            //                     return [
+                            //                         'subject' => [
+                            //                             'id' => $subjectRequest->subject?->id,
+                            //                             'name' => $subjectRequest->subject?->name,
+                            //                             'code' => $subjectRequest->subject?->subject_code,
+                            //                             'unit' => $subjectRequest->subject?->unit,
+                            //                         ],
+                            //                         'grade' => [
+                            //                             'id' => null,
+                            //                             'grade' => null,
+                            //                             'is_failed' => null,
+                            //                             'is_incomplete' => null,
+                            //                             'is_drop' => null,
+                            //                             'is_active' => null,
+                            //                         ],
+                            //                     ];
+                            //                 });
+                            //             }),
+                            //         ];
+                            //     }),
 
                         ];
                     } : null,
+
                 'resultSearch' => request('findAddress')
                     ? ($location->getFullAddress(request('findAddress')) ?? [])
                     : [],

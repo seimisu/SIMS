@@ -749,6 +749,7 @@ const toggleScholarDetails = (event) => {
     router.reload({
         only: [
             "details",
+
             "programOptions",
             "subProgramOptions",
             "statusOptions",

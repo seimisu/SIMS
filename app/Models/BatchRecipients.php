@@ -36,6 +36,11 @@ class BatchRecipients extends Model
         return $this->belongsTo(Batches::class, 'batch_id');
     }
 
+    public function logs()
+    {
+        return $this->hasMany(BatchLogs::class, 'batch_id', 'batch_id');
+    }
+
     public function scholar()
     {
         return $this->belongsTo(Scholars::class, 'scholar_id');

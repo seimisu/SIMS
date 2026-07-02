@@ -46,6 +46,14 @@ class studentLandbankRequest extends Model
         );
     }
 
+    protected function requestPurpose(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $this->decryptValue($value),
+            set: fn ($value) => $this->encryptValue($value),
+        );
+    }
+
     protected function uploadedFile(): Attribute
     {
         return Attribute::make(

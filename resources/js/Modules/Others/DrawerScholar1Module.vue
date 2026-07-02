@@ -294,7 +294,7 @@
                                     </h3>
                                 </div>
                                 <div class="flex w-full justify-end gap-2">
-                                    <div>
+                                    <!-- <div>
                                         <DefaultButton
                                             :icon="TablerIcons.IconTransfer"
                                             @click="opTransfer.toggle($event)"
@@ -469,7 +469,7 @@
                                                 </Tabs>
                                             </div>
                                         </Popover>
-                                    </div>
+                                    </div> -->
 
                                     <DefaultButton
                                         :icon="TablerIcons.IconCreditCard"
@@ -862,7 +862,9 @@
                                                 class="flex flex-col gap-3 rounded-xl bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                                             >
                                                 <div class="flex flex-col">
-                                                    <div class="text-xs text-gray-500">
+                                                    <div
+                                                        class="text-xs text-gray-500"
+                                                    >
                                                         {{
                                                             page.props?.details
                                                                 ?.school
@@ -1286,6 +1288,619 @@
                             </div>
                         </div>
                     </div>
+                    <div
+                        v-if="selectedTab.key === 3"
+                        class="w-full flex flex-col gap-3"
+                    >
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Total Amount -->
+                            <div
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-sm font-medium text-slate-500"
+                                    >
+                                        Total Stipend Amount
+                                    </span>
+
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"
+                                    >
+                                        <i
+                                            class="pi pi-wallet text-blue-600"
+                                        ></i>
+                                    </div>
+                                </div>
+
+                                <h2
+                                    class="text-3xl font-bold text-slate-800 mt-4"
+                                >
+                                    ₱
+                                    {{
+                                        page.props?.details?.financialAid
+                                            ?.grandTotal
+                                    }}
+                                </h2>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Total approved scholarship amount
+                                </p>
+                            </div>
+
+                            <!-- Amount Received -->
+                            <div
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-sm font-medium text-slate-500"
+                                    >
+                                        Total Financial Allowances
+                                    </span>
+
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"
+                                    >
+                                        <i
+                                            class="pi pi-check-circle text-green-600"
+                                        ></i>
+                                    </div>
+                                </div>
+
+                                <h2
+                                    class="text-3xl font-bold text-green-600 mt-4"
+                                >
+                                    ₱{{
+                                        page.props?.details?.financialAid
+                                            ?.approvedTotal
+                                    }}
+                                </h2>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Successfully received amount
+                                </p>
+                            </div>
+
+                            <!-- Remaining Balance -->
+                            <div
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-sm font-medium text-slate-500"
+                                    >
+                                        Remaining Balance
+                                    </span>
+
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"
+                                    >
+                                        <i
+                                            class="pi pi-chart-line text-amber-600"
+                                        ></i>
+                                    </div>
+                                </div>
+
+                                <h2
+                                    class="text-3xl font-bold text-amber-600 mt-4"
+                                >
+                                    ₱{{
+                                        page.props?.details?.financialAid
+                                            ?.totalWithheld
+                                    }}
+                                </h2>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Outstanding scholarship balance
+                                </p>
+                            </div>
+                        </div>
+                        <Panel
+                            class="w-full !rounded-xl"
+                            :pt="{
+                                header: '!border-b-1 !border-gray-300 !border-dashed !p-3 ',
+                            }"
+                        >
+                            <template #header>
+                                <div
+                                    class="flex items-center justify-between gap-1"
+                                >
+                                    <h3
+                                        class="text-sm font-semibold text-gray-800"
+                                    >
+                                        Semester Breakdown
+                                    </h3>
+                                </div>
+                            </template>
+                            <template #default>
+                                <div
+                                    class="grid grid-cols-1 xl:grid-cols-3 pt-3 gap-8"
+                                >
+                                    <div class="xl:col-span-2">
+                                        <template
+                                            v-for="(q, index) in page.props
+                                                ?.details?.financialAid
+                                                ?.monthly"
+                                            :key="index"
+                                        >
+                                            <div
+                                                class="flex items-center justify-between mt-5 mb-1"
+                                            >
+                                                <div>
+                                                    <div
+                                                        class="flex items-center gap-2"
+                                                    >
+                                                        <div
+                                                            class="text-slate-700 text-sm font-semibold"
+                                                        >
+                                                            {{ q.period }}
+                                                        </div>
+                                                        <span
+                                                            v-if="index === 0"
+                                                            class="text-xs bg-blue-100 px-4 rounded-2xl border border-blue-200 font-medium text-blue-600 py-0.5"
+                                                            >Current
+                                                            Semester</span
+                                                        >
+                                                    </div>
+                                                    <p
+                                                        class="text-xs text-slate-500"
+                                                    >
+                                                        Monthly Scholarship
+                                                        Releases
+                                                    </p>
+                                                </div>
+
+                                                <div class="text-right">
+                                                    <div
+                                                        class="text-xs text-slate-500"
+                                                    >
+                                                        Month Status
+                                                    </div>
+                                                    <div
+                                                        class="text-lg itmes-center font-semibold capitalize flex gap-1 text-slate-800"
+                                                    >
+                                                        <div>
+                                                            <Button
+                                                                size="small"
+                                                                text
+                                                                class="!rounded-full !p-1"
+                                                                severity="secondary"
+                                                                @click="
+                                                                    historyToggle(
+                                                                        $event,
+                                                                        index,
+                                                                    )
+                                                                "
+                                                            >
+                                                                <IconHistory
+                                                                    :size="20"
+                                                                />
+                                                            </Button>
+
+                                                            <Popover
+                                                                :ref="
+                                                                    (el) =>
+                                                                        (opHistory[
+                                                                            index
+                                                                        ] = el)
+                                                                "
+                                                            >
+                                                                <div
+                                                                    class="max-w-70 w-full"
+                                                                >
+                                                                    <div
+                                                                        class="flex items-center justify-between"
+                                                                    >
+                                                                        <span
+                                                                            class="font-semibold"
+                                                                            >Payroll
+                                                                            Processing
+                                                                            Timeline</span
+                                                                        >
+                                                                    </div>
+                                                                    <p
+                                                                        class="text-xs text-muted-color mt-2 mb-0!"
+                                                                    >
+                                                                        View the
+                                                                        complete
+                                                                        history
+                                                                        of
+                                                                        payroll
+                                                                        processing,
+                                                                        including
+                                                                        submissions,
+                                                                        approvals,
+                                                                        rejections,
+                                                                        remarks,
+                                                                        and the
+                                                                        users
+                                                                        responsible
+                                                                        for each
+                                                                        action.
+                                                                    </p>
+                                                                    <Timeline
+                                                                        :value="
+                                                                            q.logs
+                                                                        "
+                                                                        class="mt-5"
+                                                                        align="left"
+                                                                        :pt="{
+                                                                            eventOpposite:
+                                                                                '!hidden',
+                                                                        }"
+                                                                    >
+                                                                        <template
+                                                                            #marker="slotProps"
+                                                                        >
+                                                                            <Avatar
+                                                                                shape="circle"
+                                                                                class="!bg-white border !border-slate-200 !shadow-sm"
+                                                                            >
+                                                                                <IconDotsCircleHorizontal
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    v-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ==
+                                                                                        'draft'
+                                                                                    "
+                                                                                />
+                                                                                <IconHelpCircle
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    class="text-yellow-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ==
+                                                                                        'submitted_payroll'
+                                                                                    "
+                                                                                />
+                                                                                <IconCircleX
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    class="text-red-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ==
+                                                                                        'rejected_payroll'
+                                                                                    "
+                                                                                />
+                                                                                <IconCircleCheck
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    class="text-green-600"
+                                                                                    v-else
+                                                                                />
+                                                                            </Avatar>
+                                                                        </template>
+                                                                        <template
+                                                                            #content="slotProps"
+                                                                        >
+                                                                            <div
+                                                                                class="text-sm leading-4"
+                                                                            >
+                                                                                <div
+                                                                                    class="text-sm font-semibold"
+                                                                                    v-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ===
+                                                                                        'draft'
+                                                                                    "
+                                                                                >
+                                                                                    Payroll
+                                                                                    Draft
+                                                                                    Created
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-sm font-semibold text-yellow-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ===
+                                                                                        'submitted_payroll'
+                                                                                    "
+                                                                                >
+                                                                                    Ready
+                                                                                    for
+                                                                                    validation
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-sm font-semibold text-red-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ===
+                                                                                        'rejected_payroll'
+                                                                                    "
+                                                                                >
+                                                                                    Payroll
+                                                                                    Rejected
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-sm font-semibold text-green-600"
+                                                                                    v-else
+                                                                                >
+                                                                                    Payroll
+                                                                                    Approved
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-xs text-surface-500 mt-1"
+                                                                                >
+                                                                                    {{
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .created_by
+                                                                                    }}
+                                                                                </div>
+
+                                                                                <span
+                                                                                    class="text-[11px] text-surface-400"
+                                                                                >
+                                                                                    {{
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .created_at
+                                                                                    }}
+                                                                                </span>
+
+                                                                                <div
+                                                                                    v-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .remarks
+                                                                                    "
+                                                                                    class="mt-3 rounded-lg bg-red-50 px-3 py-2"
+                                                                                >
+                                                                                    <div
+                                                                                        class="text-xs font-semibold text-red-600"
+                                                                                    >
+                                                                                        Remarks
+                                                                                    </div>
+
+                                                                                    <div
+                                                                                        class="mt-1 text-sm"
+                                                                                    >
+                                                                                        {{
+                                                                                            slotProps
+                                                                                                .item
+                                                                                                .remarks
+                                                                                        }}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+                                                                    </Timeline>
+                                                                </div>
+                                                            </Popover>
+                                                        </div>
+
+                                                        <div
+                                                            :class="
+                                                                q.status ==
+                                                                'pending'
+                                                                    ? ' text-yellow-600 '
+                                                                    : q.status ==
+                                                                        'approved'
+                                                                      ? ' text-green-600 '
+                                                                      : q.status ==
+                                                                          'submitted'
+                                                                        ? ' text-blue-600 '
+                                                                        : q.status ==
+                                                                            'rejected'
+                                                                          ? ' text-red-600 '
+                                                                          : ' text-slate-600 '
+                                                            "
+                                                        >
+                                                            {{ q.status }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                class="border border-slate-200 rounded-xl overflow-hidden"
+                                            >
+                                                <table
+                                                    class="table table-auto w-full"
+                                                >
+                                                    <thead>
+                                                        <tr>
+                                                            <th
+                                                                class="text-sm text-left p-2 font-semibold"
+                                                            >
+                                                                Month
+                                                            </th>
+                                                            <th
+                                                                class="text-sm font-semibold p-2 text-right"
+                                                            >
+                                                                Amount
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+
+                                                    <tbody>
+                                                        <tr
+                                                            class="border-t border-slate-200"
+                                                            v-for="(
+                                                                item, idx
+                                                            ) in q.stipends"
+                                                            :key="idx"
+                                                        >
+                                                            <td
+                                                                class="text-sm px-2 text-slate-600 py-1"
+                                                            >
+                                                                {{ item.month }}
+                                                            </td>
+
+                                                            <td
+                                                                class="text-sm text-right font-medium px-2"
+                                                            >
+                                                                ₱{{
+                                                                    item.amount
+                                                                }}
+                                                            </td>
+                                                        </tr>
+                                                        <tr
+                                                            class="border-t border-slate-200"
+                                                        >
+                                                            <td
+                                                                colspan="2"
+                                                                class="text-sm px-2 py-1 font-semibold bg-slate-50 text-slate-700"
+                                                            >
+                                                                <span>
+                                                                    Financial
+                                                                    Allowances</span
+                                                                >
+                                                            </td>
+                                                        </tr>
+                                                        <tr
+                                                            class="border-t border-slate-200"
+                                                            v-for="(
+                                                                allowance,
+                                                                allowanceKey
+                                                            ) in q.financial"
+                                                            :key="allowanceKey"
+                                                        >
+                                                            <td
+                                                                class="text-sm text-slate-600 px-2 py-1"
+                                                            >
+                                                                {{
+                                                                    allowance.name
+                                                                }}
+                                                            </td>
+
+                                                            <td
+                                                                class="text-sm text-right font-medium px-2"
+                                                            >
+                                                                ₱{{
+                                                                    allowance.amount
+                                                                }}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Financial Allowances -->
+                                    <div>
+                                        <div class="mb-4">
+                                            <h3
+                                                class="text-sm font-semibold text-slate-700"
+                                            >
+                                                Total Financial Allowances
+                                            </h3>
+
+                                            <p class="text-xs text-slate-500">
+                                                Additional Benefits
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-2.5">
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Clothing Allowance</span>
+
+                                                <span class="font-medium"
+                                                    >₱{{
+                                                        page.props?.details
+                                                            ?.financialAid
+                                                            .clothing
+                                                    }}</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Transportation</span>
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span
+                                                    >Learning Materials &
+                                                    Connectivity Allowance</span
+                                                >
+                                                <span class="font-medium"
+                                                    >₱{{
+                                                        page.props?.details
+                                                            ?.financialAid
+                                                            .connectivity
+                                                    }}</span
+                                                >
+                                            </div>
+
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Book Allowance</span>
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Thesis Allowance</span>
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span
+                                                    >Graduation Allowance</span
+                                                >
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+
+                                            <Divider class="my-2" />
+
+                                            <div class="flex justify-between">
+                                                <span
+                                                    class="text-sm font-semibold text-slate-700"
+                                                >
+                                                    Total Allowances
+                                                </span>
+
+                                                <span
+                                                    class="text-base font-semibold text-slate-800"
+                                                >
+                                                    ₱{{
+                                                        page.props?.details
+                                                            ?.financialAid
+                                                            ?.totalAllowances
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </Panel>
+                    </div>
                 </div>
             </div>
         </template>
@@ -1307,6 +1922,11 @@ import {
     IconScript,
     IconExclamationCircleFilled,
     IconHistory,
+    IconHelpCircle,
+    IconDotsCircleHorizontal,
+    IconCircleCheck,
+    IconCircleX,
+    IconCircleDashed,
 } from "@tabler/icons-vue";
 
 import { computed, ref, watch } from "vue";
@@ -1322,6 +1942,7 @@ import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
 const toast = useToast();
 const page = usePage();
 const opTransfer = ref(null);
+const opHistory = ref([]);
 const transferTab = ref("school");
 const modelValue = defineModel("modelValue");
 const selectedTab = ref({
@@ -1408,10 +2029,9 @@ const tabs = ref([
         separator: true,
     },
     {
-        label: "Stipend",
+        label: "Financial Assistance Records",
         icon: "IconCoins",
         key: 3,
-        disabled: true,
         status: "Ongoing",
     },
     {
@@ -1423,6 +2043,56 @@ const tabs = ref([
         key: 4,
         disabled: true,
         status: "Ongoing",
+    },
+]);
+
+const activities = ref([
+    {
+        id: 1,
+        user: { name: "Sarah Chen", avatar: "SC", color: "bg-violet-500!" },
+        action: "pushed",
+        target: "3 commits",
+        repo: "main",
+        time: "2 minutes ago",
+        details: [
+            "fix: resolve memory leak in useEffect",
+            "feat: add dark mode toggle",
+            "chore: update dependencies",
+        ],
+    },
+    {
+        id: 2,
+        user: { name: "Alex Kumar", avatar: "AK", color: "bg-blue-500!" },
+        action: "opened",
+        target: "pull request #142",
+        repo: "feature/auth",
+        time: "15 minutes ago",
+        description: "Implement OAuth2 authentication flow",
+    },
+    {
+        id: 3,
+        user: { name: "Maya Johnson", avatar: "MJ", color: "bg-emerald-500!" },
+        action: "commented on",
+        target: "issue #89",
+        time: "1 hour ago",
+        description:
+            "I've investigated this bug and found the root cause. Working on a fix now.",
+    },
+    {
+        id: 4,
+        user: { name: "David Park", avatar: "DP", color: "bg-amber-500!" },
+        action: "merged",
+        target: "pull request #138",
+        repo: "main",
+        time: "3 hours ago",
+    },
+    {
+        id: 5,
+        user: { name: "Emma Wilson", avatar: "EW", color: "bg-rose-500!" },
+        action: "created",
+        target: "release v2.4.0",
+        time: "5 hours ago",
+        description: "Performance improvements and bug fixes",
     },
 ]);
 
@@ -1641,6 +2311,10 @@ const storePersonalInfo = async () => {
             },
         },
     );
+};
+
+const historyToggle = (event, index) => {
+    opHistory.value[index].toggle(event);
 };
 
 watch(

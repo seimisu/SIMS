@@ -1,37 +1,62 @@
 <template>
     <div class="flex h-screen overflow-hidden dark:bg-gray-800 dark:text-white">
         <Transition name="slide-fade">
-            <aside v-if="!isMobile" :class="[
-                'z-30 fixed md:block md:relative md:flex-shrink-0 flex flex-col transition-all duration-300 bg-slate-100 dark:bg-gray-700 m-3 h-min-screen rounded-[15px] shadow-sm py-4 ',
-                sidebar ? 'w-60 ' : 'w-20 ',
-            ]">
-                <div :class="[
-                    'h-full w-full flex flex-col justify-between px-[1.2rem] ',
-                ]">
+            <aside
+                v-if="!isMobile"
+                :class="[
+                    'z-30 fixed md:block md:relative md:flex-shrink-0 flex flex-col transition-all duration-300 bg-slate-100 dark:bg-gray-700 m-3 h-min-screen rounded-[15px] shadow-sm py-4 ',
+                    sidebar ? 'w-60 ' : 'w-20 ',
+                ]"
+            >
+                <div
+                    :class="[
+                        'h-full w-full flex flex-col justify-between px-[1.2rem] ',
+                    ]"
+                >
                     <div class="flex gap-2 items-center top-0 sticky">
                         <div class="flex items-center gap-2">
                             <!-- <Image src="/images/seilogo.png" alt="Logo" v-show="sidebar" width="39" height="39" /> -->
-                            <Image src="/images/dostlogo.svg" alt="Logo" width="39" height="39" />
+                            <Image
+                                src="/images/dostlogo.svg"
+                                alt="Logo"
+                                width="39"
+                                height="39"
+                            />
                         </div>
 
-                        <div v-show="sidebar"
-                            class="font-semibold flex-1 text-blue-600 dark:!text-blue-400 leading-none">
+                        <div
+                            v-show="sidebar"
+                            class="font-semibold flex-1 text-blue-600 dark:!text-blue-400 leading-none"
+                        >
                             SIMS
-                            <span class="block text-xs text-gray-500 uppercase">{{ page.props.user.profile.agency.slug
-                            }}</span>
+                            <span
+                                class="block text-xs text-gray-500 uppercase"
+                                >{{ page.props.user.profile.agency.slug }}</span
+                            >
                         </div>
                     </div>
 
-                    <nav :class="[
-                        'flex flex-col h-[80%] ',
-                        !sidebar ? 'items-center' : '',
-                    ]">
-                        <SidebarIconMenu :list="page.props.menu" v-if="!sidebar" />
-                        <SidebarLabelMenu :list="page.props.menu" class="overflow-x-hidden" v-else />
+                    <nav
+                        :class="[
+                            'flex flex-col h-[80%] ',
+                            !sidebar ? 'items-center' : '',
+                        ]"
+                    >
+                        <SidebarIconMenu
+                            :list="page.props.menu"
+                            v-if="!sidebar"
+                        />
+                        <SidebarLabelMenu
+                            :list="page.props.menu"
+                            class="overflow-x-hidden"
+                            v-else
+                        />
                     </nav>
-                    <div :class="[
-                        sidebar ? 'flex justify-center' : 'flex w-full',
-                    ]"></div>
+                    <div
+                        :class="[
+                            sidebar ? 'flex justify-center' : 'flex w-full',
+                        ]"
+                    ></div>
                 </div>
             </aside>
             <Drawer v-model:visible="drawerMobile" v-else header="Drawer">
@@ -39,13 +64,22 @@
                     <div class="flex gap-2 items-center top-0 sticky">
                         <div class="flex items-center gap-2">
                             <!-- <Image src="/images/seilogo.png" alt="Logo" v-show="sidebar" width="39" height="39" /> -->
-                            <Image src="/images/dostlogo.svg" alt="Logo" width="39" height="39" />
+                            <Image
+                                src="/images/dostlogo.svg"
+                                alt="Logo"
+                                width="39"
+                                height="39"
+                            />
                         </div>
 
-                        <div class="font-semibold flex-1 text-blue-600 dark:!text-blue-400 leading-none">
+                        <div
+                            class="font-semibold flex-1 text-blue-600 dark:!text-blue-400 leading-none"
+                        >
                             SIMS
-                            <span class="block text-xs text-gray-500 uppercase">{{ page.props.user.profile.agency.slug
-                            }}</span>
+                            <span
+                                class="block text-xs text-gray-500 uppercase"
+                                >{{ page.props.user.profile.agency.slug }}</span
+                            >
                         </div>
                     </div>
                 </template>
@@ -57,124 +91,243 @@
         </Transition>
 
         <div class="flex-1 flex flex-col w-full md:py-3 md:pr-3">
-            <header class="bg-blue-600 h-16 p-3 md:rounded-[15px] text-white w-full">
+            <header
+                class="bg-blue-600 h-16 p-3 md:rounded-[15px] text-white w-full"
+            >
                 <div class="flex justify-between items-center w-full h-full">
                     <div class="flex-1">
-                        <DefaultButton size="small" v-if="!isMobile" variant="text"
-                            class="!text-white hover:!bg-transparent" @click="toggleSidebar"
-                            :icon="sidebar ? IconChevronLeft : IconChevronRight" rounded />
-                        <DefaultButton size="small" v-else variant="text" class="!text-white hover:!bg-transparent"
-                            @click="drawerMobile = !drawerMobile" :icon="IconMenu2" rounded />
+                        <DefaultButton
+                            size="small"
+                            v-if="!isMobile"
+                            variant="text"
+                            class="!text-white hover:!bg-transparent"
+                            @click="toggleSidebar"
+                            :icon="sidebar ? IconChevronLeft : IconChevronRight"
+                            rounded
+                        />
+                        <DefaultButton
+                            size="small"
+                            v-else
+                            variant="text"
+                            class="!text-white hover:!bg-transparent"
+                            @click="drawerMobile = !drawerMobile"
+                            :icon="IconMenu2"
+                            rounded
+                        />
                     </div>
                     <div class="flex items-center gap-2">
-                        <DefaultToggle v-model="isDark" @update-value="toggleDark" :un-check-icon="IconSun"
-                            :check-icon="IconMoon" />
+                        <DefaultToggle
+                            v-model="isDark"
+                            @update-value="toggleDark"
+                            :un-check-icon="IconSun"
+                            :check-icon="IconMoon"
+                        />
 
-                        <OverlayBadge severity="danger" class="inline-flex" v-if="
-                            page.props?.notif.filter((e) => !e.read_at)
-                                .length != 0
-                        ">
-                            <DefaultButton variant="text" class="!text-white hover:!bg-transparent" :icon="IconBell"
-                                size="lg" :icon-size="20" class-name="!w-6 !h-6" @click="toggleNotif" rounded />
+                        <OverlayBadge
+                            severity="danger"
+                            class="inline-flex"
+                            v-if="
+                                page.props?.notif.filter((e) => !e.read_at)
+                                    .length != 0
+                            "
+                        >
+                            <DefaultButton
+                                variant="text"
+                                class="!text-white hover:!bg-transparent"
+                                :icon="IconBell"
+                                size="lg"
+                                :icon-size="20"
+                                class-name="!w-6 !h-6"
+                                @click="toggleNotif"
+                                rounded
+                            />
                         </OverlayBadge>
-                        <DefaultButton v-else variant="text" class="!text-white hover:!bg-transparent" :icon="IconBell"
-                            size="lg" :icon-size="20" class-name="!w-6 !h-6" @click="toggleNotif" rounded />
-                        <Popover ref="popNotif" :pt="{
-                            root: 'lg:popover-notification !ml-5 !rounded-xl',
-                        }">
+                        <DefaultButton
+                            v-else
+                            variant="text"
+                            class="!text-white hover:!bg-transparent"
+                            :icon="IconBell"
+                            size="lg"
+                            :icon-size="20"
+                            class-name="!w-6 !h-6"
+                            @click="toggleNotif"
+                            rounded
+                        />
+                        <Popover
+                            ref="popNotif"
+                            :pt="{
+                                root: 'lg:popover-notification !ml-5 !rounded-xl',
+                            }"
+                        >
                             <div class="w-[25rem] max-h-[20rem] flex flex-col">
                                 <div class="flex items-center justify-between">
                                     <div class="font-semibold text-sm">
                                         Notifications
-                                        <span class="font-bold text-xs" v-show="page.props?.notif.length != 0
-                                            ">({{
+                                        <span
+                                            class="font-bold text-xs"
+                                            v-show="
+                                                page.props?.notif.length != 0
+                                            "
+                                            >({{
                                                 page.props?.notif.filter(
                                                     (e) => !e.read_at,
                                                 ).length
-                                            }})</span>
+                                            }})</span
+                                        >
                                     </div>
                                 </div>
                                 <Divider class="!my-3"></Divider>
-                                <div class="flex-1 overflow-auto" v-if="page.props?.notif.length != 0">
-                                    <div v-for="(item, index) in page.props
-                                        ?.notif" :key="index" class="flex flex-col">
-                                        <div class="flex items-start justify-between">
-                                            <div class="flex flex-1 items-start gap-2">
-                                                <div class="p-1" v-if="
-                                                    item.data.type ==
-                                                    'scholar_upload'
-                                                ">
-                                                    <OverlayBadge severity="danger" v-if="!item.read_at">
-                                                        <Avatar class="rounded-2xl" style="
+                                <div
+                                    class="flex-1 overflow-auto"
+                                    v-if="page.props?.notif.length != 0"
+                                >
+                                    <div
+                                        v-for="(item, index) in page.props
+                                            ?.notif"
+                                        :key="index"
+                                        class="flex flex-col"
+                                    >
+                                        <div
+                                            class="flex items-start justify-between"
+                                        >
+                                            <div
+                                                class="flex flex-1 items-start gap-2"
+                                            >
+                                                <div
+                                                    class="p-1"
+                                                    v-if="
+                                                        item.data.type ==
+                                                        'scholar_upload'
+                                                    "
+                                                >
+                                                    <OverlayBadge
+                                                        severity="danger"
+                                                        v-if="!item.read_at"
+                                                    >
+                                                        <Avatar
+                                                            class="rounded-2xl"
+                                                            style="
                                                                 background-color: #dee9fc;
                                                                 color: #1a2551;
-                                                            ">
-                                                            <IconFileDownload class="text-slate-600" />
+                                                            "
+                                                        >
+                                                            <IconFileDownload
+                                                                class="text-slate-600"
+                                                            />
                                                         </Avatar>
                                                     </OverlayBadge>
-                                                    <Avatar v-else class="rounded-2xl" style="
+                                                    <Avatar
+                                                        v-else
+                                                        class="rounded-2xl"
+                                                        style="
                                                             background-color: #dee9fc;
                                                             color: #1a2551;
-                                                        ">
-                                                        <IconFileDownload class="text-slate-600" />
+                                                        "
+                                                    >
+                                                        <IconFileDownload
+                                                            class="text-slate-600"
+                                                        />
                                                     </Avatar>
                                                 </div>
-                                                <div class="p-1" v-if="
-                                                    item.data.type ==
-                                                    'upload_accept'
-                                                ">
-                                                    <OverlayBadge severity="danger" v-if="!item.read_at">
-                                                        <Avatar class="rounded-2xl !bg-green-100 !text-green-700">
+                                                <div
+                                                    class="p-1"
+                                                    v-if="
+                                                        item.data.type ==
+                                                        'upload_accept'
+                                                    "
+                                                >
+                                                    <OverlayBadge
+                                                        severity="danger"
+                                                        v-if="!item.read_at"
+                                                    >
+                                                        <Avatar
+                                                            class="rounded-2xl !bg-green-100 !text-green-700"
+                                                        >
                                                             <IconCircleCheck />
                                                         </Avatar>
                                                     </OverlayBadge>
-                                                    <Avatar v-else class="rounded-2xl !bg-green-100 !text-green-700">
+                                                    <Avatar
+                                                        v-else
+                                                        class="rounded-2xl !bg-green-100 !text-green-700"
+                                                    >
                                                         <IconCircleCheck />
                                                     </Avatar>
                                                 </div>
 
-                                                <div class="p-1" v-if="
-                                                    item.data.type ==
-                                                    'upload_reject'
-                                                ">
-                                                    <OverlayBadge severity="danger" v-if="!item.read_at">
-                                                        <Avatar class="rounded-2xl !bg-red-100 !text-red-700">
+                                                <div
+                                                    class="p-1"
+                                                    v-if="
+                                                        item.data.type ==
+                                                        'upload_reject'
+                                                    "
+                                                >
+                                                    <OverlayBadge
+                                                        severity="danger"
+                                                        v-if="!item.read_at"
+                                                    >
+                                                        <Avatar
+                                                            class="rounded-2xl !bg-red-100 !text-red-700"
+                                                        >
                                                             <IconCircleX />
                                                         </Avatar>
                                                     </OverlayBadge>
-                                                    <Avatar v-else class="rounded-2xl !bg-red-100 !text-red-700">
+                                                    <Avatar
+                                                        v-else
+                                                        class="rounded-2xl !bg-red-100 !text-red-700"
+                                                    >
                                                         <IconCircleX />
                                                     </Avatar>
                                                 </div>
                                                 <div class="flex flex-col">
-                                                    <div class="text-xs font-semibold">
+                                                    <div
+                                                        class="text-xs font-semibold"
+                                                    >
                                                         {{ item.data.title }}
                                                     </div>
-                                                    <div class="text-xs text-gray-500">
+                                                    <div
+                                                        class="text-xs text-gray-500"
+                                                    >
                                                         {{ item.data.message }}
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="flex flex-col items-end">
-                                                <div class="text-xs font-medium">
+                                            <div
+                                                class="flex flex-col items-end"
+                                            >
+                                                <div
+                                                    class="text-xs font-medium"
+                                                >
                                                     {{ item.diff_time }}
                                                 </div>
 
-                                                <DefaultButton size="small" severity="secondary" rounded
-                                                    tooltip="Mark as read" text v-if="!item.read_at"
-                                                    @click="markAsRead(item.id)" :icon="IconCheck" :icon-size="15" />
+                                                <DefaultButton
+                                                    size="small"
+                                                    severity="secondary"
+                                                    rounded
+                                                    tooltip="Mark as read"
+                                                    text
+                                                    v-if="!item.read_at"
+                                                    @click="markAsRead(item.id)"
+                                                    :icon="IconCheck"
+                                                    :icon-size="15"
+                                                />
                                                 <div v-else class="p-2">
                                                     <IconCheckbox size="15" />
                                                 </div>
                                             </div>
                                         </div>
-                                        <Divider class="!my-2" type="dashed"></Divider>
+                                        <Divider
+                                            class="!my-2"
+                                            type="dashed"
+                                        ></Divider>
                                     </div>
                                 </div>
                                 <div v-else>
                                     <div class="flex justify-center py-10">
-                                        <div class="flex flex-col gap-1 items-center text-gray-500">
+                                        <div
+                                            class="flex flex-col gap-1 items-center text-gray-500"
+                                        >
                                             <IconBellFilled />
                                             <div>No notifications</div>
                                         </div>
@@ -187,7 +340,6 @@
                 </div>
             </header>
             <main class="overflow-auto flex-1 p-2">
-
                 <slot />
             </main>
         </div>
