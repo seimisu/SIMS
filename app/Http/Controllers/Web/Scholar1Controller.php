@@ -249,6 +249,17 @@ class Scholar1Controller extends Controller
             ])
             ->values();
 
+        $standingOptions = ListStatuses::where('type', 'standing')
+            ->where('is_active', true)
+            ->where('is_delete', false)
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($status) => [
+                'id' => Str::upper($status->name),
+                'name' => Str::upper($status->name),
+            ])
+            ->values();
+
         $programOptions = $request->input('id') ? ListPrograms::where('is_active', true)
             ->whereIn('name', ['RA 7687', 'RA 10612', 'MERIT'])
             ->where('is_delete', false)
@@ -989,6 +1000,7 @@ class Scholar1Controller extends Controller
                 'monitoringYearOptions' => $monitoringYearOptions,
                 'monitoringTermOptions' => $monitoringTermOptions,
                 'submissionStatusOptions' => $submissionStatusOptions,
+                'standingOptions' => $standingOptions,
                 'selectedMonitoringYear' => $selectedMonitoringYear,
                 'selectedMonitoringTerm' => $selectedMonitoringTerm,
                 'selectedSubmissionStatus' => $monitoringSubmissionStatus
@@ -1482,6 +1494,7 @@ class Scholar1Controller extends Controller
             $scholarshipStanding = $data[0]['scholarshipStatus']['name']
                 ?? $data[0]['scholarshipStatus']['id']
                 ?? null;
+            $scholarshipStanding = Str::upper($scholarshipStanding);
 
             $terms = ScholarTerm::with('scholar:id,spas_no')
                 ->whereIn('id', collect($data)->pluck('id'))
@@ -1521,20 +1534,32 @@ class Scholar1Controller extends Controller
                 ]);
             }
 
-            $terms = ScholarTerm::where(
-                'id',
-                collect($data)->firstWhere('status', 'submitted')['id']
-            )->update([
-                'verification_status' => 'rejected',
-                'rejection_reason' => collect($data)->firstWhere('status', 'submitted')['remarks'],
-            ]);
+            $remarks = collect($data)->firstWhere('status', 'submitted')['remarks'];
 
-            // $scholar->landbankRequest()->update([
-            //     'status' => 'rejected',
-            //     'reviewed_at' => Carbon::now(),
-            //     'reviewed_by' => Auth::user()->profile->fullname,
-            //     'rejection_reason' => $data['reject'],
-            // ]);
+            $terms = ScholarTerm::with('scholar:id,spas_no')
+                ->whereIn('id', collect($data)->pluck('id'))
+                ->get();
+
+            foreach ($terms as $term) {
+                $term->update([
+                    'verification_status' => 'rejected',
+                    'rejection_reason' => $remarks,
+                    'verified_by' => Auth::id(),
+                ]);
+
+                DB::connection('scholars')
+                    ->table('scholar_processes')
+                    ->updateOrInsert(
+                        ['term_record_id' => $term->id],
+                        [
+                            'spas_no' => $term->scholar?->spas_no,
+                            'submission' => 'REJECTED',
+                            'payroll' => 'NOT SUBMITTED',
+                            'updated_at' => now(),
+                            'updated_by' => Auth::user()->profile->fullname,
+                        ]
+                    );
+            }
         }
 
         return redirect()->back()->with('flash', [
