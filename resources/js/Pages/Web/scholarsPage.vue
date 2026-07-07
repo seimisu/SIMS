@@ -201,6 +201,64 @@
                             </div>
                         </Popover>
                     </div>
+                    <div>
+                        <DefaultButton
+                            :icon="TablerIcons.IconCalendarStats"
+                            label="Monitoring"
+                            class-name="!rounded-xl"
+                            size="small"
+                            severity="secondary"
+                            @click="toggleopMonitoring"
+                        />
+                        <Popover ref="opMonitoring">
+                            <div class="flex flex-col gap-3 w-[34rem]">
+                                <div class="grid grid-cols-3 gap-2">
+                                    <SelectInput
+                                        v-model="filterAcademicYear"
+                                        :options="
+                                            page.props
+                                                .monitoringYearOptions ?? []
+                                        "
+                                        placeholder="Academic Year"
+                                        clearable
+                                    />
+                                    <SelectInput
+                                        v-model="filterMonitoringTerm"
+                                        :options="
+                                            page.props
+                                                .monitoringTermOptions ?? []
+                                        "
+                                        placeholder="Term"
+                                        clearable
+                                    />
+                                    <SelectInput
+                                        v-model="filterSubmissionStatus"
+                                        :options="
+                                            page.props
+                                                .submissionStatusOptions ?? []
+                                        "
+                                        placeholder="Submission Status"
+                                        clearable
+                                    />
+                                </div>
+                                <div class="flex justify-end items-center gap-2">
+                                    <DefaultButton
+                                        @click="clearMonitoring"
+                                        label="Latest"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                        severity="secondary"
+                                    />
+                                    <DefaultButton
+                                        @click="applyMonitoring"
+                                        label="Filter"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                    />
+                                </div>
+                            </div>
+                        </Popover>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -362,7 +420,7 @@
                         </div>
                     </template>
                 </Column>
-                <Column header="Regions">
+                <Column header="Region">
                     <template #body="props">
                         <div class="uppercase text-xs font-medium">
                             {{ props.data.agency }}
@@ -396,19 +454,7 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Award Years</div>
-                        </div>
-                    </template>
-                    <template #body="props">
-                        <div class="text-center text-xs font-medium">
-                            {{ props.data.awardyear }}
-                        </div>
-                    </template>
-                </Column>
-                <Column>
-                    <template #header>
-                        <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Status</div>
+                            <div class="font-semibold">Progress Status</div>
                         </div>
                     </template>
                     <template #body="props">
@@ -429,6 +475,51 @@
                                     {{ props.data.status.name }}
                                 </div>
                             </span>
+                        </div>
+                    </template>
+                </Column>
+                <Column v-if="monitoringActive">
+                    <template #header>
+                        <div class="flex justify-center w-full font-semibold">
+                            <div class="font-semibold">Submissions</div>
+                        </div>
+                    </template>
+                    <template #body="props">
+                        <div class="flex items-center justify-center">
+                            <span
+                                class="flex text-xs items-center py-1 px-3 border rounded-2xl gap-0.5"
+                                :class="[
+                                    props.data.submissionStatus.tcolor,
+                                    props.data.submissionStatus.bcolor,
+                                ]"
+                            >
+                                <component
+                                    :is="
+                                        TablerIcons[
+                                            props.data.submissionStatus.icon
+                                        ]
+                                    "
+                                    :size="18"
+                                    :stroke="1.8"
+                                />
+                                <div>
+                                    {{ props.data.submissionStatus.name }}
+                                </div>
+                            </span>
+                        </div>
+                    </template>
+                </Column>
+                <Column v-if="monitoringActive">
+                    <template #header>
+                        <div class="flex justify-center w-full font-semibold">
+                            <div class="font-semibold">
+                                Scholarship Standing
+                            </div>
+                        </div>
+                    </template>
+                    <template #body="props">
+                        <div class="text-center text-xs font-medium">
+                            {{ props.data.scholarshipStanding ?? "-" }}
                         </div>
                     </template>
                 </Column>
@@ -559,6 +650,7 @@ import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Modul
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
+import SelectInput from "../../Components/inputs/SelectInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
@@ -588,10 +680,16 @@ const opSchool = ref(null);
 const opProgram = ref(null);
 const opSub = ref(null);
 const opStatus = ref(null);
+const opMonitoring = ref(null);
 const filterSchool = ref(page.props?.filterSchool ?? null);
 const filterProgram = ref(null);
 const filterSub = ref(null);
 const filterStatus = ref(null);
+const filterAcademicYear = ref(page.props?.selectedMonitoringYear ?? null);
+const filterMonitoringTerm = ref(page.props?.selectedMonitoringTerm ?? null);
+const filterSubmissionStatus = ref(
+    page.props?.selectedSubmissionStatus ?? { id: "all", name: "All Status" },
+);
 const filterSubjectRequest = ref(false);
 const filterGradeRequest = ref(false);
 const filterProfileRequest = ref(false);
@@ -604,6 +702,7 @@ const dialogLandbankRequest = ref(false);
 const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
+const monitoringActive = computed(() => true);
 const toggleOption = (event, rowData) => {
     selectedRow.value = rowData;
 
@@ -716,7 +815,18 @@ const menuItems = computed((item) => {
     ];
 });
 
-const loadPage = (page) => {
+const syncMonitoringFromProps = (props) => {
+    filterAcademicYear.value = props?.selectedMonitoringYear ?? null;
+    filterMonitoringTerm.value = props?.selectedMonitoringTerm ?? null;
+    filterSubmissionStatus.value = props?.selectedSubmissionStatus ?? {
+        id: "all",
+        name: "All Status",
+    };
+};
+
+const loadPage = (page, options = {}) => {
+    const useLatestMonitoring = options.latestMonitoring ?? false;
+
     router.get(
         route("scholars"),
         {
@@ -726,6 +836,15 @@ const loadPage = (page) => {
             ...(filterProgram.value ? { programs: filterProgram.value } : {}),
             ...(filterSub.value ? { sub: filterSub.value } : {}),
             ...(filterStatus.value ? { status: filterStatus.value } : {}),
+            ...(!useLatestMonitoring && filterAcademicYear.value
+                ? { monitoringAcademicYear: filterAcademicYear.value }
+                : {}),
+            ...(!useLatestMonitoring && filterMonitoringTerm.value
+                ? { monitoringTerm: filterMonitoringTerm.value }
+                : {}),
+            ...(!useLatestMonitoring && filterSubmissionStatus.value
+                ? { monitoringSubmissionStatus: filterSubmissionStatus.value }
+                : {}),
             ...(filterProfileRequest.value
                 ? { profileRequest: filterProfileRequest.value }
                 : {}),
@@ -740,6 +859,11 @@ const loadPage = (page) => {
             preserveState: true,
             preserveScroll: true,
             onBefore: () => (loading.table = true),
+            onSuccess: (page) => {
+                if (useLatestMonitoring) {
+                    syncMonitoringFromProps(page.props);
+                }
+            },
             onFinish: () => (loading.table = false),
         },
     );
@@ -850,6 +974,10 @@ const toggleopStatus = (event) => {
     });
 };
 
+const toggleopMonitoring = (event) => {
+    opMonitoring.value.toggle(event);
+};
+
 const statusFilter = (event) => {
     opStatus.value.toggle(event);
     clearTimeout(timerBounce.value);
@@ -872,6 +1000,19 @@ const toggleRequest = (event) => {
     timerBounce.value = setTimeout(() => {
         loadPage(1);
     }, 300);
+};
+
+const applyMonitoring = () => {
+    opMonitoring.value?.hide?.();
+    clearTimeout(timerBounce.value);
+    timerBounce.value = setTimeout(() => {
+        loadPage(1);
+    }, 300);
+};
+
+const clearMonitoring = () => {
+    opMonitoring.value?.hide?.();
+    loadPage(1, { latestMonitoring: true });
 };
 
 watch(

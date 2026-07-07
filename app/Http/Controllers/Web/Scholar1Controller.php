@@ -7,6 +7,7 @@ use App\Mail\activationLinkMail;
 use App\Models\ActivityLogs;
 use App\Models\ListPrograms;
 use App\Models\ListReferences;
+use App\Models\ListStatuses;
 use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
@@ -37,33 +38,46 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class Scholar1Controller extends Controller
 {
-    private function academicStatusMeta(?string $status): array
+    private function academicStatusMeta(?string $status, ?array $statusOption = null): array
     {
-        $status = $status ?: 'Ongoing';
+        $status = Str::upper($status ?: 'NEW');
 
         return [
             'id' => $status,
             'name' => $status,
+            'bcolor' => $statusOption['bcolor'] ?? 'bg-slate-100',
+            'tcolor' => $statusOption['tcolor'] ?? 'text-slate-600',
+            'icon' => $statusOption['icon'] ?? 'IconProgressCheck',
+        ];
+    }
+
+    private function submissionStatusMeta(?string $status): array
+    {
+        $status = $status ?: 'No Submission';
+
+        return [
+            'id' => $status,
+            'name' => Str::headline($status),
             'bcolor' => match ($status) {
-                'Graduating' => 'bg-blue-100',
-                'Graduated' => 'bg-green-100',
-                'LOA' => 'bg-amber-100',
-                'Terminated' => 'bg-red-100',
-                default => 'bg-slate-100',
+                'submitted' => 'bg-blue-100',
+                'approved' => 'bg-green-100',
+                'rejected' => 'bg-red-100',
+                'draft' => 'bg-slate-100',
+                default => 'bg-gray-100',
             },
             'tcolor' => match ($status) {
-                'Graduating' => 'text-blue-600',
-                'Graduated' => 'text-green-600',
-                'LOA' => 'text-amber-600',
-                'Terminated' => 'text-red-600',
-                default => 'text-slate-600',
+                'submitted' => 'text-blue-600',
+                'approved' => 'text-green-600',
+                'rejected' => 'text-red-600',
+                'draft' => 'text-slate-600',
+                default => 'text-gray-500',
             },
             'icon' => match ($status) {
-                'Graduating' => 'IconSchool',
-                'Graduated' => 'IconRosetteDiscountCheck',
-                'LOA' => 'IconClockPause',
-                'Terminated' => 'IconCircleX',
-                default => 'IconProgressCheck',
+                'submitted' => 'IconUpload',
+                'approved' => 'IconCircleCheck',
+                'rejected' => 'IconCircleX',
+                'draft' => 'IconEdit',
+                default => 'IconCircleDashed',
             },
         ];
     }
@@ -164,15 +178,76 @@ class Scholar1Controller extends Controller
                 ->values()
         );
 
-        $academicStatusOptions = collect(['Ongoing', 'Graduating', 'Graduated', 'LOA', 'Terminated'])
+        $academicStatusOptions = ListStatuses::with('color:id,background_color,text_color')
+            ->where('type', 'progress')
+            ->where('is_active', true)
+            ->where('is_delete', false)
+            ->orderBy('id')
+            ->get()
             ->map(fn ($status) => [
-                'id' => $status,
-                'name' => $status,
+                'id' => Str::upper($status->name),
+                'name' => Str::upper($status->name),
+                'icon' => $status->icon,
+                'bcolor' => $status->color?->background_color,
+                'tcolor' => $status->color?->text_color,
             ])
             ->values();
 
         $statusFilter = Inertia::optional(fn () => $academicStatusOptions);
         $statusOptions = $request->input('id') ? $academicStatusOptions : null;
+        $monitoringAcademicYear = $request->input('monitoringAcademicYear');
+        $monitoringTerm = $request->input('monitoringTerm');
+        $monitoringSubmissionStatus = $request->input('monitoringSubmissionStatus');
+        $monitoringAcademicYear = is_array($monitoringAcademicYear) ? ($monitoringAcademicYear['id'] ?? $monitoringAcademicYear['name'] ?? null) : $monitoringAcademicYear;
+        $monitoringTermId = is_array($monitoringTerm) ? ($monitoringTerm['id'] ?? null) : $monitoringTerm;
+        $monitoringSubmissionStatus = is_array($monitoringSubmissionStatus) ? ($monitoringSubmissionStatus['id'] ?? null) : $monitoringSubmissionStatus;
+        $monitoringSubmissionStatus = $monitoringSubmissionStatus ?: 'all';
+
+        $latestMonitoringTerm = ScholarTerm::query()
+            ->whereNotNull('academic_year')
+            ->whereNotNull('term_id')
+            ->orderByDesc('academic_year')
+            ->orderByDesc('term_id')
+            ->first(['academic_year', 'term_id']);
+
+        $monitoringYearOptions = ScholarTerm::query()
+            ->whereNotNull('academic_year')
+            ->distinct()
+            ->orderByDesc('academic_year')
+            ->pluck('academic_year')
+            ->map(fn ($year) => [
+                'id' => $year,
+                'name' => $year,
+            ])
+            ->values();
+
+        $monitoringTermOptions = ListReferences::where('is_active', true)
+            ->where('is_delete', false)
+            ->where('type', 'Term')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($term) => [
+                'id' => $term->id,
+                'name' => $term->name,
+            ]);
+
+        $monitoringAcademicYear ??= $latestMonitoringTerm?->academic_year;
+        $monitoringTermId ??= $latestMonitoringTerm?->term_id;
+
+        $selectedMonitoringYear = $monitoringAcademicYear
+            ? ['id' => $monitoringAcademicYear, 'name' => $monitoringAcademicYear]
+            : null;
+
+        $selectedMonitoringTerm = $monitoringTermId
+            ? $monitoringTermOptions->firstWhere('id', (int) $monitoringTermId)
+            : null;
+
+        $submissionStatusOptions = collect(['all', 'submitted', 'approved', 'rejected', 'No Submission'])
+            ->map(fn ($status) => [
+                'id' => $status,
+                'name' => $status === 'all' ? 'All Status' : Str::headline($status),
+            ])
+            ->values();
 
         $programOptions = $request->input('id') ? ListPrograms::where('is_active', true)
             ->whereIn('name', ['RA 7687', 'RA 10612', 'MERIT'])
@@ -387,7 +462,29 @@ class Scholar1Controller extends Controller
                         $q->whereHas('type', fn ($w) => $w->whereIn('name', $sub));
                     })
                     ->when($request->input('status'), function ($q, $status) {
-                        $q->whereIn('academic_status', $status);
+                        $statuses = collect($status)
+                            ->map(fn ($item) => Str::upper(is_array($item) ? ($item['id'] ?? $item['name'] ?? '') : $item))
+                            ->filter()
+                            ->values()
+                            ->all();
+
+                        $q->whereIn(DB::raw('UPPER(academic_status)'), $statuses);
+                    })
+                    ->when($monitoringAcademicYear && $monitoringTermId && $monitoringSubmissionStatus !== 'all', function ($q) use ($monitoringAcademicYear, $monitoringTermId, $monitoringSubmissionStatus) {
+                        if ($monitoringSubmissionStatus === 'No Submission') {
+                            $q->whereDoesntHave('termRecords', function ($term) use ($monitoringAcademicYear, $monitoringTermId) {
+                                $term->where('academic_year', $monitoringAcademicYear)
+                                    ->where('term_id', $monitoringTermId);
+                            });
+
+                            return;
+                        }
+
+                        $q->whereHas('termRecords', function ($term) use ($monitoringAcademicYear, $monitoringTermId, $monitoringSubmissionStatus) {
+                            $term->where('academic_year', $monitoringAcademicYear)
+                                ->where('term_id', $monitoringTermId)
+                                ->where('verification_status', $monitoringSubmissionStatus);
+                        });
                     })
                     ->when($request->input('profileRequest'), function ($q) use ($profileRequestIds) {
                         $q->whereIn('spas_no', $profileRequestIds);
@@ -404,42 +501,60 @@ class Scholar1Controller extends Controller
                     })
                     ->orderBy('scholar_profiles.lname', 'ASC')
                     ->paginate(10)
-                    ->through(fn ($q) => [
-                        'count' => [
-                            'profile' => (string) $q->profileRequest->where('status', 'pending')->count(),
-                            'landbank' => (string) $q->landbankRequest->where('status', 'pending')->count(),
-                            'grades' => (string) $q->termRecords->where('verification_status', 'submitted')->count(),
-                        ],
-                        'hasRequest' => $q->profileRequest()->where('status', 'pending')->exists()
-                                        || $q->landbankRequest()->where('status', 'pending')->exists() || $q->termRecords()->where('verification_status', 'submitted')->exists(),
-                        'id' => Hashids::encode($q->id),
-                        'spas_no' => $q->spas_no,
-                        'photo' => $q->profile?->photo,
-                        'email' => $q->profile?->email,
-                        'contact_no' => $q->profile?->contact_no,
-                        'sex' => $q->profile?->sex,
-                        'activated_at' => $q->activated_at,
-                        'activationRequested' => ! empty($q->activation_token),
-                        'fullname' => trim(collect([
-                            $q->profile?->lname.',',
-                            $q->profile?->fname,
-                            $q->profile?->mname,
-                            $q->profile?->suffix,
-                        ])->filter()->implode(' ')),
-                        'type' => $q->type?->name,
-                        'subProgram' => $q->program?->name,
-                        'mainProgram' => $q->mainProgram?->name,
-                        'status' => $this->academicStatusMeta($q->academic_status),
-                        'course' => $q->schoolInfo?->first()?->course?->course?->name,
-                        'school' => $q->schoolInfo?->first()?->campus?->generated_name,
-                        'awardyear' => $q->award_year,
-                        'agency' => $q->schoolInfo?->first()?->campus?->agency?->slug,
-                        'region' => $q->schoolInfo?->first()?->campus?->address?->region_array,
-                        // 'request' => $q->termRecords
-                        //     ->pluck('requests')
-                        //     ->flatten()
-                        //     ->isNotEmpty(),
-                    ]),
+                    ->through(function ($q) use ($monitoringAcademicYear, $monitoringTermId, $academicStatusOptions) {
+                        $monitoringTermRecord = null;
+                        $scholarshipStanding = null;
+                        $progressStatus = Str::upper($q->academic_status ?: 'NEW');
+                        $progressStatusOption = $academicStatusOptions->firstWhere('name', $progressStatus);
+
+                        if ($monitoringAcademicYear && $monitoringTermId) {
+                            $monitoringTermRecord = $q->termRecords()
+                                ->where('academic_year', $monitoringAcademicYear)
+                                ->where('term_id', $monitoringTermId)
+                                ->first();
+
+                            $scholarshipStanding = $monitoringTermRecord
+                                ? DB::connection('scholars')
+                                    ->table('scholar_processes')
+                                    ->where('term_record_id', $monitoringTermRecord->id)
+                                    ->value('standing')
+                                : null;
+                        }
+
+                        return [
+                            'count' => [
+                                'profile' => (string) $q->profileRequest->where('status', 'pending')->count(),
+                                'landbank' => (string) $q->landbankRequest->where('status', 'pending')->count(),
+                                'grades' => (string) $q->termRecords->where('verification_status', 'submitted')->count(),
+                            ],
+                            'hasRequest' => $q->profileRequest()->where('status', 'pending')->exists()
+                                            || $q->landbankRequest()->where('status', 'pending')->exists() || $q->termRecords()->where('verification_status', 'submitted')->exists(),
+                            'id' => Hashids::encode($q->id),
+                            'spas_no' => $q->spas_no,
+                            'photo' => $q->profile?->photo,
+                            'email' => $q->profile?->email,
+                            'contact_no' => $q->profile?->contact_no,
+                            'sex' => $q->profile?->sex,
+                            'activated_at' => $q->activated_at,
+                            'activationRequested' => ! empty($q->activation_token),
+                            'fullname' => trim(collect([
+                                $q->profile?->lname.',',
+                                $q->profile?->fname,
+                                $q->profile?->mname,
+                                $q->profile?->suffix,
+                            ])->filter()->implode(' ')),
+                            'type' => $q->type?->name,
+                            'subProgram' => $q->program?->name,
+                            'mainProgram' => $q->mainProgram?->name,
+                            'status' => $this->academicStatusMeta($progressStatus, $progressStatusOption),
+                            'submissionStatus' => $this->submissionStatusMeta($monitoringTermRecord?->verification_status),
+                            'scholarshipStanding' => $scholarshipStanding,
+                            'course' => $q->schoolInfo?->first()?->course?->course?->name,
+                            'school' => $q->schoolInfo?->first()?->campus?->generated_name,
+                            'agency' => $q->schoolInfo?->first()?->campus?->agency?->slug,
+                            'region' => $q->schoolInfo?->first()?->campus?->address?->region_array,
+                        ];
+                    }),
                 'personalRequest' => Inertia::optional(
                     fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
                         ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
@@ -663,10 +778,10 @@ class Scholar1Controller extends Controller
                                 $q?->profile?->suffix,
                             ])->filter()->implode(' ')),
 
-                            'academic_status' => $q?->academic_status ?? 'Ongoing',
+                            'academic_status' => Str::upper($q?->academic_status ?? 'NEW'),
                             'status' => [
-                                'id' => $q?->academic_status ?? 'Ongoing',
-                                'name' => $q?->academic_status ?? 'Ongoing',
+                                'id' => Str::upper($q?->academic_status ?? 'NEW'),
+                                'name' => Str::upper($q?->academic_status ?? 'NEW'),
                             ],
                             'address' => [
                                 'address' => $q?->address?->address,
@@ -871,6 +986,14 @@ class Scholar1Controller extends Controller
                 'programFilter' => $programFilter,
                 'scholarTypeFilter' => $scholarTypeFilter,
                 'statusFilter' => $statusFilter,
+                'monitoringYearOptions' => $monitoringYearOptions,
+                'monitoringTermOptions' => $monitoringTermOptions,
+                'submissionStatusOptions' => $submissionStatusOptions,
+                'selectedMonitoringYear' => $selectedMonitoringYear,
+                'selectedMonitoringTerm' => $selectedMonitoringTerm,
+                'selectedSubmissionStatus' => $monitoringSubmissionStatus
+                    ? $submissionStatusOptions->firstWhere('id', $monitoringSubmissionStatus)
+                    : null,
                 'statusOptions' => $statusOptions,
                 'programOptions' => $programOptions,
                 'subProgramOptions' => $subProgramOptions,
@@ -955,7 +1078,7 @@ class Scholar1Controller extends Controller
                     'program_id' => $data['program']['id'],
                     'type_id' => $data['sub_program']['id'],
                     'award_year' => Carbon::parse($data['award_year'])->format('Y') + 1,
-                    'academic_status' => $data['status']['name'] ?? $data['status']['id'] ?? 'Ongoing',
+                    'academic_status' => Str::upper($data['status']['name'] ?? $data['status']['id'] ?? 'NEW'),
                 ]);
                 $profile = $scholar->profile()->updateOrCreate(
                     ['scholar_id' => $scholar->id],

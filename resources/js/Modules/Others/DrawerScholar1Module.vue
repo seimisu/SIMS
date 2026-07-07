@@ -642,7 +642,7 @@
                                             format-date="yy"
                                         />
                                         <SelectInput
-                                            label="Academic Status"
+                                            label="Progress Status"
                                             v-model="personalInfo.status"
                                             :disable="!editBtn.info"
                                             class="capitalize"
@@ -2041,56 +2041,37 @@ const tabs = ref([
         icon: "IconWood",
         key: 4,
         disabled: true,
-        status: "Ongoing",
+        status: "NEW",
     },
 ]);
 
-const academicStatusStyles = {
-    Ongoing: {
-        name: "Ongoing",
+const academicStatusDisplay = computed(() => {
+    const rawStatus = String(
+        page.props?.details?.academic_status ??
+            page.props?.details?.status?.name ??
+            "NEW",
+    ).toUpperCase();
+    const statusOption = page.props?.statusOptions?.find(
+        (status) =>
+            status.name?.toUpperCase() === rawStatus ||
+            String(status.id ?? "").toUpperCase() === rawStatus,
+    );
+
+    if (statusOption) {
+        return {
+            name: statusOption.name,
+            icon: statusOption.icon ?? "IconCircleCheck",
+            bcolor: statusOption.bcolor ?? "bg-slate-50",
+            tcolor: statusOption.tcolor ?? "text-slate-600",
+        };
+    }
+
+    return {
+        name: rawStatus,
         icon: "IconCircleCheck",
         bcolor: "bg-slate-50",
-        tcolor: "text-slate-700",
-    },
-    Graduating: {
-        name: "Graduating",
-        icon: "IconSchool",
-        bcolor: "bg-blue-50",
-        tcolor: "text-blue-600",
-    },
-    Graduated: {
-        name: "Graduated",
-        icon: "IconAward",
-        bcolor: "bg-indigo-50",
-        tcolor: "text-indigo-600",
-    },
-    LOA: {
-        name: "LOA",
-        icon: "IconClockPause",
-        bcolor: "bg-amber-50",
-        tcolor: "text-amber-600",
-    },
-    Terminated: {
-        name: "Terminated",
-        icon: "IconCircleX",
-        bcolor: "bg-rose-50",
-        tcolor: "text-rose-600",
-    },
-};
-
-const academicStatusDisplay = computed(() => {
-    const rawStatus =
-        page.props?.details?.academic_status ??
-        page.props?.details?.status?.name ??
-        "Ongoing";
-    return (
-        academicStatusStyles[rawStatus] ?? {
-            name: rawStatus,
-            icon: "IconCircleCheck",
-            bcolor: "bg-slate-50",
-            tcolor: "text-slate-600",
-        }
-    );
+        tcolor: "text-slate-600",
+    };
 });
 
 const scholarLocationDisplay = computed(() => {
@@ -2212,12 +2193,21 @@ watch(
             : null;
         personalInfo.status =
             page.props?.statusOptions?.find(
-                (status) =>
-                    status.name === newVal.academic_status ||
-                    status.id === newVal.academic_status,
+                (status) => {
+                    const scholarStatus = String(
+                        newVal.academic_status ??
+                            newVal.status?.name ??
+                            "NEW",
+                    ).toUpperCase();
+
+                    return (
+                        status.name?.toUpperCase() === scholarStatus ||
+                        String(status.id ?? "").toUpperCase() === scholarStatus
+                    );
+                },
             ) ??
             newVal.status ??
-            null;
+            { id: "NEW", name: "NEW" };
         personalInfo.acc_name = newVal.landbank.account_name ?? null;
         personalInfo.acc_no = newVal.landbank.account_number ?? null;
         personalInfo.school = newVal.schoolInput ?? null;
