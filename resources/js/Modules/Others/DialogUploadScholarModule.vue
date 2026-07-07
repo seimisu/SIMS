@@ -30,8 +30,21 @@
                         <UploadInput ref="uploadRef" @select-files="handleFiles" @remove-file="clearForm"
                             :progress="progressUpload"
                             accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-                            {{ progressUpload }}
+
                         </UploadInput>
+                        <div class="" v-if="page.props?.flash.status == 'error'">
+                            <div
+                                class="flex items-start p-3 shadow border border-red-300 text-red-500 rounded-xl bg-red-50 gap-1">
+                                <div>
+                                    <IconExclamationCircleFilled :size="20" />
+                                </div>
+
+                                <p class="text-xs leading-5 text-justify">
+                                    {{ page.props?.flash.message }}
+                                </p>
+                            </div>
+
+                        </div>
                         <div class="flex justify-end">
                             <DefaultButton size="small" label="Upload File" @click="submitForm" />
                         </div>
@@ -83,7 +96,7 @@ const submitForm = () => {
         },
         onProgress: (e) => {
             if (!e.total) return;
-            console.log(e.percentage);
+
             progressUpload.value = (e.loaded / e.total) * 97;
         },
         onSuccess: () => {

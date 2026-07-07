@@ -26,6 +26,11 @@ class RoleRequest extends FormRequest
             return [
                 'isActive' => ['boolean']
             ];
+        } elseif ($this->type == 'permissions') {
+            return [
+                'permissions' => ['array'],
+                'permissions.*' => ['integer', 'exists:list_permissions,id'],
+            ];
         } else {
             return [
                 'name' => ['required', Rule::unique('list_roles', 'name')->ignore($this->route('id')), 'string'],

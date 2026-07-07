@@ -41,7 +41,7 @@ class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, Wit
                 'status' => ['required'],
                 'standing' => ['required'],
                 'scholarship_type' => ['required'],
-                'scholarship_subprogram' => ['required'],
+                'scholarship_subprogram' => ['nullable'],
                 'fname' => ['required'],
                 'lname' => ['required'],
                 'mname' => ['nullable'],

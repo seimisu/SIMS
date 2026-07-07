@@ -6,19 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ActivationRequest;
 use App\Models\SchoolCampuses;
 use App\Models\User;
-use App\Models\UserProfile;
 use App\References\ListClass;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Response;
+use Inertia\Inertia;
 
 class ActivationController extends Controller
 {
-
     public $agencyOption;
 
     public function __construct(ListClass $ref)
@@ -42,12 +37,13 @@ class ActivationController extends Controller
                 'schoolOption' => SchoolCampuses::where([
                     'is_delete' => false,
                     'is_active' => true,
+                    'agency_id' => request()->input('agency'),
                 ])->get()->map(function ($campus) {
                     return [
                         'id' => $campus->id,
                         'name' => $campus->generated_name,
                     ];
-                })
+                }),
             ]);
         } catch (ModelNotFoundException $e) {
             return redirect()->route('login');
@@ -58,52 +54,51 @@ class ActivationController extends Controller
     {
         $data = $request->validated();
 
-
-
         $user = User::findOrFail($id);
-        $profile = UserProfile::where('user_id', $id)->firstOrFail();
 
         $user->update([
-            'password'          => bcrypt($data['password']),
-            'activation_token'  => null,
-            'is_verified'        => true,
+            'password' => bcrypt($data['password']),
+            'activation_token' => null,
+            'is_verified' => true,
+            'school_id' => $data['school'] ? $data['school']['id'] : null,
+            'email' => $data['email'],
         ]);
 
-        $profile->update([
-            'fname'       => Str::upper($data['fname']),
-            'lname'       => Str::upper($data['lname']),
-            'email'       => $data['email'],
-            'school_id'   => $data['school']['id'],
+        $user->profile()->update([
+            'fname' => Str::upper($data['fname']),
+            'lname' => Str::upper($data['lname']),
             'designation' => Str::lower($data['designation']),
-            'agency_id'   => $data['agency']['id'],
-            'contact_no'  => $data['contact'],
+            'agency_id' => $data['agency']['id'],
+            'contact_no' => $data['contact'],
         ]);
-
-
 
         if ($data['photo']) {
             // Get the Base64 string
             $imageData = $data['photo'];
 
             // Extract the file type
-            preg_match("/^data:image\/(.*);base64,/", $imageData, $type);
-            $imageType = $type[1]; // png, jpeg, etc.
+            if (preg_match('/^data:image\/([a-zA-Z0-9+]+);base64,/', $imageData, $matches)) {
+                $imageType = $matches[1];
+            } else {
+                dd('Invalid image format', $imageData);
+            }
 
             // Remove the Base64 prefix
             $imageData = substr($imageData, strpos($imageData, ',') + 1);
             $imageData = base64_decode($imageData);
 
             // Generate a filename
-            $filename = 'profile_' . time() . '.' . $imageType;
+            $filename = 'profile_'.time().'.'.$imageType;
             Storage::disk('public')->put("avatars/{$user->id}/{$filename}", $imageData);
 
-            $profile->avatar = $filename;
-            $profile->save();
+            $user->profile()->update([
+                'avatar' => $filename,
+            ]);
         }
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'User Activate',
+            'title' => 'User Activate',
             'message' => 'User successfully activated.',
         ]);
     }

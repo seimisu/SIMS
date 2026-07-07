@@ -9,6 +9,7 @@
             v-model="modelValue"
             :disabled="disable"
             :filter="filter"
+            :loading="loading"
             optionLabel="name"
             @update:modelValue="emit('update-model', $event)"
             :options="options"
@@ -71,13 +72,17 @@ defineProps({
         type: [Boolean],
         default: false,
     },
+    loading: {
+        type: Boolean,
+        default: false,
+    },
     clearable: {
         type: [Boolean],
         default: false,
     },
     errorMark: {
-        type: String,
-        default: null,
+        type: Boolean,
+        default: false,
     },
 });
 const modelValue = defineModel({

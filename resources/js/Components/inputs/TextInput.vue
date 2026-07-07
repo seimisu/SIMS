@@ -56,7 +56,7 @@ defineProps({
         default: false,
     },
     errorMark: {
-        type: String,
+        type: [Boolean, String],
         default: null,
     },
 });

@@ -6,6 +6,7 @@ use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
 use App\Models\LocationRegions;
+use App\Support\SystemPermissions;
 use Illuminate\Support\Facades\Auth;
 
 class LocationClass
@@ -130,7 +131,7 @@ class LocationClass
             ->with(['cityCode.provinceCode.regionCode'])
             ->when(
                 Auth::check() &&
-                    Auth::user()->role_array['name'] == 'regional staff' &&
+                    app(SystemPermissions::class)->shouldScopeToRegion(Auth::user()) &&
                     Auth::user()->is_verified && $filterRegion,
                 function ($query) {
                     $region = Auth::user()->profile->agency->region_code;

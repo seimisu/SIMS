@@ -1,110 +1,202 @@
 <template>
-
     <Head title="Scholars" />
     <AuthLayout>
         <div class="flex flex-col w-full h-full gap-5">
             <div class="flex flex-col lg:flex-row items-center space-x-0 gap-4">
-                <HeaderModule title="Scholar Management"
-                    description="Comprehensive records of all scholars, including profile details, program assignments, and status monitoring." />
-                <div>
-                    <!-- <DefaultButton
-                        size="small"
-                        label="Register Scholar"
-                        :icon="TablerIcons.IconPlus"
-                        @click="dialogUploadScholar = true"
-                        class-name="!rounded-xl !text-sm !px-4"
-                        raised
-                    /> -->
-                </div>
+                <HeaderModule
+                    title="Scholar Management"
+                    description="Comprehensive records of all scholars, including profile details, program assignments, and status monitoring."
+                />
             </div>
             <div class="w-full flex items-end justify-between">
                 <div class="flex items-center gap-2">
-                    <IconTextInput :icon="TablerIcons.IconSearch" placeholder="Search keywords..." v-model="searchInput"
-                        class="w-64 lg:w-96" />
+                    <IconTextInput
+                        :icon="TablerIcons.IconUserSearch"
+                        placeholder="Search by name or SPAS No..."
+                        v-model="searchInput"
+                        class="w-64 lg:w-96"
+                    />
                     <div>
-                        <DefaultButton :icon="filterSchool != null
-                            ? TablerIcons.IconFilterFilled
-                            : TablerIcons.IconFilter
-                            " label="Schools" class-name="w-30  !rounded-xl" size="small" severity="secondary"
-                            @click="toggleOpSchool" />
+                        <DefaultButton
+                            :icon="
+                                filterSchool != null
+                                    ? TablerIcons.IconFilterFilled
+                                    : TablerIcons.IconFilter
+                            "
+                            label="Schools"
+                            class-name="w-30  !rounded-xl"
+                            size="small"
+                            severity="secondary"
+                            @click="toggleOpSchool"
+                        />
                         <Popover ref="opSchool">
-                            <div class="gap-3 flex" v-if="page.props?.schoolFilter">
+                            <div
+                                class="gap-3 flex"
+                                v-if="page.props?.schoolFilter"
+                            >
                                 <div class="flex-1 w-60">
-                                    <SelectMultiInput filter v-model="filterSchool" :options="page.props?.schoolFilter"
-                                        capitalize></SelectMultiInput>
+                                    <SelectMultiInput
+                                        filter
+                                        v-model="filterSchool"
+                                        :options="page.props?.schoolFilter"
+                                        capitalize
+                                    ></SelectMultiInput>
                                 </div>
 
-                                <div class="flex justify-end items-center gap-2">
-                                    <DefaultButton @click="schoolFilterClear" label="Clear"
-                                        class-name="w-20 !rounded-xl" size="small" severity="secondary" />
-                                    <DefaultButton @click="schoolFilter" label="Filter" class-name="w-20 !rounded-xl"
-                                        size="small" />
+                                <div
+                                    class="flex justify-end items-center gap-2"
+                                >
+                                    <DefaultButton
+                                        @click="schoolFilterClear"
+                                        label="Clear"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                        severity="secondary"
+                                    />
+                                    <DefaultButton
+                                        @click="schoolFilter"
+                                        label="Filter"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                    />
                                 </div>
                             </div>
                         </Popover>
                     </div>
                     <div>
-                        <DefaultButton :icon="filterProgram != null
-                            ? TablerIcons.IconFilterFilled
-                            : TablerIcons.IconFilter
-                            " label="Programs" class-name="w-30  !rounded-xl" size="small" severity="secondary"
-                            @click="toggleopProgram" />
+                        <DefaultButton
+                            :icon="
+                                filterProgram != null
+                                    ? TablerIcons.IconFilterFilled
+                                    : TablerIcons.IconFilter
+                            "
+                            label="Programs"
+                            class-name="w-30  !rounded-xl"
+                            size="small"
+                            severity="secondary"
+                            @click="toggleopProgram"
+                        />
                         <Popover ref="opProgram">
-                            <div class="gap-3 flex" v-if="page.props?.programFilter">
+                            <div
+                                class="gap-3 flex"
+                                v-if="page.props?.programFilter"
+                            >
                                 <div class="flex-1 w-60">
-                                    <SelectMultiInput v-model="filterProgram" :options="page.props?.programFilter"
-                                        capitalize></SelectMultiInput>
+                                    <SelectMultiInput
+                                        v-model="filterProgram"
+                                        :options="page.props?.programFilter"
+                                        capitalize
+                                    ></SelectMultiInput>
                                 </div>
 
-                                <div class="flex justify-end items-center gap-2">
-                                    <DefaultButton @click="programFilterClear" label="Clear"
-                                        class-name="w-20 !rounded-xl" size="small" severity="secondary" />
-                                    <DefaultButton @click="programFilter" label="Filter" class-name="w-20 !rounded-xl"
-                                        size="small" />
+                                <div
+                                    class="flex justify-end items-center gap-2"
+                                >
+                                    <DefaultButton
+                                        @click="programFilterClear"
+                                        label="Clear"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                        severity="secondary"
+                                    />
+                                    <DefaultButton
+                                        @click="programFilter"
+                                        label="Filter"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                    />
                                 </div>
                             </div>
                         </Popover>
                     </div>
                     <div>
-                        <DefaultButton :icon="filterSub != null
-                            ? TablerIcons.IconFilterFilled
-                            : TablerIcons.IconFilter
-                            " label="Sub-Programs" class-name=" !rounded-xl" size="small" severity="secondary"
-                            @click="toggleopSub" />
+                        <DefaultButton
+                            :icon="
+                                filterSub != null
+                                    ? TablerIcons.IconFilterFilled
+                                    : TablerIcons.IconFilter
+                            "
+                            label="Types"
+                            class-name=" !rounded-xl"
+                            size="small"
+                            severity="secondary"
+                            @click="toggleopSub"
+                        />
                         <Popover ref="opSub">
-                            <div class="gap-3 flex" v-if="page.props?.subProgramFilter">
+                            <div
+                                class="gap-3 flex"
+                                v-if="page.props?.scholarTypeFilter"
+                            >
                                 <div class="flex-1 w-60">
-                                    <SelectMultiInput v-model="filterSub" :options="page.props?.subProgramFilter"
-                                        capitalize></SelectMultiInput>
+                                    <SelectMultiInput
+                                        v-model="filterSub"
+                                        :options="page.props?.scholarTypeFilter"
+                                        capitalize
+                                    ></SelectMultiInput>
                                 </div>
 
-                                <div class="flex justify-end items-center gap-2">
-                                    <DefaultButton @click="subFilterClear" label="Clear" class-name="w-20 !rounded-xl"
-                                        size="small" severity="secondary" />
-                                    <DefaultButton @click="subFilter" label="Filter" class-name="w-20 !rounded-xl"
-                                        size="small" />
+                                <div
+                                    class="flex justify-end items-center gap-2"
+                                >
+                                    <DefaultButton
+                                        @click="subFilterClear"
+                                        label="Clear"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                        severity="secondary"
+                                    />
+                                    <DefaultButton
+                                        @click="subFilter"
+                                        label="Filter"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                    />
                                 </div>
                             </div>
                         </Popover>
                     </div>
                     <div>
-                        <DefaultButton :icon="filterStatus != null
-                            ? TablerIcons.IconFilterFilled
-                            : TablerIcons.IconFilter
-                            " label="Status" class-name=" !rounded-xl" size="small" severity="secondary"
-                            @click="toggleopStatus" />
+                        <DefaultButton
+                            :icon="
+                                filterStatus != null
+                                    ? TablerIcons.IconFilterFilled
+                                    : TablerIcons.IconFilter
+                            "
+                            label="Status"
+                            class-name=" !rounded-xl"
+                            size="small"
+                            severity="secondary"
+                            @click="toggleopStatus"
+                        />
                         <Popover ref="opStatus">
-                            <div class="gap-3 flex" v-if="page.props?.statusFilter">
+                            <div
+                                class="gap-3 flex"
+                                v-if="page.props?.statusFilter"
+                            >
                                 <div class="flex-1 w-60">
-                                    <SelectMultiInput v-model="filterStatus" :options="page.props?.statusFilter"
-                                        capitalize></SelectMultiInput>
+                                    <SelectMultiInput
+                                        v-model="filterStatus"
+                                        :options="page.props?.statusFilter"
+                                        capitalize
+                                    ></SelectMultiInput>
                                 </div>
 
-                                <div class="flex justify-end items-center gap-2">
-                                    <DefaultButton @click="statusFilterClear" label="Clear"
-                                        class-name="w-20 !rounded-xl" size="small" severity="secondary" />
-                                    <DefaultButton @click="statusFilter" label="Filter" class-name="w-20 !rounded-xl"
-                                        size="small" />
+                                <div
+                                    class="flex justify-end items-center gap-2"
+                                >
+                                    <DefaultButton
+                                        @click="statusFilterClear"
+                                        label="Clear"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                        severity="secondary"
+                                    />
+                                    <DefaultButton
+                                        @click="statusFilter"
+                                        label="Filter"
+                                        class-name="w-20 !rounded-xl"
+                                        size="small"
+                                    />
                                 </div>
                             </div>
                         </Popover>
@@ -112,83 +204,147 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <ToggleButton v-model="filterGradeRequest" size="small"
-                        :disabled="page.props?.grade_request_cnt == '0'" class="!rounded-xl h-8.5"
-                        @update:model-value="toggleSubjectRequest">
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Grade Request</div>
-                                <Badge v-if="page.props?.grade_request_cnt != '0'"
-                                    :value="page.props?.grade_request_cnt" size="small" severity="danger"></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                    <ToggleButton v-model="filterSubjectRequest" size="small" :disabled="page.props?.request_cnt == '0'"
-                        class="!rounded-xl h-8.5" @update:model-value="toggleSubjectRequest">
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Subject Request</div>
-                                <Badge v-if="page.props?.request_cnt != '0'" :value="page.props?.request_cnt"
-                                    size="small" severity="danger"></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                    <!-- <DefaultButton
-                        :icon="TablerIcons.IconPlus"
-                        label="Create"
-                        @click="dialogUploadScholar = true"
-                        class-name="w-30  !rounded-xl"
+                    <ToggleButton
+                        v-model="filterProfileRequest"
                         size="small"
-                        raised
-                    /> -->
+                        :disabled="page.props?.request_cnt?.profile == 0"
+                        class="!rounded-xl h-8.5"
+                        @update:model-value="toggleRequest"
+                    >
+                        <template #default>
+                            <div class="flex items-center gap-2">
+                                <div class="text-xs">Profile Request</div>
+                                <Badge
+                                    v-if="page.props?.request_cnt?.profile != 0"
+                                    :value="page.props?.request_cnt?.profile"
+                                    size="small"
+                                    severity="danger"
+                                ></Badge>
+                            </div>
+                        </template>
+                    </ToggleButton>
+                    <ToggleButton
+                        v-model="filterLandbankRequest"
+                        size="small"
+                        :disabled="page.props?.request_cnt?.landbank == 0"
+                        class="!rounded-xl h-8.5"
+                        @update:model-value="toggleRequest"
+                    >
+                        <template #default>
+                            <div class="flex items-center gap-2">
+                                <div class="text-xs">Landbank Request</div>
+                                <Badge
+                                    v-if="
+                                        page.props?.request_cnt?.landbank != '0'
+                                    "
+                                    :value="page.props?.request_cnt?.landbank"
+                                    size="small"
+                                    severity="danger"
+                                ></Badge>
+                            </div>
+                        </template>
+                    </ToggleButton>
+                    <ToggleButton
+                        v-model="filterTorRequest"
+                        size="small"
+                        :disabled="page.props?.request_cnt?.grades == 0"
+                        class="!rounded-xl h-8.5"
+                        @update:model-value="toggleRequest"
+                    >
+                        <template #default>
+                            <div class="flex items-center gap-2">
+                                <div class="text-xs">Grade Submitted</div>
+                                <Badge
+                                    v-if="
+                                        page.props?.request_cnt?.grades != '0'
+                                    "
+                                    :value="page.props?.request_cnt?.grades"
+                                    size="small"
+                                    severity="danger"
+                                ></Badge>
+                            </div>
+                        </template>
+                    </ToggleButton>
                 </div>
             </div>
-            <DefaultSelectionTable :items="page.props.scholars.data" :pagination="{
-                total: page.props.scholars.total,
-                perPage: page.props.scholars.per_page,
-                currentPage: page.props.scholars.current_page,
-            }" @selected="toggleScholarDetails" :loading="loading.table" @paginate="loadPage">
+            <DefaultSelectionTable
+                :items="page.props.scholars.data"
+                :pagination="{
+                    total: page.props.scholars.total,
+                    perPage: page.props.scholars.per_page,
+                    currentPage: page.props.scholars.current_page,
+                }"
+                @selected="toggleScholarDetails"
+                :loading="loading.table"
+                @paginate="loadPage"
+            >
                 <Column header="Scholars">
                     <template #body="props">
                         <div class="flex items-center gap-2">
                             <div class="">
-                                <OverlayBadge severity="danger" class="inline-flex" v-if="
-                                    props.data.request ||
-                                    props.data.gradeRequest
-                                ">
-                                    <Avatar :label="props.data.fullname
-                                        .charAt(0)
-                                        .toUpperCase()
-                                        " style="
+                                <OverlayBadge
+                                    severity="danger"
+                                    class="inline-flex"
+                                    v-if="props.data.hasRequest"
+                                >
+                                    <Avatar
+                                        :label="
+                                            props.data.fullname
+                                                .charAt(0)
+                                                .toUpperCase()
+                                        "
+                                        style="
                                             background-color: #dee9fc;
                                             color: #1a2551;
-                                        " class="!w-[40px] !h-[40px] !rounded-xl" :image="props.data.photo == null
-                                            ? null
-                                            : props.data.photo
-                                            " />
+                                        "
+                                        class="!w-[40px] !h-[40px] !rounded-xl"
+                                        :image="
+                                            props.data.photo == null
+                                                ? null
+                                                : props.data.photo
+                                        "
+                                    />
                                 </OverlayBadge>
-                                <Avatar v-else :label="props.data.fullname
-                                    .charAt(0)
-                                    .toUpperCase()
-                                    " style="
+                                <Avatar
+                                    v-else
+                                    :label="
+                                        props.data.fullname
+                                            .charAt(0)
+                                            .toUpperCase()
+                                    "
+                                    style="
                                         background-color: #dee9fc;
                                         color: #1a2551;
-                                    " class="!w-[40px] !h-[40px] !rounded-xl" :image="props.data.photo == null
-                                        ? null
-                                        : props.data.photo
-                                        " />
+                                    "
+                                    class="!w-[40px] !h-[40px] !rounded-xl"
+                                    :image="
+                                        props.data.photo == null
+                                            ? null
+                                            : props.data.photo
+                                    "
+                                />
                             </div>
                             <div class="flex-1 flex flex-col">
-                                <div :class="[
-                                    'text-xs flex items-center',
-                                    props.data.sex == 'M'
-                                        ? '!text-blue-600'
-                                        : '!text-rose-600',
-                                ]">
-                                    <div>{{ props.data.spas_no }}</div>
+                                <div
+                                    :class="[
+                                        'text-xs flex items-center text-blue-600',
+                                    ]"
+                                >
+                                    <div># {{ props.data.spas_no }}</div>
                                 </div>
-                                <div class="font-medium">
-                                    {{ props.data.fullname }}
+                                <div class="flex gap-1 items-center">
+                                    <div class="font-medium">
+                                        {{ props.data.fullname }}
+                                    </div>
+                                    <div
+                                        v-tooltip.top="'Account activated'"
+                                        v-if="props.data?.activated_at"
+                                    >
+                                        <IconRosetteDiscountCheckFilled
+                                            :size="20"
+                                            class="text-green-600"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -206,39 +362,45 @@
                         </div>
                     </template>
                 </Column>
-                <Column header="Program / Sub Program">
+                <Column header="Regions">
                     <template #body="props">
-                        <div class="flex items-center gap-1">
-                            <div class="flex items-center">
-                                <p>
-                                    {{ props.data.program }}
-                                </p>
-                            </div>
-                            <div>-</div>
-                            <div class="flex items-center">
-                                <p>
-                                    {{ props.data.type }}
-                                </p>
-                            </div>
-                        </div>
-                    </template>
-                </Column>
-                <Column header="Region">
-                    <template #body="props">
-                        <div class="uppercase font-medium">
+                        <div class="uppercase text-xs font-medium">
                             {{ props.data.agency }}
                         </div>
                     </template>
                 </Column>
-
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Award Year</div>
+                            <div class="font-semibold">Types</div>
                         </div>
                     </template>
                     <template #body="props">
-                        <div class="text-center font-medium">
+                        <div class="text-center text-xs font-medium">
+                            {{ props.data.type }}
+                        </div>
+                    </template>
+                </Column>
+                <Column>
+                    <template #header>
+                        <div class="flex justify-center w-full font-semibold">
+                            <div class="font-semibold">Programs</div>
+                        </div>
+                    </template>
+                    <template #body="props">
+                        <div class="text-center text-xs font-medium">
+                            {{ props.data.subProgram }}
+                        </div>
+                    </template>
+                </Column>
+                <Column>
+                    <template #header>
+                        <div class="flex justify-center w-full font-semibold">
+                            <div class="font-semibold">Award Years</div>
+                        </div>
+                    </template>
+                    <template #body="props">
+                        <div class="text-center text-xs font-medium">
                             {{ props.data.awardyear }}
                         </div>
                     </template>
@@ -246,79 +408,173 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Scholar Status</div>
+                            <div class="font-semibold">Status</div>
                         </div>
                     </template>
                     <template #body="props">
-                        <div class="flex items-center text-xs justify-center gap-1" :class="props.data.status.tcolor">
-                            <component :is="TablerIcons[props.data.status.icon]" :size="20" :stroke="1.8" />
-                            <div>
-                                {{ props.data.status.name }}
-                            </div>
+                        <div class="flex items-center justify-center">
+                            <span
+                                class="flex text-xs items-center py-1 px-3 border rounded-2xl gap-0.5"
+                                :class="[
+                                    props.data.status.tcolor,
+                                    props.data.status.bcolor,
+                                ]"
+                            >
+                                <component
+                                    :is="TablerIcons[props.data.status.icon]"
+                                    :size="18"
+                                    :stroke="1.8"
+                                />
+                                <div>
+                                    {{ props.data.status.name }}
+                                </div>
+                            </span>
                         </div>
                     </template>
                 </Column>
                 <!-- <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Status</div>
-                        </div>
-                    </template>
-                    <template #body="props">
-                        <div class="flex justify-center">
-                            <div
-                                :class="[
-                                    ' flex items-center capitalize  rounded-2xl py-1 px-3 gap-1',
-                                    props.data.status.bcolor,
-                                    props.data.status.tcolor,
-                                ]"
-                            >
-                                <component
-                                    :is="TablerIcons[props.data.status.icon]"
-                                    :size="20"
-                                    :stroke="2"
-                                />
-                                <div class="">
-                                    {{ props.data.status.name }}
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                </Column> -->
-
-                <Column>
-                    <template #header>
-                        <div class="flex justify-center w-full font-semibold">
                             <div class="font-semibold">Activate Account</div>
                         </div>
                     </template>
                     <template #body="props">
-                        <DefaultButton :disabled="props.data.acticationRequest" label="Activate"
-                            @click="sendLinkEmail(props.data.id)" class-name="!rounded-lg" size="small" />
+                        <DefaultButton
+                            :disabled="props.data.acticationRequest"
+                            label="Activate"
+                            @click="sendLinkEmail(props.data.id)"
+                            class-name="!rounded-lg"
+                            size="small"
+                        />
+                    </template>
+                </Column> -->
+                <Column>
+                    <template #header>
+                        <div class="flex justify-end w-full font-semibold">
+                            <div class="font-semibold mr-2">
+                                <IconSettings :size="20" />
+                            </div>
+                        </div>
+                    </template>
+                    <template #body="prop">
+                        <div class="flex justify-end">
+                            <Button
+                                text
+                                v-tooltip.top="'Options'"
+                                rounded
+                                size="small"
+                                severity="secondary"
+                                icon="pi pi-ellipsis-v"
+                                @click="(e) => toggleOption(e, prop.data)"
+                            />
+                            <Menu ref="menu" :model="menuItems" :popup="true">
+                                <template #item="{ item, props }">
+                                    <a
+                                        v-ripple
+                                        class="flex items-center !text-gray-500"
+                                        v-bind="props.action"
+                                    >
+                                        <div>
+                                            <component
+                                                :is="item.icon"
+                                                size="20"
+                                                stroke-width="1.5"
+                                            ></component>
+                                        </div>
+                                        <span class="ml-2 text-xs">{{
+                                            item.label
+                                        }}</span>
+                                        <Badge
+                                            v-if="
+                                                selectedRow?.count?.profile !=
+                                                    '0' &&
+                                                item.label == 'Profile Request'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            severity="danger"
+                                            :value="selectedRow?.count?.profile"
+                                        />
+                                        <Badge
+                                            v-if="
+                                                selectedRow?.count?.landbank !=
+                                                    '0' &&
+                                                item.label == 'Landbank Request'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            severity="danger"
+                                            :value="
+                                                selectedRow?.count?.landbank
+                                            "
+                                        />
+                                        <Badge
+                                            v-if="
+                                                selectedRow?.count?.grades !=
+                                                    '0' &&
+                                                item.label == 'Grade Submitted'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            severity="danger"
+                                            :value="selectedRow?.count?.grades"
+                                        />
+                                        <Badge
+                                            v-if="
+                                                selectedRow.activationRequested &&
+                                                item.label == 'Activation Link'
+                                            "
+                                            class="ml-auto"
+                                            size="small"
+                                            :value="'Sent'"
+                                        />
+                                    </a>
+                                </template>
+                            </Menu>
+                        </div>
                     </template>
                 </Column>
             </DefaultSelectionTable>
         </div>
-        <DialogUploadScholarModule v-if="dialogUploadScholar" v-model="dialogUploadScholar"></DialogUploadScholarModule>
+        <DialogScholarDetailRequest
+            v-if="drawerDetailsRequest"
+            v-model="drawerDetailsRequest"
+        />
+        <DialogScholarGradeRequest
+            v-if="drawerGradeRequest"
+            v-model="drawerGradeRequest"
+        />
         <DrawerScholar1Module v-if="drawerScholar" v-model="drawerScholar" />
+        <DialogScholarLandbankRequest
+            v-if="dialogLandbankRequest"
+            v-model="dialogLandbankRequest"
+        />
     </AuthLayout>
 </template>
 <script setup>
+import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
+import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
+import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
+import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Module.vue";
+import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
+import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
+import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+import IconTextInput from "../../Components/inputs/IconTextInput.vue";
+import HeaderModule from "../../Modules/Others/HeaderModule.vue";
+import TextInput from "../../Components/inputs/TextInput.vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import * as TablerIcons from "@tabler/icons-vue";
-import HeaderModule from "../../Modules/Others/HeaderModule.vue";
-import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
-import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
-import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Module.vue";
-import DialogUploadScholarModule from "../../Modules/Others/DialogUploadScholarModule.vue";
-import TextInput from "../../Components/inputs/TextInput.vue";
-import IconTextInput from "../../Components/inputs/IconTextInput.vue";
-import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+
 import { computed, onMounted, onUpdated, reactive, ref, watch } from "vue";
-import { route } from "ziggy-js";
+import {
+    IconLineDashed,
+    IconSettings,
+    IconRosetteDiscountCheckFilled,
+} from "@tabler/icons-vue";
 import { Head, usePage, router } from "@inertiajs/vue3";
-import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
 import { useToast } from "primevue";
+import { route } from "ziggy-js";
 
 const toast = useToast();
 const page = usePage();
@@ -326,6 +582,8 @@ const loading = reactive({
     table: false,
     request: false,
 });
+
+const menu = ref(null);
 const opSchool = ref(null);
 const opProgram = ref(null);
 const opSub = ref(null);
@@ -336,10 +594,127 @@ const filterSub = ref(null);
 const filterStatus = ref(null);
 const filterSubjectRequest = ref(false);
 const filterGradeRequest = ref(false);
-const dialogUploadScholar = ref(false);
+const filterProfileRequest = ref(false);
+const filterLandbankRequest = ref(false);
+const filterTorRequest = ref(false);
+const drawerDetailsRequest = ref(false);
+const drawerGradeRequest = ref(false);
 const drawerScholar = ref(false);
+const dialogLandbankRequest = ref(false);
+const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
+const toggleOption = (event, rowData) => {
+    selectedRow.value = rowData;
+
+    menu.value.toggle(event);
+};
+
+const menuItems = computed((item) => {
+    if (!selectedRow.value) return [];
+
+    return [
+        {
+            label: "Activation Link",
+            icon: TablerIcons.IconMailForward,
+            class: "text-cyan-500",
+            command: () => {
+                router.post(
+                    route("scholars.activation", { id: selectedRow.value.id }),
+                    {},
+                    {
+                        onSuccess: (page) => {
+                            toast.add({
+                                severity: page.props.flash?.status || "success",
+                                summary: page.props.flash?.title || "Success",
+                                detail:
+                                    page.props.flash?.message ||
+                                    "Scholar activated successfully.",
+                                life: 3000,
+                            });
+                        },
+                        onError: () => {
+                            toast.add({
+                                severity: "error",
+                                summary: "Error",
+                                detail: "Failed to activate scholar.",
+                                life: 3000,
+                            });
+                        },
+                    },
+                );
+            },
+        },
+        {
+            label: "Profile Request",
+            icon: TablerIcons.IconUserQuestion,
+            class: "text-cyan-500",
+
+            command: () => {
+                router.reload({
+                    only: ["personalRequest"],
+                    data: { id: selectedRow.value.id },
+                    preserveState: false,
+                    showProgress: true,
+                    replace: true,
+                    onFinish: () => {
+                        drawerDetailsRequest.value = true;
+                    },
+                });
+            },
+        },
+        {
+            label: "Landbank Request",
+            icon: TablerIcons.IconCreditCard,
+            class: "text-cyan-500",
+            command: () => {
+                router.reload({
+                    only: ["landbankRequest"],
+                    data: { id: selectedRow.value.id },
+                    preserveState: false,
+                    showProgress: true,
+                    replace: true,
+                    onFinish: () => {
+                        dialogLandbankRequest.value = true;
+                    },
+                });
+            },
+        },
+        {
+            label: "Grade Submitted",
+            icon: TablerIcons.IconId,
+            disabled: selectedRow.value.count.grades == "0" ? true : false,
+            class: "text-cyan-500",
+            command: () => {
+                router.reload({
+                    only: ["subjectRequest"],
+                    data: { id: selectedRow.value.id },
+
+                    preserveState: false,
+                    showProgress: true,
+                    replace: true,
+                    onFinish: () => {
+                        drawerGradeRequest.value = true;
+                    },
+                });
+            },
+        },
+        {
+            separator: true,
+        },
+        {
+            label: "Chat Support",
+            icon: TablerIcons.IconMessageChatbot,
+            class: "text-cyan-500",
+            command: () => {
+                toggleModal({
+                    type: "resend",
+                    data: selectedRow.value,
+                });
+            },
+        },
+    ];
+});
 
 const loadPage = (page) => {
     router.get(
@@ -351,11 +726,14 @@ const loadPage = (page) => {
             ...(filterProgram.value ? { programs: filterProgram.value } : {}),
             ...(filterSub.value ? { sub: filterSub.value } : {}),
             ...(filterStatus.value ? { status: filterStatus.value } : {}),
-            ...(filterSubjectRequest.value
-                ? { subjectRequest: filterSubjectRequest.value }
+            ...(filterProfileRequest.value
+                ? { profileRequest: filterProfileRequest.value }
                 : {}),
-            ...(filterGradeRequest.value
-                ? { gradeRequest: filterGradeRequest.value }
+            ...(filterLandbankRequest.value
+                ? { landbankRequest: filterLandbankRequest.value }
+                : {}),
+            ...(filterTorRequest.value
+                ? { gradeRequest: filterTorRequest.value }
                 : {}),
         },
         {
@@ -371,17 +749,23 @@ const toggleScholarDetails = (event) => {
     router.reload({
         only: [
             "details",
+
             "programOptions",
             "subProgramOptions",
             "statusOptions",
             "termOptions",
             "yearOptions",
+            "schoolOptions",
+            "courseOptions",
         ],
-        data: { id: event.id },
+        data: { id: event.id, campus: null },
         preserveState: false,
         showProgress: true,
         replace: true,
         onFinish: () => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("campus");
+            window.history.replaceState({}, "", url);
             drawerScholar.value = true;
         },
     });
@@ -438,7 +822,7 @@ const programFilterClear = (event) => {
 const toggleopSub = (event) => {
     opSub.value.toggle(event);
     router.reload({
-        only: ["subProgramFilter"],
+        only: ["scholarTypeFilter"],
     });
 };
 
@@ -466,33 +850,6 @@ const toggleopStatus = (event) => {
     });
 };
 
-const sendLinkEmail = (id) => {
-    router.post(
-        route("scholars.activation", { id: id }),
-        {},
-        {
-            onSuccess: (page) => {
-                toast.add({
-                    severity: page.props.flash?.status || "success",
-                    summary: page.props.flash?.title || "Success",
-                    detail:
-                        page.props.flash?.message ||
-                        "Scholar activated successfully.",
-                    life: 3000,
-                });
-            },
-            onError: () => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to activate scholar.",
-                    life: 3000,
-                });
-            },
-        },
-    );
-};
-
 const statusFilter = (event) => {
     opStatus.value.toggle(event);
     clearTimeout(timerBounce.value);
@@ -510,7 +867,7 @@ const statusFilterClear = (event) => {
     }, 300);
 };
 
-const toggleSubjectRequest = (event) => {
+const toggleRequest = (event) => {
     clearTimeout(timerBounce.value);
     timerBounce.value = setTimeout(() => {
         loadPage(1);

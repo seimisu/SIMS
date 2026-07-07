@@ -35,4 +35,10 @@ class ListRole extends Model
     {
         return $this->hasMany(ListRoutes::class, 'role_id');
     }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(ListPermission::class, 'list_role_permissions', 'role_id', 'permission_id')
+            ->withTimestamps();
+    }
 }

@@ -4,9 +4,7 @@ namespace App\Http\Requests\Web;
 
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class UserRequest extends FormRequest
 {
@@ -42,9 +40,6 @@ class UserRequest extends FormRequest
                     'lname'     => ['required', 'string', 'max:50'],
                     'email'     => ['required', 'email', Rule::unique('users', 'email')->ignore($this->route('id'))],
                     'role'      => ['required', 'array'],
-                    'canCreate' => ['boolean', 'required'],
-                    'canEdit'   => ['boolean', 'required'],
-                    'canDelete' => ['boolean', 'required'],
                 ];
                 break;
         }
@@ -56,15 +51,5 @@ class UserRequest extends FormRequest
             'lname'         => 'last name',
 
         ];
-    }
-
-
-    public function checkSuperAdminId(): void
-    {
-        if (Auth::user()->id != 1) {
-            throw ValidationException::withMessages([
-                'invalid' => 'You must be the super admin or the system creator to access this feature.',
-            ]);
-        }
     }
 }

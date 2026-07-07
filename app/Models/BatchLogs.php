@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BatchLogs extends Model
 {
+    protected $table = 'batches_logs';
 
     protected $fillable = [
         'batch_id',

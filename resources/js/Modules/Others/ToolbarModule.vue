@@ -5,7 +5,7 @@
                 :icon="IconSearch"
                 placeholder="Search keywords..."
                 v-model="modelValue"
-                class="w-64 lg:w-96"
+                :class="['w-64 lg:w-96', hideSearch ? '!hidden' : '']"
             />
             <DefaultButton
                 rounded
@@ -22,6 +22,7 @@
             <slot name="add2"></slot>
             <slot name="add1"></slot>
             <DefaultButton
+                v-if="buttonVisible"
                 :icon="IconCirclePlusFilled"
                 :label="buttonLabel"
                 size="small"
@@ -71,8 +72,16 @@ defineProps({
     dialogButtonLabel: String,
     dialogButtonLoading: Boolean,
     buttonLabel: String,
+    buttonVisible: {
+        type: Boolean,
+        default: true,
+    },
     messageHasErrors: Boolean,
     messageErrors: Object,
+    hideSearch: {
+        type: Boolean,
+        default: false,
+    },
     messageType: String,
 });
 

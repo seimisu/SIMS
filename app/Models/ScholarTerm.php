@@ -7,20 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 class ScholarTerm extends Model
 {
     protected $connection = 'pgsql';
+
     protected $table = 'scholar_term_records';
+
     protected $fillable = [
         'term_id',
         'scholar_id',
         'level_id',
         'academic_year',
         'scholar_school_id',
-        'term_type_id'
+        'term_type_id',
+        'verified_by',
+        'verification_status',
+        'rejection_reason',
     ];
 
     public function term()
     {
         return $this->belongsTo(ListReferences::class, 'term_id');
     }
+
     public function scholar()
     {
         return $this->belongsTo(Scholars::class, 'scholar_id');

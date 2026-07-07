@@ -44,7 +44,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/activate/{id}', [ActivationController::class, 'update'])->name('activation.update');
 });
 
-Route::middleware(['auth', 'web'])->group(function () {
+Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
     Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
     Route::put('roles/{id}/{type}', [RoleController::class, 'update'])->name('roles.update');
@@ -134,17 +134,26 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::post('geolocation', [GeolocationController::class, 'store'])->name('geolocation.store');
 
     Route::post('stipends', [StipendController::class, 'store'])->name('stipends.store');
+    Route::post('stipends/{id}/recipients', [StipendController::class, 'addRecipients'])->name('stipends.recipients.store');
+    Route::put('stipends/{id}/payroll', [StipendController::class, 'savePayroll'])->name('stipends.payroll.update');
+    Route::get('stipends/{id}/export', [StipendController::class, 'export'])->name('stipends.export');
     Route::put('stipends/{id}/{type}', [StipendController::class, 'update'])->name('stipends.update');
     Route::delete('stipends/{id}/{type}', [StipendController::class, 'destroy'])->name('stipends.destroy');
 
     // Scholar 1.0 Routes
     Route::post('scholars/{id}/{type}', [Scholar1Controller::class, 'update'])->name('scholars.update');
     Route::post('scholarsActivation/{id}', [Scholar1Controller::class, 'activation'])->name('scholars.activation');
-    Route::post('scholars/{id}/{type}/SubjectRequest', [Scholar1Controller::class, 'validate'])->name('scholars.validate');
-    Route::post('scholars/{id}/{type}/GradeRequest', [Scholar1Controller::class, 'gradeValidate'])->name('scholars.gradeValidate');
+    Route::post('scholars/{id}/{type}/transfer', [Scholar1Controller::class, 'transfer'])->name('scholars.transfer');
+    // Route::post('scholars/{id}/{type}/SubjectRequest', [Scholar1Controller::class, 'validate'])->name('scholars.validate');
+    // Route::post('scholars/{id}/{type}/GradeRequest', [Scholar1Controller::class, 'gradeValidate'])->name('scholars.gradeValidate');
 
+    // scholar preview
     Route::post('scholar-review/{id}/validate', [ScholarController::class, 'validate'])->name('review.validate');
     Route::post('scholar-review/{id}/publish', [ScholarController::class, 'publish'])->name('review.publish');
+
+    Route::post('scholar-grade-request/{type}', [Scholar1Controller::class, 'gradeRequest'])->name('scholar.grade-request');
+    Route::post('profileRequest/{type}', [Scholar1Controller::class, 'profileRequest'])->name('profile.request');
+    Route::post('landbankRequest/{type}', [Scholar1Controller::class, 'landbankRequest'])->name('landbank.request');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

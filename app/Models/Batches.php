@@ -12,7 +12,10 @@ class Batches extends Model
         'name',
         'region',
         'academic_term',
+        'term_id',
+        'level_id',
         'school_year',
+        'is_lock',
     ];
 
     public $timestamps = false;
@@ -20,5 +23,20 @@ class Batches extends Model
     public function logs()
     {
         return $this->hasMany(BatchLogs::class, 'batch_id');
+    }
+
+    public function recipients()
+    {
+        return $this->hasMany(BatchRecipients::class, 'batch_id');
+    }
+
+    public function term()
+    {
+        return $this->belongsTo(ListReferences::class, 'term_id');
+    }
+
+    public function level()
+    {
+        return $this->belongsTo(ListReferences::class, 'level_id');
     }
 }

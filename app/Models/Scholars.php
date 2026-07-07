@@ -9,6 +9,7 @@ class Scholars extends Model
     protected $fillable = [
         'spas_no',
         'status_id',
+        'academic_status',
         'program_id',
         'type_id',
         'category_id',
@@ -24,31 +25,71 @@ class Scholars extends Model
         'validate_status',
     ];
 
+    public function payrolls()
+    {
+        return $this->hasMany(BatchRecipients::class, 'scholar_id', 'id');
+    }
+
+    public function requestHistory()
+    {
+        return $this->hasMany(requestHistory::class, 'scholar_id', 'id');
+    }
+
+    public function subjectRequest()
+    {
+        return $this->hasMany(StudentSubject::class, 'spas_no', 'spas_no');
+    }
+
+    public function profileRequest()
+    {
+        return $this->hasMany(StudentProfileRequest::class, 'spas_no', 'spas_no');
+    }
+
+    public function landbankRequest()
+    {
+        return $this->hasMany(studentLandbankRequest::class, 'spas_no', 'spas_no');
+    }
 
     public function status()
     {
         return $this->belongsTo(ListStatuses::class, 'status_id');
     }
+
     public function program()
     {
         return $this->belongsTo(ListPrograms::class, 'program_id');
     }
+
+    public function mainProgram()
+    {
+        return $this->belongsTo(ListReferences::class, 'category_id');
+    }
+
+    public function landbank()
+    {
+        return $this->hasOne(scholarLandbank::class, 'scholar_id');
+    }
+
     public function type()
     {
         return $this->belongsTo(ListReferences::class, 'type_id');
     }
+
     public function profile()
     {
         return $this->hasOne(ScholarProfiles::class, 'scholar_id');
     }
+
     public function address()
     {
-        return $this->hasOne(ScholarAddresses::class, 'scholar_id');
+        return $this->hasOne(ScholarAddresses::class, 'scholar_id', 'id');
     }
+
     public function parent()
     {
         return $this->hasOne(ScholarParentDetails::class, 'scholar_id');
     }
+
     public function schoolInfo()
     {
         return $this->hasMany(ScholarSchoolInfos::class, 'scholar_id');

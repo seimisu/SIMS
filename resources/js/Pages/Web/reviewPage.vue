@@ -199,8 +199,10 @@ import {
 import { useForm, progress, usePage, Head, router } from "@inertiajs/vue3";
 import { ref } from "vue";
 import DialogUploadScholarModule from "../../Modules/Others/DialogUploadScholarModule.vue";
+import { useToast } from "primevue";
 
 const page = usePage();
+const toast = useToast()
 const dialogUploadScholar = ref(false)
 const selectedDrawer = ref(false);
 const selectedId = ref(null)
@@ -209,15 +211,27 @@ const loading = ref({
 });
 
 const selectScholar = (e) => {
+    if (e.status === 'completed') {
+        toast.add({
+            severity: 'info',
+            summary: 'Unable to Open Module',
+            detail: 'This module has been marked as completed and cannot be reopened.',
+            life: 3000
+        });
+        return;
+    }
+
     router.reload({
         only: ["selected", "courseOption", "schoolOption", "validationStatus"],
         data: { id: e.hash_id },
         replace: true,
         onBefore: () => {
             selectedId.value = e.hash_id
+            loading.value.table = true;
         },
         onFinish: () => {
             selectedDrawer.value = true;
+            loading.value.table = false;
         },
     });
 };

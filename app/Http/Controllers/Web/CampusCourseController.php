@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\CampusCourseRequest;
 use App\Models\SchoolCampusCourses;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CampusCourseController extends Controller
@@ -14,30 +13,36 @@ class CampusCourseController extends Controller
     {
         $data = $request->validated();
 
-        $course = SchoolCampusCourses::create([
-            'years' => $data['years'],
-            'course_id' => $data['course']['id'],
-            'campus_id' => $data['campusId'],
-            'created_by' => Auth::user()->profile->fullname
-        ]);
+        $check = SchoolCampusCourses::where('course_id', $data['course']['id'])
+            ->where('campus_id', $data['campusId'])
+            ->first();
+        if ($check) {
+            $check->update([
+                'is_delete' => false,
+                'years' => $data['years'],
+            ]);
 
-        // foreach ($data['subjects'] as $subject) {
-        //     $course->subjects()->create([
-        //         'name'          => $subject['name'],
-        //         'subject_code'  => $subject['code'],
-        //         'subject_class' => $subject['class']['name'],
-        //         'unit'          => $subject['unit'],
-        //         'created_by'    => Auth::user()->profile->fullname,
-        //     ]);
-        // }
+            return redirect()->back()->with('flash', [
+                'status' => 'success',
+                'title' => 'Campus Course Recreated',
+                'message' => 'Campus course successfully recreated.',
+            ]);
+        } else {
+            SchoolCampusCourses::create([
+                'years' => $data['years'],
+                'course_id' => $data['course']['id'],
+                'campus_id' => $data['campusId'],
+                'created_by' => Auth::user()->profile->fullname,
+            ]);
 
-        return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Campus Course Created',
-            'message' => 'Campus course successfully created.',
-        ]);;
+            return redirect()->back()->with('flash', [
+                'status' => 'success',
+                'title' => 'Campus Course Created',
+                'message' => 'Campus course successfully created.',
+            ]);
+        }
+
     }
-
 
     public function update(CampusCourseRequest $request, string $id, string $type)
     {
@@ -48,7 +53,7 @@ class CampusCourseController extends Controller
 
             $find->update([
                 'course_id' => $data['course']['id'],
-                'years'     => $data['years']
+                'years' => $data['years'],
             ]);
 
             // foreach ($data['subjects'] as $subject) {
@@ -80,12 +85,12 @@ class CampusCourseController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Campus Course Updated',
+            'title' => 'Campus Course Updated',
             'message' => 'Campus course successfully updated.',
         ]);
     }
 
-    function destroy(int $id)
+    public function destroy(int $id)
     {
 
         $find = SchoolCampusCourses::findOrFail($id);
@@ -95,7 +100,7 @@ class CampusCourseController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Campus Course Deleted',
+            'title' => 'Campus Course Deleted',
             'message' => 'Campus course successfully deleted.',
         ]);
     }

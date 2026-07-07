@@ -1,39 +1,61 @@
 <template>
-    <Drawer v-model:visible="modelValue" position="full" :pt="{
-        header: 'border-b-1 border-gray-300 border-dashed',
-        content: 'bg-slate-50',
-    }">
+    <Drawer
+        v-model:visible="modelValue"
+        position="full"
+        :pt="{
+            header: 'border-b-1 border-gray-300 border-dashed',
+            content: 'bg-slate-50',
+        }"
+    >
         <template #header>
-            <div class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2">
+            <div
+                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
+            >
                 <IconId :size="20" :stroke-width="2" />
                 <div class="uppercase font-medium">Scholar Details</div>
             </div>
         </template>
         <template #default>
-            <div class="flex flex-col lg:flex-row w-full pt-5 gap-3 h-full">
+            <div class="flex flex-col lg:flex-row w-full my-5 gap-3 h-full">
                 <div class="lg:flex-2 flex flex-col bg-white p-2 rounded-2xl">
                     <div class="flex-1">
                         <div class="flex gap-2 items-center">
                             <div class="">
-                                <Avatar v-if="
-                                    page.props?.details?.profile?.photo ==
-                                    null
-                                " class="!w-[9rem] !h-[9rem] !rounded-xl !text-5xl !bg-slate-300">
+                                <Avatar
+                                    v-if="
+                                        page.props?.details?.profile?.photo ==
+                                        null
+                                    "
+                                    class="!w-[9rem] !h-[9rem] !rounded-xl !text-5xl !bg-slate-300"
+                                >
                                     <IconUserFilled :size="80" />
                                 </Avatar>
 
-                                <Avatar v-else :image="page.props.details?.profile?.photo"
-                                    class="!w-[9rem] !h-[9rem] !bg-white shadow p-1 !rounded-xl" />
+                                <Avatar
+                                    v-else
+                                    :image="page.props.details?.profile?.photo"
+                                    class="!w-[9rem] !h-[9rem] !bg-white shadow p-1 !rounded-xl"
+                                />
                             </div>
                             <div class="flex-1 flex flex-col">
                                 <div class="flex flex-col gap-2">
                                     <div class="">
-                                        <div class="text-xs font-light text-gray-400 leading-none">
+                                        <div
+                                            class="text-xs font-light text-gray-400 leading-none"
+                                        >
                                             SPAS NO.
                                         </div>
-                                        <div class="flex items-center text-sm gap-1">
-                                            <div v-tooltip.top="'Copy'" class="w-fit">
-                                                <IconCopy :size="15" class="cursor-pointer" />
+                                        <div
+                                            class="flex items-center text-sm gap-1"
+                                        >
+                                            <div
+                                                v-tooltip.top="'Copy'"
+                                                class="w-fit"
+                                            >
+                                                <IconCopy
+                                                    :size="15"
+                                                    class="cursor-pointer"
+                                                />
                                             </div>
                                             <div class="">
                                                 {{
@@ -43,15 +65,27 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-xs font-light text-gray-400 leading-none">
+                                        <div
+                                            class="text-xs font-light text-gray-400 leading-none"
+                                        >
                                             NAME
                                         </div>
 
-                                        <div class="flex items-center text-sm gap-1">
-                                            <div v-tooltip.top="'Copy'" class="w-fit">
-                                                <IconUser :size="15" class="cursor-pointer" />
+                                        <div
+                                            class="flex items-center text-sm gap-1"
+                                        >
+                                            <div
+                                                v-tooltip.top="'Copy'"
+                                                class="w-fit"
+                                            >
+                                                <IconUser
+                                                    :size="15"
+                                                    class="cursor-pointer"
+                                                />
                                             </div>
-                                            <div class="font-medium text-gray-600 text-sm">
+                                            <div
+                                                class="font-medium text-gray-600 text-sm"
+                                            >
                                                 {{
                                                     page.props.details?.fullname
                                                 }}
@@ -59,14 +93,26 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-xs font-light text-gray-400 leading-none">
+                                        <div
+                                            class="text-xs font-light text-gray-400 leading-none"
+                                        >
                                             EMAIL
                                         </div>
-                                        <div class="flex items-center text-sm gap-1">
-                                            <div v-tooltip.top="'Copy'" class="w-fit">
-                                                <IconAt :size="15" class="cursor-pointer" />
+                                        <div
+                                            class="flex items-center text-sm gap-1"
+                                        >
+                                            <div
+                                                v-tooltip.top="'Copy'"
+                                                class="w-fit"
+                                            >
+                                                <IconAt
+                                                    :size="15"
+                                                    class="cursor-pointer"
+                                                />
                                             </div>
-                                            <div class="font-medium text-gray-600 text-sm">
+                                            <div
+                                                class="font-medium text-gray-600 text-sm"
+                                            >
                                                 {{ page.props.details?.email }}
                                             </div>
                                         </div>
@@ -75,30 +121,40 @@
                             </div>
                         </div>
                         <Divider align="left">
-                            <span class="text-xs font-medium">Scholar Details</span>
+                            <span class="text-xs font-medium"
+                                >Scholar Details</span
+                            >
                         </Divider>
                     </div>
 
                     <div class="flex-3 flex flex-col">
                         <div class="flex items-center justify-center">
-                            <div class="bg-slate-50 flex gap-7 rounded-2xl py-2 px-10">
-                                <div class="flex flex-col items-center justify-center">
+                            <div
+                                class="bg-slate-50 flex gap-7 rounded-2xl py-2 px-10"
+                            >
+                                <div
+                                    class="flex flex-col items-center justify-center"
+                                >
                                     <div>
                                         {{ page.props?.details?.type.name }}
+                                    </div>
+                                    <div class="text-xs text-gray-400">
+                                        Type
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex flex-col items-center justify-center"
+                                >
+                                    <div>
+                                        {{ page.props?.details?.program.name }}
                                     </div>
                                     <div class="text-xs text-gray-400">
                                         Program
                                     </div>
                                 </div>
-                                <div class="flex flex-col items-center justify-center">
-                                    <div>
-                                        {{ page.props?.details?.program.name }}
-                                    </div>
-                                    <div class="text-xs text-gray-400">
-                                        Sub-Program
-                                    </div>
-                                </div>
-                                <div class="flex flex-col items-center justify-center">
+                                <div
+                                    class="flex flex-col items-center justify-center"
+                                >
                                     <div>
                                         {{ page.props?.details?.awardYear }}
                                     </div>
@@ -110,15 +166,21 @@
                         </div>
                         <div class="mt-5 flex flex-col gap-3">
                             <div class="flex items-center gap-2">
-                                <Avatar class="rounded-full border !bg-blue-50 !text-blue-500" size="small">
+                                <Avatar
+                                    class="rounded-full border !bg-blue-50 !text-blue-500"
+                                    size="small"
+                                >
                                     <IconMapPin :size="20" stroke-width="2" />
                                 </Avatar>
                                 <div class="text-sm">
-                                    {{ page.props?.details?.region["name"] }}
+                                    {{ scholarLocationDisplay }}
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <Avatar class="rounded-full border !bg-blue-50 !text-blue-500" size="small">
+                                <Avatar
+                                    class="rounded-full border !bg-blue-50 !text-blue-500"
+                                    size="small"
+                                >
                                     <IconSchool :size="20" stroke-width="2" />
                                 </Avatar>
                                 <div class="text-sm">
@@ -126,828 +188,1718 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <Avatar class="rounded-full border !bg-blue-50 !text-blue-500" size="small">
-                                    <IconBuildingEstate :size="20" stroke-width="2" />
+                                <Avatar
+                                    class="rounded-full border !bg-blue-50 !text-blue-500"
+                                    size="small"
+                                >
+                                    <IconBuildingEstate
+                                        :size="20"
+                                        stroke-width="2"
+                                    />
                                 </Avatar>
                                 <div class="text-sm">
                                     {{ page.props?.details?.school }}
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div :class="[
-                                    'rounded-full border p-[5px]',
-                                    page.props?.details?.status?.bcolor,
-                                    page.props?.details?.status?.tcolor,
-                                ]">
-                                    <component :is="TablerIcons[
-                                        page.props?.details?.status.icon
-                                    ]
-                                        " :size="20" :stroke="2" />
+                                <div
+                                    :class="[
+                                        'rounded-full border p-[5px]',
+                                        academicStatusDisplay.bcolor,
+                                        academicStatusDisplay.tcolor,
+                                    ]"
+                                >
+                                    <component
+                                        :is="
+                                            TablerIcons[
+                                                academicStatusDisplay.icon
+                                            ]
+                                        "
+                                        :size="20"
+                                        :stroke="2"
+                                    />
                                 </div>
                                 <div class="text-sm uppercase">
-                                    {{ page.props?.details?.status.name }}
+                                    {{ academicStatusDisplay.name }}
                                 </div>
                             </div>
                         </div>
                         <Divider align="left">
-                            <span class="text-xs font-medium">Scholar Menu</span>
+                            <span class="text-xs font-medium"
+                                >Scholar Menu</span
+                            >
                         </Divider>
                     </div>
                     <div class="flex-3">
                         <Menu :model="tabs">
                             <template #item="{ item, props }">
-                                <a v-ripple :class="[
-                                    'flex items-center gap-2 px-3 py-2 cursor-pointer',
-                                    selectedTab.key == item.key
-                                        ? 'text-blue-600'
-                                        : '',
-                                ]" @click="changeMenu(item)">
-                                    <component :is="TablerIcons[item.icon]" :size="18"></component>
+                                <a
+                                    v-ripple
+                                    :class="[
+                                        'flex items-center gap-2 px-3 py-2 cursor-pointer',
+                                        selectedTab.key == item.key
+                                            ? 'text-blue-600'
+                                            : '',
+                                    ]"
+                                    @click="changeMenu(item)"
+                                >
+                                    <component
+                                        :is="TablerIcons[item.icon]"
+                                        :size="18"
+                                    ></component>
                                     <span class="!text-xs">{{
                                         item.label
                                     }}</span>
-                                    <Badge v-if="item.badge" size="small" severity="danger" class="ml-auto !text-xs"
-                                        :value="item.badge" />
-                                    <Badge v-if="item.status" size="small" severity="info" class="ml-auto !text-xs"
-                                        :value="item.status" />
+                                    <Badge
+                                        v-if="item.badge"
+                                        size="small"
+                                        severity="danger"
+                                        class="ml-auto !text-xs"
+                                        :value="item.badge"
+                                    />
+                                    <Badge
+                                        v-if="item.status"
+                                        size="small"
+                                        severity="info"
+                                        class="ml-auto !text-xs"
+                                        :value="item.status"
+                                    />
                                 </a>
                             </template>
                         </Menu>
                     </div>
                 </div>
                 <div class="lg:flex-7">
-                    <Panel class="!rounded-xl" v-if="selectedTab.key == 1" :pt="{
-                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                    }">
+                    <Panel
+                        class="!rounded-xl"
+                        v-if="selectedTab.key == 1"
+                        :pt="{
+                            header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
+                        }"
+                    >
                         <template #header>
                             <div class="p-2 w-full flex justify-between">
                                 <div class="flex items-center gap-2">
-                                    <Avatar class="rounded-full !bg-blue-100 !text-blue-500" size="small">
-                                        <IconUserQuestion :size="20" stroke-width="2" />
+                                    <Avatar
+                                        class="rounded-full !bg-blue-100 !text-blue-500"
+                                        size="small"
+                                    >
+                                        <IconUserQuestion
+                                            :size="20"
+                                            stroke-width="2"
+                                        />
                                     </Avatar>
                                     <h3 class="text-lg font-bold text-nowrap">
                                         Personal Records
                                     </h3>
                                 </div>
-                                <div class="flex w-full justify-end">
-                                    <DefaultButton :icon="TablerIcons.IconUserEdit" label="Edit Details" size="small"
-                                        v-if="!editBtn.info" @click="editBtn.info = true" raised
-                                        class-name="!rounded-xl !px-5" />
+                                <div class="flex w-full justify-end gap-2">
+                                    <!-- <div>
+                                        <DefaultButton
+                                            :icon="TablerIcons.IconTransfer"
+                                            @click="opTransfer.toggle($event)"
+                                            outlined
+                                            severity="secondary"
+                                            label="Transfer School/Course"
+                                            size="small"
+                                            class-name="!rounded-xl !px-5"
+                                            rounded
+                                        />
+                                        <Popover ref="opTransfer">
+                                            <div
+                                                class="w-100 flex flex-col text-sm"
+                                            >
+                                                <div
+                                                    class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1"
+                                                >
+                                                    <div>
+                                                        <IconExclamationCircleFilled
+                                                            :size="20"
+                                                        />
+                                                    </div>
+
+                                                    <p
+                                                        class="text-xs leading-5 text-justify"
+                                                    >
+                                                        Update the scholar's
+                                                        school and course
+                                                        information based on the
+                                                        approved transfer
+                                                        request. Ensure that all
+                                                        changes are accurate
+                                                        before saving.
+                                                    </p>
+                                                </div>
+                                                <Tabs :value="transferTab">
+                                                    <TabList>
+                                                        <Tab value="school">
+                                                            <div
+                                                                class="flex items-center gap-2"
+                                                            >
+                                                                <IconSchool />
+                                                                <div>
+                                                                    School
+                                                                </div>
+                                                            </div>
+                                                        </Tab>
+                                                        <Tab value="course">
+                                                            <div
+                                                                class="flex items-center gap-2"
+                                                            >
+                                                                <IconBook2 />
+                                                                <div>
+                                                                    Course
+                                                                </div>
+                                                            </div></Tab
+                                                        >
+                                                    </TabList>
+                                                    <TabPanels
+                                                        :pt="{
+                                                            root: {
+                                                                class: '!p-0 !pt-3',
+                                                            },
+                                                        }"
+                                                    >
+                                                        <TabPanel
+                                                            value="school"
+                                                        >
+                                                            <div
+                                                                class="flex flex-col gap-3"
+                                                            >
+                                                                <SelectInput
+                                                                    label="School"
+                                                                    :error-mark="
+                                                                        transferInfo
+                                                                            .errors
+                                                                            .school !=
+                                                                        null
+                                                                            ? true
+                                                                            : false
+                                                                    "
+                                                                    v-model="
+                                                                        transferInfo.school
+                                                                    "
+                                                                    @update:model-value="
+                                                                        rendertCourse
+                                                                    "
+                                                                    :options="
+                                                                        page
+                                                                            .props
+                                                                            ?.schoolOptions
+                                                                    "
+                                                                ></SelectInput>
+                                                                <SelectInput
+                                                                    label="Course"
+                                                                    v-model="
+                                                                        transferInfo.course
+                                                                    "
+                                                                    :loading="
+                                                                        loading.transferCourse
+                                                                    "
+                                                                    :disable="
+                                                                        transferInfo.school !=
+                                                                        null
+                                                                            ? false
+                                                                            : true
+                                                                    "
+                                                                    :options="
+                                                                        page
+                                                                            .props
+                                                                            ?.transferCourseOptions
+                                                                    "
+                                                                ></SelectInput>
+
+                                                                <DefaultButton
+                                                                    :icon="
+                                                                        TablerIcons.IconTransfer
+                                                                    "
+                                                                    @click="
+                                                                        transferSubmit
+                                                                    "
+                                                                    raised
+                                                                    :loading="
+                                                                        loading.transferSubmit
+                                                                    "
+                                                                    label="Transfer"
+                                                                    size="small"
+                                                                    class-name="!rounded-xl !px-5"
+                                                                />
+                                                            </div>
+                                                        </TabPanel>
+                                                        <TabPanel
+                                                            value="course"
+                                                        >
+                                                            <p class="m-0">
+                                                                Sed ut
+                                                                perspiciatis
+                                                                unde omnis iste
+                                                                natus error sit
+                                                                voluptatem
+                                                                accusantium
+                                                                doloremque
+                                                                laudantium,
+                                                                totam rem
+                                                                aperiam, eaque
+                                                                ipsa quae ab
+                                                                illo inventore
+                                                                veritatis et
+                                                                quasi architecto
+                                                                beatae vitae
+                                                                dicta sunt
+                                                                explicabo. Nemo
+                                                                enim ipsam
+                                                                voluptatem quia
+                                                                voluptas sit
+                                                                aspernatur aut
+                                                                odit aut fugit,
+                                                                sed quia
+                                                                consequuntur
+                                                                magni dolores
+                                                                eos qui ratione
+                                                                voluptatem sequi
+                                                                nesciunt.
+                                                                Consectetur,
+                                                                adipisci velit,
+                                                                sed quia non
+                                                                numquam eius
+                                                                modi.
+                                                            </p>
+                                                        </TabPanel>
+                                                    </TabPanels>
+                                                </Tabs>
+                                            </div>
+                                        </Popover>
+                                    </div> -->
+
+                                    <!-- <DefaultButton
+                                        :icon="TablerIcons.IconCreditCard"
+                                        @click="storePersonalInfo"
+                                        outlined
+                                        severity="secondary"
+                                        label="View Landbank Details"
+                                        size="small"
+                                        rounded
+                                        class-name="!rounded-xl !px-5"
+                                    />
+                                    <Divider layout="vertical" /> -->
+                                    <DefaultButton
+                                        :icon="TablerIcons.IconUserEdit"
+                                        label="Edit Details"
+                                        size="small"
+                                        v-if="!editBtn.info"
+                                        @click="EditMode"
+                                        raised
+                                        class-name="!rounded-xl !px-5"
+                                    />
                                     <div class="flex items-center gap-2" v-else>
-                                        <DefaultButton :icon="TablerIcons.IconUserCancel" label="Cancel Edit"
-                                            size="small" severity="danger" @click="editBtn.info = false" outlined
-                                            class-name="!rounded-xl !px-5" />
-                                        <DefaultButton :icon="TablerIcons.IconUserCheck" @click="storePersonalInfo"
-                                            raised :loading="loading.storePersonalInfo" label="Save this details"
-                                            size="small" class-name="!rounded-xl !px-5" />
+                                        <DefaultButton
+                                            :icon="TablerIcons.IconUserCancel"
+                                            label="Cancel Edit"
+                                            size="small"
+                                            severity="danger"
+                                            @click="cancelEdit"
+                                            outlined
+                                            class-name="!rounded-xl !px-5"
+                                        />
+                                        <DefaultButton
+                                            :icon="TablerIcons.IconUserCheck"
+                                            @click="storePersonalInfo"
+                                            raised
+                                            :loading="loading.storePersonalInfo"
+                                            label="Save this details"
+                                            size="small"
+                                            class-name="!rounded-xl !px-5"
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </template>
                         <template #default>
-                            <div class="w-full flex flex-col pt-5 gap-3">
-                                <div class="flex items-center gap-3">
-                                    <TextInput v-model="personalInfo.first_name" label="First Name"
-                                        :disabled="!editBtn.info"></TextInput>
+                            <div class="w-full flex flex-col pt-2 gap-4">
+                                <section class="flex flex-col gap-2">
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
+                                        Personal Information
+                                    </h3>
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2"
+                                    >
+                                        <TextInput
+                                            v-model="personalInfo.first_name"
+                                            label="First Name"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.middle_name"
+                                            label="Middle Name"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.last_name"
+                                            label="Last Name"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.suffix"
+                                            label="Suffix"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.email"
+                                            label="Email"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.contact_no"
+                                            label="Contact No"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <DatePickerInput
+                                            v-model="personalInfo.birth_date"
+                                            label="Birth Date"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.birth_place"
+                                            label="Birth Place"
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.religion"
+                                            label="Religion"
+                                            capitalize
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.civil_status"
+                                            capitalize
+                                            label="Civil Status"
+                                            :disabled="!editBtn.info"
+                                        />
+                                    </div>
+                                </section>
 
-                                    <TextInput v-model="personalInfo.middle_name" label="Middle Name"
-                                        :disabled="!editBtn.info"></TextInput>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <TextInput v-model="personalInfo.last_name" label="Last Name"
-                                        :disabled="!editBtn.info"></TextInput>
-                                    <TextInput v-model="personalInfo.suffix" label="Suffix" :disabled="!editBtn.info">
-                                    </TextInput>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <TextInput v-model="personalInfo.email" label="Email" :disabled="!editBtn.info">
-                                    </TextInput>
-                                    <TextInput v-model="personalInfo.contact_no" label="Contact No"
-                                        :disabled="!editBtn.info"></TextInput>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <DatePickerInput v-model="personalInfo.birth_date" label="Birth Date"
-                                        :disabled="!editBtn.info"></DatePickerInput>
-                                    <TextInput v-model="personalInfo.birth_place" label="Birth Place"
-                                        :disabled="!editBtn.info"></TextInput>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <TextInput v-model="personalInfo.religion" label="Religion" capitalize
-                                        :disabled="!editBtn.info"></TextInput>
-                                    <TextInput v-model="personalInfo.civil_status" capitalize label="Civil Status"
-                                        :disabled="!editBtn.info">
-                                    </TextInput>
-                                </div>
-                                <TextInput v-model="personalInfo.address" label="Address" :disabled="!editBtn.info"
-                                    placeholder="Street, Subdivision, etc."></TextInput>
-                                <AutoCompleteInput v-model="personalInfo.fulladdress"
-                                    :options="page.props?.resultSearch" :disabled="!editBtn.info"
-                                    :loading="loading.address"
-                                    placeholder="Find by Barangay, Municipality, Province, or Region"
-                                    @complete="autoSearch" selection></AutoCompleteInput>
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
+                                        School Information
+                                    </h3>
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 gap-2"
+                                    >
+                                        <SelectInput
+                                            label="School"
+                                            v-model="personalInfo.school"
+                                            :disable="!editBtn.info"
+                                            @update:model-value="renderCourse"
+                                            :options="page.props?.schoolOptions"
+                                        />
+                                        <SelectInput
+                                            label="Course"
+                                            v-model="personalInfo.course"
+                                            :disable="!editBtn.info"
+                                            :options="page.props?.courseOptions"
+                                        />
+                                    </div>
+                                </section>
 
-                                <Divider align="left">
-                                    <span class="text-xs font-semibold">Scholarship Assignment</span>
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
+                                        Scholarship Information
+                                    </h3>
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2"
+                                    >
+                                        <SelectInput
+                                            label="Scholar Program"
+                                            v-model="personalInfo.program"
+                                            :disable="!editBtn.info"
+                                            :options="
+                                                page.props?.programOptions
+                                            "
+                                        />
+                                        <SelectInput
+                                            label="Type"
+                                            v-model="personalInfo.sub_program"
+                                            :disable="!editBtn.info"
+                                            :options="
+                                                page.props?.subProgramOptions
+                                            "
+                                        />
+                                        <DatePickerInput
+                                            v-model="personalInfo.award_year"
+                                            label="Award Year"
+                                            view="year"
+                                            :disabled="!editBtn.info"
+                                            format-date="yy"
+                                        />
+                                        <SelectInput
+                                            label="Academic Status"
+                                            v-model="personalInfo.status"
+                                            :disable="!editBtn.info"
+                                            class="capitalize"
+                                            :options="page.props?.statusOptions"
+                                        />
+                                    </div>
+                                </section>
+
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
+                                        Address
+                                    </h3>
+                                    <TextInput
+                                        v-model="personalInfo.address"
+                                        label="Street Address"
+                                        :disabled="!editBtn.info"
+                                        placeholder="Street, Subdivision, etc."
+                                    />
+                                    <AutoCompleteInput
+                                        v-model="personalInfo.fulladdress"
+                                        label="Barangay / Municipality / Province / Region"
+                                        :options="page.props?.resultSearch"
+                                        :disabled="!editBtn.info"
+                                        :loading="loading.address"
+                                        placeholder="Find by Barangay, Municipality, Province, or Region"
+                                        @complete="autoSearch"
+                                        selection
+                                    />
+                                </section>
+
+                                <section
+                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                >
+                                    <h3
+                                        class="text-xs font-semibold uppercase text-slate-500"
+                                    >
+                                        Other Information
+                                    </h3>
+                                    <div
+                                        class="grid grid-cols-1 lg:grid-cols-2 gap-2"
+                                    >
+                                        <TextInput
+                                            v-model="personalInfo.acc_name"
+                                            label="Landbank Account Name"
+                                            capitalize
+                                            :disabled="!editBtn.info"
+                                        />
+                                        <TextInput
+                                            v-model="personalInfo.acc_no"
+                                            capitalize
+                                            label="Landbank Account Number"
+                                            :disabled="!editBtn.info"
+                                        />
+                                    </div>
+                                </section>
+
+                                <!-- <Divider align="left">
+                                    <span class="text-xs font-semibold"
+                                        >Guardian Information</span
+                                    >
                                 </Divider>
                                 <div class="flex items-center gap-3">
-                                    <SelectInput label="Scholar Program" v-model="personalInfo.program"
-                                        :disable="!editBtn.info" :options="page.props?.programOptions"></SelectInput>
-
-                                    <SelectInput label="Scholar Sub-Program" v-model="personalInfo.sub_program"
-                                        :disable="!editBtn.info" :options="page.props?.subProgramOptions"></SelectInput>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <SelectInput label="School" v-model="personalInfo.school" :disable="!editBtn.info"
-                                        :options="page.props?.programOptions"></SelectInput>
-                                    <SelectInput label="Course" v-model="personalInfo.sub_program"
-                                        :disable="!editBtn.info" :options="page.props?.subProgramOptions"></SelectInput>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <DatePickerInput v-model="personalInfo.award_year" label="Award Year" view="year"
-                                        :disabled="!editBtn.info" format-date="yy"></DatePickerInput>
-                                    <SelectInput label="Status" v-model="personalInfo.status" :disable="!editBtn.info"
-                                        class="capitalize" :options="page.props?.statusOptions"></SelectInput>
-                                </div>
-                                <Divider align="left">
-                                    <span class="text-xs font-semibold">Guardian Information</span>
-                                </Divider>
-                                <div class="flex items-center gap-3">
-                                    <TextInput v-model="personalInfo.guardian_name" label="Parent/Guardian Name"
-                                        capitalize :disabled="!editBtn.info"></TextInput>
-                                    <TextInput v-model="personalInfo.guardian_id_no" label="ID Number"
-                                        :disabled="!editBtn.info">
+                                    <TextInput
+                                        v-model="personalInfo.guardian_name"
+                                        label="Parent/Guardian Name"
+                                        capitalize
+                                        :disabled="!editBtn.info"
+                                    ></TextInput>
+                                    <TextInput
+                                        v-model="personalInfo.guardian_id_no"
+                                        label="ID Number"
+                                        :disabled="!editBtn.info"
+                                    >
                                     </TextInput>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <TextInput v-model="personalInfo.guardian_place_issue
-                                        " label="ID Place of Issue" :disabled="!editBtn.info"></TextInput>
-                                    <TextInput v-model="personalInfo.guardian_date_issue
-                                        " label="ID Date of Issue" :disabled="!editBtn.info">
+                                    <TextInput
+                                        v-model="
+                                            personalInfo.guardian_place_issue
+                                        "
+                                        label="ID Place of Issue"
+                                        :disabled="!editBtn.info"
+                                    ></TextInput>
+                                    <TextInput
+                                        v-model="
+                                            personalInfo.guardian_date_issue
+                                        "
+                                        label="ID Date of Issue"
+                                        :disabled="!editBtn.info"
+                                    >
                                     </TextInput>
-                                </div>
+                                </div> -->
                             </div>
                         </template>
                     </Panel>
-                    <div class="flex flex-col gap-4" v-if="selectedTab.key == 2">
-                        <div class="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-2">
-                            <div class="flex items-center gap-2">
-                                <Avatar class="rounded-full !bg-blue-100 !text-blue-500" size="small">
-                                    <IconScript :size="20" stroke-width="2" />
-                                </Avatar>
-                                <h3 class="text-lg font-bold text-nowrap">
-                                    Transcript of Records
-                                </h3>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <DefaultButton :icon="TablerIcons.IconPlus" v-if="!createBtn.tr" label="Create TOR"
-                                    size="small" raised class-name="!rounded-xl !px-5" @click="createBtn.tr = true" />
-                                <div class="flex items-center gap-2" v-else>
-                                    <DefaultButton :icon="TablerIcons.IconScriptX" label="Cancel Create" size="small"
-                                        severity="danger" @click="createBtn.tr = false" outlined
-                                        class-name="!rounded-xl !px-5" />
-                                    <DefaultButton :icon="TablerIcons.IconScriptPlus" @click="storeTor" raised
-                                        label="Save TOR" size="small" class-name="!rounded-xl !px-5" />
+                    <div
+                        class="flex flex-col gap-4"
+                        v-if="selectedTab.key == 2"
+                    >
+                        <div
+                            class="rounded-2xl border border-slate-200 bg-slate-50 p-3"
+                            v-if="page.props?.details?.termGrades?.length > 0"
+                        >
+                            <div
+                                class="mb-3 flex flex-col gap-1 rounded-xl bg-white p-3 text-gray-700 shadow-sm"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <IconHistory :size="18" />
+                                    <span class="text-sm font-semibold">
+                                        Academic Records
+                                    </span>
                                 </div>
-                                <!-- <DefaultButton :icon="TablerIcons.IconTransfer" label="Transfer school" size="small"
-                                    raised class-name="!rounded-xl !px-5" /> -->
+                                <p class="text-xs text-gray-500">
+                                    Records are arranged from newest to oldest.
+                                    Totals and semester average use academic
+                                    subjects only.
+                                </p>
+                            </div>
+                            <div
+                                v-for="(termRecord, index) in page.props
+                                    ?.details?.termGrades"
+                                class="my-3"
+                            >
+                                <Panel
+                                    class="!rounded-xl"
+                                    :pt="{
+                                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
+                                    }"
+                                >
+                                    <template #header>
+                                        <div
+                                            class="p-3 w-full flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+                                        >
+                                            <div
+                                                class="flex items-center gap-3 text-md font-medium text-gray-700"
+                                            >
+                                                <IconSchool
+                                                    class="text-gray-500"
+                                                    :size="20"
+                                                />
+                                                <span
+                                                    class="px-2 py-0.5 rounded-md bg-slate-200"
+                                                >
+                                                    {{
+                                                        termRecord.academic_year
+                                                    }}
+                                                </span>
+                                                <span
+                                                    class="px-2 py-0.5 rounded-md bg-gray-100"
+                                                >
+                                                    {{
+                                                        termRecord.termType ??
+                                                        "Term"
+                                                    }}
+                                                </span>
+                                            </div>
+                                            <div
+                                                class="flex flex-wrap items-center gap-2 lg:justify-end"
+                                            >
+                                                <span
+                                                    class="text-xs font-semibold uppercase text-gray-400"
+                                                >
+                                                    Documents
+                                                </span>
+                                                <div
+                                                    class="flex items-center gap-1"
+                                                    v-if="termRecord.files"
+                                                >
+                                                    <template
+                                                        v-for="(
+                                                            file, index
+                                                        ) in termRecord.files"
+                                                        :key="index"
+                                                    >
+                                                        <a
+                                                            v-if="
+                                                                file.document_type ==
+                                                                'cor'
+                                                            "
+                                                            :href="
+                                                                file.file_path
+                                                            "
+                                                            target="_blank"
+                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                        >
+                                                            COR:
+                                                            {{ file.file_name }}
+                                                        </a>
+                                                        <a
+                                                            v-if="
+                                                                file.document_type ==
+                                                                'grades_proof'
+                                                            "
+                                                            :href="
+                                                                file.file_path
+                                                            "
+                                                            target="_blank"
+                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                        >
+                                                            Proof of Grades:
+                                                            {{ file.file_name }}
+                                                        </a>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template #default>
+                                        <div
+                                            class="w-full flex flex-col pt-5 gap-3"
+                                        >
+                                            <div
+                                                class="flex flex-col gap-3 rounded-xl bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                                            >
+                                                <div class="flex flex-col">
+                                                    <div
+                                                        class="text-xs text-gray-500"
+                                                    >
+                                                        {{
+                                                            page.props?.details
+                                                                ?.school
+                                                        }}
+                                                    </div>
+                                                    <div
+                                                        class="text-base font-semibold text-gray-800"
+                                                    >
+                                                        {{
+                                                            page.props?.details
+                                                                ?.course
+                                                        }}
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-right"
+                                                >
+                                                    <div
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-amber-600"
+                                                    >
+                                                        Scholarship Standing
+                                                    </div>
+                                                    <div
+                                                        class="text-sm font-semibold text-amber-800"
+                                                    >
+                                                        {{
+                                                            termRecord.scholarshipStanding ??
+                                                            "Scholarship standing is not available"
+                                                        }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <table
+                                                class="min-w-full !border-none text-sm"
+                                            >
+                                                <thead>
+                                                    <tr class="bg-gray-100">
+                                                        <th
+                                                            class="px-3 py-2 text-left rounded-l-xl"
+                                                        >
+                                                            Subject Name
+                                                        </th>
+                                                        <th
+                                                            class="px-3 py-2 text-left"
+                                                        >
+                                                            Subject Code
+                                                        </th>
+                                                        <th
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            Unit
+                                                        </th>
+                                                        <th
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            Grades
+                                                        </th>
+                                                        <th
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            Total
+                                                        </th>
+                                                        <th
+                                                            class="px-3 py-2 text-center rounded-r-xl"
+                                                        >
+                                                            Remarks
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr
+                                                        v-if="
+                                                            !termRecord.subjects
+                                                                ?.length
+                                                        "
+                                                    >
+                                                        <td
+                                                            colspan="6"
+                                                            class="px-3 py-6 text-center text-gray-500"
+                                                        >
+                                                            Approved academic
+                                                            record found, but no
+                                                            subjects are loaded
+                                                            for this term yet.
+                                                        </td>
+                                                    </tr>
+                                                    <tr
+                                                        v-for="(
+                                                            item, index
+                                                        ) in termRecord.subjects"
+                                                        :key="index"
+                                                        class="hover:bg-gray-50"
+                                                    >
+                                                        <td
+                                                            class="px-3 py-2 uppercase max-w-70"
+                                                        >
+                                                            {{
+                                                                item.subject
+                                                                    .name
+                                                            }}
+                                                        </td>
+                                                        <td class="px-3 py-2">
+                                                            {{
+                                                                item.subject
+                                                                    ?.code ??
+                                                                item.code
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            {{
+                                                                item.subject
+                                                                    ?.unit ??
+                                                                item.unit
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2 text-right max-w-35"
+                                                        >
+                                                            {{
+                                                                item.request
+                                                                    ?.grade ??
+                                                                item.grade
+                                                                    ?.grade
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            {{
+                                                                item.total ??
+                                                                "-"
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2 text-center"
+                                                        >
+                                                            <div
+                                                                v-if="
+                                                                    item.request
+                                                                        ?.is_drop
+                                                                "
+                                                                class="text-red-600"
+                                                            >
+                                                                Dropped
+                                                            </div>
+                                                            <div
+                                                                v-else-if="
+                                                                    item.request
+                                                                        ?.is_failed
+                                                                "
+                                                                class="text-rose-600"
+                                                            >
+                                                                Failed
+                                                            </div>
+                                                            <div
+                                                                v-else-if="
+                                                                    item.request
+                                                                        ?.is_incomplete
+                                                                "
+                                                                class="text-amber-600"
+                                                            >
+                                                                Incompleted
+                                                            </div>
+                                                            <div
+                                                                v-else-if="
+                                                                    item.request
+                                                                        ?.grade
+                                                                "
+                                                                class="text-green-600"
+                                                            >
+                                                                Passed
+                                                            </div>
+                                                            <div
+                                                                v-else-if="
+                                                                    item.grade
+                                                                        ?.is_drop
+                                                                "
+                                                                class="text-red-600"
+                                                            >
+                                                                Dropped
+                                                            </div>
+                                                            <div
+                                                                v-else-if="
+                                                                    item.grade
+                                                                        ?.is_failed
+                                                                "
+                                                                class="text-rose-600"
+                                                            >
+                                                                Failed
+                                                            </div>
+                                                            <div
+                                                                v-else-if="
+                                                                    item.grade
+                                                                        ?.is_incomplete
+                                                                "
+                                                                class="text-amber-600"
+                                                            >
+                                                                Incompleted
+                                                            </div>
+                                                            <div
+                                                                v-else-if="
+                                                                    item.grade
+                                                                        ?.is_active
+                                                                "
+                                                                class="text-green-600"
+                                                            >
+                                                                Passed
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr
+                                                        v-if="
+                                                            termRecord.subjects
+                                                                ?.length
+                                                        "
+                                                        class="bg-blue-50 font-semibold text-gray-700"
+                                                    >
+                                                        <td
+                                                            class="px-3 py-2"
+                                                            colspan="2"
+                                                        >
+                                                            Semester Average
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            {{
+                                                                termRecord
+                                                                    .summary
+                                                                    ?.units ?? 0
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2"
+                                                        ></td>
+                                                        <td
+                                                            class="px-3 py-2 text-right"
+                                                        >
+                                                            {{
+                                                                termRecord
+                                                                    .summary
+                                                                    ?.average ??
+                                                                "-"
+                                                            }}
+                                                        </td>
+                                                        <td
+                                                            class="px-3 py-2"
+                                                        ></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <!-- Group Action Buttons -->
+                                            <div
+                                                v-if="termRecord.gradeRequest"
+                                                class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200"
+                                            >
+                                                <div>
+                                                    <DefaultButton
+                                                        @click="
+                                                            (e) =>
+                                                                opGradeToggle(
+                                                                    e,
+                                                                    index,
+                                                                )
+                                                        "
+                                                        :icon="
+                                                            TablerIcons.IconX
+                                                        "
+                                                        label="Reject All"
+                                                        severity="danger"
+                                                        :icon-size="15"
+                                                        rounded
+                                                        outlined
+                                                        size="small"
+                                                        class-name="!px-5"
+                                                    />
+                                                    <Popover
+                                                        :ref="
+                                                            (el) =>
+                                                                (opGradeRequest[
+                                                                    index
+                                                                ] = el)
+                                                        "
+                                                    >
+                                                        <div
+                                                            class="w-[26rem] p-1 flex flex-col gap-4"
+                                                        >
+                                                            <!-- Header -->
+                                                            <div
+                                                                class="flex items-start justify-between"
+                                                            >
+                                                                <div>
+                                                                    <h3
+                                                                        class="text-sm font-semibold text-gray-800"
+                                                                    >
+                                                                        Reject
+                                                                        Grade
+                                                                        Request
+                                                                    </h3>
+                                                                    <p
+                                                                        class="text-xs text-gray-500 mt-1"
+                                                                    >
+                                                                        Provide
+                                                                        a reason
+                                                                        for
+                                                                        rejecting
+                                                                        all
+                                                                        grade
+                                                                        requests.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Divider -->
+                                                            <div
+                                                                class="border-t"
+                                                            ></div>
+
+                                                            <!-- Form -->
+                                                            <div
+                                                                class="flex flex-col gap-2"
+                                                            >
+                                                                <label
+                                                                    class="text-xs font-medium text-gray-600 leading-0"
+                                                                >
+                                                                    Remarks
+                                                                    <span
+                                                                        class="text-red-500"
+                                                                        >*</span
+                                                                    >
+                                                                </label>
+
+                                                                <Textarea
+                                                                    v-model="
+                                                                        validateGradeForm.reason
+                                                                    "
+                                                                    rows="4"
+                                                                    placeholder="Enter your reason here..."
+                                                                    class="w-full !text-sm"
+                                                                    size="small"
+                                                                />
+                                                            </div>
+
+                                                            <!-- Actions -->
+                                                            <div
+                                                                class="flex justify-end gap-2 pt-2"
+                                                            >
+                                                                <DefaultButton
+                                                                    @click="
+                                                                        (e) =>
+                                                                            opGradeToggle(
+                                                                                e,
+                                                                                index,
+                                                                            )
+                                                                    "
+                                                                    label="Cancel"
+                                                                    rounded
+                                                                    outlined
+                                                                    size="small"
+                                                                    class-name="!px-4"
+                                                                />
+
+                                                                <DefaultButton
+                                                                    label="Reject Request"
+                                                                    :icon="
+                                                                        TablerIcons.IconX
+                                                                    "
+                                                                    :loading="
+                                                                        loading.validateGrade
+                                                                    "
+                                                                    :disabled="
+                                                                        loading.validateGrade
+                                                                    "
+                                                                    @click="
+                                                                        validateGradeRequest(
+                                                                            {
+                                                                                id: termRecord.id,
+                                                                                type: 'reject',
+                                                                            },
+                                                                        )
+                                                                    "
+                                                                    severity="danger"
+                                                                    rounded
+                                                                    size="small"
+                                                                    class-name="!px-5"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </Popover>
+                                                </div>
+
+                                                <DefaultButton
+                                                    @click="
+                                                        validateGradeRequest({
+                                                            id: termRecord.id,
+                                                            type: 'accept',
+                                                        })
+                                                    "
+                                                    label="Approve All"
+                                                    :icon="
+                                                        TablerIcons.IconCheck
+                                                    "
+                                                    :loading="
+                                                        loading.validateGrade
+                                                    "
+                                                    :disabled="
+                                                        loading.validateGrade
+                                                    "
+                                                    severity="success"
+                                                    :icon-size="15"
+                                                    rounded
+                                                    size="small"
+                                                    class-name="!px-5"
+                                                />
+                                            </div>
+                                        </div>
+                                    </template>
+                                </Panel>
                             </div>
                         </div>
+                    </div>
+                    <div
+                        v-if="selectedTab.key === 3"
+                        class="w-full flex flex-col gap-3"
+                    >
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Total Amount -->
+                            <div
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-sm font-medium text-slate-500"
+                                    >
+                                        Total Stipend Amount
+                                    </span>
 
-                        <Panel class="!rounded-xl" v-if="createBtn.tr" :pt="{
-                            header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                        }">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"
+                                    >
+                                        <i
+                                            class="pi pi-wallet text-blue-600"
+                                        ></i>
+                                    </div>
+                                </div>
+
+                                <h2
+                                    class="text-3xl font-bold text-slate-800 mt-4"
+                                >
+                                    ₱
+                                    {{
+                                        page.props?.details?.financialAid
+                                            ?.grandTotal
+                                    }}
+                                </h2>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Total approved scholarship amount
+                                </p>
+                            </div>
+
+                            <!-- Amount Received -->
+                            <div
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-sm font-medium text-slate-500"
+                                    >
+                                        Total Financial Allowances
+                                    </span>
+
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"
+                                    >
+                                        <i
+                                            class="pi pi-check-circle text-green-600"
+                                        ></i>
+                                    </div>
+                                </div>
+
+                                <h2
+                                    class="text-3xl font-bold text-green-600 mt-4"
+                                >
+                                    ₱{{
+                                        page.props?.details?.financialAid
+                                            ?.approvedTotal
+                                    }}
+                                </h2>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Successfully received amount
+                                </p>
+                            </div>
+
+                            <!-- Remaining Balance -->
+                            <div
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-sm font-medium text-slate-500"
+                                    >
+                                        Remaining Balance
+                                    </span>
+
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"
+                                    >
+                                        <i
+                                            class="pi pi-chart-line text-amber-600"
+                                        ></i>
+                                    </div>
+                                </div>
+
+                                <h2
+                                    class="text-3xl font-bold text-amber-600 mt-4"
+                                >
+                                    ₱{{
+                                        page.props?.details?.financialAid
+                                            ?.totalWithheld
+                                    }}
+                                </h2>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Outstanding scholarship balance
+                                </p>
+                            </div>
+                        </div>
+                        <Panel
+                            class="w-full !rounded-xl"
+                            :pt="{
+                                header: '!border-b-1 !border-gray-300 !border-dashed !p-3 ',
+                            }"
+                        >
                             <template #header>
-                                <div class="p-2 w-full flex justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <SelectInput v-model="torInfo.year" @update="checkChangesYearAndTerm"
-                                            class="!w-60" placeholder="Year" :options="page.props?.yearOptions">
-                                        </SelectInput>
-                                        /
-                                        <SelectInput v-model="torInfo.term" @update="checkChangesYearAndTerm"
-                                            :options="page.props?.termOptions" placeholder="Term">
-                                        </SelectInput>
-                                    </div>
-                                    <div class="">
-                                        <TextInput v-model="torInfo.academic_year" placeholder="Academic Year"
-                                            size="small">
-                                        </TextInput>
-                                    </div>
+                                <div
+                                    class="flex items-center justify-between gap-1"
+                                >
+                                    <h3
+                                        class="text-sm font-semibold text-gray-800"
+                                    >
+                                        Semester Breakdown
+                                    </h3>
                                 </div>
                             </template>
                             <template #default>
-                                <div class="w-full flex flex-col pt-5 gap-3">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex flex-col">
-                                            <div class="text-xs">
-                                                {{
-                                                    page.props?.details?.course
-                                                }}
+                                <div
+                                    class="grid grid-cols-1 xl:grid-cols-3 pt-3 gap-8"
+                                >
+                                    <div class="xl:col-span-2">
+                                        <template
+                                            v-for="(q, index) in page.props
+                                                ?.details?.financialAid
+                                                ?.monthly"
+                                            :key="index"
+                                        >
+                                            <div
+                                                class="flex items-center justify-between mt-5 mb-1"
+                                            >
+                                                <div>
+                                                    <div
+                                                        class="flex items-center gap-2"
+                                                    >
+                                                        <div
+                                                            class="text-slate-700 text-sm font-semibold"
+                                                        >
+                                                            {{ q.period }}
+                                                        </div>
+                                                        <span
+                                                            v-if="index === 0"
+                                                            class="text-xs bg-blue-100 px-4 rounded-2xl border border-blue-200 font-medium text-blue-600 py-0.5"
+                                                            >Current
+                                                            Semester</span
+                                                        >
+                                                    </div>
+                                                    <p
+                                                        class="text-xs text-slate-500"
+                                                    >
+                                                        Monthly Scholarship
+                                                        Releases
+                                                    </p>
+                                                </div>
+
+                                                <div class="text-right">
+                                                    <div
+                                                        class="text-xs text-slate-500"
+                                                    >
+                                                        Month Status
+                                                    </div>
+                                                    <div
+                                                        class="text-lg itmes-center font-semibold capitalize flex gap-1 text-slate-800"
+                                                    >
+                                                        <div>
+                                                            <Button
+                                                                size="small"
+                                                                text
+                                                                class="!rounded-full !p-1"
+                                                                severity="secondary"
+                                                                @click="
+                                                                    historyToggle(
+                                                                        $event,
+                                                                        index,
+                                                                    )
+                                                                "
+                                                            >
+                                                                <IconHistory
+                                                                    :size="20"
+                                                                />
+                                                            </Button>
+
+                                                            <Popover
+                                                                :ref="
+                                                                    (el) =>
+                                                                        (opHistory[
+                                                                            index
+                                                                        ] = el)
+                                                                "
+                                                            >
+                                                                <div
+                                                                    class="max-w-70 w-full"
+                                                                >
+                                                                    <div
+                                                                        class="flex items-center justify-between"
+                                                                    >
+                                                                        <span
+                                                                            class="font-semibold"
+                                                                            >Payroll
+                                                                            Processing
+                                                                            Timeline</span
+                                                                        >
+                                                                    </div>
+                                                                    <p
+                                                                        class="text-xs text-muted-color mt-2 mb-0!"
+                                                                    >
+                                                                        View the
+                                                                        complete
+                                                                        history
+                                                                        of
+                                                                        payroll
+                                                                        processing,
+                                                                        including
+                                                                        submissions,
+                                                                        approvals,
+                                                                        rejections,
+                                                                        remarks,
+                                                                        and the
+                                                                        users
+                                                                        responsible
+                                                                        for each
+                                                                        action.
+                                                                    </p>
+                                                                    <Timeline
+                                                                        :value="
+                                                                            q.logs
+                                                                        "
+                                                                        class="mt-5"
+                                                                        align="left"
+                                                                        :pt="{
+                                                                            eventOpposite:
+                                                                                '!hidden',
+                                                                        }"
+                                                                    >
+                                                                        <template
+                                                                            #marker="slotProps"
+                                                                        >
+                                                                            <Avatar
+                                                                                shape="circle"
+                                                                                class="!bg-white border !border-slate-200 !shadow-sm"
+                                                                            >
+                                                                                <IconDotsCircleHorizontal
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    v-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ==
+                                                                                        'draft'
+                                                                                    "
+                                                                                />
+                                                                                <IconHelpCircle
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    class="text-yellow-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ==
+                                                                                        'submitted_payroll'
+                                                                                    "
+                                                                                />
+                                                                                <IconCircleX
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    class="text-red-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ==
+                                                                                        'rejected_payroll'
+                                                                                    "
+                                                                                />
+                                                                                <IconCircleCheck
+                                                                                    :size="
+                                                                                        20
+                                                                                    "
+                                                                                    class="text-green-600"
+                                                                                    v-else
+                                                                                />
+                                                                            </Avatar>
+                                                                        </template>
+                                                                        <template
+                                                                            #content="slotProps"
+                                                                        >
+                                                                            <div
+                                                                                class="text-sm leading-4"
+                                                                            >
+                                                                                <div
+                                                                                    class="text-sm font-semibold"
+                                                                                    v-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ===
+                                                                                        'draft'
+                                                                                    "
+                                                                                >
+                                                                                    Payroll
+                                                                                    Draft
+                                                                                    Created
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-sm font-semibold text-yellow-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ===
+                                                                                        'submitted_payroll'
+                                                                                    "
+                                                                                >
+                                                                                    Ready
+                                                                                    for
+                                                                                    validation
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-sm font-semibold text-red-600"
+                                                                                    v-else-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .action ===
+                                                                                        'rejected_payroll'
+                                                                                    "
+                                                                                >
+                                                                                    Payroll
+                                                                                    Rejected
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-sm font-semibold text-green-600"
+                                                                                    v-else
+                                                                                >
+                                                                                    Payroll
+                                                                                    Approved
+                                                                                </div>
+
+                                                                                <div
+                                                                                    class="text-xs text-surface-500 mt-1"
+                                                                                >
+                                                                                    {{
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .created_by
+                                                                                    }}
+                                                                                </div>
+
+                                                                                <span
+                                                                                    class="text-[11px] text-surface-400"
+                                                                                >
+                                                                                    {{
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .created_at
+                                                                                    }}
+                                                                                </span>
+
+                                                                                <div
+                                                                                    v-if="
+                                                                                        slotProps
+                                                                                            .item
+                                                                                            .remarks
+                                                                                    "
+                                                                                    class="mt-3 rounded-lg bg-red-50 px-3 py-2"
+                                                                                >
+                                                                                    <div
+                                                                                        class="text-xs font-semibold text-red-600"
+                                                                                    >
+                                                                                        Remarks
+                                                                                    </div>
+
+                                                                                    <div
+                                                                                        class="mt-1 text-sm"
+                                                                                    >
+                                                                                        {{
+                                                                                            slotProps
+                                                                                                .item
+                                                                                                .remarks
+                                                                                        }}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </template>
+                                                                    </Timeline>
+                                                                </div>
+                                                            </Popover>
+                                                        </div>
+
+                                                        <div
+                                                            :class="
+                                                                q.status ==
+                                                                'pending'
+                                                                    ? ' text-yellow-600 '
+                                                                    : q.status ==
+                                                                        'approved'
+                                                                      ? ' text-green-600 '
+                                                                      : q.status ==
+                                                                          'submitted'
+                                                                        ? ' text-blue-600 '
+                                                                        : q.status ==
+                                                                            'rejected'
+                                                                          ? ' text-red-600 '
+                                                                          : ' text-slate-600 '
+                                                            "
+                                                        >
+                                                            {{ q.status }}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                {{
-                                                    page.props?.details?.school
-                                                }}
+
+                                            <div
+                                                class="border border-slate-200 rounded-xl overflow-hidden"
+                                            >
+                                                <table
+                                                    class="table table-auto w-full"
+                                                >
+                                                    <thead>
+                                                        <tr>
+                                                            <th
+                                                                class="text-sm text-left p-2 font-semibold"
+                                                            >
+                                                                Month
+                                                            </th>
+                                                            <th
+                                                                class="text-sm font-semibold p-2 text-right"
+                                                            >
+                                                                Amount
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+
+                                                    <tbody>
+                                                        <tr
+                                                            class="border-t border-slate-200"
+                                                            v-for="(
+                                                                item, idx
+                                                            ) in q.stipends"
+                                                            :key="idx"
+                                                        >
+                                                            <td
+                                                                class="text-sm px-2 text-slate-600 py-1"
+                                                            >
+                                                                {{ item.month }}
+                                                            </td>
+
+                                                            <td
+                                                                class="text-sm text-right font-medium px-2"
+                                                            >
+                                                                ₱{{
+                                                                    item.amount
+                                                                }}
+                                                            </td>
+                                                        </tr>
+                                                        <tr
+                                                            class="border-t border-slate-200"
+                                                        >
+                                                            <td
+                                                                colspan="2"
+                                                                class="text-sm px-2 py-1 font-semibold bg-slate-50 text-slate-700"
+                                                            >
+                                                                <span>
+                                                                    Financial
+                                                                    Allowances</span
+                                                                >
+                                                            </td>
+                                                        </tr>
+                                                        <tr
+                                                            class="border-t border-slate-200"
+                                                            v-for="(
+                                                                allowance,
+                                                                allowanceKey
+                                                            ) in q.financial"
+                                                            :key="allowanceKey"
+                                                        >
+                                                            <td
+                                                                class="text-sm text-slate-600 px-2 py-1"
+                                                            >
+                                                                {{
+                                                                    allowance.name
+                                                                }}
+                                                            </td>
+
+                                                            <td
+                                                                class="text-sm text-right font-medium px-2"
+                                                            >
+                                                                ₱{{
+                                                                    allowance.amount
+                                                                }}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Financial Allowances -->
+                                    <div>
+                                        <div class="mb-4">
+                                            <h3
+                                                class="text-sm font-semibold text-slate-700"
+                                            >
+                                                Total Financial Allowances
+                                            </h3>
+
+                                            <p class="text-xs text-slate-500">
+                                                Additional Benefits
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-2.5">
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Clothing Allowance</span>
+
+                                                <span class="font-medium"
+                                                    >₱{{
+                                                        page.props?.details
+                                                            ?.financialAid
+                                                            .clothing
+                                                    }}</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Transportation</span>
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span
+                                                    >Learning Materials &
+                                                    Connectivity Allowance</span
+                                                >
+                                                <span class="font-medium"
+                                                    >₱{{
+                                                        page.props?.details
+                                                            ?.financialAid
+                                                            .connectivity
+                                                    }}</span
+                                                >
+                                            </div>
+
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Book Allowance</span>
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span>Thesis Allowance</span>
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="flex justify-between text-sm text-slate-600"
+                                            >
+                                                <span
+                                                    >Graduation Allowance</span
+                                                >
+                                                <span class="font-medium"
+                                                    >₱0.00</span
+                                                >
+                                            </div>
+
+                                            <Divider class="my-2" />
+
+                                            <div class="flex justify-between">
+                                                <span
+                                                    class="text-sm font-semibold text-slate-700"
+                                                >
+                                                    Total Allowances
+                                                </span>
+
+                                                <span
+                                                    class="text-base font-semibold text-slate-800"
+                                                >
+                                                    ₱{{
+                                                        page.props?.details
+                                                            ?.financialAid
+                                                            ?.totalAllowances
+                                                    }}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-2"></div>
                                     </div>
-                                    <table class="min-w-full !border-none text-sm" v-if="torInfo.term && torInfo.year">
-                                        <thead>
-                                            <tr class="bg-gray-100">
-                                                <th class="px-3 py-2 text-left"></th>
-                                                <th class="px-3 py-2 text-left">
-                                                    Subject Name
-                                                </th>
-                                                <th class="px-3 py-2 text-left">
-                                                    Subject Code
-                                                </th>
-                                                <th class="px-3 py-2 text-right">
-                                                    Unit
-                                                </th>
-                                                <th class="px-3 py-2 text-right">
-                                                    Grades
-                                                </th>
-                                                <th class="px-3 py-2 text-right">
-                                                    Remarks
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="(
-item, index
-                                                ) in torInfo.subjects" :key="index" class="hover:bg-gray-50">
-                                                <td class="px-3 py-2">
-                                                    <DefaultButton :icon="TablerIcons.IconTrash
-                                                        " size="small" severity="danger" outlined rounded
-                                                        :icon-size="15" class-name="!p-1" @click="
-                                                            torInfo.subjects.splice(
-                                                                index,
-                                                                1,
-                                                            )
-                                                            " />
-                                                </td>
-                                                <td class="px-3 py-2 uppercase max-w-70">
-                                                    <SelectInput v-model="item.subject" filter :options="page.props
-                                                        ?.subjectOptions
-                                                        " capitalize option-label="name" placeholder="Select subject">
-                                                    </SelectInput>
-                                                </td>
-                                                <td class="px-3 py-2">
-                                                    {{
-                                                        item.subject?.code ??
-                                                        item.code
-                                                    }}
-                                                </td>
-                                                <td class="px-3 py-2 text-right">
-                                                    {{
-                                                        item.subject?.unit ??
-                                                        item.unit
-                                                    }}
-                                                </td>
-                                                <td class="px-3 py-2 text-right max-w-35">
-                                                    <SelectInput v-model="item.grade" :options="page.props
-                                                        ?.gradeOptions
-                                                        " capitalize option-label="name" placeholder="Select Grade">
-                                                    </SelectInput>
-                                                </td>
-                                                <td class="px-3 py-2 text-right">
-                                                    <div v-if="
-                                                        item.grade?.is_drop
-                                                    " class="text-red-600">
-                                                        Dropped
-                                                    </div>
-                                                    <div v-else-if="
-                                                        item.grade
-                                                            ?.is_failed
-                                                    " class="text-rose-600">
-                                                        Failed
-                                                    </div>
-                                                    <div v-else-if="
-                                                        item.grade
-                                                            ?.is_incomplete
-                                                    " class="text-amber-600">
-                                                        Incompleted
-                                                    </div>
-                                                    <div v-else-if="
-                                                        item.grade
-                                                            ?.is_active
-                                                    " class="text-green-600">
-                                                        Passed
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </template>
-                            <template #footer>
-                                <div class="flex w-full justify-between">
-                                    <DefaultButton :icon="TablerIcons.IconFileUpload" label="Upload TOR" size="small"
-                                        severity="warning" class-name="!rounded-xl !px-5" />
-                                    <DefaultButton :icon="TablerIcons.IconBook2" @click="addSubject" :disabled="!torInfo.term || !torInfo.year
-                                        " raised label="Add Subjects" class-name="!rounded-xl !px-5" size="small" />
                                 </div>
                             </template>
                         </Panel>
-                        <div class="bg-red-200 px-1 rounded-lg py-3"
-                            v-if="parseInt(page.props?.details?.tr_request) > 0 && page.props?.details?.requestGrades?.length > 0">
-                            <div v-for="(termRecord, index) in page.props
-                                ?.details?.requestGrades" class="my-1">
-                                <div v-if="index == 0" class="flex items-center mb-2 gap-1">
-                                    <IconUserExclamation :size="18" />
-                                    <span class="text-sm text-nowrap">
-                                        Scholar Requested for Transcript of
-                                        Records
-                                    </span>
-                                </div>
-                                <Panel
-                                    v-if="termRecord.subjects?.length > 0 && termRecord.subjects.some(s => s.subject?.name)"
-                                    class="!rounded-xl" :pt="{
-                                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                                    }">
-                                    <template #header>
-                                        <div class="p-3 w-full flex justify-between">
-                                            <div class="flex items-center gap-2 text-md font-medium text-gray-700">
-                                                <IconSchool class="text-gray-500" :size="20" />
-                                                <span class="px-2 py-0.5 rounded-md bg-gray-100">
-                                                    {{ termRecord.level.name }}
-                                                </span>
-                                                <IconChevronRight class="w-5 h-5 text-gray-400" />
-                                                <span class="px-2 py-0.5 rounded-md bg-gray-100">
-                                                    {{ termRecord.term.name }}
-                                                </span>
-                                            </div>
-                                            <div class="flex items-center gap-2 px-2 bg-slate-200 shadow rounded-lg">
-                                                <IconCalendar :size="18" />
-                                                <div>
-                                                    {{
-                                                        termRecord.academic_year
-                                                    }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <template #default>
-                                        <div class="w-full flex flex-col pt-5 gap-3">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex flex-col">
-                                                    <div class="text-xs">
-                                                        {{
-                                                            page.props?.details
-                                                                ?.course
-                                                        }}
-                                                    </div>
-                                                    <div>
-                                                        {{
-                                                            page.props?.details
-                                                                ?.school
-                                                        }}
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center gap-2">
-                                                    <DefaultButton :icon="TablerIcons.IconFileUpload
-                                                        " label="View Uploaded TOR" size="small" severity="warning"
-                                                        class-name="!rounded-xl !px-5" />
-                                                </div>
-                                            </div>
-                                            <table class="min-w-full !border-none text-sm">
-                                                <thead>
-                                                    <tr class="bg-gray-100">
-                                                        <th class="px-3 py-2 rounded-l-xl text-left">
-                                                            Subject Name
-                                                        </th>
-                                                        <th class="px-3 py-2 text-left">
-                                                            Subject Code
-                                                        </th>
-                                                        <th class="px-3 py-2 text-right">
-                                                            Unit
-                                                        </th>
-                                                        <th class="px-3 py-2 text-right">
-                                                            Grades
-                                                        </th>
-                                                        <th class="px-3 py-2 text-center rounded-r-xl">
-                                                            Remarks
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr v-for="(
-item, index
-                                                        ) in termRecord.subjects" :key="index"
-                                                        class="hover:bg-gray-50">
-                                                        <td class="px-3 py-2 uppercase max-w-70 truncate">
-                                                            {{
-                                                                item.subject
-                                                                    .name
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2">
-                                                            {{
-                                                                item.subject
-                                                                    ?.code ??
-                                                                item.code
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2 text-right">
-                                                            {{
-                                                                item.subject
-                                                                    ?.unit ??
-                                                                item.unit
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2 text-right max-w-35">
-                                                            {{
-                                                                item.grade.grade
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2 text-right">
-                                                            <div v-if="
-                                                                item.grade
-                                                                    ?.is_drop
-                                                            " class="text-red-600">
-                                                                Dropped
-                                                            </div>
-                                                            <div v-else-if="
-                                                                item.grade
-                                                                    ?.is_failed
-                                                            " class="text-rose-600">
-                                                                Failed
-                                                            </div>
-                                                            <div v-else-if="
-                                                                item.grade
-                                                                    ?.is_incomplete
-                                                            " class="text-amber-600">
-                                                                Incompleted
-                                                            </div>
-                                                            <div v-else-if="
-                                                                item.grade
-                                                                    ?.is_active
-                                                            " class="text-green-600">
-                                                                Passed
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                            <!-- Group Action Buttons -->
-                                            <div class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200">
-                                                <div>
-                                                    <DefaultButton @click="
-                                                        (
-                                                            e,
-                                                        ) =>
-                                                            opToggle(
-                                                                e,
-                                                                index,
-                                                            )
-                                                    " :icon="TablerIcons.IconX
-                                                        " label="Reject All" severity="danger" :icon-size="15
-                                                            " rounded outlined size="small" class-name="!px-5" />
-                                                    <Popover :ref="(
-                                                        el,
-                                                    ) =>
-                                                    (opRequest[
-                                                        index
-                                                    ] =
-                                                        el)
-                                                        ">
-                                                        <div class="w-[26rem] p-1 flex flex-col gap-4">
-                                                            <!-- Header -->
-                                                            <div class="flex items-start justify-between">
-                                                                <div>
-                                                                    <h3 class="text-sm font-semibold text-gray-800">
-                                                                        Reject Subject Request
-                                                                    </h3>
-                                                                    <p class="text-xs text-gray-500 mt-1">
-                                                                        Provide a reason for rejecting all subject
-                                                                        requests.
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Divider -->
-                                                            <div class="border-t"></div>
-
-                                                            <!-- Form -->
-                                                            <div class="flex flex-col gap-2">
-                                                                <label
-                                                                    class="text-xs font-medium text-gray-600 leading-0">
-                                                                    Remarks
-                                                                    <span class="text-red-500">*</span>
-                                                                </label>
-
-                                                                <Textarea v-model="validateRequestForm.reason
-                                                                    " rows="4" placeholder="Enter your reason here..."
-                                                                    class="w-full !text-sm" size="small" />
-                                                            </div>
-
-                                                            <!-- Actions -->
-                                                            <div class="flex justify-end gap-2 pt-2">
-                                                                <DefaultButton @click="
-                                                                    (
-                                                                        e,
-                                                                    ) =>
-                                                                        opToggle(
-                                                                            e,
-                                                                            index,
-                                                                        )
-                                                                " label="Cancel" rounded outlined size="small"
-                                                                    class-name="!px-4" />
-
-                                                                <DefaultButton label="Reject Request" :icon="TablerIcons.IconX
-                                                                    " :loading="loading.validateReject
-                                                                        " :disabled="loading.validateReject
-                                                                            " @click="
-                                                                                validateRequest(
-                                                                                    {
-                                                                                        id: termRecord
-                                                                                            .id,
-                                                                                        type: 'reject',
-                                                                                    },
-                                                                                )
-                                                                                " severity="danger" rounded
-                                                                    size="small" class-name="!px-5" />
-                                                            </div>
-                                                        </div>
-                                                    </Popover>
-                                                </div>
-
-                                                <DefaultButton @click="
-                                                    validateRequest(
-                                                        {
-                                                            id: termRecord
-                                                                .id,
-                                                            type: 'accept',
-                                                        },
-                                                    )
-                                                    " label="Approve All" :icon="TablerIcons.IconCheck
-                                                        " :loading="loading.validateReject
-                                                            " :disabled="loading.validateReject
-                                                                " severity="success" :icon-size="15
-                                                                    " rounded size="small" class-name="!px-5" />
-                                            </div>
-                                        </div>
-                                    </template>
-                                </Panel>
-                            </div>
-                        </div>
-                        <div class="bg-slate-200 px-1 rounded-lg py-3" v-if="page.props?.details?.termGrades">
-                            <div v-for="(termRecord, index) in page.props
-                                ?.details?.termGrades" class="my-1">
-                                <div v-if="index == 0" class="flex items-center mb-2 gap-1 text-gray-500">
-                                    <IconHistory :size="18" />
-                                    <span class="text-sm text-nowrap">
-                                        Previous Transcript of Records
-                                    </span>
-                                </div>
-                                <Panel v-if="termRecord.subjects?.length > 0" class="!rounded-xl" :pt="{
-                                    header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
-                                }">
-                                    <template #header>
-                                        <div class="p-3 w-full flex justify-between">
-                                            <div class="flex items-center gap-2 text-md font-medium text-gray-700">
-                                                <IconSchool class="text-gray-500" :size="20" />
-                                                <span class="px-2 py-0.5 rounded-md bg-gray-100">
-                                                    {{ termRecord.level.name }}
-                                                </span>
-                                                <IconChevronRight class="w-5 h-5 text-gray-400" />
-                                                <span class="px-2 py-0.5 rounded-md bg-gray-100">
-                                                    {{ termRecord.term.name }}
-                                                </span>
-                                            </div>
-                                            <div class="flex items-center gap-2 px-2 bg-slate-200 shadow rounded-lg">
-                                                <IconCalendar :size="18" />
-                                                <div>
-                                                    {{
-                                                        termRecord.academic_year
-                                                    }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <template #default>
-                                        <div class="w-full flex flex-col pt-5 gap-3">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex flex-col">
-                                                    <div class="text-xs">
-                                                        {{
-                                                            page.props?.details
-                                                                ?.course
-                                                        }}
-                                                    </div>
-                                                    <div>
-                                                        {{
-                                                            page.props?.details
-                                                                ?.school
-                                                        }}
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center gap-2"></div>
-                                            </div>
-                                            <table class="min-w-full !border-none text-sm">
-                                                <thead>
-                                                    <tr class="bg-gray-100">
-                                                        <th class="px-3 py-2 text-left rounded-l-xl">
-                                                            Subject Name
-                                                        </th>
-                                                        <th class="px-3 py-2 text-left">
-                                                            Subject Code
-                                                        </th>
-                                                        <th class="px-3 py-2 text-right">
-                                                            Unit
-                                                        </th>
-                                                        <th class="px-3 py-2 text-right">
-                                                            Grades
-                                                        </th>
-                                                        <th class="px-3 py-2 text-center rounded-r-xl">
-                                                            Remarks
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr v-for="(
-item, index
-                                                        ) in termRecord.subjects" :key="index"
-                                                        class="hover:bg-gray-50">
-                                                        <td class="px-3 py-2 uppercase max-w-70">
-                                                            {{
-                                                                item.subject
-                                                                    .name
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2">
-                                                            {{
-                                                                item.subject
-                                                                    ?.code ??
-                                                                item.code
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2 text-right">
-                                                            {{
-                                                                item.subject
-                                                                    ?.unit ??
-                                                                item.unit
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2 text-right max-w-35">
-                                                            {{
-                                                                item.request?.grade ??
-                                                                item.grade?.grade
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2 text-center">
-                                                            <div v-if="item.request?.is_drop" class="text-red-600">
-                                                                Dropped
-                                                            </div>
-                                                            <div v-else-if="item.request?.is_failed"
-                                                                class="text-rose-600">
-                                                                Failed
-                                                            </div>
-                                                            <div v-else-if="item.request?.is_incomplete"
-                                                                class="text-amber-600">
-                                                                Incompleted
-                                                            </div>
-                                                            <div v-else-if="item.request?.grade" class="text-green-600">
-                                                                Passed
-                                                            </div>
-                                                            <div v-else-if="
-                                                                item.grade
-                                                                    ?.is_drop
-                                                            " class="text-red-600">
-                                                                Dropped
-                                                            </div>
-                                                            <div v-else-if="
-                                                                item.grade
-                                                                    ?.is_failed
-                                                            " class="text-rose-600">
-                                                                Failed
-                                                            </div>
-                                                            <div v-else-if="
-                                                                item.grade
-                                                                    ?.is_incomplete
-                                                            " class="text-amber-600">
-                                                                Incompleted
-                                                            </div>
-                                                            <div v-else-if="
-                                                                item.grade
-                                                                    ?.is_active
-                                                            " class="text-green-600">
-                                                                Passed
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                            <!-- Group Action Buttons -->
-                                            <div v-if="termRecord.gradeRequest"
-                                                class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200">
-                                                <div>
-                                                    <DefaultButton @click="
-                                                        (e) =>
-                                                            opGradeToggle(
-                                                                e,
-                                                                index,
-                                                            )
-                                                    " :icon="TablerIcons.IconX
-                                                        " label="Reject All" severity="danger" :icon-size="15
-                                                            " rounded outlined size="small" class-name="!px-5" />
-                                                    <Popover :ref="(
-                                                        el,
-                                                    ) =>
-                                                    (opGradeRequest[
-                                                        index
-                                                    ] =
-                                                        el)
-                                                        ">
-                                                        <div class="w-[26rem] p-1 flex flex-col gap-4">
-                                                            <!-- Header -->
-                                                            <div class="flex items-start justify-between">
-                                                                <div>
-                                                                    <h3 class="text-sm font-semibold text-gray-800">
-                                                                        Reject Grade Request
-                                                                    </h3>
-                                                                    <p class="text-xs text-gray-500 mt-1">
-                                                                        Provide a reason for rejecting all grade
-                                                                        requests.
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Divider -->
-                                                            <div class="border-t"></div>
-
-                                                            <!-- Form -->
-                                                            <div class="flex flex-col gap-2">
-                                                                <label
-                                                                    class="text-xs font-medium text-gray-600 leading-0">
-                                                                    Remarks
-                                                                    <span class="text-red-500">*</span>
-                                                                </label>
-
-                                                                <Textarea v-model="validateGradeForm.reason
-                                                                    " rows="4" placeholder="Enter your reason here..."
-                                                                    class="w-full !text-sm" size="small" />
-                                                            </div>
-
-                                                            <!-- Actions -->
-                                                            <div class="flex justify-end gap-2 pt-2">
-                                                                <DefaultButton @click="
-                                                                    (
-                                                                        e,
-                                                                    ) =>
-                                                                        opGradeToggle(
-                                                                            e,
-                                                                            index,
-                                                                        )
-                                                                " label="Cancel" rounded outlined size="small"
-                                                                    class-name="!px-4" />
-
-                                                                <DefaultButton label="Reject Request" :icon="TablerIcons.IconX
-                                                                    " :loading="loading.validateGrade
-                                                                        " :disabled="loading.validateGrade
-                                                                            " @click="
-                                                                                validateGradeRequest(
-                                                                                    {
-                                                                                        id: termRecord
-                                                                                            .id,
-                                                                                        type: 'reject',
-                                                                                    },
-                                                                                )
-                                                                                " severity="danger" rounded
-                                                                    size="small" class-name="!px-5" />
-                                                            </div>
-                                                        </div>
-                                                    </Popover>
-                                                </div>
-
-                                                <DefaultButton @click="
-                                                    validateGradeRequest(
-                                                        {
-                                                            id: termRecord
-                                                                .id,
-                                                            type: 'accept',
-                                                        },
-                                                    )
-                                                    " label="Approve All" :icon="TablerIcons.IconCheck
-                                                        " :loading="loading.validateGrade
-                                                            " :disabled="loading.validateGrade
-                                                                " severity="success" :icon-size="15
-                                                                    " rounded size="small" class-name="!px-5" />
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <!-- <template #footer>
-                                    <div class="flex w-full justify-between">
-                                        <DefaultButton :icon="TablerIcons.IconFileUpload" label="Upload TOR"
-                                            size="small" severity="warning" class-name="!rounded-xl !px-5" />
-                                        <DefaultButton :icon="TablerIcons.IconBook2" @click="addSubject"
-                                            :disabled="!torInfo.term || !torInfo.year" raised label="Add Subjects"
-                                            class-name="!rounded-xl !px-5" size="small" />
-                                    </div>
-                                </template> -->
-                                </Panel>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -955,10 +1907,9 @@ item, index
     </Drawer>
 </template>
 <script setup>
-import { router, useForm, usePage } from "@inertiajs/vue3";
-
 import {
     IconCopy,
+    IconBook2,
     IconId,
     IconUserFilled,
     IconAt,
@@ -969,21 +1920,30 @@ import {
     IconCalendar,
     IconUserQuestion,
     IconScript,
+    IconExclamationCircleFilled,
     IconHistory,
-    IconUserExclamation,
-    IconChevronRight,
+    IconHelpCircle,
+    IconDotsCircleHorizontal,
+    IconCircleCheck,
+    IconCircleX,
+    IconCircleDashed,
 } from "@tabler/icons-vue";
+
+import { computed, ref, watch } from "vue";
+import { useToast } from "primevue";
 import * as TablerIcons from "@tabler/icons-vue";
-import { ref, watch } from "vue";
-import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+import { router, useForm, usePage } from "@inertiajs/vue3";
 import TextInput from "../../Components/inputs/TextInput.vue";
+import SelectInput from "../../Components/inputs/SelectInput.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DatePickerInput from "../../Components/inputs/DatePickerInput.vue";
 import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
-import SelectInput from "../../Components/inputs/SelectInput.vue";
-import { useToast } from "primevue";
 
 const toast = useToast();
 const page = usePage();
+const opTransfer = ref(null);
+const opHistory = ref([]);
+const transferTab = ref("school");
 const modelValue = defineModel("modelValue");
 const selectedTab = ref({
     label: "Personal Records",
@@ -992,6 +1952,11 @@ const selectedTab = ref({
 });
 const opRequest = ref([]);
 const opGradeRequest = ref([]);
+
+const transferInfo = useForm({
+    school: null,
+    course: null,
+});
 
 const createBtn = ref({
     tr: false,
@@ -1008,17 +1973,14 @@ const loading = ref({
     address: false,
     storePersonalInfo: false,
     validateReject: false,
-    validateGrade: false
-});
-
-const torInfo = useForm({
-    term: null,
-    year: null,
-    academic_year: null,
-    subjects: [],
+    validateGrade: false,
+    course: false,
+    transferCourse: false,
+    transferSubmit: false,
 });
 
 const personalInfo = useForm({
+    schoolId: null,
     last_name: null,
     first_name: null,
     middle_name: null,
@@ -1029,10 +1991,13 @@ const personalInfo = useForm({
     formatBD: null,
     birth_place: null,
     religion: null,
+    acc_name: null,
+    acc_no: null,
     civil_status: null,
     address: null,
     fulladdress: null,
     school: null,
+    course: null,
     program: null,
     sub_program: null,
     award_year: null,
@@ -1047,8 +2012,8 @@ const validateRequestForm = useForm({
 });
 
 const validateGradeForm = useForm({
-    reason: null
-})
+    reason: null,
+});
 
 const tabs = ref([
     { label: "Personal Records", icon: "IconUserQuestion", key: 1 },
@@ -1056,22 +2021,17 @@ const tabs = ref([
         separator: true,
     },
     {
-        label: "Transcript of Records",
+        label: "Academic Records",
         icon: "IconScript",
-        badge:
-            parseInt(page.props?.details?.tr_request) +
-            parseInt(page.props?.details?.grade_request),
         key: 2,
     },
     {
         separator: true,
     },
     {
-        label: "Stipend",
+        label: "Financial Assistance Records",
         icon: "IconCoins",
         key: 3,
-        disabled: true,
-        status: "Ongoing",
     },
     {
         separator: true,
@@ -1085,12 +2045,64 @@ const tabs = ref([
     },
 ]);
 
-const addSubject = () => {
-    torInfo.subjects.push({
-        subject: null,
-        grade: null,
-    });
+const academicStatusStyles = {
+    Ongoing: {
+        name: "Ongoing",
+        icon: "IconCircleCheck",
+        bcolor: "bg-slate-50",
+        tcolor: "text-slate-700",
+    },
+    Graduating: {
+        name: "Graduating",
+        icon: "IconSchool",
+        bcolor: "bg-blue-50",
+        tcolor: "text-blue-600",
+    },
+    Graduated: {
+        name: "Graduated",
+        icon: "IconAward",
+        bcolor: "bg-indigo-50",
+        tcolor: "text-indigo-600",
+    },
+    LOA: {
+        name: "LOA",
+        icon: "IconClockPause",
+        bcolor: "bg-amber-50",
+        tcolor: "text-amber-600",
+    },
+    Terminated: {
+        name: "Terminated",
+        icon: "IconCircleX",
+        bcolor: "bg-rose-50",
+        tcolor: "text-rose-600",
+    },
 };
+
+const academicStatusDisplay = computed(() => {
+    const rawStatus =
+        page.props?.details?.academic_status ??
+        page.props?.details?.status?.name ??
+        "Ongoing";
+    return (
+        academicStatusStyles[rawStatus] ?? {
+            name: rawStatus,
+            icon: "IconCircleCheck",
+            bcolor: "bg-slate-50",
+            tcolor: "text-slate-600",
+        }
+    );
+});
+
+const scholarLocationDisplay = computed(() => {
+    const details = page.props?.details;
+    const parts = [
+        details?.address?.barangay?.name,
+        details?.address?.municipality?.name,
+        details?.address?.province?.name,
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(", ") : "N/A";
+});
 
 const changeMenu = (item) => {
     selectedTab.value = item;
@@ -1111,6 +2123,12 @@ const autoSearch = (event) => {
             },
         },
     );
+};
+
+const toggle = (type, event) => {
+    if (type === "transfer") {
+        opTransfer.value.toggle(event);
+    }
 };
 
 const opToggle = (event, index) => {
@@ -1153,12 +2171,12 @@ const validateRequest = (data) => {
 const validateGradeRequest = (data) => {
     loading.value.validateGrade = true;
 
-    if (data.type === 'accept') {
+    if (data.type === "accept") {
         // For approval, send direct request without form validation
         router.post(
             route("scholars.gradeValidate", {
                 id: data.id,
-                type: data.type
+                type: data.type,
             }),
             {},
             {
@@ -1179,14 +2197,14 @@ const validateGradeRequest = (data) => {
                     });
                 },
                 onFinish: () => (loading.value.validateGrade = false),
-            }
+            },
         );
     } else {
         // For rejection, use form with reason validation
         validateGradeForm.post(
             route("scholars.gradeValidate", {
                 id: data.id,
-                type: data.type
+                type: data.type,
             }),
             {
                 onSuccess: () => {
@@ -1206,39 +2224,9 @@ const validateGradeRequest = (data) => {
                     });
                 },
                 onFinish: () => (loading.value.validateGrade = false),
-            }
+            },
         );
     }
-};
-
-const storeTor = () => {
-    torInfo.post(
-        route("scholars.update", {
-            id: page.props?.details.id,
-            type: "grades",
-        }),
-        {
-            onSuccess: () => {
-                toast.add({
-                    severity: page.props.flash?.status,
-                    summary: page.props.flash?.title,
-                    detail: page.props.flash?.message,
-                    life: 3000,
-                });
-                if (page.props.flash?.status == "success") {
-                    createBtn.value.tr = false;
-                }
-            },
-            onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to save grade record.",
-                    life: 3000,
-                });
-            },
-        },
-    );
 };
 
 const storePersonalInfo = async () => {
@@ -1253,20 +2241,13 @@ const storePersonalInfo = async () => {
             onSuccess: () => {
                 editBtn.value.info = false;
                 toast.add({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Personal information updated successfully.",
+                    severity: page.props.flash?.status,
+                    summary: page.props.flash?.title,
+                    detail: page.props.flash?.message,
                     life: 3000,
                 });
             },
-            onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to update personal information.",
-                    life: 3000,
-                });
-            },
+
             onFinish: () => {
                 loading.value.storePersonalInfo = false;
             },
@@ -1274,25 +2255,13 @@ const storePersonalInfo = async () => {
     );
 };
 
-const checkChangesYearAndTerm = () => {
-    if (!torInfo.year || !torInfo.term) return;
-
-    router.reload({
-        preserveState: true,
-        preserveScroll: true,
-        only: ["generateSubjects", "subjectOptions", "gradeOptions"],
-        data: {
-            year: torInfo.year.number,
-            term: torInfo.term.id,
-        },
-    });
+const historyToggle = (event, index) => {
+    opHistory.value[index].toggle(event);
 };
 
 watch(
     () => page.props?.details,
     (newVal) => {
-
-        console.log(newVal.birthdate)
         if (!newVal) return;
         personalInfo.last_name = newVal.lname ?? null;
         personalInfo.first_name = newVal.fname ?? null;
@@ -1313,9 +2282,20 @@ watch(
         personalInfo.award_year = newVal.awardYear
             ? new Date(parseInt(newVal.awardYear), 0, 1)
             : null;
-        personalInfo.status = newVal.status ?? null;
+        personalInfo.status =
+            page.props?.statusOptions?.find(
+                (status) =>
+                    status.name === newVal.academic_status ||
+                    status.id === newVal.academic_status,
+            ) ??
+            newVal.status ??
+            null;
+        personalInfo.acc_name = newVal.landbank.account_name ?? null;
+        personalInfo.acc_no = newVal.landbank.account_number ?? null;
         personalInfo.school = newVal.schoolInput ?? null;
-        personalInfo.guardian_name = newVal.guardian?.name ?? null;
+        personalInfo.course = newVal.courseInput ?? null;
+        ((personalInfo.schoolId = newVal.schoolInfoId ?? null),
+            (personalInfo.guardian_name = newVal.guardian?.name ?? null));
         personalInfo.guardian_id_no = newVal.guardian?.id_no ?? null;
         personalInfo.guardian_place_issue =
             newVal.guardian?.place_issue ?? null;
@@ -1324,20 +2304,86 @@ watch(
     { immediate: true },
 );
 
-watch(
-    () => page.props?.generateSubjects,
-    (newVal) => {
-        if (!newVal) return;
-        torInfo.subjects = newVal.map((item) => ({
-            subject: {
-                id: item.id,
-                name: item.name,
-                code: item.code,
-                unit: item.unit,
+const renderCourse = (event) => {
+    router.reload({
+        only: ["courseOptions"],
+        data: { campus: event.name },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+    });
+};
+
+const rendertCourse = (event) => {
+    loading.value.transferCourse = true;
+    router.reload({
+        only: ["transferCourseOptions"],
+        data: { tcampus: event.name },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+        onFinish: () => {
+            loading.value.transferCourse = false;
+        },
+    });
+};
+
+const transferSubmit = () => {
+    loading.value.transferSubmit = true;
+    transferInfo.post(
+        route("scholars.transfer", {
+            id: page.props?.details.id,
+            type: transferTab.value,
+        }),
+        {
+            onSuccess: () => {
+                toast.add({
+                    severity: page.props.flash?.status,
+                    summary: page.props.flash?.title,
+                    detail: page.props.flash?.message,
+                    life: 3000,
+                });
+                if (page.props.flash?.status == "success") {
+                    transferInfo.value.school = null;
+                    transferInfo.value.course = null;
+                    opTransfer.value.hide();
+                }
             },
-            grade: [],
-        }));
-    },
-    { immediate: true },
-);
+            onError: (errors) => {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to transfer course.",
+                    life: 3000,
+                });
+            },
+            onFinish: () => {
+                loading.value.transferSubmit = false;
+            },
+        },
+    );
+};
+
+const EditMode = () => {
+    editBtn.value.info = true;
+};
+
+const cancelEdit = () => {
+    editBtn.value.info = false;
+
+    router.reload({
+        only: ["courseOptions"],
+        data: { campus: page.props?.details.schoolInput.name },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+        onFinish: () => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("campus");
+            window.history.replaceState({}, "", url);
+            personalInfo.school = page.props?.details.schoolInput ?? null;
+            personalInfo.course = page.props?.details.courseInput ?? null;
+        },
+    });
+};
 </script>
