@@ -129,8 +129,6 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::delete('scholar/{id}/{type}', [ScholarController::class, 'destroy'])->name('scholar.destroy');
     Route::post('scholar/{id}/grade-update', [ScholarController::class, 'gradeUpdate'])->name('scholar.grade-update');
     Route::post('scholar/{id}/grade-delete', [ScholarController::class, 'gradeDelete'])->name('scholar.grade-delete');
-    Route::post('scholar/{id}/requestSubject', [ScholarController::class, 'requestSubjectDenied'])->name('scholar.requestSubject-denied');
-    Route::post('scholar/{id}/requestSubjectAccept', [ScholarController::class, 'requestSubjectAccept'])->name('scholar.requestSubject-accept');
     Route::post('geolocation', [GeolocationController::class, 'store'])->name('geolocation.store');
 
     Route::post('stipends', [StipendController::class, 'store'])->name('stipends.store');
@@ -144,9 +142,6 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('scholars/{id}/{type}', [Scholar1Controller::class, 'update'])->name('scholars.update');
     Route::post('scholarsActivation/{id}', [Scholar1Controller::class, 'activation'])->name('scholars.activation');
     Route::post('scholars/{id}/{type}/transfer', [Scholar1Controller::class, 'transfer'])->name('scholars.transfer');
-    // Route::post('scholars/{id}/{type}/SubjectRequest', [Scholar1Controller::class, 'validate'])->name('scholars.validate');
-    // Route::post('scholars/{id}/{type}/GradeRequest', [Scholar1Controller::class, 'gradeValidate'])->name('scholars.gradeValidate');
-
     // scholar preview
     Route::post('scholar-review/{id}/validate', [ScholarController::class, 'validate'])->name('review.validate');
     Route::post('scholar-review/{id}/publish', [ScholarController::class, 'publish'])->name('review.publish');

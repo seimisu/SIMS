@@ -17,7 +17,6 @@ use App\Models\ScholarUploadedFiles;
 use App\Models\ScholarUploadTemp;
 use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
-use App\Models\StudentSubjectRequest;
 use App\Models\User;
 use App\Notifications\ScholarUploadedNotification;
 use App\Notifications\ValidatedFilesNotification;
@@ -645,62 +644,6 @@ class ScholarController extends Controller
         } catch (Exception $e) {
             throw ValidationException::withMessages([
                 'subjects' => ['There was an error deleting the grade: '.$e->getMessage()],
-            ]);
-        }
-    }
-
-    public function requestSubjectDenied(Request $request, string $id)
-    {
-
-        $data = $request->validate([
-            'remarks' => 'required|string',
-        ]);
-
-        try {
-            $requestRecord = StudentSubjectRequest::findOrFail($id);
-            $requestRecord->update([
-                'status' => 'rejected',
-                'remarks' => $data['remarks'],
-                'reviewed_at' => now(),
-                'reviewed_by' => Auth::user()->profile->fullname,
-            ]);
-
-            return redirect()->back()->with('flash', [
-                'status' => 'success',
-                'title' => 'Request Updated!',
-                'message' => 'The subject request has been successfully updated.',
-            ]);
-        } catch (Exception $e) {
-            throw ValidationException::withMessages([
-                'request' => ['There was an error updating the request: '.$e->getMessage()],
-            ]);
-        }
-    }
-
-    public function requestSubjectAccept(Request $request, string $id)
-    {
-        try {
-            $requestRecord = StudentSubjectRequest::findOrFail($id);
-            $requestRecord->update([
-                'status' => 'approved',
-                'reviewed_at' => now(),
-                'reviewed_by' => Auth::user()->profile->fullname,
-            ]);
-
-            ScholarSchoolGrades::create([
-                'term_record_id' => $requestRecord->term_record_id,
-                'subject_id' => $requestRecord->subject_id,
-                'grade_id' => null,
-            ]);
-
-            return redirect()->back()->with('flash', [
-                'status' => 'success',
-                'title' => 'Request Updated!',
-                'message' => 'The subject request has been successfully updated.',
-            ]);
-        } catch (Exception $e) {
-            throw ValidationException::withMessages([
-                'request' => ['There was an error updating the request: '.$e->getMessage()],
             ]);
         }
     }

@@ -202,12 +202,21 @@
                                         />
                                         <DefaultButton
                                             size="small"
-                                            label="Export"
+                                            label="Excel"
                                             outlined
-                                            :icon="IconDownload"
-                                            :loading="exportingPayroll"
+                                            :icon="IconFileSpreadsheet"
+                                            :loading="exportingPayroll === 'excel'"
                                             :disabled="!payrollRows.length || payrollForm.processing"
-                                            @click="exportPayroll"
+                                            @click="exportPayroll('excel')"
+                                        />
+                                        <DefaultButton
+                                            size="small"
+                                            label="PDF"
+                                            outlined
+                                            :icon="IconFileTypePdf"
+                                            :loading="exportingPayroll === 'pdf'"
+                                            :disabled="!payrollRows.length || payrollForm.processing"
+                                            @click="exportPayroll('pdf')"
                                         />
                                         <DefaultButton
                                             v-if="batchPermissions.canSubmit"
@@ -305,12 +314,8 @@
                                                 :key="group.program"
                                             >
                                                 <tr v-for="row in group.rows" :key="row.id">
-                                                    <td class="border px-2 py-1">
-                                                        <InputText
-                                                            v-model="row.account_no"
-                                                            class="!text-xs w-36"
-                                                            :disabled="!batchPermissions.canEdit"
-                                                        />
+                                                    <td class="border px-2 py-1 min-w-36">
+                                                        {{ row.account_no }}
                                                     </td>
                                                     <td class="border px-2 py-1 uppercase min-w-56">
                                                         {{ row.name }}
@@ -319,12 +324,8 @@
                                                     <td class="border px-2 py-1 min-w-56">
                                                         {{ row.university }}
                                                     </td>
-                                                    <td class="border px-2 py-1">
-                                                        <InputText
-                                                            v-model="row.scholarship_status"
-                                                            class="!text-xs w-44"
-                                                            :disabled="!batchPermissions.canEdit"
-                                                        />
+                                                    <td class="border px-2 py-1 min-w-44">
+                                                        {{ row.scholarship_status }}
                                                         <div
                                                             v-if="!row.scholarship_status"
                                                             class="mt-1 max-w-44 text-[10px] leading-3 text-amber-600"
@@ -332,12 +333,8 @@
                                                             Assign a scholar standing before submitting payroll.
                                                         </div>
                                                     </td>
-                                                    <td class="border px-2 py-1">
-                                                        <InputText
-                                                            v-model="row.period"
-                                                            class="!text-xs w-44"
-                                                            :disabled="!batchPermissions.canEdit"
-                                                        />
+                                                    <td class="border px-2 py-1 min-w-44">
+                                                        {{ row.period }}
                                                     </td>
                                                     <td
                                                         v-for="month in 5"
@@ -375,6 +372,7 @@
                                                             v-model="row.learning_materials_amount"
                                                             inputClass="!text-xs !text-right w-28"
                                                             :min="0"
+                                                            :max="fixedAllowanceLimits.connectivity?.max_amount ?? undefined"
                                                             :minFractionDigits="2"
                                                             :maxFractionDigits="2"
                                                             :disabled="!batchPermissions.canEdit"
@@ -385,6 +383,7 @@
                                                             v-model="row.clothing_amount"
                                                             inputClass="!text-xs !text-right w-28"
                                                             :min="0"
+                                                            :max="fixedAllowanceLimits.clothing?.max_amount ?? undefined"
                                                             :minFractionDigits="2"
                                                             :maxFractionDigits="2"
                                                             :disabled="!batchPermissions.canEdit"
@@ -557,8 +556,8 @@ import {
     IconChecks,
     IconCircleCheck,
     IconDeviceFloppy,
-    IconDownload,
     IconFileSpreadsheet,
+    IconFileTypePdf,
     IconSend,
     IconTrash,
     IconUserPlus,
@@ -587,7 +586,7 @@ const selectedCustomAllowanceCodes = ref([]);
 const rejectDialog = ref(false);
 const rejectRemarks = ref("");
 const rejectRemarksError = ref(false);
-const exportingPayroll = ref(false);
+const exportingPayroll = ref(null);
 
 const details = computed(() => page.props.details);
 const eligibleScholars = computed(
@@ -657,6 +656,7 @@ const statusMeta = computed(() => {
 });
 
 const customAllowanceOptions = computed(() => page.props.allowanceOptions ?? []);
+const fixedAllowanceLimits = computed(() => page.props.allowanceLimits ?? {});
 const selectedCustomAllowanceOptions = computed(() =>
     customAllowanceOptions.value.filter((allowance) =>
         selectedCustomAllowanceCodes.value.includes(allowance.code),
@@ -819,7 +819,7 @@ const reloadBatch = (extra = {}) => {
             eligible_status: eligibleStatus.value,
             ...extra,
         },
-        only: ["details", "eligibleScholars", "payrollRecipients", "allowanceOptions"],
+        only: ["details", "eligibleScholars", "payrollRecipients", "allowanceOptions", "allowanceLimits"],
         preserveScroll: true,
         onSuccess: () => {
             selectedEligible.value = [];
@@ -895,29 +895,30 @@ const savePayroll = async (onSuccess = null) => {
             reloadBatch();
         },
         onError: () => {
-            exportingPayroll.value = false;
+            exportingPayroll.value = null;
         },
     });
 };
 
-const downloadPayroll = () => {
+const downloadPayroll = (format = "excel") => {
     if (!details.value?.id) return;
 
-    exportingPayroll.value = false;
-    window.location.href = route("stipends.export", details.value.id);
+    exportingPayroll.value = null;
+    const url = route("stipends.export", details.value.id);
+    window.location.href = format === "pdf" ? `${url}?format=pdf` : url;
 };
 
-const exportPayroll = () => {
+const exportPayroll = (format = "excel") => {
     if (!details.value?.id || !payrollRows.value.length) return;
 
-    exportingPayroll.value = true;
+    exportingPayroll.value = format;
 
     if (canBuildPayroll.value && batchPermissions.value.canEdit) {
-        savePayroll(downloadPayroll);
+        savePayroll(() => downloadPayroll(format));
         return;
     }
 
-    downloadPayroll();
+    downloadPayroll(format);
 };
 
 const removeRecipient = (row) => {

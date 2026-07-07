@@ -62,18 +62,8 @@ class ScholarTerm extends Model
         return $this->hasMany(StudentSubject::class, 'term_record_id')->where('status', 'pending');
     }
 
-    public function subjectRequests()
-    {
-        return $this->hasManyThrough(StudentSubjectRequest::class, StudentSubject::class, 'term_record_id', 'student_subject_id', 'id', 'id');
-    }
-
     public function grades()
     {
         return $this->hasMany(StudentGrade::class, 'term_record_id');
-    }
-
-    public function gradeRequests()
-    {
-        return $this->hasManyThrough(StudentGradeRequest::class, StudentGrade::class, 'term_record_id', 'student_grades_id', 'id', 'id');
     }
 }

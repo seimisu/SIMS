@@ -21,9 +21,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -345,6 +348,8 @@ class StipendController extends Controller
                     'name' => trim($term->classification . ' - ' . $term->name),
                     'term_name' => $term->name,
                 ]),
+            'academicYearOptions' => $this->academicYearOptions(),
+            'nextBatchNumber' => $this->nextBatchNumber($request),
             'batches' => Batches::whereNull('deleted_at')
                 ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
                     $query->whereRaw('LOWER(region) = ?', [Str::lower($permissions->agencyNameFor($user) ?? '')]);
@@ -392,15 +397,107 @@ class StipendController extends Controller
             'allowanceOptions' => request('id')
                 ? $this->allowanceOptions()
                 : [],
+            'allowanceLimits' => request('id')
+                ? $this->allowanceLimits()
+                : [],
         ]);
     }
 
-    private function allowanceOptions()
+    private function academicYearOptions()
     {
-        return AllowanceType::whereIn('code', $this->customAllowanceCodes())
+        $years = collect();
+
+        foreach (['scholar_term_records', 'term_records'] as $table) {
+            if (! Schema::connection('pgsql')->hasTable($table)) {
+                continue;
+            }
+
+            if (! Schema::connection('pgsql')->hasColumn($table, 'academic_year')
+                || ! Schema::connection('pgsql')->hasColumn($table, 'verification_status')
+            ) {
+                continue;
+            }
+
+            $years = $years->merge(
+                DB::connection('pgsql')
+                    ->table($table)
+                    ->whereRaw('LOWER(verification_status) = ?', ['approved'])
+                    ->whereNotNull('academic_year')
+                    ->pluck('academic_year')
+            );
+        }
+
+        return $years
+            ->filter(fn($year) => is_string($year) && preg_match('/^\d{4}-\d{4}$/', trim($year)))
+            ->map(fn($year) => trim($year))
+            ->unique()
+            ->sortByDesc(fn($year) => (int) Str::before($year, '-'))
+            ->take(5)
+            ->values()
+            ->map(fn($year) => [
+                'id' => $year,
+                'name' => $year,
+            ]);
+    }
+
+    private function inputArrayValue(mixed $value, string $key = 'name'): mixed
+    {
+        if (is_array($value)) {
+            return $value[$key] ?? $value['name'] ?? $value['id'] ?? null;
+        }
+
+        return $value;
+    }
+
+    private function calculatedNextBatchNumber(string $region, string $academicYear, int|string|null $termId, ?string $termName): int
+    {
+        $usedNumbers = Batches::query()
+            ->whereNull('deleted_at')
+            ->where('school_year', $academicYear)
+            ->whereRaw('LOWER(region) = ?', [Str::lower($region)])
+            ->when($termId, fn($query) => $query->where('term_id', $termId), function ($query) use ($termName) {
+                $query->whereRaw('LOWER(academic_term) = ?', [Str::lower($termName)]);
+            })
+            ->pluck('name')
+            ->map(function ($name) {
+                preg_match('/(?:^|_)Batch(\d+)\b/i', (string) $name, $matches);
+
+                return isset($matches[1]) ? (int) $matches[1] : null;
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        $next = 1;
+
+        while ($usedNumbers->contains($next)) {
+            $next++;
+        }
+
+        return $next;
+    }
+
+    private function nextBatchNumber(Request $request): ?int
+    {
+        $region = $this->inputArrayValue($request->input('batch_region'));
+        $academicYear = $this->inputArrayValue($request->input('batch_academic_year'));
+        $term = $request->input('batch_term');
+        $termId = is_array($term) ? ($term['id'] ?? null) : null;
+        $termName = is_array($term) ? ($term['term_name'] ?? $term['name'] ?? null) : $term;
+
+        if (! $region || ! $academicYear || (! $termId && ! $termName)) {
+            return null;
+        }
+
+        return $this->calculatedNextBatchNumber($region, $academicYear, $termId, $termName);
+    }
+
+    private function allowanceMetadata(array $codes)
+    {
+        return AllowanceType::whereIn('code', $codes)
             ->where('is_active', true)
             ->get()
-            ->sortBy(fn($allowance) => array_search($allowance->code, $this->customAllowanceCodes(), true))
+            ->sortBy(fn($allowance) => array_search($allowance->code, $codes, true))
             ->values()
             ->map(fn($allowance) => [
                 'code' => $allowance->code,
@@ -409,6 +506,70 @@ class StipendController extends Controller
                 'max_amount' => $allowance->max_amount !== null ? (float) $allowance->max_amount : null,
                 'is_variable' => (bool) $allowance->is_variable,
             ]);
+    }
+
+    private function allowanceOptions()
+    {
+        return $this->allowanceMetadata($this->customAllowanceCodes());
+    }
+
+    private function allowanceLimits()
+    {
+        return $this->allowanceMetadata(['connectivity', 'clothing'])
+            ->keyBy('code');
+    }
+
+    private function enforceAllowanceMaximums(array $recipients): void
+    {
+        $maxAmounts = AllowanceType::whereIn('code', array_merge(
+            ['connectivity', 'clothing'],
+            $this->customAllowanceCodes()
+        ))
+            ->whereNotNull('max_amount')
+            ->pluck('max_amount', 'code')
+            ->map(fn($amount) => (float) $amount);
+
+        if ($maxAmounts->isEmpty()) {
+            return;
+        }
+
+        $fieldCodes = [
+            'learning_materials_amount' => 'connectivity',
+            'clothing_amount' => 'clothing',
+        ];
+        $errors = [];
+
+        foreach ($recipients as $index => $recipient) {
+            foreach ($fieldCodes as $field => $code) {
+                if (! $maxAmounts->has($code)) {
+                    continue;
+                }
+
+                $amount = (float) ($recipient[$field] ?? 0);
+                $maxAmount = $maxAmounts[$code];
+
+                if ($amount > $maxAmount) {
+                    $errors["recipients.{$index}.{$field}"] = "The amount must not exceed {$maxAmount}.";
+                }
+            }
+
+            foreach (($recipient['custom_allowances'] ?? []) as $code => $amount) {
+                if (! $maxAmounts->has($code)) {
+                    continue;
+                }
+
+                $amount = (float) ($amount ?? 0);
+                $maxAmount = $maxAmounts[$code];
+
+                if ($amount > $maxAmount) {
+                    $errors["recipients.{$index}.custom_allowances.{$code}"] = "The amount must not exceed {$maxAmount}.";
+                }
+            }
+        }
+
+        if (! empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     private function batchDetails(string $hashId): ?array
@@ -800,6 +961,12 @@ class StipendController extends Controller
             }
 
             $termName = $data['term']['term_name'] ?? $data['term']['name'];
+            $data['batch'] = (string) $this->calculatedNextBatchNumber(
+                $data['region']['name'],
+                $data['academic_year'],
+                $data['term']['id'],
+                $termName
+            );
             $name = $this->payrollBatchName($data['region'], $termName, $data['academic_year'], $data['batch']);
 
             $exists = Batches::where('name', $name)
@@ -845,7 +1012,7 @@ class StipendController extends Controller
         }
     }
 
-    public function export(string $id)
+    private function payrollExportPayload(string $id): array
     {
         $batchId = Hashids::decode($id)[0] ?? 0;
         $batch = Batches::with([
@@ -887,14 +1054,31 @@ class StipendController extends Controller
             ->all();
 
         preg_match('/Batch([A-Za-z0-9]+)/i', $batch->name ?? '', $batchMatches);
-        $filename = $this->payrollBatchName(
+        $filenameBase = $this->payrollBatchName(
             $batch->region,
             $batch->academic_term,
             $batch->school_year,
             $batchMatches[1] ?? $batch->id
-        ) . '.xlsx';
+        );
 
-        return Excel::download(new PayrollExport($batch, $rows), $filename);
+        return [$batch, $rows, $filenameBase];
+    }
+
+    public function export(Request $request, string $id)
+    {
+        [$batch, $rows, $filenameBase] = $this->payrollExportPayload($id);
+
+        if ($request->query('format') === 'pdf') {
+            return Pdf::loadView('exports.payroll_pdf', [
+                'batch' => $batch,
+                'rows' => $rows,
+                'monthLabels' => collect(range(1, 5))->map(fn($month) => "Month {$month}"),
+            ])
+                ->setPaper('legal', 'landscape')
+                ->download($filenameBase . '.pdf');
+        }
+
+        return Excel::download(new PayrollExport($batch, $rows), $filenameBase . '.xlsx');
     }
 
     public function update(Request $request, $id, $type)
@@ -1152,6 +1336,8 @@ class StipendController extends Controller
             'recipients.*.custom_allowances.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $this->enforceAllowanceMaximums($data['recipients']);
+
         try {
             DB::beginTransaction();
             $allowanceTypeIds = $this->allowanceTypeIds();
@@ -1187,9 +1373,6 @@ class StipendController extends Controller
                 $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing + $customAllowances->sum();
 
                 $recipient->update([
-                    'account_no' => $item['account_no'] ?? null,
-                    'scholarship_status' => $item['scholarship_status'] ?? null,
-                    'period' => $item['period'] ?? null,
                     'total_stipend' => $totalStipend,
                     'total_withheld' => $totalWithheld,
                     'learning_materials_amount' => $learningMaterials,

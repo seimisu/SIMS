@@ -2140,93 +2140,21 @@ const opGradeToggle = (event, index) => {
 };
 
 const validateRequest = (data) => {
-    loading.value.validateReject = true;
-    validateRequestForm.post(
-        route("scholars.validate", {
-            id: data.id,
-            type: data.type,
-        }),
-        {
-            onSuccess: () => {
-                toast.add({
-                    severity: page.props.flash?.status,
-                    summary: page.props.flash?.title,
-                    detail: page.props.flash?.message,
-                    life: 3000,
-                });
-            },
-            onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to save grade record.",
-                    life: 3000,
-                });
-            },
-            onFinish: () => (loading.value.validateReject = false),
-        },
-    );
+    toast.add({
+        severity: "info",
+        summary: "Request flow updated",
+        detail: "Subject requests are now handled directly through term records.",
+        life: 3000,
+    });
 };
 
 const validateGradeRequest = (data) => {
-    loading.value.validateGrade = true;
-
-    if (data.type === "accept") {
-        // For approval, send direct request without form validation
-        router.post(
-            route("scholars.gradeValidate", {
-                id: data.id,
-                type: data.type,
-            }),
-            {},
-            {
-                onSuccess: () => {
-                    toast.add({
-                        severity: page.props.flash?.status,
-                        summary: page.props.flash?.title,
-                        detail: page.props.flash?.message,
-                        life: 3000,
-                    });
-                },
-                onError: (errors) => {
-                    toast.add({
-                        severity: "error",
-                        summary: "Error",
-                        detail: errors.message || "Failed to approve grades.",
-                        life: 3000,
-                    });
-                },
-                onFinish: () => (loading.value.validateGrade = false),
-            },
-        );
-    } else {
-        // For rejection, use form with reason validation
-        validateGradeForm.post(
-            route("scholars.gradeValidate", {
-                id: data.id,
-                type: data.type,
-            }),
-            {
-                onSuccess: () => {
-                    toast.add({
-                        severity: page.props.flash?.status,
-                        summary: page.props.flash?.title,
-                        detail: page.props.flash?.message,
-                        life: 3000,
-                    });
-                },
-                onError: (errors) => {
-                    toast.add({
-                        severity: "error",
-                        summary: "Error",
-                        detail: "Failed to reject grades. Please ensure you've provided remarks.",
-                        life: 3000,
-                    });
-                },
-                onFinish: () => (loading.value.validateGrade = false),
-            },
-        );
-    }
+    toast.add({
+        severity: "info",
+        summary: "Request flow updated",
+        detail: "Grade approvals are now handled from the term-record request workflow.",
+        life: 3000,
+    });
 };
 
 const storePersonalInfo = async () => {

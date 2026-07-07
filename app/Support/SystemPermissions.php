@@ -137,8 +137,6 @@ class SystemPermissions
         'scholar.destroy' => 'scholars.manage',
         'scholar.grade-update' => 'scholars.update',
         'scholar.grade-delete' => 'scholars.update',
-        'scholar.requestSubject-denied' => 'scholars.requests.review',
-        'scholar.requestSubject-accept' => 'scholars.requests.review',
         'scholars.update' => 'scholars.update',
         'scholars.activation' => 'scholars.update',
         'scholars.transfer' => 'scholars.update',

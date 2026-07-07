@@ -17,6 +17,7 @@
                     :dialog-title="!form.id ? 'Create Batch' : 'Edit User'"
                     dialog-description="Fill in the required information to create or update this user."
                     :dialog-button-loading="form.processing"
+                    :dialog-button-disabled="!nextBatchNumber"
                     :dialog-icon="IconUserPlus"
                     dialog-button-label="Save"
                     :message-has-errors="form.hasErrors"
@@ -44,22 +45,33 @@
                                 :errorMark="v$.term.$error"
                                 :tooltip="v$.term.$errors[0]?.$message"
                             />
-                            <TextInput
+                            <SelectInput
                                 v-model="form.academic_year"
                                 label="Academic year"
-                                placeholder="e.g. 2025-2026"
+                                placeholder="Select academic year"
+                                :options="page.props.academicYearOptions ?? []"
+                                :clearable="true"
                                 :errorMark="v$.academic_year.$error"
                                 :tooltip="v$.academic_year.$errors[0]?.$message"
                             />
 
-                            <TextInput
-                                v-model="form.batch"
-                                label="Batch Number"
-                                capitalize
-                                placeholder="Ex. 1"
-                                :errorMark="v$.batch.$error"
-                                :tooltip="v$.batch.$errors[0]?.$message"
-                            />
+                            <div class="w-full flex flex-col">
+                                <div class="text-sm font-medium">
+                                    Batch Number
+                                    <span class="text-red-600 font-semibold" v-if="v$.batch.$error">*</span>
+                                </div>
+                                <div
+                                    :class="[
+                                        'min-h-10 flex items-center rounded-md border border-gray-300 px-3 text-sm text-gray-700 opacity-60',
+                                        'dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100',
+                                    ]"
+                                >
+                                    {{ nextBatchNumber ?? "" }}
+                                </div>
+                                <small v-if="v$.batch.$error" class="mt-1 text-xs text-red-600">
+                                    {{ v$.batch.$errors[0]?.$message }}
+                                </small>
+                            </div>
                         </div>
                     </template>
                 </ToolbarModule>
@@ -183,7 +195,6 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import useVuelidate from "@vuelidate/core";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
-import TextInput from "../../Components/inputs/TextInput.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
@@ -208,10 +219,12 @@ const { can } = usePermissions();
 const toolbarRef = ref(null);
 const toastRef = ref(null);
 const timerBounce = ref(null);
+const batchNumberTimer = ref(null);
 const stipendDrawer = ref(null);
 const searchInput = ref(null);
 const deletingId = ref(null);
 const lastFlashKey = ref(null);
+const displayedBatchNumber = ref(null);
 
 const form = useForm({
     id: null,
@@ -224,6 +237,7 @@ const form = useForm({
 });
 const deleteForm = useForm({});
 const isRegionLocked = computed(() => Boolean(page.props.payrollPermissions.regionLocked));
+const nextBatchNumber = computed(() => displayedBatchNumber.value);
 
 const batchStatusMeta = (status) =>
     ({
@@ -257,24 +271,32 @@ const truncateRemarks = (remarks, limit = 24) => {
 const canDeleteBatch = (batch) =>
     Boolean(batch?.permissions?.canDelete) && batch?.status !== "rejected_payroll";
 
+const selectedAcademicYear = (value) => value?.name ?? value;
+
 const rules = computed(() => ({
     region: { required: helpers.withMessage("Region is required", required) },
     academic_year: {
         required: helpers.withMessage("Academic year is required", required),
         format: helpers.withMessage(
             "Format must be YYYY-YYYY (e.g., 2025-2026)",
-            helpers.regex(/^\d{4}-\d{4}$/),
+            (value) => /^\d{4}-\d{4}$/.test(selectedAcademicYear(value) ?? ""),
         ),
     },
     term: {
         required: helpers.withMessage("Term is required", required),
     },
-    batch: { required: helpers.withMessage("Batch is required", required) },
+    batch: {
+        available: helpers.withMessage(
+            "Select region, academic term, and academic year to generate the next batch number",
+            () => Boolean(nextBatchNumber.value),
+        ),
+    },
 }));
 
 const v$ = useVuelidate(rules, form);
 
 const toggleModal = (res) => {
+    displayedBatchNumber.value = null;
     toolbarRef.value.openModal();
 };
 
@@ -283,10 +305,29 @@ const clearSearch = () => {
 };
 
 const submitForm = () => {
+    if (!nextBatchNumber.value) return;
+
     v$.value.$validate();
 
     if (!v$.value.$error) {
-        form.post(route("stipends.store"));
+        form
+            .transform((data) => ({
+                ...data,
+                academic_year: selectedAcademicYear(data.academic_year),
+                batch: nextBatchNumber.value,
+            }))
+            .post(route("stipends.store"), {
+                onSuccess: () => {
+                    toolbarRef.value?.closeModal();
+                    form.reset();
+                    form.region = page.props.payrollPermissions.regionLocked
+                        ? (page.props.agencyOption?.[0] ?? page.props.user.profile.agency_array ?? null)
+                        : page.props.user.profile.agency_array ?? null;
+                    displayedBatchNumber.value = null;
+                    v$.value.$reset();
+                },
+                onFinish: () => form.transform((data) => data),
+            });
     }
 };
 
@@ -344,6 +385,38 @@ watch(
             loadPage(1);
         }, 300);
     },
+);
+
+watch(
+    () => [form.region, form.term, form.academic_year],
+    () => {
+        clearTimeout(batchNumberTimer.value);
+
+        const academicYear = selectedAcademicYear(form.academic_year);
+
+        if (!form.region || !form.term || !academicYear) {
+            displayedBatchNumber.value = null;
+            return;
+        }
+
+        displayedBatchNumber.value = null;
+        batchNumberTimer.value = setTimeout(() => {
+            router.reload({
+                data: {
+                    batch_region: form.region,
+                    batch_term: form.term,
+                    batch_academic_year: academicYear,
+                },
+                only: ["nextBatchNumber"],
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    displayedBatchNumber.value = page.props.nextBatchNumber ?? null;
+                },
+            });
+        }, 250);
+    },
+    { deep: true },
 );
 
 watch(

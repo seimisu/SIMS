@@ -60,6 +60,7 @@
                             type="submit"
                             :label="buttonLabel"
                             :loading="loading"
+                            :disabled="buttonDisabled"
                             size="small"
                             class="!px-5 !rounded-md"
                             @click="emit('submit-form')"
@@ -85,6 +86,10 @@ defineProps({
     title: String,
     icon: Function,
     loading: Boolean,
+    buttonDisabled: {
+        type: Boolean,
+        default: false,
+    },
     buttonLabel: {
         type: String,
         default: "Submit",

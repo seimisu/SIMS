@@ -850,21 +850,18 @@ const toggleGradeRequest = (data) => {
 };
 
 const validateSubjectRequest = (item) => {
-    subjectRequestForm.post(route("scholar.requestSubject-denied", item.id), {
-        preserveScroll: true,
-        onSuccess: () => {
-            toastRef.value.show(page.props.flash);
-            popovers.value[item.id]?.hide();
-        },
+    toastRef.value.show({
+        status: "info",
+        title: "Request flow updated",
+        message: "Subject requests are now handled directly through term records.",
     });
 };
 
 const validateSubjectRequestAccept = (item) => {
-    router.post(route("scholar.requestSubject-accept", item.id), {
-        preserveScroll: true,
-        onSuccess: () => {
-            toastRef.value.show(page.props.flash);
-        },
+    toastRef.value.show({
+        status: "info",
+        title: "Request flow updated",
+        message: "Subject requests are now handled directly through term records.",
     });
 };
 
