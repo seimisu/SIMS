@@ -927,7 +927,7 @@ const removeRecipient = (row) => {
     removingId.value = row.id;
     removeForm.delete(route("stipends.destroy", { id: row.id, type: "recipient" }), {
         preserveScroll: true,
-        onSuccess: () => reloadBatch(),
+        onSuccess: () => reloadBatch({ eligible_page: 1 }),
         onFinish: () => {
             removingId.value = null;
         },

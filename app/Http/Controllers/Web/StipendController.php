@@ -10,6 +10,7 @@ use App\Models\BatchRecipients;
 use App\Models\Batches;
 use App\Models\ListAgencies;
 use App\Models\ListReferences;
+use App\Models\ListStatuses;
 use App\Models\LocationRegions;
 use App\Models\RecipientAllowance;
 use App\Models\RecipientStipend;
@@ -622,6 +623,14 @@ class StipendController extends Controller
         $program = Str::lower($request->input('eligible_program'));
         $university = Str::lower($request->input('eligible_university'));
         $status = Str::lower($request->input('eligible_status'));
+        $eligibleProgressStatusIds = [1, 2, 3];
+        $eligibleProgressStatuses = ListStatuses::whereIn('id', $eligibleProgressStatusIds)
+            ->pluck('name')
+            ->map(fn($name) => Str::upper(trim($name)))
+            ->merge(collect($eligibleProgressStatusIds)->map(fn($id) => (string) $id))
+            ->unique()
+            ->values()
+            ->all();
 
         if (!$batch) {
             return Scholars::whereRaw('1 = 0')->paginate(10, ['*'], 'eligible_page');
@@ -700,6 +709,10 @@ class StipendController extends Controller
             ])
             ->where('is_active', true)
             ->where('is_delete', false)
+            ->where(function ($query) use ($eligibleProgressStatusIds, $eligibleProgressStatuses) {
+                $query->whereIn('status_id', $eligibleProgressStatusIds)
+                    ->orWhereIn(DB::raw('UPPER(TRIM(academic_status))'), $eligibleProgressStatuses);
+            })
             ->whereHas('termRecords', function ($termQuery) use ($batch) {
                 $termQuery->where('verification_status', 'approved')
                     ->where('academic_year', $batch->school_year);
@@ -741,6 +754,8 @@ class StipendController extends Controller
                     ? $query->whereIn('id', $standingScholarIds)
                     : $query->whereRaw('1 = 0');
             })
+            ->orderBy('spas_no')
+            ->orderBy('id')
             ->paginate(10, ['*'], 'eligible_page');
 
         $pageScholarIds = $eligibleScholars->getCollection()->pluck('id')->filter()->unique();
@@ -939,7 +954,7 @@ class StipendController extends Controller
                 'term.term_name' => ['nullable', 'string'],
                 'term.name' => ['required', 'string'],
                 'academic_year' => ['required', 'regex:/^\d{4}-\d{4}$/'],
-                'batch' => ['required', 'string'],
+                'batch' => ['required'],
             ]);
 
             if ($this->permissions()->shouldScopeToRegion(Auth::user())

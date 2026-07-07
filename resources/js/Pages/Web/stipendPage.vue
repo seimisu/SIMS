@@ -314,7 +314,7 @@ const submitForm = () => {
             .transform((data) => ({
                 ...data,
                 academic_year: selectedAcademicYear(data.academic_year),
-                batch: nextBatchNumber.value,
+                batch: String(nextBatchNumber.value),
             }))
             .post(route("stipends.store"), {
                 onSuccess: () => {
