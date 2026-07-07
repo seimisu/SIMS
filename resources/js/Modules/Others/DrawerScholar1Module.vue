@@ -84,7 +84,7 @@
                                                 />
                                             </div>
                                             <div
-                                                class="font-medium text-gray-600 text-sm"
+                                                class="font-medium text-gray-600 text-sm uppercase"
                                             >
                                                 {{
                                                     page.props.details?.fullname
@@ -529,21 +529,25 @@
                                             v-model="personalInfo.first_name"
                                             label="First Name"
                                             :disabled="!editBtn.info"
+                                            uppercase
                                         />
                                         <TextInput
                                             v-model="personalInfo.middle_name"
                                             label="Middle Name"
                                             :disabled="!editBtn.info"
+                                            uppercase
                                         />
                                         <TextInput
                                             v-model="personalInfo.last_name"
                                             label="Last Name"
                                             :disabled="!editBtn.info"
+                                            uppercase
                                         />
                                         <TextInput
                                             v-model="personalInfo.suffix"
                                             label="Suffix"
                                             :disabled="!editBtn.info"
+                                            uppercase
                                         />
                                         <TextInput
                                             v-model="personalInfo.email"

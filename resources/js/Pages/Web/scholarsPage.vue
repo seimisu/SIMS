@@ -391,7 +391,7 @@
                                     <div># {{ props.data.spas_no }}</div>
                                 </div>
                                 <div class="flex gap-1 items-center">
-                                    <div class="font-medium">
+                                    <div class="font-medium uppercase">
                                         {{ props.data.fullname }}
                                     </div>
                                     <div
