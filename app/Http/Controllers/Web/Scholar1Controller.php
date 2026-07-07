@@ -1136,7 +1136,7 @@ class Scholar1Controller extends Controller
                     ]);
 
                 }
-                $scholar->schoolInfo()->updateOrCreate(
+                $school = $scholar->schoolInfo()->updateOrCreate(
 
                     [
                         'id' => $data['schoolId'],
@@ -1148,6 +1148,22 @@ class Scholar1Controller extends Controller
                     ]
                 );
 
+                if ($school->wasChanged()) {
+                    $changes = Arr::except($school->getChanges(), [
+                        'updated_at',
+                    ]);
+                    $previous = Arr::only($school->getOriginal(), array_keys($changes));
+
+                    ActivityLogs::create([
+                        'previous' => $previous,
+                        'changes' => $changes,
+                        'request_type' => 'school',
+                        'created_by' => Auth::user()->profile->fullname,
+                        'user_id' => Auth::id(),
+                    ]);
+
+                }
+
                 $landbank = $scholar->landbank()->updateOrCreate(
                     ['scholar_id' => $scholar->id],
                     [
@@ -1158,7 +1174,6 @@ class Scholar1Controller extends Controller
 
                 if ($landbank->wasChanged()) {
                     $changes = Arr::except($landbank->getChanges(), [
-
                         'updated_at',
                     ]);
                     $previous = Arr::only($landbank->getOriginal(), array_keys($changes));
