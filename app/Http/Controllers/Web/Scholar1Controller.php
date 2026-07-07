@@ -13,7 +13,6 @@ use App\Models\LocationProvinces;
 use App\Models\LocationRegions;
 use App\Models\requestHistory;
 use App\Models\Scholars;
-use App\Models\ScholarSchoolGrades;
 use App\Models\ScholarTerm;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
 use App\Models\SchoolCampusCourses;
@@ -27,6 +26,7 @@ use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -930,6 +930,7 @@ class Scholar1Controller extends Controller
                     'religion' => 'nullable|string|max:255',
                     'civil_status' => 'nullable|string|max:255',
                     'fulladdress' => 'nullable',
+                    'address' => 'nullable',
                     // // Scholarship
                     'program' => 'nullable',
                     'sub_program' => 'nullable',
@@ -957,13 +958,14 @@ class Scholar1Controller extends Controller
                     'award_year' => Carbon::parse($data['award_year'])->format('Y') + 1,
                     'academic_status' => $data['status']['name'] ?? $data['status']['id'] ?? 'Ongoing',
                 ]);
+
                 $profile = $scholar->profile()->updateOrCreate(
                     ['scholar_id' => $scholar->id],
                     [
-                        'fname' => $data['first_name'],
-                        'mname' => $data['middle_name'] ?? null,
-                        'lname' => $data['last_name'],
-                        'suffix' => $data['suffix'] ?? null,
+                        'fname' => Str::upper($data['first_name']),
+                        'mname' => Str::upper($data['middle_name']) ?? null,
+                        'lname' => Str::upper($data['last_name']),
+                        'suffix' => Str::upper($data['suffix']) ?? null,
                         'email' => $data['email'],
 
                         'contact_no' => $data['contact_no'] ?? null,
@@ -981,12 +983,13 @@ class Scholar1Controller extends Controller
                     ActivityLogs::create([
                         'previous' => $prev,
                         'changes' => $changes,
+                        'request_type' => 'profile',
                         'created_by' => Auth::user()->profile->fullname,
                         'user_id' => Auth::id(),
                     ]);
 
                 }
-                $scholar->address()->updateOrCreate(
+                $address = $scholar->address()->updateOrCreate(
                     ['scholar_id' => $scholar->id],
                     [
                         'address' => $data['address'] ?? null,
@@ -997,6 +1000,19 @@ class Scholar1Controller extends Controller
                     ]
                 );
 
+                if ($address->wasChanged()) {
+                    $changes = $address->getChanges();
+                    $prev = $address->getPrevious();
+
+                    ActivityLogs::create([
+                        'previous' => $prev,
+                        'changes' => $changes,
+                        'request_type' => 'address',
+                        'created_by' => Auth::user()->profile->fullname,
+                        'user_id' => Auth::id(),
+                    ]);
+
+                }
                 $scholar->schoolInfo()->updateOrCreate(
 
                     [
@@ -1009,13 +1025,30 @@ class Scholar1Controller extends Controller
                     ]
                 );
 
-                $scholar->landbank()->updateOrCreate(
+                $landbank = $scholar->landbank()->updateOrCreate(
                     ['scholar_id' => $scholar->id],
                     [
                         'account_name' => $data['acc_name'] ?? null,
                         'account_number' => $data['acc_no'] ?? null,
                     ]
                 );
+
+                if ($landbank->wasChanged()) {
+                    $changes = Arr::except($landbank->getChanges(), [
+
+                        'updated_at',
+                    ]);
+                    $previous = Arr::only($landbank->getOriginal(), array_keys($changes));
+
+                    ActivityLogs::create([
+                        'previous' => $previous,
+                        'changes' => $changes,
+                        'request_type' => 'landbank',
+                        'created_by' => Auth::user()->profile->fullname,
+                        'user_id' => Auth::id(),
+                    ]);
+
+                }
 
                 $scholar->parent()->updateOrCreate(
                     ['scholar_id' => $scholar->id],

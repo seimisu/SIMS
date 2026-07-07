@@ -11,6 +11,7 @@ class ActivityLogs extends Model
         'previous',
         'changes',
         'created_by',
+        'request_type',
     ];
 
     protected $casts = [
