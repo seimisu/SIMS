@@ -710,6 +710,10 @@ class Scholar1Controller extends Controller
                                 'id' => $q->schoolInfo?->first()?->campus?->id,
                                 'name' => $q->schoolInfo?->first()?->campus?->generated_name,
                             ],
+                            'landbank' => [
+                                'account_name' => $q?->landbank?->account_name,
+                                'account_number' => $q?->landbank?->account_number,
+                            ],
                             'courseInput' => [
                                 'id' => $q?->schoolInfo?->first()?->course?->id,
                                 'name' => $q?->schoolInfo?->first()?->course?->course?->name,
@@ -974,31 +978,34 @@ class Scholar1Controller extends Controller
 
             if ($type == 'personal') {
                 $data = $request->validate([
-                    'first_name' => 'required|string|max:255',
+                    'first_name' => 'nullable|string|max:255',
                     'middle_name' => 'nullable|string|max:255',
-                    'last_name' => 'required|string|max:255',
+                    'last_name' => 'nullable|string|max:255',
                     'suffix' => 'nullable|string|max:255',
-                    'email' => 'required|email|max:255',
+                    'email' => 'nullable|email|max:255',
                     'contact_no' => 'nullable|string|max:20',
                     'birth_place' => 'nullable|string|max:255',
                     'birth_date' => 'nullable|date',
                     'religion' => 'nullable|string|max:255',
                     'civil_status' => 'nullable|string|max:255',
-                    'fulladdress' => 'required',
+                    'fulladdress' => 'nullable',
                     // // Scholarship
-                    'program' => 'required',
-                    'sub_program' => 'required',
-                    'award_year' => 'required',
-                    'status' => 'required',
-                    'school' => 'required',
-                    'course' => 'required',
-                    'schoolId' => 'required',
+                    'program' => 'nullable',
+                    'sub_program' => 'nullable',
+                    'award_year' => 'nullable',
+                    'status' => 'nullable',
+                    'school' => 'nullable',
+                    'course' => 'nullable',
+                    'schoolId' => 'nullable',
 
                     // // Guardian
                     'guardian_name' => 'nullable|string|max:255',
                     'guardian_id_no' => 'nullable|string|max:255',
                     'guardian_place_issue' => 'nullable|string|max:255',
                     'guardian_date_issue' => 'nullable|date',
+                    // // Landbank
+                    'acc_name' => 'nullable|string|max:255',
+                    'acc_no' => 'nullable|string|max:16',
                 ]);
 
                 $slice = explode('-', $data['fulladdress']['id']);
@@ -1039,6 +1046,7 @@ class Scholar1Controller extends Controller
                 );
 
                 $scholar->schoolInfo()->updateOrCreate(
+
                     [
                         'id' => $data['schoolId'],
                         'scholar_id' => $scholar->id,
@@ -1046,6 +1054,14 @@ class Scholar1Controller extends Controller
                     [
                         'campus_id' => $data['school']['id'],
                         'campus_course_id' => $data['course']['id'],
+                    ]
+                );
+
+                $scholar->landbank()->updateOrCreate(
+                    ['scholar_id' => $scholar->id],
+                    [
+                        'account_name' => $data['acc_name'] ?? null,
+                        'account_number' => $data['acc_no'] ?? null,
                     ]
                 );
 
@@ -1116,10 +1132,11 @@ class Scholar1Controller extends Controller
                 ]);
             }
         } catch (\Throwable $th) {
+
             return redirect()->back()->with('flash', [
                 'status' => 'error',
                 'title' => 'Save Failed',
-                'message' => 'Missing or invalid required fields. Please check your input and try again.',
+                'message' => $th->getMessage(),
             ]);
         }
     }
@@ -1167,6 +1184,7 @@ class Scholar1Controller extends Controller
                 ]);
             }
         } catch (\Throwable $th) {
+
             return redirect()->back()->with('flash', [
                 'status' => 'error',
                 'title' => 'Save Failed',

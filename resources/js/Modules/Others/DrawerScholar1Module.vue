@@ -471,7 +471,7 @@
                                         </Popover>
                                     </div> -->
 
-                                    <DefaultButton
+                                    <!-- <DefaultButton
                                         :icon="TablerIcons.IconCreditCard"
                                         @click="storePersonalInfo"
                                         outlined
@@ -481,7 +481,7 @@
                                         rounded
                                         class-name="!rounded-xl !px-5"
                                     />
-                                    <Divider layout="vertical" />
+                                    <Divider layout="vertical" /> -->
                                     <DefaultButton
                                         :icon="TablerIcons.IconUserEdit"
                                         label="Edit Details"
@@ -2032,7 +2032,6 @@ const tabs = ref([
         label: "Financial Assistance Records",
         icon: "IconCoins",
         key: 3,
-        status: "Ongoing",
     },
     {
         separator: true,
@@ -2043,56 +2042,6 @@ const tabs = ref([
         key: 4,
         disabled: true,
         status: "Ongoing",
-    },
-]);
-
-const activities = ref([
-    {
-        id: 1,
-        user: { name: "Sarah Chen", avatar: "SC", color: "bg-violet-500!" },
-        action: "pushed",
-        target: "3 commits",
-        repo: "main",
-        time: "2 minutes ago",
-        details: [
-            "fix: resolve memory leak in useEffect",
-            "feat: add dark mode toggle",
-            "chore: update dependencies",
-        ],
-    },
-    {
-        id: 2,
-        user: { name: "Alex Kumar", avatar: "AK", color: "bg-blue-500!" },
-        action: "opened",
-        target: "pull request #142",
-        repo: "feature/auth",
-        time: "15 minutes ago",
-        description: "Implement OAuth2 authentication flow",
-    },
-    {
-        id: 3,
-        user: { name: "Maya Johnson", avatar: "MJ", color: "bg-emerald-500!" },
-        action: "commented on",
-        target: "issue #89",
-        time: "1 hour ago",
-        description:
-            "I've investigated this bug and found the root cause. Working on a fix now.",
-    },
-    {
-        id: 4,
-        user: { name: "David Park", avatar: "DP", color: "bg-amber-500!" },
-        action: "merged",
-        target: "pull request #138",
-        repo: "main",
-        time: "3 hours ago",
-    },
-    {
-        id: 5,
-        user: { name: "Emma Wilson", avatar: "EW", color: "bg-rose-500!" },
-        action: "created",
-        target: "release v2.4.0",
-        time: "5 hours ago",
-        description: "Performance improvements and bug fixes",
     },
 ]);
 
@@ -2292,20 +2241,13 @@ const storePersonalInfo = async () => {
             onSuccess: () => {
                 editBtn.value.info = false;
                 toast.add({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Personal information updated successfully.",
+                    severity: page.props.flash?.status,
+                    summary: page.props.flash?.title,
+                    detail: page.props.flash?.message,
                     life: 3000,
                 });
             },
-            onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to update personal information.",
-                    life: 3000,
-                });
-            },
+
             onFinish: () => {
                 loading.value.storePersonalInfo = false;
             },
@@ -2348,6 +2290,8 @@ watch(
             ) ??
             newVal.status ??
             null;
+        personalInfo.acc_name = newVal.landbank.account_name ?? null;
+        personalInfo.acc_no = newVal.landbank.account_number ?? null;
         personalInfo.school = newVal.schoolInput ?? null;
         personalInfo.course = newVal.courseInput ?? null;
         ((personalInfo.schoolId = newVal.schoolInfoId ?? null),

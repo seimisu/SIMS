@@ -12,7 +12,7 @@
             <div
                 class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
             >
-                <IconUserUp :size="18" :stroke-width="2" />
+                <IconId :size="18" :stroke-width="2" />
                 <div class="uppercase font-medium text-sm">
                     Scholar Subjects & Grades Request
                 </div>
@@ -310,9 +310,7 @@
                                                             :size="20"
                                                         />
 
-                                                        <p>
-                                                            Return for Revision
-                                                        </p>
+                                                        <p>Reject Request</p>
                                                     </div>
                                                 </template>
                                             </Button>
@@ -584,6 +582,7 @@ import {
     IconLoader2,
     IconArrowLeft,
     IconCircleXFilled,
+    IconId,
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
