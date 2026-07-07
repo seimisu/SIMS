@@ -310,7 +310,9 @@
                                                             :size="20"
                                                         />
 
-                                                        <p>Reject Request</p>
+                                                        <p>
+                                                            For Revisions
+                                                        </p>
                                                     </div>
                                                 </template>
                                             </Button>
@@ -326,17 +328,15 @@
                                                             <h3
                                                                 class="text-sm font-semibold text-gray-800"
                                                             >
-                                                                Reject Grade
-                                                                Request
+                                                                For Revisions
+                                                                (w/ Deficiency)
                                                             </h3>
                                                             <p
                                                                 class="text-xs text-gray-500 mt-1"
                                                             >
-                                                                Provide a reason
-                                                                for returning
-                                                                the grade
-                                                                request to the
-                                                                scholar.
+                                                                Provide
+                                                                deficiency
+                                                                remarks.
                                                             </p>
                                                         </div>
                                                     </div>
@@ -390,7 +390,7 @@
                                                         />
 
                                                         <DefaultButton
-                                                            label="Reject Submission"
+                                                            label="For Revisions"
                                                             severity="danger"
                                                             @click="
                                                                 approveRequest(
@@ -424,7 +424,7 @@
                                                             :size="20"
                                                         />
 
-                                                        <p>Approve Request</p>
+                                                        <p>Verified Correct</p>
                                                     </div>
                                                 </template>
                                             </Button>
@@ -440,9 +440,17 @@
                                                             <h3
                                                                 class="text-sm font-semibold text-gray-800"
                                                             >
-                                                                Accept grades
-                                                                submitted
+                                                                Verified Correct
                                                             </h3>
+                                                            <p
+                                                                class="text-xs text-gray-500 mt-1"
+                                                            >
+                                                                Select the
+                                                                scholarship
+                                                                standing before
+                                                                approving the
+                                                                document.
+                                                            </p>
                                                         </div>
                                                     </div>
 
@@ -456,7 +464,8 @@
                                                         <label
                                                             class="text-xs font-semibold text-gray-600 leading-0"
                                                         >
-                                                            Scholarship Status
+                                                            Scholarship
+                                                            Standing
                                                             <span
                                                                 class="text-red-500"
                                                                 >*</span
@@ -473,7 +482,9 @@
                                                                     .scholarshipStatus
                                                             "
                                                             :options="
-                                                                standingOptions
+                                                                page.props
+                                                                    ?.standingOptions ??
+                                                                []
                                                             "
                                                         />
                                                     </div>
@@ -495,7 +506,7 @@
                                                         />
 
                                                         <DefaultButton
-                                                            label="Ready for payroll"
+                                                            label="Verified Correct"
                                                             rounded
                                                             :loading="
                                                                 loading.approve
@@ -604,22 +615,6 @@ const details = ref(null);
 const remarks = ref(null);
 const selectedFile = ref(null);
 const standing = ref(null);
-const standingOptions = [
-    { id: "GOOD STANDING", name: "GOOD STANDING" },
-    { id: "CONTINUED", name: "CONTINUED" },
-    {
-        id: "CUP - Continued Under Probation",
-        name: "CUP - Continued Under Probation",
-    },
-    {
-        id: "CPA - Continued with Partial Allowance",
-        name: "CPA - Continued with Partial Allowance",
-    },
-    // { id: "TERMINATED", name: "TERMINATED" },
-    // { id: "NO REPORT", name: "NO REPORT" },
-    // { id: "NON-COMPLIANCE", name: "NON-COMPLIANCE" },
-    { id: "GRADUATED", name: "GRADUATED" },
-];
 
 const selectFile = (file) => {
     selectedFile.value = file;
@@ -632,27 +627,28 @@ const toggleOpAccept = (event) => {
 };
 
 const approveRequest = (decision) => {
+    const submittedTerm = details.value.find((item) => item.status === "submitted");
+
     if (
         decision === "accept" &&
-        !details.value.find((item) => item.status === "submitted")
-            .scholarshipStatus
+        !submittedTerm?.scholarshipStatus
     ) {
         toast.add({
             severity: "warn",
             summary: "Standing Required",
-            detail: "Please select the scholarship status before accepting.",
+            detail: "Please select the scholarship standing.",
             life: 3000,
         });
         return;
     }
     if (
         decision === "reject" &&
-        !details.value.find((item) => item.status === "submitted").remarks
+        !submittedTerm?.remarks
     ) {
         toast.add({
             severity: "warn",
-            summary: "Standing Required",
-            detail: "Please enter your remarks",
+            summary: "Remarks Required",
+            detail: "Please enter the deficiency remarks.",
             life: 3000,
         });
         return;
