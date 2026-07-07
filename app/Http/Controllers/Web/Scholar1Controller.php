@@ -296,23 +296,9 @@ class Scholar1Controller extends Controller
                 ];
             }) : [];
 
-<<<<<<< Updated upstream
-        // $termSubjectRecordIds = StudentSubject::whereHas('subjectRequests', function ($q) {
-        //     $q->where('status', 'pending');
-        // })->pluck('term_record_id')->toArray();
-
         $profileRequestIds = StudentProfileRequest::where('status', 'pending')->pluck('spas_no')->toArray();
         $landbankRequestIds = studentLandbankRequest::where('status', 'pending')->pluck('spas_no')->toArray();
 
-        // $termGradeRecordIds = StudentGrade::whereHas('gradeRequests', function ($q) {
-        //     $q->where('status', 'submitted');
-        // })->pluck('term_record_id')->toArray();
-
-=======
-        $profileRequestIds = StudentProfileRequest::where('status', 'pending')->pluck('spas_no')->toArray();
-        $landbankRequestIds = studentLandbankRequest::where('status', 'pending')->pluck('spas_no')->toArray();
-
->>>>>>> Stashed changes
         $generateSubjects = Inertia::optional(
             fn () => SchoolCampusCourseCurriculumSubjects::where('is_active', true)
                 ->where('is_delete', false)
@@ -339,15 +325,7 @@ class Scholar1Controller extends Controller
                     'profile' => strval(StudentProfileRequest::where('status', 'pending')->count()),
                     'grades' => strval(ScholarTerm::where('verification_status', 'submitted')->count()),
                 ]),
-<<<<<<< Updated upstream
-                // 'grade_request_cnt' => Str::of(
-                //     StudentGrade::whereHas('gradeRequests', function ($q) {
-                //         $q->where('status', 'submitted');
-                //     })->count()
-                // )->toString(),
-=======
                 'grade_request_cnt' => Str::of(ScholarTerm::where('verification_status', 'submitted')->count())->toString(),
->>>>>>> Stashed changes
                 'scholars' => Scholars::select(
                     'scholars.id',
                     'scholars.spas_no',
