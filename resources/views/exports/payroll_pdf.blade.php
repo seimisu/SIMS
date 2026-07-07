@@ -1,6 +1,8 @@
 @php
     $money = fn ($value) => (float) ($value ?? 0);
     $display = fn ($value) => $money($value) > 0 ? number_format($money($value), 2) : '-';
+    $customAllowances = collect($customAllowances ?? []);
+    $columnCount = 17 + $customAllowances->count();
     $region = trim(str_replace('DOST', '', $batch->region ?? ''));
     $title = 'PAYROLL OF REGION ' . ($region ?: '____') . ' - MONITORED DOST UNDERGRADUATE SCHOLARS';
     $grand = [
@@ -12,6 +14,7 @@
         'withheld' => 0,
         'learning_materials' => 0,
         'clothing' => 0,
+        'custom_allowances' => $customAllowances->mapWithKeys(fn ($allowance) => [$allowance['code'] => 0])->all(),
         'total' => 0,
     ];
 @endphp
@@ -26,7 +29,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            font-size: 7px;
+            font-size: {{ $customAllowances->isNotEmpty() ? '6px' : '7px' }};
             color: #000;
         }
 
@@ -102,9 +105,9 @@
 <body>
     <table>
         <tr class="title-row">
-            <td colspan="17" class="title">{{ $title }}</td>
+            <td colspan="{{ $columnCount }}" class="title">{{ $title }}</td>
         </tr>
-        <tr class="blank-row"><td colspan="17" class="spacer"></td></tr>
+        <tr class="blank-row"><td colspan="{{ $columnCount }}" class="spacer"></td></tr>
 
         <tr>
             <th rowspan="2" class="col-spas">SPAS ID NO.</th>
@@ -118,6 +121,9 @@
             <th colspan="2">WITHHELD STIPEND/S</th>
             <th rowspan="2" class="col-allowance">LEARNING MATERIALS AND/OR CONNECTIVITY ALLOWANCE</th>
             <th rowspan="2" class="col-allowance">CLOTHING ALLOWANCE<br>(if applicable)</th>
+            @foreach ($customAllowances as $allowance)
+                <th rowspan="2" class="col-allowance">{{ strtoupper($allowance['name'] ?? $allowance['code']) }}</th>
+            @endforeach
             <th rowspan="2" class="col-total">TOTAL</th>
         </tr>
         <tr>
@@ -139,6 +145,7 @@
                     'withheld' => 0,
                     'learning_materials' => 0,
                     'clothing' => 0,
+                    'custom_allowances' => $customAllowances->mapWithKeys(fn ($allowance) => [$allowance['code'] => 0])->all(),
                     'total' => 0,
                 ];
             @endphp
@@ -158,6 +165,13 @@
                     $grand['learning_materials'] += $money($row['learning_materials_amount'] ?? 0);
                     $grand['clothing'] += $money($row['clothing_amount'] ?? 0);
                     $grand['total'] += $money($row['grand_total'] ?? 0);
+
+                    foreach ($customAllowances as $allowance) {
+                        $code = $allowance['code'];
+                        $amount = $money($row['custom_allowances'][$code] ?? 0);
+                        $subtotal['custom_allowances'][$code] += $amount;
+                        $grand['custom_allowances'][$code] += $amount;
+                    }
                 @endphp
                 <tr>
                     <td>{{ $row['spas_no'] }}</td>
@@ -174,6 +188,9 @@
                     <td>{{ $row['remarks'] }}</td>
                     <td class="right">{{ $display($row['learning_materials_amount'] ?? 0) }}</td>
                     <td class="right">{{ $display($row['clothing_amount'] ?? 0) }}</td>
+                    @foreach ($customAllowances as $allowance)
+                        <td class="right">{{ $display($row['custom_allowances'][$allowance['code']] ?? 0) }}</td>
+                    @endforeach
                     <td class="right">{{ $display($row['grand_total'] ?? 0) }}</td>
                 </tr>
             @endforeach
@@ -193,11 +210,14 @@
                 <td></td>
                 <td class="right">{{ $display($subtotal['learning_materials']) }}</td>
                 <td class="right">{{ $display($subtotal['clothing']) }}</td>
+                @foreach ($customAllowances as $allowance)
+                    <td class="right">{{ $display($subtotal['custom_allowances'][$allowance['code']] ?? 0) }}</td>
+                @endforeach
                 <td class="right">{{ $display($subtotal['total']) }}</td>
             </tr>
         @empty
             <tr>
-                <td colspan="17" class="center">No payroll recipients found.</td>
+                <td colspan="{{ $columnCount }}" class="center">No payroll recipients found.</td>
             </tr>
         @endforelse
 
@@ -216,38 +236,40 @@
             <td></td>
             <td class="right">{{ $display($grand['learning_materials']) }}</td>
             <td class="right">{{ $display($grand['clothing']) }}</td>
+            @foreach ($customAllowances as $allowance)
+                <td class="right">{{ $display($grand['custom_allowances'][$allowance['code']] ?? 0) }}</td>
+            @endforeach
             <td class="right">{{ $display($grand['total']) }}</td>
         </tr>
 
-        <tr class="blank-row"><td colspan="17" class="spacer"></td></tr>
+        <tr class="blank-row"><td colspan="{{ $columnCount }}" class="spacer"></td></tr>
         <tr class="note-row">
             <td></td>
-            <td colspan="14" class="center">
+            <td colspan="{{ $columnCount - 1 }}" class="center">
                 This is to certify that the DOST-SEI undergraduate scholars listed above are of good academic standing and are eligible to receive financial assistance for the {{ $batch->academic_term ?? '____' }} semester/term of AY {{ $batch->school_year ?? '____' }}.
             </td>
-            <td colspan="2"></td>
         </tr>
-        <tr class="blank-row"><td colspan="17" class="spacer"></td></tr>
+        <tr class="blank-row"><td colspan="{{ $columnCount }}" class="spacer"></td></tr>
         <tr class="signature-row">
             <td colspan="3" class="bold">PREPARED BY:</td>
-            <td colspan="14"></td>
+            <td colspan="{{ $columnCount - 3 }}"></td>
         </tr>
-        <tr class="signature-row"><td colspan="17" class="signature-space"></td></tr>
+        <tr class="signature-row"><td colspan="{{ $columnCount }}" class="signature-space"></td></tr>
         <tr class="signature-row">
             <td colspan="4">Printed Name and Signature of Scholarship Project Staff</td>
-            <td colspan="13"></td>
+            <td colspan="{{ $columnCount - 4 }}"></td>
         </tr>
-        <tr class="blank-row"><td colspan="17" class="spacer"></td></tr>
+        <tr class="blank-row"><td colspan="{{ $columnCount }}" class="spacer"></td></tr>
         <tr class="signature-row">
             <td colspan="9"></td>
             <td colspan="3" class="bold">CERTIFIED CORRECT:</td>
-            <td colspan="5"></td>
+            <td colspan="{{ $columnCount - 12 }}"></td>
         </tr>
-        <tr class="signature-row"><td colspan="17" class="signature-space"></td></tr>
+        <tr class="signature-row"><td colspan="{{ $columnCount }}" class="signature-space"></td></tr>
         <tr class="signature-row">
             <td colspan="9"></td>
             <td colspan="5">Printed Name and Signature of Scholarship Technical Coordinator</td>
-            <td colspan="3"></td>
+            <td colspan="{{ $columnCount - 14 }}"></td>
         </tr>
     </table>
 </body>

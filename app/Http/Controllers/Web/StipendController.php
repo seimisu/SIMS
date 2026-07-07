@@ -1047,10 +1047,33 @@ class StipendController extends Controller
                     'month_3' => (float) ($row['months']['month_3'] ?? 0),
                     'month_4' => (float) ($row['months']['month_4'] ?? 0),
                     'month_5' => (float) ($row['months']['month_5'] ?? 0),
+                    'custom_allowances' => collect($row['custom_allowances'] ?? [])->all(),
                 ];
             })
             ->groupBy('program')
             ->sortKeys()
+            ->all();
+
+        $customAllowanceCodes = collect($rows)
+            ->flatten(1)
+            ->flatMap(fn($row) => array_keys($row['custom_allowances'] ?? []))
+            ->unique()
+            ->values();
+
+        $customAllowances = $this->allowanceOptions()
+            ->filter(fn($allowance) => $customAllowanceCodes->contains($allowance['code']))
+            ->values();
+
+        $fallbackAllowances = $customAllowanceCodes
+            ->diff($customAllowances->pluck('code'))
+            ->map(fn($code) => [
+                'code' => $code,
+                'name' => Str::headline(str_replace('_', ' ', $code)),
+            ]);
+
+        $customAllowances = $customAllowances
+            ->concat($fallbackAllowances)
+            ->values()
             ->all();
 
         preg_match('/Batch([A-Za-z0-9]+)/i', $batch->name ?? '', $batchMatches);
@@ -1061,24 +1084,25 @@ class StipendController extends Controller
             $batchMatches[1] ?? $batch->id
         );
 
-        return [$batch, $rows, $filenameBase];
+        return [$batch, $rows, $filenameBase, $customAllowances];
     }
 
     public function export(Request $request, string $id)
     {
-        [$batch, $rows, $filenameBase] = $this->payrollExportPayload($id);
+        [$batch, $rows, $filenameBase, $customAllowances] = $this->payrollExportPayload($id);
 
         if ($request->query('format') === 'pdf') {
             return Pdf::loadView('exports.payroll_pdf', [
                 'batch' => $batch,
                 'rows' => $rows,
                 'monthLabels' => collect(range(1, 5))->map(fn($month) => "Month {$month}"),
+                'customAllowances' => $customAllowances,
             ])
                 ->setPaper('legal', 'landscape')
                 ->download($filenameBase . '.pdf');
         }
 
-        return Excel::download(new PayrollExport($batch, $rows), $filenameBase . '.xlsx');
+        return Excel::download(new PayrollExport($batch, $rows, $customAllowances), $filenameBase . '.xlsx');
     }
 
     public function update(Request $request, $id, $type)
