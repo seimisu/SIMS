@@ -675,33 +675,51 @@ class Scholar1Controller extends Controller
                         ])
                         ->get()
                         ->flatMap(function ($scholar) {
-                            return $scholar->landbankRequest->map(function ($q, $index) use ($scholar) {
+
+                            $requests = $scholar->landbankRequest()
+                                ->orderByDesc('id')
+                                ->get();
+
+                            return $requests->map(function ($q, $index) use ($scholar, $requests) {
+
+                                $requestNo = Carbon::parse($q->requested_at)->format('Ymd')
+                                    .'-'.str_pad($requests->count() - $index, 3, '0', STR_PAD_LEFT);
 
                                 return [
-                                    'count' => Carbon::parse($q->requested_at)->format('Ymd')
-                                        .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+                                    'count' => $requestNo,
                                     'spas_no' => $q->spas_no,
+
                                     'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
+
                                     'reviewed_at' => $q->reviewed_at
                                         ? Carbon::parse($q->reviewed_at)->diffForHumans()
                                         : null,
+
                                     'request_date' => Carbon::parse($q->requested_at)->format('F d, Y h:i A'),
+
                                     'reviewed_by' => $q->reviewed_by,
+
                                     'nameStored' => $scholar->landbank?->account_name,
                                     'noStored' => $scholar->landbank?->account_number,
+
                                     'status' => $q->status,
+
                                     'name' => $q->acc_name,
                                     'reject' => $q->rejection_reason,
                                     'no' => $q->acc_no,
+
                                     'file' => $q->uploaded_file,
                                     'remarks' => $q->request_purpose,
                                     'type' => $q->uploaded_type,
-                                    'records' => requestHistory::where('request_no', Carbon::parse($q->requested_at)->format('Ymd')
-                                        .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT))->where('request_type', 'landbank')->first(),
+
+                                    'records' => requestHistory::where('request_no', $requestNo)
+                                        ->where('request_type', 'landbank')
+                                        ->first(),
                                 ];
                             });
                         })
-                        ->values()),
+                        ->values()
+                ),
                 'details' => $request->input('id') ?
                     function () use ($request, $permissions, $user) {
                         $id = Hashids::decode($request->input('id'))[0] ?? 0;
@@ -831,6 +849,15 @@ class Scholar1Controller extends Controller
                                 'date_issue' => $q?->parent?->id_date,
 
                             ],
+                            'logs' => $q->logs
+                                ->take(50)
+                                ->map(fn ($log) => [
+                                    'created_by' => $log->created_by,
+                                    'previous' => $log->previous_formatted,
+                                    'changes' => $log->changes_formatted,
+                                    'type' => $log->request_type,
+                                    'date' => Carbon::parse($log->created_at)->format('M d, Y h:i A'),
+                                ]),
                             'termGrades' => $q?->termRecords->sort(function ($left, $right) {
                                 $leftSort = [
                                     $this->academicYearSortValue($left?->academic_year),
@@ -1116,11 +1143,11 @@ class Scholar1Controller extends Controller
                     $prev = $profile->getPrevious();
 
                     ActivityLogs::create([
-                        'previous' => $prev,
-                        'changes' => $changes,
+                        'previous_data' => $prev,
+                        'changes_data' => $changes,
                         'request_type' => 'profile',
                         'created_by' => Auth::user()->profile->fullname,
-                        'user_id' => Auth::id(),
+                        'scholar_id' => $decodedId,
                     ]);
 
                 }
@@ -1140,11 +1167,11 @@ class Scholar1Controller extends Controller
                     $prev = $address->getPrevious();
 
                     ActivityLogs::create([
-                        'previous' => $prev,
-                        'changes' => $changes,
+                        'previous_data' => $prev,
+                        'changes_data' => $changes,
                         'request_type' => 'address',
                         'created_by' => Auth::user()->profile->fullname,
-                        'user_id' => Auth::id(),
+                        'scholar_id' => $decodedId,
                     ]);
 
                 }
@@ -1167,11 +1194,11 @@ class Scholar1Controller extends Controller
                     $previous = Arr::only($school->getOriginal(), array_keys($changes));
 
                     ActivityLogs::create([
-                        'previous' => $previous,
-                        'changes' => $changes,
+                        'previous_data' => $previous,
+                        'changes_data' => $changes,
                         'request_type' => 'school',
                         'created_by' => Auth::user()->profile->fullname,
-                        'user_id' => Auth::id(),
+                        'scholar_id' => $decodedId,
                     ]);
 
                 }
@@ -1185,17 +1212,19 @@ class Scholar1Controller extends Controller
                 );
 
                 if ($landbank->wasChanged()) {
+
                     $changes = Arr::except($landbank->getChanges(), [
                         'updated_at',
                     ]);
-                    $previous = Arr::only($landbank->getOriginal(), array_keys($changes));
+
+                    $previous = Arr::except($landbank->getPrevious(), ['updated_at']);
 
                     ActivityLogs::create([
-                        'previous' => $previous,
-                        'changes' => $changes,
+                        'previous_data' => $previous,
+                        'changes_data' => $changes,
                         'request_type' => 'landbank',
                         'created_by' => Auth::user()->profile->fullname,
-                        'user_id' => Auth::id(),
+                        'scholar_id' => $decodedId,
                     ]);
 
                 }
@@ -1292,7 +1321,7 @@ class Scholar1Controller extends Controller
             'activation_token' => $activation,
         ]);
 
-        $url = 'https://portal7.science-scholarships.ph/activation?token='.$activation;
+        $url = 'http://172.16.8.98:85/activation?token='.$activation;
         Mail::to($user->profile->email)
             ->send(new activationLinkMail($url));
 

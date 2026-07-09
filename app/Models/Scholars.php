@@ -25,6 +25,11 @@ class Scholars extends Model
         'validate_status',
     ];
 
+    public function logs()
+    {
+        return $this->hasMany(ActivityLogs::class, 'scholar_id', 'id');
+    }
+
     public function payrolls()
     {
         return $this->hasMany(BatchRecipients::class, 'scholar_id', 'id');

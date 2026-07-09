@@ -21,10 +21,10 @@
         <template #default>
             <div class="">
                 <div
-                    class="flex flex-col lg:flex-row h-full w-full lg:min-h-[30rem]"
+                    class="flex flex-col lg:flex-row h-full w-full lg:h-[40rem]"
                 >
                     <div
-                        class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col max-h-[95vw] gap-3 p-3"
+                        class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col flex-1 overflow-y-auto p-3 gap-3"
                     >
                         <div class="flex items-center gap-1">
                             <IconHistory :size="20" />
@@ -32,119 +32,126 @@
                                 History Request:
                             </div>
                         </div>
-                        <template
-                            v-for="(item, index) in landbankRequest"
-                            :key="index"
-                            class="overflow-x-auto"
-                        >
-                            <div
-                                class="border rounded-xl gap-3 hover:shadow border-gray-200 bg-white flex flex-col text-sm p-2"
+                        <div class="flex lg:flex-col gap-2">
+                            <template
+                                v-for="(item, index) in landbankRequest"
+                                :key="index"
                             >
-                                <div class="flex justify-between items-start">
-                                    <div class="flex items-center gap-1">
-                                        <Avatar
-                                            class="!w-[40px] !h-[40px] shadow border border-slate-400 !rounded-xl"
-                                        >
-                                            <IconCreditCard :size="23" />
-                                        </Avatar>
-                                        <div class="text-sm">
-                                            <div class="text-xs text-slate-500">
-                                                Request ID
-                                            </div>
-                                            <div class="font-medium">
-                                                #{{ item.count }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        v-if="item.status == 'pending'"
-                                        class="text-xs bg-amber-100 text-amber-500 border capitalize rounded-xl px-3 py-1"
-                                    >
-                                        {{ item.status }} Review
-                                    </div>
-                                    <div
-                                        v-else-if="item.status == 'approved'"
-                                        class="text-xs bg-green-100 text-green-500 border capitalize rounded-xl px-3 py-1"
-                                    >
-                                        {{ item.status }}
-                                    </div>
-                                    <div
-                                        v-else
-                                        class="text-xs bg-red-100 text-red-500 border capitalize rounded-xl px-3 py-1"
-                                    >
-                                        {{ item.status }}
-                                    </div>
-                                </div>
                                 <div
-                                    class="flex-1 flex flex-col p-1 gap-2 text-sm"
-                                >
-                                    <div class="flex-1">
-                                        <div class="text-xs text-slate-500">
-                                            Requested On
-                                        </div>
-                                        <p class="font-medium">
-                                            {{ item.request_date }}
-                                        </p>
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="text-xs text-slate-500">
-                                            Reason for Change
-                                        </div>
-                                        <p class="font-medium">
-                                            {{ item.remarks }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex justify-between items-center border-t border-gray-200 pt-2"
+                                    class="border rounded-xl gap-3 hover:shadow border-gray-200 bg-white flex flex-col text-sm p-2"
                                 >
                                     <div
-                                        class="flex gap-1 items-center"
-                                        v-if="item.reviewed_at"
+                                        class="flex justify-between items-start"
                                     >
-                                        <Avatar
-                                            class="!bg-green-100 !text-green-600 border"
-                                            shape="circle"
-                                        >
-                                            <IconUser :size="18" />
-                                        </Avatar>
-                                        <div class="flex flex-col text-xs">
-                                            <div class="leading-none">
+                                        <div class="flex items-center gap-1">
+                                            <Avatar
+                                                class="!w-[40px] !h-[40px] shadow border border-slate-400 !rounded-xl"
+                                            >
+                                                <IconCreditCard :size="23" />
+                                            </Avatar>
+                                            <div class="text-sm">
+                                                <div
+                                                    class="text-xs text-slate-500"
+                                                >
+                                                    Request ID
+                                                </div>
                                                 <div class="font-medium">
-                                                    {{ item.reviewed_at }}
-                                                </div>
-                                                <div>
-                                                    {{ item.reviewed_by }}
+                                                    #{{ item.count }}
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <div
+                                            v-if="item.status == 'pending'"
+                                            class="text-xs bg-amber-100 text-amber-500 border capitalize rounded-xl px-3 py-1"
+                                        >
+                                            {{ item.status }} Review
+                                        </div>
+                                        <div
+                                            v-else-if="
+                                                item.status == 'approved'
+                                            "
+                                            class="text-xs bg-green-100 text-green-500 border capitalize rounded-xl px-3 py-1"
+                                        >
+                                            {{ item.status }}
+                                        </div>
+                                        <div
+                                            v-else
+                                            class="text-xs bg-red-100 text-red-500 border capitalize rounded-xl px-3 py-1"
+                                        >
+                                            {{ item.status }}
+                                        </div>
                                     </div>
                                     <div
-                                        v-else
-                                        class="flex items-center text-gray-700 gap-1"
+                                        class="flex-1 flex flex-col p-1 gap-2 text-sm"
                                     >
-                                        <IconCalendarTime :size="18" />
-                                        <p class="text-xs">
-                                            {{ item.requested_at }}
-                                        </p>
+                                        <div class="flex-1">
+                                            <div class="text-xs text-slate-500">
+                                                Requested On
+                                            </div>
+                                            <p class="font-medium">
+                                                {{ item.request_date }}
+                                            </p>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="text-xs text-slate-500">
+                                                Reason for Change
+                                            </div>
+                                            <p class="font-medium">
+                                                {{ item.remarks }}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <Button
-                                            label="View this request"
-                                            size="small"
-                                            class="!text-xs !rounded-lg"
-                                            severity="secondary"
-                                            iconPos="right"
-                                            @click="
-                                                selectedRequest(item, index)
-                                            "
-                                            icon="pi pi-arrow-right"
-                                        />
+                                    <div
+                                        class="flex justify-between items-center border-t border-gray-200 pt-2"
+                                    >
+                                        <div
+                                            class="flex gap-1 items-center"
+                                            v-if="item.reviewed_at"
+                                        >
+                                            <Avatar
+                                                class="!bg-green-100 !text-green-600 border"
+                                                shape="circle"
+                                            >
+                                                <IconUser :size="18" />
+                                            </Avatar>
+                                            <div class="flex flex-col text-xs">
+                                                <div class="leading-none">
+                                                    <div class="font-medium">
+                                                        {{ item.reviewed_at }}
+                                                    </div>
+                                                    <div>
+                                                        {{ item.reviewed_by }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div
+                                            v-else
+                                            class="flex items-center text-gray-700 gap-1"
+                                        >
+                                            <IconCalendarTime :size="18" />
+                                            <p class="text-xs">
+                                                {{ item.requested_at }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <Button
+                                                label="View this request"
+                                                size="small"
+                                                class="!text-xs !rounded-lg"
+                                                severity="secondary"
+                                                iconPos="right"
+                                                @click="
+                                                    selectedRequest(item, index)
+                                                "
+                                                icon="pi pi-arrow-right"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </template>
+                            </template>
+                        </div>
                     </div>
                     <div
                         class="flex flex-col gap-2 p-3 h-full w-full lg:w-8/12"
@@ -212,14 +219,16 @@
                                                         >
                                                             Account Name
                                                         </div>
+                                                        {{}}
                                                         <p
                                                             v-if="
-                                                                !selectedRow.reviewed_at
+                                                                selectedRow.reviewed_at
                                                             "
                                                         >
                                                             {{
                                                                 selectedRow
-                                                                    .record
+                                                                    .records
+                                                                    ?.previous
                                                                     ?.account_name ??
                                                                 "No record"
                                                             }}
@@ -239,12 +248,13 @@
                                                         </div>
                                                         <p
                                                             v-if="
-                                                                !selectedRow.reviewed_at
+                                                                selectedRow.reviewed_at
                                                             "
                                                         >
                                                             {{
                                                                 selectedRow
-                                                                    .record
+                                                                    .records
+                                                                    ?.previous
                                                                     ?.account_number ??
                                                                 "No record"
                                                             }}
@@ -363,29 +373,142 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <Button
-                                                    size="small"
-                                                    class="!text-xs !rounded-full"
-                                                    :loading="loading.approve"
-                                                    text
-                                                >
-                                                    <template #default>
+                                                <div>
+                                                    <Button
+                                                        size="small"
+                                                        class="!text-xs !rounded-full"
+                                                        @click="
+                                                            toggleOpFileViewer
+                                                        "
+                                                        text
+                                                    >
+                                                        <template #default>
+                                                            <div
+                                                                class="flex gap-1 items-center"
+                                                            >
+                                                                <IconEye
+                                                                    :stroke-width="
+                                                                        1.5
+                                                                    "
+                                                                    :size="20"
+                                                                />
+                                                                <p>
+                                                                    View
+                                                                    uploaded
+                                                                    file
+                                                                </p>
+                                                            </div>
+                                                        </template>
+                                                    </Button>
+                                                    <Popover
+                                                        ref="opFileViewer"
+                                                        class="!rounded-2xl !shadow-2xl"
+                                                        :pt="{
+                                                            content: '!p-0',
+                                                        }"
+                                                    >
                                                         <div
-                                                            class="flex gap-1 items-center"
+                                                            class="w-[600px] max-w-[90vw] h-[550px]"
                                                         >
-                                                            <IconEye
-                                                                :stroke-width="
-                                                                    1.5
+                                                            <!-- Header -->
+                                                            <div
+                                                                class="flex items-center justify-between px-5 py-4 border-b border-gray-200"
+                                                            >
+                                                                <div
+                                                                    class="flex items-center gap-3"
+                                                                >
+                                                                    <div
+                                                                        class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"
+                                                                    >
+                                                                        <IconFileTypePdf
+                                                                            v-if="
+                                                                                selectedRow?.file?.endsWith(
+                                                                                    '.pdf',
+                                                                                )
+                                                                            "
+                                                                            :size="
+                                                                                22
+                                                                            "
+                                                                        />
+
+                                                                        <IconFile
+                                                                            v-else
+                                                                            :size="
+                                                                                22
+                                                                            "
+                                                                        />
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <h3
+                                                                            class="font-semibold text-gray-800"
+                                                                        >
+                                                                            Document
+                                                                            Preview
+                                                                        </h3>
+
+                                                                        <p
+                                                                            class="text-sm text-gray-500 truncate max-w-[500px]"
+                                                                        >
+                                                                            {{
+                                                                                selectedRow?.file
+                                                                                    ?.split(
+                                                                                        "/",
+                                                                                    )
+                                                                                    .pop()
+                                                                            }}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <div
+                                                                    class="flex items-center gap-3"
+                                                                >
+                                                                    <!-- <Button
+                                                                        icon="pi pi-download"
+                                                                        severity="secondary"
+                                                                        text
+                                                                        size="small"
+                                                                        rounded
+                                                                        as="a"
+                                                                        :href="
+                                                                            'http://172.16.8.35/' +
+                                                                            selectedRow.file
+                                                                        "
+                                                                        download
+                                                                        v-tooltip.top="
+                                                                            'Download'
+                                                                        "
+                                                                    /> -->
+                                                                    <Button
+                                                                        icon="pi pi-external-link"
+                                                                        severity="secondary"
+                                                                        text
+                                                                        size="small"
+                                                                        rounded
+                                                                        as="a"
+                                                                        target="_blank"
+                                                                        :href="
+                                                                            'http://172.16.8.35/' +
+                                                                            selectedRow.file
+                                                                        "
+                                                                        v-tooltip.top="
+                                                                            'Open in new tab'
+                                                                        "
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Viewer -->
+                                                            <iframe
+                                                                :src="
+                                                                    'http://172.16.8.35/' +
+                                                                    selectedRow.file
                                                                 "
-                                                                :size="20"
+                                                                class="w-full h-[500px] border-0"
                                                             />
-                                                            <p>
-                                                                View uploaded
-                                                                file
-                                                            </p>
                                                         </div>
-                                                    </template>
-                                                </Button>
+                                                    </Popover>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -509,6 +632,7 @@ import {
     IconCircleCheckFilled,
     IconCircleXFilled,
     IconLoader,
+    IconFile,
     IconLoader2,
 } from "@tabler/icons-vue";
 
@@ -523,6 +647,7 @@ const modelValue = defineModel("modelValue");
 const page = usePage();
 const toast = useToast();
 const selectedRow = ref(null);
+const opFileViewer = ref(null);
 const loading = ref({
     approve: false,
     reject: false,
@@ -533,6 +658,10 @@ const landbankRequest = ref(null);
 const selectedRequest = (item, index) => {
     selectedRow.value = item;
     selectedRow.value.index = index;
+};
+
+const toggleOpFileViewer = (event) => {
+    opFileViewer.value.toggle(event);
 };
 
 const validationRequest = (decision) => {

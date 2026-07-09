@@ -1905,6 +1905,190 @@
                             </template>
                         </Panel>
                     </div>
+                    <Panel
+                        class="!rounded-xl"
+                        v-if="selectedTab.key == 4"
+                        :pt="{
+                            header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
+                            content: '!p-4',
+                        }"
+                    >
+                        <template #header>
+                            <div class="p-2 w-full flex justify-between">
+                                <div class="flex items-center gap-2">
+                                    <Avatar
+                                        class="rounded-full !bg-blue-100 !text-blue-500"
+                                        size="small"
+                                    >
+                                        <IconWood :size="20" stroke-width="2" />
+                                    </Avatar>
+                                    <h3 class="text-lg font-bold text-nowrap">
+                                        Activity Logs
+                                    </h3>
+                                </div>
+                            </div>
+                        </template>
+                        <template #default>
+                            <div class="w-full h-full overflow-auto">
+                                <Timeline
+                                    :value="page.props.details.logs"
+                                    align="left"
+                                    class="p-1"
+                                    :pt="{
+                                        eventOpposite: '!hidden',
+                                        eventSeparator: '!min-w-[3rem]',
+                                    }"
+                                >
+                                    <template #marker="slotProps">
+                                        <div
+                                            :class="[
+                                                'w-10 h-10 rounded-2xl border flex items-center justify-center shadow-sm',
+                                                {
+                                                    'bg-blue-50 border-blue-200':
+                                                        slotProps.item.type ===
+                                                        'profile',
+                                                    'bg-emerald-50 border-emerald-200':
+                                                        slotProps.item.type ===
+                                                        'landbank',
+                                                    'bg-cyan-50 border-cyan-200':
+                                                        slotProps.item.type ===
+                                                        'address',
+                                                    'bg-green-50 border-green-200':
+                                                        slotProps.item.type ===
+                                                        'school',
+                                                },
+                                            ]"
+                                        >
+                                            <IconMapPin
+                                                v-if="
+                                                    slotProps.item.type ===
+                                                    'address'
+                                                "
+                                                class="text-cyan-600"
+                                                :size="22"
+                                            />
+
+                                            <IconUser
+                                                v-else-if="
+                                                    slotProps.item.type ===
+                                                    'profile'
+                                                "
+                                                class="text-blue-600"
+                                                :size="22"
+                                            />
+
+                                            <IconBuildingBank
+                                                v-else-if="
+                                                    slotProps.item.type ===
+                                                    'landbank'
+                                                "
+                                                class="text-emerald-600"
+                                                :size="22"
+                                            />
+
+                                            <IconSchool
+                                                v-else
+                                                class="text-green-600"
+                                                :size="22"
+                                            />
+                                        </div>
+                                    </template>
+
+                                    <template #content="slotProps">
+                                        <div class="flex flex-col gap-2">
+                                            <div class="flex flex-col">
+                                                <div
+                                                    class="text-sm font-medium"
+                                                >
+                                                    Updated User
+                                                    {{ slotProps.item.type }}
+                                                </div>
+                                                <div
+                                                    class="text-sm flex gap-4 items-center text-gray-400"
+                                                >
+                                                    <div
+                                                        class="flex gap-1 items-center"
+                                                    >
+                                                        <IconUserCircle
+                                                            :size="20"
+                                                        />
+                                                        <div>
+                                                            {{
+                                                                slotProps.item
+                                                                    .created_by
+                                                            }}
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="flex gap-1 items-center"
+                                                    >
+                                                        <IconCalendarFilled
+                                                            :size="20"
+                                                        />
+                                                        <div>
+                                                            {{
+                                                                slotProps.item
+                                                                    .date
+                                                            }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="p-3 text-sm">
+                                                <div
+                                                    v-for="(
+                                                        value, key
+                                                    ) in slotProps.item.changes"
+                                                    :key="key"
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <span
+                                                        class="text-gray-700 min-w-36 capitalize"
+                                                    >
+                                                        {{
+                                                            key.replaceAll(
+                                                                "_",
+                                                                " ",
+                                                            )
+                                                        }}
+                                                    </span>
+
+                                                    <span class="text-red-500">
+                                                        {{
+                                                            slotProps.item
+                                                                .previous?.[
+                                                                key
+                                                            ] != ""
+                                                                ? slotProps.item
+                                                                      .previous?.[
+                                                                      key
+                                                                  ]
+                                                                : "Not Set"
+                                                        }}
+                                                    </span>
+
+                                                    <IconArrowRight
+                                                        :size="14"
+                                                        class="text-gray-400"
+                                                    />
+
+                                                    <span
+                                                        class="text-emerald-600 font-medium"
+                                                    >
+                                                        {{
+                                                            value != ""
+                                                                ? value
+                                                                : "Removed"
+                                                        }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </Timeline>
+                            </div>
+                        </template>
+                    </Panel>
                 </div>
             </div>
         </template>
@@ -1916,6 +2100,7 @@ import {
     IconBook2,
     IconId,
     IconUserFilled,
+    IconWood,
     IconAt,
     IconMapPin,
     IconUser,
@@ -1931,6 +2116,11 @@ import {
     IconCircleCheck,
     IconCircleX,
     IconCircleDashed,
+    IconArrowRight,
+    IconBuildingBank,
+    IconClock,
+    IconCalendarFilled,
+    IconUserCircle,
 } from "@tabler/icons-vue";
 
 import { computed, ref, watch } from "vue";
@@ -2044,8 +2234,7 @@ const tabs = ref([
         label: "Activity Logs",
         icon: "IconWood",
         key: 4,
-        disabled: true,
-        status: "NEW",
+        disabled: page.props?.details?.logs.length != 0 ? false : true,
     },
 ]);
 
@@ -2195,23 +2384,17 @@ watch(
         personalInfo.award_year = newVal.awardYear
             ? new Date(parseInt(newVal.awardYear), 0, 1)
             : null;
-        personalInfo.status =
-            page.props?.statusOptions?.find(
-                (status) => {
-                    const scholarStatus = String(
-                        newVal.academic_status ??
-                            newVal.status?.name ??
-                            "NEW",
-                    ).toUpperCase();
+        personalInfo.status = page.props?.statusOptions?.find((status) => {
+            const scholarStatus = String(
+                newVal.academic_status ?? newVal.status?.name ?? "NEW",
+            ).toUpperCase();
 
-                    return (
-                        status.name?.toUpperCase() === scholarStatus ||
-                        String(status.id ?? "").toUpperCase() === scholarStatus
-                    );
-                },
-            ) ??
-            newVal.status ??
-            { id: "NEW", name: "NEW" };
+            return (
+                status.name?.toUpperCase() === scholarStatus ||
+                String(status.id ?? "").toUpperCase() === scholarStatus
+            );
+        }) ??
+            newVal.status ?? { id: "NEW", name: "NEW" };
         personalInfo.acc_name = newVal.landbank.account_name ?? null;
         personalInfo.acc_no = newVal.landbank.account_number ?? null;
         personalInfo.school = newVal.schoolInput ?? null;

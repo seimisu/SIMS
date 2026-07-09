@@ -216,8 +216,8 @@
                                     <SelectInput
                                         v-model="filterAcademicYear"
                                         :options="
-                                            page.props
-                                                .monitoringYearOptions ?? []
+                                            page.props.monitoringYearOptions ??
+                                            []
                                         "
                                         placeholder="Academic Year"
                                         clearable
@@ -225,8 +225,8 @@
                                     <SelectInput
                                         v-model="filterMonitoringTerm"
                                         :options="
-                                            page.props
-                                                .monitoringTermOptions ?? []
+                                            page.props.monitoringTermOptions ??
+                                            []
                                         "
                                         placeholder="Term"
                                         clearable
@@ -241,7 +241,9 @@
                                         clearable
                                     />
                                 </div>
-                                <div class="flex justify-end items-center gap-2">
+                                <div
+                                    class="flex justify-end items-center gap-2"
+                                >
                                     <DefaultButton
                                         @click="clearMonitoring"
                                         label="Latest"
@@ -786,7 +788,7 @@ const menuItems = computed((item) => {
             class: "text-cyan-500",
             command: () => {
                 router.reload({
-                    only: ["subjectRequest"],
+                    only: ["subjectRequest", "details"],
                     data: { id: selectedRow.value.id },
 
                     preserveState: false,

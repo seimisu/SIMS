@@ -23,6 +23,62 @@
                 <div
                     class="flex-6 flex flex-col gap-3 overflow-auto max-h-190 p-5"
                 >
+                    <div class="flex items-center justify-between py-1">
+                        <!-- Left -->
+                        <div class="flex items-center gap-3">
+                            <Avatar
+                                class="!bg-blue-100 !text-blue-600 !rounded-2xl shadow border border-blue-300"
+                                size="large"
+                            >
+                                <IconUser :size="22" />
+                            </Avatar>
+
+                            <div>
+                                <div
+                                    class="text-xl font-bold text-gray-900 leading-5"
+                                >
+                                    {{ page.props?.details?.fullname }}
+                                </div>
+
+                                <div
+                                    class="mt-1 flex items-center gap-1 text-sm text-gray-500"
+                                >
+                                    <IconHash :size="14" />
+                                    {{ page.props?.details?.spas_no }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right -->
+                        <div class="flex items-center gap-8">
+                            <div class="text-right">
+                                <div
+                                    class="text-xs uppercase tracking-wider text-gray-400"
+                                >
+                                    Scholarship
+                                </div>
+
+                                <div class="font-semibold text-gray-800">
+                                    {{ page.props?.details?.type?.name }}
+                                </div>
+                            </div>
+
+                            <Divider layout="vertical" class="!h-10" />
+
+                            <div class="text-right">
+                                <div
+                                    class="text-xs uppercase tracking-wider text-gray-400"
+                                >
+                                    Program
+                                </div>
+
+                                <div class="font-semibold text-gray-800">
+                                    {{ page.props?.details?.program?.name }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex flex-col gap-5" v-if="details">
                         <template v-for="(item, index) in details" :key="index">
                             <Divider>
@@ -310,9 +366,7 @@
                                                             :size="20"
                                                         />
 
-                                                        <p>
-                                                            For Revisions
-                                                        </p>
+                                                        <p>For Revisions</p>
                                                     </div>
                                                 </template>
                                             </Button>
@@ -464,8 +518,7 @@
                                                         <label
                                                             class="text-xs font-semibold text-gray-600 leading-0"
                                                         >
-                                                            Scholarship
-                                                            Standing
+                                                            Scholarship Standing
                                                             <span
                                                                 class="text-red-500"
                                                                 >*</span
@@ -558,12 +611,72 @@
                             Select a file on the left panel
                         </div>
                     </div>
-                    <div v-else class="w-full flex flex-col p-1">
+                    <div v-else class="w-full flex flex-col gap-3 p-5">
+                        <div
+                            class="flex items-center justify-between px-5 pb-4 border-b border-gray-200"
+                        >
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"
+                                >
+                                    <IconFileTypePdf
+                                        v-if="
+                                            selectedRow?.file?.endsWith('.pdf')
+                                        "
+                                        :size="22"
+                                    />
+
+                                    <IconFile v-else :size="22" />
+                                </div>
+
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">
+                                        Document Preview
+                                    </h3>
+
+                                    <p
+                                        class="text-sm text-gray-500 truncate max-w-[500px]"
+                                    >
+                                        {{
+                                            selectedFile?.file_path
+                                                ?.split("/")
+                                                .pop()
+                                        }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <Button
+                                    icon="pi pi-external-link"
+                                    severity="secondary"
+                                    text
+                                    size="small"
+                                    rounded
+                                    as="a"
+                                    target="_blank"
+                                    :href="
+                                        'http://172.16.8.35/' +
+                                        selectedFile.file_path
+                                    "
+                                    v-tooltip.top="'Open in new tab'"
+                                />
+                                <Button
+                                    icon="pi pi-times-circle"
+                                    severity="secondary"
+                                    text
+                                    size="small"
+                                    rounded
+                                    @click="selectedFile = null"
+                                    v-tooltip.top="'Close File'"
+                                />
+                            </div>
+                        </div>
+
                         <iframe
                             :src="
                                 'http://172.16.8.35/' + selectedFile.file_path
                             "
-                            class="w-full h-[800px] rounded-xl border"
+                            class="w-full h-[700px] rounded-xl border"
                         >
                         </iframe>
                     </div>
@@ -594,6 +707,7 @@ import {
     IconArrowLeft,
     IconCircleXFilled,
     IconId,
+    IconHash,
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
@@ -627,12 +741,11 @@ const toggleOpAccept = (event) => {
 };
 
 const approveRequest = (decision) => {
-    const submittedTerm = details.value.find((item) => item.status === "submitted");
+    const submittedTerm = details.value.find(
+        (item) => item.status === "submitted",
+    );
 
-    if (
-        decision === "accept" &&
-        !submittedTerm?.scholarshipStatus
-    ) {
+    if (decision === "accept" && !submittedTerm?.scholarshipStatus) {
         toast.add({
             severity: "warn",
             summary: "Standing Required",
@@ -641,10 +754,7 @@ const approveRequest = (decision) => {
         });
         return;
     }
-    if (
-        decision === "reject" &&
-        !submittedTerm?.remarks
-    ) {
+    if (decision === "reject" && !submittedTerm?.remarks) {
         toast.add({
             severity: "warn",
             summary: "Remarks Required",
