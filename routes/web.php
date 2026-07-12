@@ -30,6 +30,7 @@ use App\Http\Controllers\Web\SchoolController;
 use App\Http\Controllers\Web\StatusController;
 use App\Http\Controllers\Web\StipendController;
 use App\Http\Controllers\Web\UserController;
+use App\Http\Controllers\Web\VideoResourceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,6 +38,7 @@ Route::get('/', function () {
 });
 
 Route::get('api/documents', [DocumentController::class, 'publicIndex'])->name('documents.public');
+Route::get('api/video-resources', [VideoResourceController::class, 'publicIndex'])->name('video-resources.public');
 Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
 
 Route::middleware('guest')->group(function () {
@@ -160,6 +162,9 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('document-categories', [DocumentController::class, 'storeCategory'])->name('document-categories.store');
     Route::put('document-categories/{category}', [DocumentController::class, 'updateCategory'])->name('document-categories.update');
     Route::delete('document-categories/{category}', [DocumentController::class, 'destroyCategory'])->name('document-categories.destroy');
+    Route::post('video-resources', [VideoResourceController::class, 'store'])->name('video-resources.store');
+    Route::put('video-resources/{videoResource}', [VideoResourceController::class, 'update'])->name('video-resources.update');
+    Route::delete('video-resources/{videoResource}', [VideoResourceController::class, 'destroy'])->name('video-resources.destroy');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -180,6 +185,7 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('events', [eventController::class, 'index'])->name('events');
     Route::get('stipends', [StipendController::class, 'index'])->name('stipends');
     Route::get('documents', [DocumentController::class, 'index'])->name('documents');
+    Route::get('video-resources', [VideoResourceController::class, 'index'])->name('video-resources');
     Route::get('geolocation', [GeolocationController::class, 'index']);
     Route::get('scholar-review', [ScholarController::class, 'index'])->name('review');
 });

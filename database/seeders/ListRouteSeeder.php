@@ -293,7 +293,7 @@ class ListRouteSeeder extends Seeder
                 ],
                 [
                     "id" => 7,
-                    "label" => "places",
+                    "label" => "Locations",
                     "roles" =>  json_encode([
                         [
                             'id' => 1,
@@ -408,7 +408,7 @@ class ListRouteSeeder extends Seeder
                 ],
                 [
                     "id" => 21,
-                    "label" => "documents",
+                    "label" => "Downloadables",
                     "roles" =>  json_encode([
                         [
                             'id' => 1,
@@ -421,6 +421,29 @@ class ListRouteSeeder extends Seeder
                     "slug" => "documents",
                     "icon" => "IconFileDescription",
                     "order_no" => 6,
+                    "is_submenu" => true,
+                    "is_active" => true,
+                    "is_delete" => false,
+                    "created_by" => "John Rey Dalit",
+                    "updated_by" => null,
+                    "created_at" => "2026-07-12 00:00:00",
+                    "updated_at" => "2026-07-12 00:00:00",
+                ],
+                [
+                    "id" => 22,
+                    "label" => "Video Library",
+                    "roles" =>  json_encode([
+                        [
+                            'id' => 1,
+                            'name' => 'Administrator'
+                        ]
+                    ]),
+                    "main_id" => 5,
+                    "route" => "/video-resources",
+                    "component" => "Web/videoResourcePage",
+                    "slug" => "video-resources",
+                    "icon" => "IconVideo",
+                    "order_no" => 7,
                     "is_submenu" => true,
                     "is_active" => true,
                     "is_delete" => false,

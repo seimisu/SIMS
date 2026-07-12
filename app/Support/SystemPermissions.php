@@ -25,6 +25,8 @@ class SystemPermissions
             'payroll.delete',
             'documents.view',
             'documents.manage',
+            'video-resources.view',
+            'video-resources.manage',
             'geolocation.upload',
         ],
 
@@ -40,6 +42,8 @@ class SystemPermissions
             'payroll.delete',
             'documents.view',
             'documents.manage',
+            'video-resources.view',
+            'video-resources.manage',
             'geolocation.upload',
         ],
 
@@ -55,6 +59,7 @@ class SystemPermissions
             'payroll.approve',
             'payroll.reject',
             'documents.view',
+            'video-resources.view',
         ],
 
         'scholarship coordinator' => [
@@ -69,6 +74,7 @@ class SystemPermissions
             'payroll.approve',
             'payroll.reject',
             'documents.view',
+            'video-resources.view',
         ],
 
         'school coordinator' => [
@@ -166,6 +172,9 @@ class SystemPermissions
         'document-categories.store' => 'documents.manage',
         'document-categories.update' => 'documents.manage',
         'document-categories.destroy' => 'documents.manage',
+        'video-resources.store' => 'video-resources.manage',
+        'video-resources.update' => 'video-resources.manage',
+        'video-resources.destroy' => 'video-resources.manage',
     ];
 
     public static function permissionDefinitions(): array

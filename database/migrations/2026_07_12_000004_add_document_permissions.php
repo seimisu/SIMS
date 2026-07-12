@@ -9,14 +9,14 @@ return new class extends Migration
     {
         $permissions = [
             'documents.view' => [
-                'label' => 'Documents - View',
+                'label' => 'Downloadables - View',
                 'group_name' => 'documents',
-                'description' => 'Allows View actions in the Documents module.',
+                'description' => 'Allows View actions in the Downloadables module.',
             ],
             'documents.manage' => [
-                'label' => 'Documents - Manage',
+                'label' => 'Downloadables - Manage',
                 'group_name' => 'documents',
-                'description' => 'Allows Manage actions in the Documents module.',
+                'description' => 'Allows Manage actions in the Downloadables module.',
             ],
         ];
 

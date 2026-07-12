@@ -1,11 +1,11 @@
 <template>
-    <Head title="Documents" />
+    <Head title="Downloadables" />
     <AuthLayout>
         <div class="flex flex-col w-full h-full gap-4">
             <div class="flex">
                 <HeaderModule
-                    title="Documents"
-                    description="Manage downloadable documents, categories, and audience availability."
+                    title="Downloadables"
+                    description="Manage downloadable files, categories, and audience availability."
                 />
             </div>
 
@@ -31,8 +31,8 @@
                             <ToolbarModule
                                 v-model="searchInput"
                                 button-label="Upload"
-                                :dialog-title="documentForm.id ? 'Edit Document' : 'Upload Document'"
-                                dialog-description="Set the document details, file, and who can download it."
+                                :dialog-title="documentForm.id ? 'Edit Downloadable' : 'Upload Downloadable'"
+                                dialog-description="Set the file details and who can download it."
                                 dialog-button-label="Save"
                                 :dialog-icon="IconFileUpload"
                                 :dialog-button-loading="documentForm.processing"
@@ -46,7 +46,7 @@
                             >
                                 <template #form>
                                     <div class="flex flex-col gap-3 mt-5">
-                                        <TextInput v-model="documentForm.title" label="Document Name" />
+                                        <TextInput v-model="documentForm.title" label="Downloadable Name" />
                                         <div class="flex flex-col">
                                             <span class="text-sm font-medium">Description</span>
                                             <Textarea v-model="documentForm.description" rows="3" autoResize fluid />
@@ -129,7 +129,7 @@
                                 }"
                                 @paginate="loadPage"
                             >
-                                <Column field="title" header="Document" class="font-semibold">
+                                <Column field="title" header="Downloadable" class="font-semibold">
                                     <template #body="props">
                                         <div class="flex flex-col">
                                             <span>{{ props.data.title }}</span>
@@ -213,7 +213,7 @@
                                 v-model="categorySearchInput"
                                 button-label="Create"
                                 :dialog-title="categoryForm.id ? 'Edit Category' : 'Create Category'"
-                                dialog-description="Organize downloadable documents by category."
+                                dialog-description="Organize downloadable files by category."
                                 dialog-button-label="Save"
                                 :dialog-icon="IconCategory"
                                 :dialog-button-loading="categoryForm.processing"
@@ -322,7 +322,7 @@ const uploadRef = ref(null);
 const progressUpload = ref(0);
 const activeTab = ref("documents");
 const tabs = [
-    { label: "Documents", value: "documents" },
+    { label: "Downloadables", value: "documents" },
     { label: "Categories", value: "categories" },
 ];
 

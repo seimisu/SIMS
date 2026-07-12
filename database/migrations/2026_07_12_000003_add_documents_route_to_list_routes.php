@@ -10,7 +10,7 @@ return new class extends Migration
         DB::table('list_routes')->updateOrInsert(
             ['slug' => 'documents'],
             [
-                'label' => 'documents',
+                'label' => 'Downloadables',
                 'roles' => json_encode([
                     [
                         'id' => 1,

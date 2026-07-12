@@ -1,10 +1,10 @@
 <template>
-    <Head title="Stipend Management" />
+    <Head title="Financial Assistance" />
     <AuthLayout>
         <div class="flex flex-col w-full h-full gap-5">
             <div class="flex">
                 <HeaderModule
-                    title="Stipend Management"
+                    title="Financial Assistance"
                     description="Manage and monitor stipend records, track financial assistance details, and ensure accurate processing of student support."
                 />
             </div>

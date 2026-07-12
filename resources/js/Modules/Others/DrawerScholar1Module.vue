@@ -1305,7 +1305,7 @@
                                     <span
                                         class="text-sm font-medium text-slate-500"
                                     >
-                                        Total Stipend Amount
+                                        Total Financial Assistance Amount
                                     </span>
 
                                     <div
