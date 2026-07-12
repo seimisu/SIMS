@@ -515,13 +515,13 @@
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
                             <div class="font-semibold">
-                                Scholarship Standing
+                                Scholarship Status
                             </div>
                         </div>
                     </template>
                     <template #body="props">
                         <div class="text-center text-xs font-medium">
-                            {{ props.data.scholarshipStanding ?? "-" }}
+                            {{ props.data.scholarshipStatus ?? "-" }}
                         </div>
                     </template>
                 </Column>

@@ -514,7 +514,7 @@ class Scholar1Controller extends Controller
                     ->paginate(10)
                     ->through(function ($q) use ($monitoringAcademicYear, $monitoringTermId, $academicStatusOptions) {
                         $monitoringTermRecord = null;
-                        $scholarshipStanding = null;
+                        $scholarshipStatus = null;
                         $progressStatus = Str::upper($q->academic_status ?: 'NEW');
                         $progressStatusOption = $academicStatusOptions->firstWhere('name', $progressStatus);
 
@@ -524,7 +524,7 @@ class Scholar1Controller extends Controller
                                 ->where('term_id', $monitoringTermId)
                                 ->first();
 
-                            $scholarshipStanding = $monitoringTermRecord
+                            $scholarshipStatus = $monitoringTermRecord
                                 ? DB::connection('scholars')
                                     ->table('scholar_processes')
                                     ->where('term_record_id', $monitoringTermRecord->id)
@@ -559,7 +559,7 @@ class Scholar1Controller extends Controller
                             'mainProgram' => $q->mainProgram?->name,
                             'status' => $this->academicStatusMeta($progressStatus, $progressStatusOption),
                             'submissionStatus' => $this->submissionStatusMeta($monitoringTermRecord?->verification_status),
-                            'scholarshipStanding' => $scholarshipStanding,
+                            'scholarshipStatus' => $scholarshipStatus,
                             'course' => $q->schoolInfo?->first()?->course?->course?->name,
                             'school' => $q->schoolInfo?->first()?->campus?->generated_name,
                             'agency' => $q->schoolInfo?->first()?->campus?->agency?->slug,
@@ -577,6 +577,8 @@ class Scholar1Controller extends Controller
                             'profileRequest',
                             'profile',
                             'address',
+                            'program:id,name',
+                            'type:id,name',
                         ])
                         ->get()
                         ->flatMap(function ($scholar) {
@@ -617,6 +619,14 @@ class Scholar1Controller extends Controller
                                     'contactStored' => $scholar->profile->contact_no,
                                     'civilStored' => $scholar->profile->civil_status,
                                     'spas_no' => $scholar->spas_no,
+                                    'fullname' => trim(collect([
+                                        $scholar->profile?->lname.',',
+                                        $scholar->profile?->fname,
+                                        $scholar->profile?->mname,
+                                        $scholar->profile?->suffix,
+                                    ])->filter()->implode(' ')),
+                                    'program' => $scholar->program?->name,
+                                    'scholarshipProgram' => $scholar->type?->name,
                                     'records' => requestHistory::where('request_no', Carbon::parse($q->requested_at)->format('Ymd')
                                        .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT))->where('request_type', 'profile')->first(),
                                 ];
@@ -672,6 +682,9 @@ class Scholar1Controller extends Controller
                         ->with([
                             'landbankRequest',
                             'landbank',
+                            'profile',
+                            'program:id,name',
+                            'type:id,name',
                         ])
                         ->get()
                         ->flatMap(function ($scholar) {
@@ -688,6 +701,14 @@ class Scholar1Controller extends Controller
                                 return [
                                     'count' => $requestNo,
                                     'spas_no' => $q->spas_no,
+                                    'fullname' => trim(collect([
+                                        $scholar->profile?->lname.',',
+                                        $scholar->profile?->fname,
+                                        $scholar->profile?->mname,
+                                        $scholar->profile?->suffix,
+                                    ])->filter()->implode(' ')),
+                                    'program' => $scholar->program?->name,
+                                    'scholarshipProgram' => $scholar->type?->name,
 
                                     'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
 
@@ -932,7 +953,7 @@ class Scholar1Controller extends Controller
                                         'total' => round($totalGradePoints, 2),
                                         'average' => $totalUnits > 0 ? number_format($totalGradePoints / $totalUnits, 2, '.', '') : null,
                                     ],
-                                    'scholarshipStanding' => $standing,
+                                    'scholarshipStatus' => $standing,
                                 ];
                             }),
                             'financialAid' => [
@@ -1535,10 +1556,10 @@ class Scholar1Controller extends Controller
                 ]);
             }
 
-            $scholarshipStanding = $data[0]['scholarshipStatus']['name']
+            $scholarshipStatus = $data[0]['scholarshipStatus']['name']
                 ?? $data[0]['scholarshipStatus']['id']
                 ?? null;
-            $scholarshipStanding = Str::upper($scholarshipStanding);
+            $scholarshipStatus = Str::upper($scholarshipStatus);
 
             $terms = ScholarTerm::with('scholar:id,spas_no')
                 ->whereIn('id', collect($data)->pluck('id'))
@@ -1556,7 +1577,7 @@ class Scholar1Controller extends Controller
                         ['term_record_id' => $term->id],
                         [
                             'spas_no' => $term->scholar?->spas_no,
-                            'standing' => $scholarshipStanding,
+                            'standing' => $scholarshipStatus,
                             'submission' => 'APPROVED',
                             'payroll' => 'NOT SUBMITTED',
                             'updated_at' => now(),
