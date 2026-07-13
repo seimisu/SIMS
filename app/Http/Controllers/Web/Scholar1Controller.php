@@ -1445,10 +1445,12 @@ class Scholar1Controller extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Action Completed',
+            'title' => $type === 'accept'
+                ? 'Scholar info request approved'
+                : 'Scholar info request rejected',
             'message' => $type === 'accept'
-                ? 'The change request has been approved.'
-                : 'The change request has been declined.',
+                ? 'The scholar information change request has been approved.'
+                : 'The scholar information change request has been rejected.',
         ]);
     }
 
@@ -1531,10 +1533,12 @@ class Scholar1Controller extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Action Completed',
+            'title' => $type === 'accept'
+                ? 'Landbank request approved'
+                : 'Landbank request rejected',
             'message' => $type === 'accept'
-                ? 'The change request has been approved.'
-                : 'The change request has been declined.',
+                ? 'The Landbank change request has been approved.'
+                : 'The Landbank change request has been rejected.',
         ]);
     }
 
@@ -1630,10 +1634,12 @@ class Scholar1Controller extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Action Completed',
+            'title' => $type === 'accept'
+                ? 'Grade request approved'
+                : 'Grade request rejected',
             'message' => $type === 'accept'
-                ? 'The change request has been approved.'
-                : 'The change request has been declined.',
+                ? 'The grade request has been approved.'
+                : 'The grade request has been rejected.',
         ]);
     }
 
