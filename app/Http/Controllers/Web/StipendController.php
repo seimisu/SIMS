@@ -190,6 +190,25 @@ class StipendController extends Controller
             ->all();
     }
 
+    private function isPartialAllowanceStanding(?string $standing): bool
+    {
+        return Str::lower(trim((string) $standing)) === 'continue with partial allowance';
+    }
+
+    private function scholarStandingForBatch(Batches $batch, int $scholarId): ?string
+    {
+        $termIds = $this->scholarTermPayrollQuery($batch, $scholarId)->pluck('id');
+
+        if ($termIds->isEmpty()) {
+            return null;
+        }
+
+        return DB::connection('scholars')
+            ->table('scholar_processes')
+            ->whereIn('term_record_id', $termIds)
+            ->value('standing');
+    }
+
     private function recipientAllowanceAmount(BatchRecipients $recipient, string $code, string $legacyClassification, float $fallback): float
     {
         $allowance = $recipient->allowances->first(function ($allowance) use ($code, $legacyClassification) {
@@ -1126,7 +1145,7 @@ class StipendController extends Controller
             return redirect()->back()->with('flash', [
                 'status' => 'error',
                 'title' => 'Invalid action',
-                'message' => 'The requested stipend action is not supported.',
+                'message' => 'The requested financial assistance action is not supported.',
             ]);
         }
 
@@ -1173,10 +1192,24 @@ class StipendController extends Controller
         $this->syncBatchRecipientTermStatuses($batch, $data['status']);
         $this->syncBatchFinancialStatuses($batch, $data['status']);
 
+        $successFlash = match ($data['status']) {
+            'submitted_payroll' => [
+                'title' => 'Payroll submitted',
+                'message' => 'The payroll batch was successfully submitted.',
+            ],
+            'approved_payroll' => [
+                'title' => 'Payroll approved',
+                'message' => 'The payroll batch was successfully approved.',
+            ],
+            'rejected_payroll' => [
+                'title' => 'Payroll rejected',
+                'message' => 'The payroll batch was successfully rejected.',
+            ],
+        };
+
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Payroll Batch status updated',
-            'message' => 'The payroll batch status was updated.',
+            ...$successFlash,
         ]);
     }
 
@@ -1206,7 +1239,6 @@ class StipendController extends Controller
             $allowanceDefaults = $this->visibleFixedAllowanceDefaults();
             $allowanceTypeIds = $this->allowanceTypeIds();
             $monthlyLiving = $allowanceDefaults['monthly_living'] ?? 0;
-            $totalMonthlyLiving = $monthlyLiving * 5;
             $defaultConnectivity = $allowanceDefaults['connectivity'] ?? 0;
             $defaultClothing = $allowanceDefaults['clothing'] ?? 0;
 
@@ -1244,6 +1276,12 @@ class StipendController extends Controller
                     continue;
                 }
 
+                $standing = $this->scholarStandingForBatch($batch, $scholar->id);
+                $recipientMonthlyLiving = $this->isPartialAllowanceStanding($standing)
+                    ? $monthlyLiving / 2
+                    : $monthlyLiving;
+                $totalMonthlyLiving = $recipientMonthlyLiving * 5;
+
                 $recipient = BatchRecipients::firstOrCreate(
                     [
                         'batch_id' => $batch->id,
@@ -1272,7 +1310,7 @@ class StipendController extends Controller
                         ['month_no' => $month],
                         [
                             'month' => 'Month ' . $month,
-                            'amount' => $monthlyLiving,
+                            'amount' => $recipientMonthlyLiving,
                             'status' => 'pending',
                         ]
                     );
@@ -1514,7 +1552,7 @@ class StipendController extends Controller
             return redirect()->back()->with('flash', [
                 'status' => 'success',
                 'title' => 'Payroll saved',
-                'message' => 'Payroll informations were saved.',
+                'message' => 'Payroll information was saved.',
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -1584,7 +1622,7 @@ class StipendController extends Controller
             return redirect()->back()->with('flash', [
                 'status' => 'error',
                 'title' => 'Invalid action',
-                'message' => 'The requested stipend action is not supported.',
+                'message' => 'The requested financial assistance action is not supported.',
             ]);
         }
 
