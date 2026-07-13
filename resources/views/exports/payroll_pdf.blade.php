@@ -3,6 +3,14 @@
     $display = fn ($value) => $money($value) > 0 ? number_format($money($value), 2) : '-';
     $customAllowances = collect($customAllowances ?? []);
     $columnCount = 17 + $customAllowances->count();
+    $allowanceColumnCount = 2 + $customAllowances->count();
+    $allowanceColumnWidth = max(3.2, min(5.5, 22 / max(1, $allowanceColumnCount)));
+    $bodyFontSize = match (true) {
+        $customAllowances->count() >= 4 => '4.8px',
+        $customAllowances->count() >= 2 => '5.3px',
+        $customAllowances->isNotEmpty() => '5.8px',
+        default => '6.5px',
+    };
     $region = trim(str_replace('DOST', '', $batch->region ?? ''));
     $title = 'PAYROLL OF REGION ' . ($region ?: '____') . ' - MONITORED DOST UNDERGRADUATE SCHOLARS';
     $grand = [
@@ -29,13 +37,14 @@
 
         body {
             font-family: Arial, sans-serif;
-            font-size: {{ $customAllowances->isNotEmpty() ? '6px' : '7px' }};
+            font-size: {{ $bodyFontSize }};
             color: #000;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         th,
@@ -89,17 +98,17 @@
             height: 30px;
         }
 
-        .col-spas { width: 5.5%; }
-        .col-account { width: 7%; }
-        .col-name { width: 11%; }
-        .col-program { width: 7%; }
-        .col-university { width: 10%; }
-        .col-status { width: 6.5%; }
-        .col-period { width: 8.5%; }
-        .col-money { width: 5%; }
-        .col-remarks { width: 8%; }
-        .col-allowance { width: 7.5%; }
-        .col-total { width: 5%; }
+        .col-spas { width: 5%; }
+        .col-account { width: 6%; }
+        .col-name { width: 9.5%; }
+        .col-program { width: 6%; }
+        .col-university { width: 7.5%; }
+        .col-status { width: 5%; }
+        .col-period { width: 6.5%; }
+        .col-money { width: 3.5%; }
+        .col-remarks { width: 5%; }
+        .col-allowance { width: {{ $allowanceColumnWidth }}%; }
+        .col-total { width: 4%; }
     </style>
 </head>
 <body>

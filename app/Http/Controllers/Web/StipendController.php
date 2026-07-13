@@ -220,6 +220,34 @@ class StipendController extends Controller
         return (float) ($allowance?->amount ?? $fallback);
     }
 
+    private function recipientCustomAllowanceAmounts(BatchRecipients $recipient, array $allowanceTypeIds): array
+    {
+        $customCodes = $this->customAllowanceCodes();
+        $customTypeIds = collect($customCodes)
+            ->map(fn($code) => $allowanceTypeIds[$code] ?? null)
+            ->filter()
+            ->values()
+            ->all();
+
+        return RecipientAllowance::with('allowanceType')
+            ->where('recipient_id', $recipient->id)
+            ->where(function ($query) use ($customCodes, $customTypeIds) {
+                $query->whereIn('classification', $customCodes);
+
+                if (!empty($customTypeIds)) {
+                    $query->orWhereIn('allowance_type_id', $customTypeIds);
+                }
+            })
+            ->get()
+            ->mapWithKeys(function ($allowance) {
+                $code = $allowance->allowanceType?->code ?? $allowance->classification;
+
+                return [$code => (float) $allowance->amount];
+            })
+            ->only($customCodes)
+            ->all();
+    }
+
     private function payrollRegionCode(array|string|null $region): string
     {
         $regionCode = is_array($region) ? ($region['region_code'] ?? null) : null;
@@ -1046,7 +1074,7 @@ class StipendController extends Controller
         }
     }
 
-    private function payrollExportPayload(string $id): array
+    private function payrollExportPayload(string $id, array $requestedAllowanceCodes = []): array
     {
         $batchId = Hashids::decode($id)[0] ?? 0;
         $batch = Batches::with([
@@ -1091,6 +1119,8 @@ class StipendController extends Controller
         $customAllowanceCodes = collect($rows)
             ->flatten(1)
             ->flatMap(fn($row) => array_keys($row['custom_allowances'] ?? []))
+            ->merge($requestedAllowanceCodes)
+            ->filter(fn($code) => in_array($code, $this->customAllowanceCodes(), true))
             ->unique()
             ->values();
 
@@ -1123,7 +1153,12 @@ class StipendController extends Controller
 
     public function export(Request $request, string $id)
     {
-        [$batch, $rows, $filenameBase, $customAllowances] = $this->payrollExportPayload($id);
+        $requestedAllowanceCodes = collect($request->input('allowances', []))
+            ->filter(fn($code) => is_string($code))
+            ->values()
+            ->all();
+
+        [$batch, $rows, $filenameBase, $customAllowances] = $this->payrollExportPayload($id, $requestedAllowanceCodes);
 
         if ($request->query('format') === 'pdf') {
             return Pdf::loadView('exports.payroll_pdf', [
@@ -1444,9 +1479,12 @@ class StipendController extends Controller
                 $totalWithheld = (float) ($item['total_withheld'] ?? 0);
                 $learningMaterials = (float) ($item['learning_materials_amount'] ?? 0);
                 $clothing = (float) ($item['clothing_amount'] ?? 0);
-                $customAllowances = collect($item['custom_allowances'] ?? [])
+                $submittedCustomAllowances = collect($item['custom_allowances'] ?? [])
                     ->only($this->customAllowanceCodes())
-                    ->map(fn($amount) => (float) ($amount ?? 0));
+                    ->map(fn($amount) => (float) ($amount ?? 0))
+                    ->filter(fn($amount) => $amount > 0);
+                $customAllowances = collect($this->recipientCustomAllowanceAmounts($recipient, $allowanceTypeIds))
+                    ->merge($submittedCustomAllowances);
                 $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing + $customAllowances->sum();
 
                 $recipient->update([
@@ -1500,31 +1538,17 @@ class StipendController extends Controller
                     );
                 }
 
-                foreach ($this->customAllowanceCodes() as $code) {
-                    $amount = (float) ($customAllowances[$code] ?? 0);
-
-                    if ($amount <= 0) {
-                        RecipientAllowance::where('recipient_id', $recipient->id)
-                            ->where(function ($query) use ($code, $allowanceTypeIds) {
-                                $query->where('classification', $code);
-
-                                if (!empty($allowanceTypeIds[$code])) {
-                                    $query->orWhere('allowance_type_id', $allowanceTypeIds[$code]);
-                                }
-                            })
-                            ->delete();
-
-                        continue;
-                    }
+                foreach ($submittedCustomAllowances as $code => $amount) {
+                    $amount = (float) ($amount ?? 0);
 
                     RecipientAllowance::updateOrCreate(
                         [
                             'recipient_id' => $recipient->id,
-                            'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
+                            'classification' => $code,
                         ],
                         [
-                            'classification' => $code,
                             'amount' => $amount,
+                            'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
                             'remarks' => $item['remarks'] ?? null,
                             'status' => 'pending',
                         ]
