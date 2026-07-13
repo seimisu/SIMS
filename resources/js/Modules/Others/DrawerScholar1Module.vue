@@ -889,14 +889,14 @@
                                                     <div
                                                         class="text-[10px] font-semibold uppercase tracking-wide text-amber-600"
                                                     >
-                                                        Scholarship Standing
+                                                        Scholarship Status
                                                     </div>
                                                     <div
                                                         class="text-sm font-semibold text-amber-800"
                                                     >
                                                         {{
-                                                            termRecord.scholarshipStanding ??
-                                                            "Scholarship standing is not available"
+                                                            termRecord.scholarshipStatus ??
+                                                            "Scholarship status is not available"
                                                         }}
                                                     </div>
                                                 </div>
@@ -1305,7 +1305,7 @@
                                     <span
                                         class="text-sm font-medium text-slate-500"
                                     >
-                                        Total Stipend Amount
+                                        Total Financial Assistance Amount
                                     </span>
 
                                     <div

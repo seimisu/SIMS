@@ -14,7 +14,7 @@
                 >
                     <IconFileSpreadsheet :size="20" />
                     <div class="text-sm uppercase font-medium">
-                        {{ details?.name ?? "Stipend Batch" }}
+                        {{ details?.name ?? "Financial Assistance Batch" }}
                     </div>
                 </div>
                 <div

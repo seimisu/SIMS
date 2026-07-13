@@ -23,6 +23,10 @@ class SystemPermissions
             'payroll.edit',
             'payroll.submit',
             'payroll.delete',
+            'documents.view',
+            'documents.manage',
+            'video-resources.view',
+            'video-resources.manage',
             'geolocation.upload',
         ],
 
@@ -36,6 +40,10 @@ class SystemPermissions
             'payroll.edit',
             'payroll.submit',
             'payroll.delete',
+            'documents.view',
+            'documents.manage',
+            'video-resources.view',
+            'video-resources.manage',
             'geolocation.upload',
         ],
 
@@ -50,6 +58,8 @@ class SystemPermissions
             'payroll.review',
             'payroll.approve',
             'payroll.reject',
+            'documents.view',
+            'video-resources.view',
         ],
 
         'scholarship coordinator' => [
@@ -63,6 +73,8 @@ class SystemPermissions
             'payroll.review',
             'payroll.approve',
             'payroll.reject',
+            'documents.view',
+            'video-resources.view',
         ],
 
         'school coordinator' => [
@@ -153,6 +165,16 @@ class SystemPermissions
         'stipends.export' => 'payroll.view',
         'stipends.update' => 'payroll.view',
         'stipends.destroy' => 'payroll.delete',
+
+        'documents.store' => 'documents.manage',
+        'documents.update' => 'documents.manage',
+        'documents.destroy' => 'documents.manage',
+        'document-categories.store' => 'documents.manage',
+        'document-categories.update' => 'documents.manage',
+        'document-categories.destroy' => 'documents.manage',
+        'video-resources.store' => 'video-resources.manage',
+        'video-resources.update' => 'video-resources.manage',
+        'video-resources.destroy' => 'video-resources.manage',
     ];
 
     public static function permissionDefinitions(): array

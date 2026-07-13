@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\CampusCourseSubjectController;
 use App\Http\Controllers\Web\CampusGradeController;
 use App\Http\Controllers\Web\CourseController;
 use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\DocumentController;
 use App\Http\Controllers\Web\eventController;
 use App\Http\Controllers\Web\GeolocationController;
 use App\Http\Controllers\Web\LocationBarangayController;
@@ -29,11 +30,16 @@ use App\Http\Controllers\Web\SchoolController;
 use App\Http\Controllers\Web\StatusController;
 use App\Http\Controllers\Web\StipendController;
 use App\Http\Controllers\Web\UserController;
+use App\Http\Controllers\Web\VideoResourceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('api/documents', [DocumentController::class, 'publicIndex'])->name('documents.public');
+Route::get('api/video-resources', [VideoResourceController::class, 'publicIndex'])->name('video-resources.public');
+Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
@@ -149,6 +155,16 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('scholar-grade-request/{type}', [Scholar1Controller::class, 'gradeRequest'])->name('scholar.grade-request');
     Route::post('profileRequest/{type}', [Scholar1Controller::class, 'profileRequest'])->name('profile.request');
     Route::post('landbankRequest/{type}', [Scholar1Controller::class, 'landbankRequest'])->name('landbank.request');
+
+    Route::post('documents', [DocumentController::class, 'store'])->name('documents.store');
+    Route::put('documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
+    Route::delete('documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+    Route::post('document-categories', [DocumentController::class, 'storeCategory'])->name('document-categories.store');
+    Route::put('document-categories/{category}', [DocumentController::class, 'updateCategory'])->name('document-categories.update');
+    Route::delete('document-categories/{category}', [DocumentController::class, 'destroyCategory'])->name('document-categories.destroy');
+    Route::post('video-resources', [VideoResourceController::class, 'store'])->name('video-resources.store');
+    Route::put('video-resources/{videoResource}', [VideoResourceController::class, 'update'])->name('video-resources.update');
+    Route::delete('video-resources/{videoResource}', [VideoResourceController::class, 'destroy'])->name('video-resources.destroy');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -168,6 +184,8 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('programs', [programController::class, 'index'])->name('programs');
     Route::get('events', [eventController::class, 'index'])->name('events');
     Route::get('stipends', [StipendController::class, 'index'])->name('stipends');
+    Route::get('documents', [DocumentController::class, 'index'])->name('documents');
+    Route::get('video-resources', [VideoResourceController::class, 'index'])->name('video-resources');
     Route::get('geolocation', [GeolocationController::class, 'index']);
     Route::get('scholar-review', [ScholarController::class, 'index'])->name('review');
 });

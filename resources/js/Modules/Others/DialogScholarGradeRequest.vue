@@ -501,7 +501,7 @@
                                                             >
                                                                 Select the
                                                                 scholarship
-                                                                standing before
+                                                                status before
                                                                 approving the
                                                                 document.
                                                             </p>
@@ -518,7 +518,7 @@
                                                         <label
                                                             class="text-xs font-semibold text-gray-600 leading-0"
                                                         >
-                                                            Scholarship Standing
+                                                            Scholarship Status
                                                             <span
                                                                 class="text-red-500"
                                                                 >*</span
@@ -748,8 +748,8 @@ const approveRequest = (decision) => {
     if (decision === "accept" && !submittedTerm?.scholarshipStatus) {
         toast.add({
             severity: "warn",
-            summary: "Standing Required",
-            detail: "Please select the scholarship standing.",
+            summary: "Scholarship Status Required",
+            detail: "Please select the scholarship status.",
             life: 3000,
         });
         return;
