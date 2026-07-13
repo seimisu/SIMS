@@ -701,6 +701,7 @@ class Scholar1Controller extends Controller
 
                                 return [
                                     'count' => $requestNo,
+                                    'request_id' => $q->id,
                                     'spas_no' => $q->spas_no,
                                     'fullname' => trim(collect([
                                         $scholar->profile?->lname.',',
