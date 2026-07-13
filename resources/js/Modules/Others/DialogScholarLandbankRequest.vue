@@ -157,73 +157,20 @@
                         class="flex flex-col gap-2 p-3 h-full w-full lg:w-8/12"
                     >
                         <div
-                            class="flex flex-col gap-4 border-b border-gray-200 pb-4 lg:flex-row lg:items-center lg:justify-between"
+                            class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1"
                         >
-                            <div class="flex items-center gap-3">
-                                <Avatar
-                                    class="!bg-blue-100 !text-blue-600 !rounded-2xl shadow border border-blue-300"
-                                    size="large"
-                                >
-                                    <IconUser :size="22" />
-                                </Avatar>
-
-                                <div>
-                                    <div
-                                        class="text-lg font-bold text-gray-900 leading-5"
-                                    >
-                                        {{
-                                            (selectedRow ?? landbankRequest?.[0])
-                                                ?.fullname ?? "-"
-                                        }}
-                                    </div>
-
-                                    <div
-                                        class="mt-1 flex items-center gap-1 text-sm text-gray-500"
-                                    >
-                                        <IconHash :size="14" />
-                                        {{
-                                            (selectedRow ?? landbankRequest?.[0])
-                                                ?.spas_no ?? "-"
-                                        }}
-                                    </div>
-                                </div>
+                            <div>
+                                <IconExclamationCircleFilled :size="20" />
                             </div>
 
-                            <div class="flex items-center gap-8">
-                                <div class="text-right">
-                                    <div
-                                        class="text-xs uppercase tracking-wider text-gray-400"
-                                    >
-                                        Scholarship
-                                    </div>
-
-                                    <div class="font-semibold text-gray-800">
-                                        {{
-                                            (selectedRow ?? landbankRequest?.[0])
-                                                ?.scholarshipProgram ?? "-"
-                                        }}
-                                    </div>
-                                </div>
-
-                                <Divider layout="vertical" class="!h-10" />
-
-                                <div class="text-right">
-                                    <div
-                                        class="text-xs uppercase tracking-wider text-gray-400"
-                                    >
-                                        Program
-                                    </div>
-
-                                    <div class="font-semibold text-gray-800">
-                                        {{
-                                            (selectedRow ?? landbankRequest?.[0])
-                                                ?.program ?? "-"
-                                        }}
-                                    </div>
-                                </div>
-                            </div>
+                            <p class="text-xs leading-5 text-justify">
+                                Please upload the scholar’s complete information
+                                and supporting documents. Ensure that all
+                                required fields are properly filled out and the
+                                uploaded files are accurate and up to date
+                                before submitting.
+                            </p>
                         </div>
-                        {{ console.log(selectedRow) }}
                         <div
                             class="flex items-center w-full h-full gap-1"
                             v-if="selectedRow"
@@ -551,14 +498,17 @@
                                                                 </div>
                                                             </div>
 
-                                                            <!-- Viewer -->
-                                                            <iframe
-                                                                :src="
-                                                                    'http://172.16.8.35/' +
-                                                                    selectedRow.file
-                                                                "
-                                                                class="w-full h-[500px] border-0"
-                                                            />
+                                                            <div
+                                                                class="w-full h-[600px]"
+                                                            >
+                                                                <iframe
+                                                                    :src="
+                                                                        'http://172.16.8.98:85/' +
+                                                                        selectedRow.file
+                                                                    "
+                                                                    class="border-0 w-full h-[450px]"
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </Popover>
                                                 </div>
@@ -581,7 +531,7 @@
                             </div>
                         </div>
                         <div
-                            v-if="selectedRow.reject"
+                            v-if="selectedRow && selectedRow.reject"
                             class="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4"
                         >
                             <i
@@ -770,6 +720,7 @@
 <script setup>
 import {
     IconExclamationCircle,
+    IconExclamationCircleFilled,
     IconUserUp,
     IconHistory,
     IconUser,
@@ -788,7 +739,6 @@ import {
     IconLoader,
     IconFile,
     IconLoader2,
-    IconHash,
 } from "@tabler/icons-vue";
 
 import UploadInput from "../../Components/inputs/UploadInput.vue";
