@@ -472,7 +472,7 @@
                         </div>
                         <div
                             class="flex flex-col gap-3"
-                            v-if="selectedRow && !selectedRow.requested_at"
+                            v-if="selectedRow && selectedRow.requested_at"
                         >
                             <div class="leading-none">
                                 <label for="remarks" class="text-sm"

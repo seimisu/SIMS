@@ -622,6 +622,7 @@ class Scholar1Controller extends Controller
                                 ];
                             });
                         })
+                        ->reverse()
                         ->values()
                 ),
 
@@ -688,7 +689,7 @@ class Scholar1Controller extends Controller
                                 return [
                                     'count' => $requestNo,
                                     'spas_no' => $q->spas_no,
-
+                                    'request_id' => $q->id,
                                     'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
 
                                     'reviewed_at' => $q->reviewed_at
@@ -1481,7 +1482,7 @@ class Scholar1Controller extends Controller
             ]);
 
             // Update request status
-            $scholar->landbankRequest()->update([
+            $scholar->landbankRequest()->where('id', $data['request_id'])->update([
                 'status' => 'approved',
                 'reviewed_at' => Carbon::now(),
                 'reviewed_by' => Auth::user()->profile->fullname,
@@ -1499,7 +1500,7 @@ class Scholar1Controller extends Controller
                     'message' => 'Please fill in the remarks field.',
                 ]);
             }
-            $scholar->landbankRequest()->update([
+            $scholar->landbankRequest()->where('id', $data['request_id'])->update([
                 'status' => 'rejected',
                 'reviewed_at' => Carbon::now(),
                 'reviewed_by' => Auth::user()->profile->fullname,

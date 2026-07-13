@@ -21,7 +21,7 @@
         <template #default>
             <div class="">
                 <div
-                    class="flex flex-col lg:flex-row h-full w-full lg:h-[40rem]"
+                    class="flex flex-col lg:flex-row h-full w-full lg:h-[33rem]"
                 >
                     <div
                         class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col flex-1 overflow-y-auto p-3 gap-3"
@@ -171,6 +171,7 @@
                                 before submitting.
                             </p>
                         </div>
+                        {{ console.log(selectedRow) }}
                         <div
                             class="flex items-center w-full h-full gap-1"
                             v-if="selectedRow"
@@ -219,7 +220,7 @@
                                                         >
                                                             Account Name
                                                         </div>
-                                                        {{}}
+
                                                         <p
                                                             v-if="
                                                                 selectedRow.reviewed_at
@@ -527,56 +528,158 @@
                                 </div>
                             </div>
                         </div>
+                        <div
+                            v-if="selectedRow.reject"
+                            class="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4"
+                        >
+                            <i
+                                class="pi pi-exclamation-circle text-red-500 text-lg mt-0.5"
+                            ></i>
 
-                        <div class="flex flex-col gap-3" v-if="selectedRow">
-                            <div class="leading-none">
-                                <label for="remarks" class="text-sm"
-                                    >Remarks</label
+                            <div class="flex-1">
+                                <div class="text-sm font-semibold text-red-700">
+                                    Request Rejected
+                                </div>
+
+                                <div
+                                    class="mt-1 text-sm text-red-600 leading-relaxed"
                                 >
-                                <Textarea
-                                    id="remarks"
-                                    class="!text-sm"
-                                    placeholder="Help the user understand why this request was rejected and what needs to be corrected."
-                                    fluid
-                                    rows="5"
-                                    v-model="selectedRow.reject"
-                                    :disabled="
-                                        selectedRow.reviewed_at ? true : false
-                                    "
-                                />
+                                    {{ selectedRow.reject }}
+                                </div>
                             </div>
+                        </div>
+                        <div class="flex flex-col gap-3" v-if="selectedRow">
                             <div class="flex flex-col gap-4">
                                 <div
                                     class="flex justify-end"
                                     v-if="!selectedRow.reviewed_at"
                                 >
                                     <div class="flex items-center gap-3">
-                                        <Button
-                                            size="small"
-                                            class="!text-xs !rounded-xl"
-                                            outlined
-                                            :loading="loading.reject"
-                                            severity="danger"
-                                            @click="validationRequest('reject')"
-                                        >
-                                            <template #default>
+                                        <div>
+                                            <Button
+                                                size="small"
+                                                class="!text-xs !rounded-xl"
+                                                outlined
+                                                :loading="loading.reject"
+                                                severity="danger"
+                                                @click="toggleOpReject"
+                                            >
+                                                <template #default>
+                                                    <div
+                                                        class="flex gap-1 items-center"
+                                                    >
+                                                        <IconCircleXFilled
+                                                            :stroke-width="1.5"
+                                                            :size="20"
+                                                            v-if="
+                                                                !loading.reject
+                                                            "
+                                                        />
+                                                        <IconLoader2
+                                                            v-else
+                                                            :size="20"
+                                                            class="animate-spin"
+                                                        />
+                                                        <p>Reject</p>
+                                                    </div>
+                                                </template>
+                                            </Button>
+                                            <Popover ref="opReject">
                                                 <div
-                                                    class="flex gap-1 items-center"
+                                                    class="w-[26rem] p-1 flex flex-col gap-4"
                                                 >
-                                                    <IconCircleXFilled
-                                                        :stroke-width="1.5"
-                                                        :size="20"
-                                                        v-if="!loading.reject"
-                                                    />
-                                                    <IconLoader2
-                                                        v-else
-                                                        :size="20"
-                                                        class="animate-spin"
-                                                    />
-                                                    <p>Reject</p>
+                                                    <!-- Header -->
+                                                    <div
+                                                        class="flex flex-col gap-1"
+                                                    >
+                                                        <h3
+                                                            class="text-sm font-semibold"
+                                                        >
+                                                            Reject Landbank
+                                                            Request
+                                                        </h3>
+
+                                                        <p
+                                                            class="text-xs text-gray-500"
+                                                        >
+                                                            Please provide the
+                                                            reason for rejecting
+                                                            this Landbank
+                                                            account request. The
+                                                            remarks will be sent
+                                                            to the scholar.
+                                                        </p>
+                                                    </div>
+
+                                                    <!-- Divider -->
+                                                    <div class="border-t"></div>
+
+                                                    <!-- Form -->
+                                                    <div
+                                                        class="flex flex-col gap-2"
+                                                    >
+                                                        <label
+                                                            class="text-xs font-semibold text-gray-700"
+                                                        >
+                                                            Remarks
+                                                            <span
+                                                                class="text-red-500"
+                                                                >*</span
+                                                            >
+                                                        </label>
+                                                        <Textarea
+                                                            id="remarks"
+                                                            class="!text-sm"
+                                                            placeholder="Help the user understand why this request was rejected and what needs to be corrected."
+                                                            fluid
+                                                            rows="5"
+                                                            v-model="
+                                                                selectedRow.reject
+                                                            "
+                                                            :disabled="
+                                                                selectedRow.reviewed_at
+                                                                    ? true
+                                                                    : false
+                                                            "
+                                                        />
+                                                    </div>
+
+                                                    <!-- Actions -->
+                                                    <div
+                                                        class="flex justify-end gap-2 pt-2"
+                                                    >
+                                                        <DefaultButton
+                                                            label="Cancel"
+                                                            rounded
+                                                            severity="secondary"
+                                                            @click="
+                                                                toggleOpReject
+                                                            "
+                                                            outlined
+                                                            size="small"
+                                                            class-name="!px-4"
+                                                        />
+
+                                                        <DefaultButton
+                                                            label="Reject this request"
+                                                            rounded
+                                                            severity="danger"
+                                                            :loading="
+                                                                loading.reject
+                                                            "
+                                                            @click="
+                                                                validationRequest(
+                                                                    'reject',
+                                                                )
+                                                            "
+                                                            size="small"
+                                                            class-name="!px-5"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </template>
-                                        </Button>
+                                            </Popover>
+                                        </div>
+
                                         <Button
                                             size="small"
                                             class="!text-xs !rounded-xl"
@@ -648,6 +751,7 @@ const page = usePage();
 const toast = useToast();
 const selectedRow = ref(null);
 const opFileViewer = ref(null);
+const opReject = ref(null);
 const loading = ref({
     approve: false,
     reject: false,
@@ -662,6 +766,10 @@ const selectedRequest = (item, index) => {
 
 const toggleOpFileViewer = (event) => {
     opFileViewer.value.toggle(event);
+};
+
+const toggleOpReject = (event) => {
+    opReject.value.toggle(event);
 };
 
 const validationRequest = (decision) => {
