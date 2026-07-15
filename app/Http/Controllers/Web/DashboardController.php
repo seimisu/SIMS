@@ -7,12 +7,13 @@ use App\Models\Scholars;
 use App\Models\SchoolCampuses;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $permissions = app(SystemPermissions::class);
@@ -175,10 +176,141 @@ class DashboardController extends Controller
                     ->first(),
             ]);
         } else {
+
+            $scholars = Scholars::with([
+                'program:id,name',
+                'profile:sex,scholar_id',
+            ])->get();
+
+            $categories = $scholars
+                ->pluck('award_year')
+                ->flatten()
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            $series = $scholars
+                ->groupBy(fn ($s) => $s->program->name)
+                ->sortKeys()
+                ->map(function ($rows, $program) use ($categories) {
+                    $data = collect($categories)->map(function ($year) use ($rows) {
+                        return $rows->where('award_year', $year)->count();
+                    })->toArray();
+
+                    return [
+                        'name' => $program,
+                        'data' => $data,
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            $timelineTotal = $scholars
+                ->groupBy(fn ($s) => $s->program->name)
+                ->map(function ($rows, $program) {
+
+                    return [
+                        'name' => $program,
+                        'data' => $rows->count(),
+                    ];
+                })
+                ->values()
+                ->toArray();
+
             return Inertia::render('Web/dashboardPage', [
                 'dashboardType' => $permissions->dashboardType($user),
+                'timeline' => [
+                    'categories' => $categories,
+                    'series' => $series,
+                    'programs' => $timelineTotal,
+                ],
                 'card' => [
-                    'totalActive' => $scholars->count(),
+                    'active' => Scholars::whereNotIn('academic_status', [
+                        'GRADUATED',
+                        'TERMINATED',
+                        'WITHDRAWN',
+                    ])->when($request->filled('filter'), function ($query) use ($request) {
+                        switch ($request->input('filter')) {
+                            case 'year':
+                                $query->whereYear('activated_at', now()->year);
+                                break;
+
+                            case 'month':
+                                $query->whereMonth('activated_at', now()->month)
+                                    ->whereYear('activated_at', now()->year);
+                                break;
+
+                                // case 'week':
+                                //     $query->whereBetween('activated_at', [
+                                //         now()->startOfWeek(),
+                                //         now()->endOfWeek(),
+                                //     ]);
+                                //     break;
+                        }
+                    })->count(),
+                    'graduated' => Scholars::where('academic_status', 'GRADUATED')->when($request->filled('filter'), function ($query) use ($request) {
+                        switch ($request->input('filter')) {
+                            case 'year':
+                                $query->whereYear('activated_at', now()->year);
+                                break;
+
+                            case 'month':
+                                $query->whereMonth('activated_at', now()->month)
+                                    ->whereYear('activated_at', now()->year);
+                                break;
+
+                                // case 'week':
+                                //     $query->whereBetween('activated_at', [
+                                //         now()->startOfWeek(),
+                                //         now()->endOfWeek(),
+                                //     ]);
+                                //     break;
+                        }
+                    })->count(),
+                    'issue' => Scholars::whereNotIn('academic_status', [
+                        'GRADUATED',
+                        'NEW',
+                        'ONGOING',
+
+                    ])->when($request->filled('filter'), function ($query) use ($request) {
+                        switch ($request->input('filter')) {
+                            case 'year':
+                                $query->whereYear('activated_at', now()->year);
+                                break;
+
+                            case 'month':
+                                $query->whereMonth('activated_at', now()->month)
+                                    ->whereYear('activated_at', now()->year);
+                                break;
+
+                                // case 'week':
+                                //     $query->whereBetween('activated_at', [
+                                //         now()->startOfWeek(),
+                                //         now()->endOfWeek(),
+                                //     ]);
+                                //     break;
+                        }
+                    })->count(),
+                    'terminated' => Scholars::where('academic_status', 'TERMINATED')->when($request->filled('filter'), function ($query) use ($request) {
+                        switch ($request->input('filter')) {
+                            case 'year':
+                                $query->whereYear('activated_at', now()->year);
+                                break;
+
+                            case 'month':
+                                $query->whereMonth('activated_at', now()->month)
+                                    ->whereYear('activated_at', now()->year);
+                                break;
+
+                                // case 'week':
+                                //     $query->whereBetween('activated_at', [
+                                //         now()->startOfWeek(),
+                                //         now()->endOfWeek(),
+                                //     ]);
+                                //     break;
+                        }
+                    })->count(),
                 ],
             ]);
         }
