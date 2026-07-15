@@ -572,12 +572,12 @@
                                         <TextInput
                                             v-model="personalInfo.religion"
                                             label="Religion"
-                                            capitalize
+                                            uppercase
                                             :disabled="!editBtn.info"
                                         />
                                         <TextInput
                                             v-model="personalInfo.civil_status"
-                                            capitalize
+                                            uppercase
                                             label="Civil Status"
                                             :disabled="!editBtn.info"
                                         />
@@ -605,6 +605,7 @@
                                         <SelectInput
                                             label="Course"
                                             v-model="personalInfo.course"
+                                            uppercase
                                             :disable="!editBtn.info"
                                             :options="page.props?.courseOptions"
                                         />

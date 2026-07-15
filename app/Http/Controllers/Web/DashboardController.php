@@ -177,7 +177,9 @@ class DashboardController extends Controller
         } else {
             return Inertia::render('Web/dashboardPage', [
                 'dashboardType' => $permissions->dashboardType($user),
-                'result' => [],
+                'card' => [
+                    'totalActive' => $scholars->count(),
+                ],
             ]);
         }
     }

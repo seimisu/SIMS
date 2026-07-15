@@ -120,7 +120,7 @@
                                                     <div class="font-medium">
                                                         {{ item.reviewed_at }}
                                                     </div>
-                                                    <div>
+                                                    <div class="capitalize">
                                                         {{ item.reviewed_by }}
                                                     </div>
                                                 </div>
@@ -171,6 +171,7 @@
                                 before submitting.
                             </p>
                         </div>
+
                         <div
                             class="flex items-center w-full h-full gap-1"
                             v-if="selectedRow"
@@ -274,7 +275,7 @@
                                                 <div
                                                     class="flex flex-col items-center text-gray-500"
                                                 >
-                                                    <IconArrowBigRightLines
+                                                    <IconArrowNarrowRight
                                                         :size="35"
                                                     />
                                                     <div
@@ -498,17 +499,14 @@
                                                                 </div>
                                                             </div>
 
-                                                            <div
-                                                                class="w-full h-[600px]"
-                                                            >
-                                                                <iframe
-                                                                    :src="
-                                                                        'http://172.16.8.98:85/' +
-                                                                        selectedRow.file
-                                                                    "
-                                                                    class="border-0 w-full h-[450px]"
-                                                                />
-                                                            </div>
+                                                            <!-- Viewer -->
+                                                            <iframe
+                                                                :src="
+                                                                    'http://172.16.8.35/' +
+                                                                    selectedRow.file
+                                                                "
+                                                                class="w-full h-[500px] border-0"
+                                                            />
                                                         </div>
                                                     </Popover>
                                                 </div>
@@ -727,7 +725,7 @@ import {
     IconCalendarTime,
     IconArrowRight,
     IconLock,
-    IconArrowBigRightLines,
+    IconArrowNarrowRight,
     IconDatabase,
     IconDatabaseEdit,
     IconCreditCard,

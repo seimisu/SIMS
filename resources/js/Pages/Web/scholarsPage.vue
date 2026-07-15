@@ -432,7 +432,7 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Types</div>
+                            <div class="font-semibold">Type</div>
                         </div>
                     </template>
                     <template #body="props">
@@ -444,7 +444,7 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Programs</div>
+                            <div class="font-semibold">Program</div>
                         </div>
                     </template>
                     <template #body="props">
@@ -514,9 +514,7 @@
                 <Column v-if="monitoringActive">
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">
-                                Scholarship Status
-                            </div>
+                            <div class="font-semibold">Scholarship Status</div>
                         </div>
                     </template>
                     <template #body="props">

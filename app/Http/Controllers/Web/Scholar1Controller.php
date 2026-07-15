@@ -560,81 +560,125 @@ class Scholar1Controller extends Controller
                             'status' => $this->academicStatusMeta($progressStatus, $progressStatusOption),
                             'submissionStatus' => $this->submissionStatusMeta($monitoringTermRecord?->verification_status),
                             'scholarshipStatus' => $scholarshipStatus,
+                            'term' => $q->termRecords()->latest()->first()?->toArray(),
                             'course' => $q->schoolInfo?->first()?->course?->course?->name,
                             'school' => $q->schoolInfo?->first()?->campus?->generated_name,
                             'agency' => $q->schoolInfo?->first()?->campus?->agency?->slug,
                             'region' => $q->schoolInfo?->first()?->campus?->address?->region_array,
                         ];
                     }),
-                'personalRequest' => Inertia::optional(
-                    fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
-                        ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                            $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                'personalRequest' => Inertia::optional(function () use ($request, $permissions, $user) {
+
+                    $id = Hashids::decode($request->input('id'))[0] ?? 0;
+
+                    $scholar = Scholars::query()
+                        ->whereKey($id)
+                        ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
+                            $query->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
                                 $address->where('region_code', $permissions->regionCodeFor($user));
                             });
                         })
                         ->with([
-                            'profileRequest',
                             'profile',
                             'address',
                             'program:id,name',
                             'type:id,name',
+                            'profileRequest' => fn ($q) => $q->latest('id'),
                         ])
-                        ->get()
-                        ->flatMap(function ($scholar) {
-                            return $scholar->profileRequest->map(function ($q, $index) use ($scholar) {
+                        ->first();
 
-                                return [
-                                    'count' => Carbon::parse($q->requested_at)->format('Ymd')
-                                        .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT),
-                                    'purpose' => $q->purpose,
-                                    'address' => $q->address,
-                                    'barangay' => $q->barangay,
-                                    'municipality' => $q->municipality,
-                                    'province' => $q->province,
-                                    'region' => $q->region,
-                                    'civil_status' => $q->civil_status,
-                                    'contact_no' => $q->contact_no,
-                                    'email' => $q->email,
+                    if (! $scholar) {
+                        return collect();
+                    }
 
-                                    'fullAddress' => collect([
-                                        $q->address,
-                                        $q->barangay,
-                                        $q->municipality,
-                                        $q->province,
-                                        $q->region,
-                                    ])->filter()->implode(', '),
-                                    'fullAddressStored' => $scholar?->address?->full_address,
-                                    'file_type' => $q->proof_type,
-                                    'remarks' => $q->remarks,
-                                    'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
-                                    'request_date' => Carbon::parse($q->requested_at)->format('F d, Y h:i A'),
-                                    'reviewed_at' => $q->reviewed_at
-                                        ? Carbon::parse($q->reviewed_at)->diffForHumans()
-                                        : null,
-                                    'reviewed_by' => $q->reviewed_by,
-                                    'status' => $q->status,
-                                    'file' => $q->proof,
-                                    'emailStored' => $scholar->profile->email,
-                                    'contactStored' => $scholar->profile->contact_no,
-                                    'civilStored' => $scholar->profile->civil_status,
-                                    'spas_no' => $scholar->spas_no,
-                                    'fullname' => trim(collect([
-                                        $scholar->profile?->lname.',',
-                                        $scholar->profile?->fname,
-                                        $scholar->profile?->mname,
-                                        $scholar->profile?->suffix,
-                                    ])->filter()->implode(' ')),
-                                    'program' => $scholar->program?->name,
-                                    'scholarshipProgram' => $scholar->type?->name,
-                                    'records' => requestHistory::where('request_no', Carbon::parse($q->requested_at)->format('Ymd')
-                                       .'-'.str_pad($index + 1, 3, '0', STR_PAD_LEFT))->where('request_type', 'profile')->first(),
-                                ];
-                            });
-                        })
-                        ->reverse()
+                    $fullname = trim(implode(' ', array_filter([
+                        $scholar->profile?->lname ? "{$scholar->profile->lname}," : null,
+                        $scholar->profile?->fname,
+                        $scholar->profile?->mname,
+                        $scholar->profile?->suffix,
+                    ])));
+
+                    $requests = $scholar->profileRequest->values();
+
+                    $requestNumbers = $requests
                         ->values()
-                ),
+                        ->map(function ($request, $index) use ($requests) {
+                            return Carbon::parse($request->requested_at)->format('Ymd').'-'.
+                                 str_pad($requests->count() - $index, 3, '0', STR_PAD_LEFT);
+                        });
+
+                    $histories = requestHistory::query()
+                        ->where('request_type', 'profile')
+                        ->whereIn('request_no', $requestNumbers)
+                        ->get()
+                        ->keyBy('request_no');
+
+                    return $requests
+                        ->values()
+                        ->map(function ($item, $index) use (
+                            $requests,
+                            $histories,
+                            $scholar,
+                            $fullname
+                        ) {
+
+                            $requestedAt = Carbon::parse($item->requested_at);
+
+                            $requestNo = $requestedAt->format('Ymd').'-'.
+                                 str_pad($requests->count() - $index, 3, '0', STR_PAD_LEFT);
+
+                            $reviewedAt = $item->reviewed_at
+                                 ? Carbon::parse($item->reviewed_at)
+                                 : null;
+
+                            return [
+                                'count' => $requestNo,
+                                'request_id' => $item->id,
+                                'purpose' => $item->purpose,
+                                'address' => $item->address,
+                                'barangay' => $item->barangay,
+                                'municipality' => $item->municipality,
+                                'province' => $item->province,
+                                'region' => $item->region,
+                                'civil_status' => $item->civil_status,
+                                'contact_no' => $item->contact_no,
+                                'email' => $item->email,
+
+                                'fullAddress' => implode(', ', array_filter([
+                                    $item->address,
+                                    $item->barangay,
+                                    $item->municipality,
+                                    $item->province,
+                                    $item->region,
+                                ])),
+
+                                'fullAddressStored' => $scholar->address?->full_address_with_street,
+
+                                'file_type' => $item->proof_type,
+                                'remarks' => $item->remarks,
+
+                                'requested_at' => $requestedAt->diffForHumans(),
+                                'request_date' => $requestedAt->format('F d, Y h:i A'),
+
+                                'reviewed_at' => $reviewedAt?->diffForHumans(),
+                                'reviewed_by' => $item->reviewed_by,
+
+                                'status' => $item->status,
+                                'file' => $item->proof,
+
+                                'emailStored' => $scholar->profile?->email,
+                                'contactStored' => $scholar->profile?->contact_no,
+                                'civilStored' => $scholar->profile?->civil_status,
+
+                                'spas_no' => $scholar->spas_no,
+                                'fullname' => $fullname,
+                                'program' => $scholar->program?->name,
+                                'scholarshipProgram' => $scholar->type?->name,
+
+                                'records' => $histories->get($requestNo),
+                            ];
+                        });
+                }),
 
                 'subjectRequest' => Inertia::optional(
                     fn () => ScholarTerm::where('scholar_id', Hashids::decode($request->input('id'))[0] ?? 0)
@@ -873,7 +917,9 @@ class Scholar1Controller extends Controller
 
                             ],
                             'logs' => $q->logs
+                                ->sortByDesc('created_at')
                                 ->take(50)
+                                ->values()
                                 ->map(fn ($log) => [
                                     'created_by' => $log->created_by,
                                     'previous' => $log->previous_formatted,
@@ -979,7 +1025,6 @@ class Scholar1Controller extends Controller
                                         ->sum('amount'),
                                     2
                                 ),
-
                                 'connectivity' => number_format(
                                     $q->payrolls()
                                         ->with('allowances.allowanceType')
@@ -1039,9 +1084,8 @@ class Scholar1Controller extends Controller
 
                         ];
                     } : null,
-
                 'resultSearch' => request('findAddress')
-                    ? ($location->getFullAddress(request('findAddress')) ?? [])
+                    ? ($location->getFullAddress(request('findAddress'), false) ?? [])
                     : [],
                 'schoolFilter' => $schoolFilter,
                 'programFilter' => $programFilter,
@@ -1157,8 +1201,8 @@ class Scholar1Controller extends Controller
                         'birthplace' => $data['birth_place'] ?? null,
                         'birthdate' => Carbon::parse($data['birth_date'])->setTimezone('Asia/Manila')
                             ->format('Y-m-d'),
-                        'religion' => $data['religion'] ?? null,
-                        'civil_status' => $data['civil_status'] ?? null,
+                        'religion' => Str::upper($data['religion']) ?? null,
+                        'civil_status' => Str::upper($data['civil_status']) ?? null,
                     ]
                 );
                 if ($profile->wasChanged()) {
@@ -1388,7 +1432,7 @@ class Scholar1Controller extends Controller
                 'barangay_code' => LocationBarangays::firstWhere('name', $data['barangay'])?->code,
                 'municipality_code' => LocationCity::firstWhere('name', $data['municipality'])?->code,
                 'province_code' => LocationProvinces::firstWhere('name', $data['province'])?->code,
-                'region_code' => LocationRegions::firstWhere('name', $data['region'])?->code,
+                'region_code' => LocationRegions::firstWhere('region', $data['region'])?->code,
             ];
             $filteredInput = collect($input)
                 ->except(['created_by', 'created_at'])
@@ -1407,7 +1451,7 @@ class Scholar1Controller extends Controller
                 'barangay_code' => LocationBarangays::firstWhere('name', $data['barangay'])?->code,
                 'municipality_code' => LocationCity::firstWhere('name', $data['municipality'])?->code,
                 'province_code' => LocationProvinces::firstWhere('name', $data['province'])?->code,
-                'region_code' => LocationRegions::firstWhere('name', $data['region'])?->code,
+                'region_code' => LocationRegions::firstWhere('region', $data['region'])?->code,
             ]);
 
             $scholar->requestHistory()->create([

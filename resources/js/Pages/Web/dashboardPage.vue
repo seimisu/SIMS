@@ -1,10 +1,7 @@
 <template>
     <Head title="Dashboard" />
     <AuthLayout>
-        <div
-            class="mx-auto"
-            v-if="page.props.dashboardType === 'admin'"
-        >
+        <div class="mx-auto" v-if="page.props.dashboardType === 'admin'">
             <h1 class="text-2xl font-bold mb-4">Welcome to the Dashboard</h1>
             <p class="text-gray-700">
                 This is your dashboard where you can manage your activities.
@@ -14,18 +11,7 @@
             class="mx-auto flex flex-col"
             v-else-if="page.props.dashboardType === 'regional'"
         >
-            <div class="w-full flex items-center justify-between">
-                <div class="flex-1">
-                    <h1 class="text-xl font-semibold">Overview</h1>
-                    <p class="text-sm text-gray-600">
-                        A quick summary of key information, status, and recent
-                        activity.
-                    </p>
-                </div>
-            </div>
-            <div class="flex-1">
-                <RegionStaffDashboardModule />
-            </div>
+            <RegionStaffDashboardModule class="h-full" />
         </div>
         <div
             class="mx-auto flex flex-col"
@@ -58,6 +44,9 @@
                 <SchoolCoordinatorDashboardModule />
             </div>
         </div>
+        <div class="mx-auto" v-else>
+            <ScholarshipDashboardModule></ScholarshipDashboardModule>
+        </div>
     </AuthLayout>
 </template>
 <script setup>
@@ -67,6 +56,7 @@ import RegionStaffDashboardModule from "../../Modules/Others/RegionStaffDashboar
 import SchoolCoordinatorDashboardModule from "../../Modules/Others/SchoolCoordinatorDashboardModule.vue";
 import { ref } from "vue";
 import { IconMapPin, IconSchool } from "@tabler/icons-vue";
+import ScholarshipDashboardModule from "../../Modules/Others/ScholarshipDashboardModule.vue";
 
 const page = usePage();
 </script>
