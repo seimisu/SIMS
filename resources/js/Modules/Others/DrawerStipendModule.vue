@@ -697,7 +697,19 @@ const syncPayrollRows = () => {
         ),
     ];
 
-    selectedCustomAllowanceCodes.value = savedCustomAllowanceCodes;
+    selectedCustomAllowanceCodes.value = [
+        ...new Set([...selectedCustomAllowanceCodes.value, ...savedCustomAllowanceCodes]),
+    ];
+
+    payrollRows.value.forEach((row) => {
+        row.custom_allowances ??= {};
+
+        selectedCustomAllowanceCodes.value.forEach((code) => {
+            if (row.custom_allowances[code] === undefined) {
+                row.custom_allowances[code] = customAllowanceDefaults.value[code] ?? 0;
+            }
+        });
+    });
 };
 
 const uniqueOptions = (items, key) =>
@@ -870,25 +882,22 @@ const buildPayrollRecipients = async () => {
         remarks: row.remarks,
         learning_materials_amount: row.learning_materials_amount ?? 0,
         clothing_amount: row.clothing_amount ?? 0,
-        custom_allowances: Object.fromEntries(
-            selectedCustomAllowanceCodes.value.map((code) => [
-                code,
-                row.custom_allowances?.[code] ?? 0,
-            ]),
-        ),
+        custom_allowances: row.custom_allowances ?? {},
     }));
 };
 
 const savePayroll = async (onSuccess = null) => {
     if (!details.value?.id || !canBuildPayroll.value) return;
 
+    const successCallback = typeof onSuccess === "function" ? onSuccess : null;
+
     payrollForm.recipients = await buildPayrollRecipients();
     payrollForm.clearErrors();
     payrollForm.put(route("stipends.payroll.update", details.value.id), {
         preserveScroll: true,
         onSuccess: () => {
-            if (onSuccess) {
-                onSuccess();
+            if (successCallback) {
+                successCallback();
                 return;
             }
 
@@ -905,7 +914,18 @@ const downloadPayroll = (format = "excel") => {
 
     exportingPayroll.value = null;
     const url = route("stipends.export", details.value.id);
-    window.location.href = format === "pdf" ? `${url}?format=pdf` : url;
+    const params = new URLSearchParams();
+
+    if (format === "pdf") {
+        params.set("format", "pdf");
+    }
+
+    selectedCustomAllowanceCodes.value.forEach((code) => {
+        params.append("allowances[]", code);
+    });
+
+    const query = params.toString();
+    window.location.href = query ? `${url}?${query}` : url;
 };
 
 const exportPayroll = (format = "excel") => {
