@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\LocationRegions;
 use App\Models\Scholars;
 use App\Models\SchoolCampuses;
 use App\Support\SystemPermissions;
@@ -157,6 +158,7 @@ class DashboardController extends Controller
                     'series' => $series,
                     'timelineTotal' => $timelineTotal,
                 ],
+
                 'gender' => [
                     'series' => $scholars
                         ->groupBy(fn ($s) => $s->profile?->sex)
@@ -176,11 +178,49 @@ class DashboardController extends Controller
                     ->first(),
             ]);
         } else {
+            $ranges = collect();
+            $firstYear = Scholars::min('award_year');
+            $lastYear = Carbon::now()->year;
+            $start = $firstYear;
+
+            while ($start <= $lastYear) {
+                $end = min($start + 10, $lastYear);
+
+                $ranges->push([
+                    'name' => "{$start}-{$end}",
+                    'start' => $start,
+                    'end' => $end,
+                ]);
+
+                $start = $end + 1;
+            }
 
             $scholars = Scholars::with([
                 'program:id,name',
                 'profile:sex,scholar_id',
-            ])->get();
+            ])
+                ->when(
+                    $request->input('range'),
+                    function ($query) use ($request) {
+
+                        $query->whereBetween('award_year', [
+                            $request->input('range')['start'],
+                            $request->input('range')['end'],
+                        ]);
+                    },
+                    function ($query) use ($ranges) {
+
+                        $query->whereBetween('award_year', [
+                            $ranges->last()['start'],
+                            $ranges->last()['end'],
+                        ]);
+                    }
+
+                )
+
+                ->whereNotNull('activated_at')
+                ->orderByDesc('program_id')
+                ->get();
 
             $categories = $scholars
                 ->pluck('award_year')
@@ -209,14 +249,30 @@ class DashboardController extends Controller
             $timelineTotal = $scholars
                 ->groupBy(fn ($s) => $s->program->name)
                 ->map(function ($rows, $program) {
-
                     return [
                         'name' => $program,
                         'data' => $rows->count(),
                     ];
                 })
-                ->values()
-                ->toArray();
+                ->values();
+
+            $regionWithSex = LocationRegions::where('is_active', true)
+                ->with('scholars.profile')
+                ->get()
+                ->map(function ($region) {
+                    return [
+                        'x' => $region->region,
+                        'y' => [
+                            $region->scholars
+                                ->filter(fn ($scholar) => optional($scholar->profile)->sex === 'F')
+                                ->count(),
+
+                            $region->scholars
+                                ->filter(fn ($scholar) => optional($scholar->profile)->sex === 'M')
+                                ->count(),
+                        ],
+                    ];
+                })->values()->toArray();
 
             return Inertia::render('Web/dashboardPage', [
                 'dashboardType' => $permissions->dashboardType($user),
@@ -224,6 +280,13 @@ class DashboardController extends Controller
                     'categories' => $categories,
                     'series' => $series,
                     'programs' => $timelineTotal,
+                    'programSeries' => $timelineTotal->pluck('data')->toArray(),
+                ],
+                'gender' => [
+                    'data' => $regionWithSex,
+                ],
+                'options' => [
+                    'dateRange' => $ranges,
                 ],
                 'card' => [
                     'active' => Scholars::whereNotIn('academic_status', [
