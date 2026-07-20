@@ -20,7 +20,9 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
     public function __construct(
         private Batches $batch,
         private array $rows,
-        private array $customAllowances = [],
+        private array $preparedBy,
+        private array $notedBy,
+        private array $certifiedBy,
     ) {
     }
 
@@ -30,7 +32,9 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
             'batch' => $this->batch,
             'rows' => $this->rows,
             'monthLabels' => collect(range(1, 5))->map(fn ($month) => "Month {$month}"),
-            'customAllowances' => $this->customAllowances,
+            'preparedBy' => $this->preparedBy,
+            'notedBy' => $this->notedBy,
+            'certifiedBy' => $this->certifiedBy,
         ]);
     }
 
@@ -48,8 +52,7 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $baseColumnCount = 17;
-                $totalColumnIndex = $baseColumnCount + count($this->customAllowances);
+                $totalColumnIndex = 17;
                 $lastColumn = Coordinate::stringFromColumnIndex($totalColumnIndex);
                 $recipientRowCount = collect($this->rows)->sum(fn ($programRows) => count($programRows));
                 $subtotalRowCount = count($this->rows);
@@ -94,10 +97,6 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
 
                 foreach (['A' => 10, 'B' => 18, 'C' => 30, 'D' => 14, 'E' => 20, 'F' => 16, 'G' => 28, 'N' => 28, 'O' => 22, 'P' => 16] as $column => $width) {
                     $sheet->getColumnDimension($column)->setAutoSize(false)->setWidth($width);
-                }
-
-                for ($column = Coordinate::columnIndexFromString('Q'); $column < $totalColumnIndex; $column++) {
-                    $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($column))->setAutoSize(false)->setWidth(18);
                 }
 
                 $sheet->getColumnDimension($lastColumn)->setAutoSize(false)->setWidth(14);

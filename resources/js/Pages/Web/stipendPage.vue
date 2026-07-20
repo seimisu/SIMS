@@ -27,6 +27,49 @@
                     message-type="error"
                     ref="toolbarRef"
                 >
+                    <template #add1>
+                        <div class="flex items-center gap-2">
+                            <SelectInput
+                                v-model="filterRegion"
+                                :options="page.props.agencyOption ?? []"
+                                placeholder="Region"
+                                clearable
+                                filter
+                                capitalize
+                                :disable="isRegionLocked"
+                                class="w-44"
+                            />
+                            <SelectInput
+                                v-model="filterTerm"
+                                :options="page.props.termOptions ?? []"
+                                placeholder="Semester"
+                                clearable
+                                class="w-40"
+                            />
+                            <SelectInput
+                                v-model="filterAcademicYear"
+                                :options="page.props.academicYearOptions ?? []"
+                                placeholder="Academic Year"
+                                clearable
+                                class="w-40"
+                            />
+                            <SelectInput
+                                v-model="filterStatus"
+                                :options="page.props.statusOptions ?? []"
+                                placeholder="Status"
+                                clearable
+                                class="w-44"
+                            />
+                            <DefaultButton
+                                size="small"
+                                severity="secondary"
+                                :icon="IconFilterOff"
+                                tooltip="Clear filters"
+                                :disabled="!hasBatchFilters"
+                                @click="clearBatchFilters"
+                            />
+                        </div>
+                    </template>
                     <template #form>
                         <div class="mt-5 flex flex-col gap-3">
                             <SelectInput
@@ -156,7 +199,7 @@
                             </div>
                         </template>
                     </Column>
-                    <Column>
+                    <Column v-if="showBatchActionColumn">
                         <template #header>
                             <div class="flex justify-center w-full font-semibold">
                                 Action
@@ -205,6 +248,7 @@ import { Head, useForm, usePage, router } from "@inertiajs/vue3";
 import {
     IconDotsCircleHorizontal,
     IconFileInvoice,
+    IconFilterOff,
     IconTrash,
     IconUserPlus,
 } from "@tabler/icons-vue";
@@ -239,6 +283,39 @@ const deleteForm = useForm({});
 const isRegionLocked = computed(() => Boolean(page.props.payrollPermissions.regionLocked));
 const nextBatchNumber = computed(() => displayedBatchNumber.value);
 
+const findOption = (options, value, keys = ["id", "name"]) => {
+    if (!value) return null;
+
+    return (options ?? []).find((option) =>
+        keys.some((key) => String(option?.[key] ?? "") === String(value)),
+    ) ?? null;
+};
+
+const lockedRegionOption = () => page.props.agencyOption?.[0] ?? null;
+const filterRegion = ref(
+    isRegionLocked.value
+        ? lockedRegionOption()
+        : findOption(page.props.agencyOption, page.props.batchFilters?.region, ["name"]),
+);
+const filterTerm = ref(findOption(
+    page.props.termOptions,
+    page.props.batchFilters?.term_id ?? page.props.batchFilters?.term_name,
+    ["id", "term_name"],
+));
+const filterAcademicYear = ref(findOption(
+    page.props.academicYearOptions,
+    page.props.batchFilters?.academic_year,
+));
+const filterStatus = ref(findOption(page.props.statusOptions, page.props.batchFilters?.status));
+const hasBatchFilters = computed(() =>
+    Boolean(
+        (!isRegionLocked.value && filterRegion.value) ||
+            filterTerm.value ||
+            filterAcademicYear.value ||
+            filterStatus.value,
+    ),
+);
+
 const batchStatusMeta = (status) =>
     ({
         draft: {
@@ -250,7 +327,7 @@ const batchStatusMeta = (status) =>
             class: "bg-blue-50 text-blue-500",
         },
         rejected_payroll: {
-            label: "Rejected Payroll",
+            label: "Returned Payroll",
             class: "bg-red-50 text-red-500",
         },
         approved_payroll: {
@@ -270,6 +347,9 @@ const truncateRemarks = (remarks, limit = 24) => {
 
 const canDeleteBatch = (batch) =>
     Boolean(batch?.permissions?.canDelete) && batch?.status !== "rejected_payroll";
+const showBatchActionColumn = computed(() =>
+    can("payroll.delete") || can("payroll.edit") || can("payroll.create"),
+);
 
 const selectedAcademicYear = (value) => value?.name ?? value;
 
@@ -332,7 +412,7 @@ const submitForm = () => {
 };
 
 const openModal = (event) => {
-    const payloads = ["details", "payrollRecipients", "allowanceOptions"];
+    const payloads = ["details", "payrollRecipients", "signatoryOptions"];
 
     if (event.permissions?.canEdit) {
         payloads.push("eligibleScholars");
@@ -368,7 +448,18 @@ const loadPage = (page) => {
         route("stipends"),
         {
             page,
-            search: searchInput.value,
+            ...(searchInput.value ? { search: searchInput.value } : {}),
+            ...(filterRegion.value ? { region: filterRegion.value.name } : {}),
+            ...(filterTerm.value
+                ? {
+                      term_id: filterTerm.value.id,
+                      term_name: filterTerm.value.term_name ?? filterTerm.value.name,
+                  }
+                : {}),
+            ...(filterAcademicYear.value
+                ? { academic_year: selectedAcademicYear(filterAcademicYear.value) }
+                : {}),
+            ...(filterStatus.value ? { status: filterStatus.value.id } : {}),
         },
         {
             preserveState: true,
@@ -379,6 +470,34 @@ const loadPage = (page) => {
 
 watch(
     () => searchInput.value,
+    () => {
+        clearTimeout(timerBounce.value);
+        timerBounce.value = setTimeout(() => {
+            loadPage(1);
+        }, 300);
+    },
+);
+
+const clearBatchFilters = () => {
+    if (isRegionLocked.value) {
+        filterRegion.value = lockedRegionOption();
+    } else {
+        filterRegion.value = null;
+    }
+
+    filterTerm.value = null;
+    filterAcademicYear.value = null;
+    filterStatus.value = null;
+    loadPage(1);
+};
+
+watch(
+    () => [
+        filterRegion.value,
+        filterTerm.value,
+        filterAcademicYear.value,
+        filterStatus.value,
+    ],
     () => {
         clearTimeout(timerBounce.value);
         timerBounce.value = setTimeout(() => {
