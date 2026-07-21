@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\LocationRegions;
+use App\Models\ScholarProfiles;
 use App\Models\Scholars;
+use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -215,10 +218,8 @@ class DashboardController extends Controller
                             $ranges->last()['end'],
                         ]);
                     }
-
                 )
 
-                ->whereNotNull('activated_at')
                 ->orderByDesc('program_id')
                 ->get();
 
@@ -256,23 +257,39 @@ class DashboardController extends Controller
                 })
                 ->values();
 
-            $regionWithSex = LocationRegions::where('is_active', true)
+            $regions = LocationRegions::where('is_active', true)
                 ->with('scholars.profile')
-                ->get()
-                ->map(function ($region) {
-                    return [
-                        'x' => $region->region,
-                        'y' => [
-                            $region->scholars
-                                ->filter(fn ($scholar) => optional($scholar->profile)->sex === 'F')
-                                ->count(),
+                ->get();
 
-                            $region->scholars
-                                ->filter(fn ($scholar) => optional($scholar->profile)->sex === 'M')
+            $regionWithSex = collect(['F', 'M'])->map(function ($sex) use ($regions) {
+                return [
+                    'name' => $sex === 'F' ? 'Female' : 'Male',
+                    'data' => $regions->map(function ($region) use ($sex) {
+                        return [
+                            'x' => $region->region,
+                            'y' => $region->scholars
+                                ->filter(fn ($scholar) => optional($scholar->profile)->sex === $sex)
                                 ->count(),
-                        ],
-                    ];
-                })->values()->toArray();
+                        ];
+                    })->values(),
+                ];
+            })->values();
+
+            $schoolTreemap = SchoolCampuses::withCount('scholarCampus')
+                ->get()
+                ->values();
+            $totalSchool = $schoolTreemap->map(function ($campus) {
+
+                return [
+                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut.'-'.$campus->address->municipality_array['name'] : $campus->school->shortcut.'-'.$campus->name),
+                    'y' => $campus->scholar_campus_count,
+                ];
+            })->sum('y');
+
+            $courseTreemap = SchoolCampusCourses::where('is_delete', false)
+                ->withCount('scholarCourse')
+                ->get();
+            $totalCourse = $courseTreemap->sum('scholar_course_count');
 
             return Inertia::render('Web/dashboardPage', [
                 'dashboardType' => $permissions->dashboardType($user),
@@ -282,8 +299,67 @@ class DashboardController extends Controller
                     'programs' => $timelineTotal,
                     'programSeries' => $timelineTotal->pluck('data')->toArray(),
                 ],
+                'school' => [
+                    'series' => [
+                        [
+                            'data' => $schoolTreemap->map(function ($campus) {
+
+                                return [
+                                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut.'-'.$campus->address->municipality_array['name'] : $campus->school->shortcut.'-'.$campus->name),
+                                    'y' => $campus->scholar_campus_count,
+                                ];
+                            }),
+                        ],
+                    ],
+                    'table' => $schoolTreemap->map(function ($campus) use ($totalSchool) {
+
+                        return [
+                            'name' => $campus->generated_name,
+                            'region' => Str::upper($campus->agency->slug),
+                            'percent' => $campus->scholar_campus_count / $totalSchool * 100,
+                            'total' => $campus->scholar_campus_count,
+                        ];
+                    }),
+                    'total' => $totalSchool,
+                ],
+                'course' => [
+                    'series' => [
+                        [
+                            'data' => $courseTreemap->map(function ($course) {
+
+                                return [
+                                    'x' => Str::upper($course->course->abbreviation),
+                                    'y' => $course->scholar_course_count,
+                                ];
+                            })->values(),
+                        ],
+                    ],
+
+                    'table' => $courseTreemap->map(function ($course) use ($totalCourse) {
+                        return [
+                            'name' => Str::upper($course->course->name ?? $course->name),
+                            'percent' => $totalCourse > 0
+                                ? ($course->scholar_course_count / $totalCourse) * 100
+                                : 0,
+                            'total' => $course->scholar_course_count,
+                        ];
+                    })->values(),
+
+                    'total' => $totalCourse,
+                ],
                 'gender' => [
-                    'data' => $regionWithSex,
+                    'series' => $regionWithSex,
+                    'bar' => [
+                        'series' => [
+                            [
+                                'name' => 'Scholars',
+                                'data' => [
+                                    ScholarProfiles::where('sex', 'F')->count(),
+                                    ScholarProfiles::where('sex', 'M')->count(),
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
                 'options' => [
                     'dateRange' => $ranges,

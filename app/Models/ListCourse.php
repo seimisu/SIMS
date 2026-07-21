@@ -13,12 +13,10 @@ class ListCourse extends Model
         'is_active',
         'is_delete',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
 
     protected $appends = ['suggestion_array'];
-
-
 
     public function getSuggestionArrayAttribute()
     {
