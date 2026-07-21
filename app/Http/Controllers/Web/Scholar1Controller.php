@@ -528,7 +528,7 @@ class Scholar1Controller extends Controller
                                 ? DB::connection('scholars')
                                     ->table('scholar_processes')
                                     ->where('term_record_id', $monitoringTermRecord->id)
-                                    ->value('standing')
+                                    ->value('scholarship_status')
                                 : null;
                         }
 
@@ -946,7 +946,7 @@ class Scholar1Controller extends Controller
                                 $standing = DB::connection('scholars')
                                     ->table('scholar_processes')
                                     ->where('term_record_id', $term->id)
-                                    ->value('standing');
+                                    ->value('scholarship_status');
 
                                 $subjects = $term->subjects->map(function ($sub) {
                                     $grade = $sub->grade;
@@ -1627,7 +1627,7 @@ class Scholar1Controller extends Controller
                         ['term_record_id' => $term->id],
                         [
                             'spas_no' => $term->scholar?->spas_no,
-                            'standing' => $scholarshipStatus,
+                            'scholarship_status' => $scholarshipStatus,
                             'submission' => 'APPROVED',
                             'payroll' => 'NOT SUBMITTED',
                             'updated_at' => now(),

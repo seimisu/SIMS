@@ -8,19 +8,15 @@
         }"
     >
         <template #header>
-            <div class="flex items-center gap-2">
-                <div
-                    class="bg-green-50 border text-green-600 px-5 py-1.5 shadow rounded-lg flex items-center gap-2"
-                >
-                    <IconFileSpreadsheet :size="20" />
-                    <div class="text-sm uppercase font-medium">
-                        {{ details?.name ?? "Financial Assistance Batch" }}
-                    </div>
+            <div class="flex min-w-0 items-center gap-3">
+                <IconFileSpreadsheet :size="18" class="shrink-0 text-slate-500" />
+                <div class="min-w-0 truncate text-sm font-semibold uppercase text-slate-700">
+                    {{ details?.name ?? "Financial Assistance Batch" }}
                 </div>
                 <div
                     :class="[
                         statusMeta.class,
-                        'border px-4 py-1.5 rounded-lg text-xs font-semibold',
+                        'shrink-0 rounded border px-2 py-1 text-[11px] font-semibold',
                     ]"
                 >
                     {{ statusMeta.label }}
@@ -30,27 +26,39 @@
 
         <template #default>
             <div class="flex flex-col w-full h-full gap-3">
-                <Tabs v-model:value="activeTab" class="flex-1 flex flex-col min-h-0">
-                    <TabList v-if="canBuildPayroll">
-                        <Tab v-if="canBuildPayroll" value="eligible">Validated Scholars</Tab>
-                        <Tab value="payroll">Payroll</Tab>
+                <Tabs v-model:value="activeTab" class="flex-1 flex flex-col min-h-0 compact-payroll-tabs">
+                    <TabList class="!mb-2">
+                        <Tab v-if="canBuildPayroll" value="eligible">
+                            <span class="inline-flex items-center gap-1.5">
+                                <IconCircleCheck :size="15" />
+                                Validated
+                            </span>
+                        </Tab>
+                        <Tab value="payroll">
+                            <span class="inline-flex items-center gap-1.5">
+                                <IconFileSpreadsheet :size="15" />
+                                Payroll
+                            </span>
+                        </Tab>
+                        <Tab value="activity">
+                            <span class="inline-flex items-center gap-1.5">
+                                <IconHistory :size="15" />
+                                Activity
+                            </span>
+                        </Tab>
                     </TabList>
 
                     <TabPanels class="flex-1 min-h-0 !px-0">
                         <TabPanel v-if="canBuildPayroll" value="eligible" class="h-full">
                             <div class="flex flex-col h-full gap-3">
-                                <div
-                                    class="flex flex-col lg:flex-row lg:items-center justify-between gap-3"
-                                >
-                                    <div class="flex items-center gap-2">
-                                        <IconCircleCheck :size="20" class="text-green-600" />
-                                        <div>
-                                            <div class="text-sm font-semibold">
-                                                Scholars with VALIDATED Periodic Reports
-                                            </div>
-                                            <div class="text-xs text-gray-500">
-                                                Scholars shown here are not yet part of this payroll.
-                                            </div>
+                                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <IconCircleCheck :size="18" class="text-green-600" />
+                                        <div class="font-semibold">
+                                            Validated Scholars
+                                            <span class="ml-1 text-xs font-normal text-gray-500">
+                                                Not yet in this payroll
+                                            </span>
                                         </div>
                                     </div>
 
@@ -142,52 +150,47 @@
                         </TabPanel>
 
                         <TabPanel value="payroll" class="h-full">
-                            <div class="flex flex-col h-full gap-3">
-                                <div class="flex items-center justify-between gap-3">
-                                    <div>
-                                        <div class="text-sm font-semibold">
-                                            Payroll Recipients
-                                        </div>
-                                        <div class="text-xs text-gray-500">
-                                            {{ payrollDescription }}
-                                        </div>
+                            <div class="flex flex-col h-full gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="min-w-0 text-sm font-semibold text-slate-700">
+                                        Payroll Recipients
                                     </div>
 
-                                    <div class="ml-auto flex flex-col xl:flex-row gap-2 xl:items-center">
+                                    <div class="ml-auto flex flex-col xl:flex-row gap-1.5 xl:items-center">
                                         <InputText
                                             v-model="payrollSearch"
-                                            placeholder="Search SPAS or name"
-                                            class="!text-sm min-w-64"
+                                            placeholder="Search"
+                                            class="!text-sm min-w-56"
                                         />
                                         <Select
                                             v-model="payrollProgram"
                                             :options="payrollProgramOptions"
                                             placeholder="Program"
                                             showClear
-                                            class="!text-sm min-w-44"
+                                            class="!text-sm min-w-40"
                                         />
                                         <Select
                                             v-model="payrollUniversity"
                                             :options="payrollUniversityOptions"
                                             placeholder="University"
                                             showClear
-                                            class="!text-sm min-w-56"
+                                            class="!text-sm min-w-48"
                                         />
                                         <Select
                                             v-model="payrollStatus"
                                             :options="payrollStatusOptions"
                                             placeholder="Status"
                                             showClear
-                                            class="!text-sm min-w-44"
+                                            class="!text-sm min-w-36"
                                         />
                                         <DefaultButton
                                             v-if="canBuildPayroll"
                                             size="small"
                                             tooltip="Download Excel"
-                                            severity="success"
+                                            severity="secondary"
                                             outlined
                                             :icon="IconFileSpreadsheet"
-                                            :icon-size="20"
+                                            :icon-size="17"
                                             class-name="!h-9 !w-9 !p-0"
                                             :loading="exportingPayroll === 'excel'"
                                             :disabled="!payrollRows.length || payrollForm.processing"
@@ -197,10 +200,10 @@
                                             v-if="canBuildPayroll"
                                             size="small"
                                             tooltip="Download PDF"
-                                            severity="danger"
+                                            severity="secondary"
                                             outlined
                                             :icon="IconFileTypePdf"
-                                            :icon-size="20"
+                                            :icon-size="17"
                                             class-name="!h-9 !w-9 !p-0"
                                             :loading="exportingPayroll === 'pdf'"
                                             :disabled="!payrollRows.length || payrollForm.processing"
@@ -209,8 +212,10 @@
                                         <DefaultButton
                                             v-if="canBuildPayroll"
                                             size="small"
-                                            label="Save"
+                                            tooltip="Save"
                                             :icon="IconDeviceFloppy"
+                                            :icon-size="17"
+                                            class-name="!h-9 !w-9 !p-0"
                                             :loading="payrollForm.processing"
                                             :disabled="!payrollRows.length || !batchPermissions.canEdit"
                                             @click="savePayroll"
@@ -219,94 +224,17 @@
                                 </div>
 
                                 <div
-                                    v-if="batchPermissions.canSubmit"
-                                    class="rounded-lg border border-dashed border-red-200 bg-red-50/50 px-3 py-2"
+                                    v-if="canMarkRecipientsForRemoval && forRemovalPayrollRows.length"
+                                    class="rounded border border-amber-200 bg-amber-50/60 px-3 py-1.5 text-xs text-amber-800"
                                 >
-                                    <div class="flex flex-wrap items-center justify-between gap-2">
-                                        <div class="flex min-w-0 items-center gap-2">
-                                            <IconFileTypePdf :size="20" class="shrink-0 text-red-500" />
-                                            <div class="text-sm font-medium text-slate-700">
-                                                Upload scanned payroll with signatories before submission.
-                                            </div>
-                                            <span class="text-xs text-slate-400">PDF only, up to 10 MB.</span>
-                                        </div>
-                                        <div class="ml-auto flex min-w-0 items-center justify-end gap-2">
-                                            <div
-                                                v-if="submissionPdf"
-                                                class="flex min-w-0 items-center gap-1 rounded-md border border-red-100 bg-white px-2 py-1 text-xs text-slate-600"
-                                            >
-                                                <span class="max-w-64 truncate">
-                                                    {{ submissionPdf.name }}
-                                                </span>
-                                                <span class="shrink-0 text-slate-400">
-                                                    {{ formatFileSize(submissionPdf.size) }}
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    class="ml-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
-                                                    @click="clearSubmissionPdf"
-                                                >
-                                                    <IconX :size="14" />
-                                                </button>
-                                            </div>
-                                            <label
-                                                class="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
-                                            >
-                                                Choose PDF
-                                                <input
-                                                    ref="submissionPdfInput"
-                                                    type="file"
-                                                    accept="application/pdf,.pdf"
-                                                    class="hidden"
-                                                    @change="selectSubmissionPdf"
-                                                />
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        v-if="submissionPdfError || statusForm.errors.payroll_file"
-                                        class="mt-2 text-xs font-medium text-red-600"
-                                    >
-                                        {{ submissionPdfError || statusForm.errors.payroll_file }}
-                                    </div>
+                                    {{ forRemovalPayrollRows.length }} scholar(s) marked for removal. Remove before submitting.
                                 </div>
 
-                                <div v-if="details?.payroll_file" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                                    <div class="flex flex-wrap items-center justify-between gap-2">
-                                        <div class="flex min-w-0 items-center gap-2">
-                                            <IconFileTypePdf :size="20" class="shrink-0 text-red-500" />
-                                            <div class="min-w-0">
-                                                <div class="truncate text-sm font-medium text-slate-700">
-                                                    {{ details.payroll_file.name || "Submitted payroll PDF" }}
-                                                </div>
-                                                <div class="text-xs text-slate-500">
-                                                    Uploaded by {{ details.payroll_file.uploaded_by || "Unknown" }}
-                                                    <span v-if="details.payroll_file.uploaded_at">
-                                                        | {{ details.payroll_file.uploaded_at }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="ml-auto flex items-center gap-2">
-                                            <DefaultButton
-                                                size="small"
-                                                label="Preview"
-                                                severity="secondary"
-                                                outlined
-                                                @click="openSubmittedPayrollPdf"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
                                 <div
-                                    v-else-if="shouldShowPayrollAttachment"
-                                    class="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+                                    v-if="details?.showing_submitted_snapshot"
+                                    class="rounded border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600"
                                 >
-                                    <div class="flex items-center gap-2">
-                                        <IconFileTypePdf :size="20" class="shrink-0 text-slate-400" />
-                                        <span>No submitted payroll PDF is attached.</span>
-                                    </div>
+                                    Showing the last submitted payroll. Regional edits will appear after resubmission.
                                 </div>
 
                                 <div class="flex-1 overflow-auto border rounded-lg">
@@ -332,7 +260,7 @@
                                                 <th class="border px-2 py-2 text-right">Clothing</th>
                                                 <th class="border px-2 py-2 text-right">Total</th>
                                                 <th
-                                                    v-if="canBuildPayroll"
+                                                    v-if="showRecipientActionColumn"
                                                     class="border px-2 py-2 text-center"
                                                 >
                                                     Action
@@ -344,12 +272,22 @@
                                                 v-for="group in groupedPayrollRows"
                                                 :key="group.program"
                                             >
-                                                <tr v-for="row in group.rows" :key="row.id">
+                                                <tr
+                                                    v-for="row in group.rows"
+                                                    :key="row.id"
+                                                    :class="row.is_for_removal ? 'bg-amber-50/50 text-slate-500' : ''"
+                                                >
                                                     <td class="border px-2 py-1 min-w-36">
                                                         {{ row.account_no }}
                                                     </td>
                                                     <td class="border px-2 py-1 uppercase min-w-56">
                                                         {{ row.name }}
+                                                        <div
+                                                            v-if="row.is_for_removal"
+                                                            class="mt-1 text-[10px] font-semibold normal-case text-amber-700"
+                                                        >
+                                                            For Removal
+                                                        </div>
                                                     </td>
                                                     <td class="border px-2 py-1">{{ row.program }}</td>
                                                     <td class="border px-2 py-1 min-w-56">
@@ -358,7 +296,7 @@
                                                     <td class="border px-2 py-1 min-w-44">
                                                         {{ row.scholarship_status }}
                                                         <div
-                                                            v-if="!row.scholarship_status"
+                                                            v-if="!row.scholarship_status && !row.is_for_removal"
                                                             class="mt-1 max-w-44 text-[10px] leading-3 text-amber-600"
                                                         >
                                                             Assign a scholar standing before submitting payroll.
@@ -378,7 +316,7 @@
                                                             :min="0"
                                                             :minFractionDigits="2"
                                                             :maxFractionDigits="2"
-                                                            :disabled="!batchPermissions.canEdit"
+                                                            :disabled="!batchPermissions.canEdit || row.is_for_removal"
                                                         />
                                                     </td>
                                                     <td class="border px-2 py-1">
@@ -388,14 +326,14 @@
                                                             :min="0"
                                                             :minFractionDigits="2"
                                                             :maxFractionDigits="2"
-                                                            :disabled="!batchPermissions.canEdit"
+                                                            :disabled="!batchPermissions.canEdit || row.is_for_removal"
                                                         />
                                                     </td>
                                                     <td class="border px-2 py-1">
                                                         <InputText
                                                             v-model="row.remarks"
                                                             class="!text-xs w-56"
-                                                            :disabled="!batchPermissions.canEdit"
+                                                            :disabled="!batchPermissions.canEdit || row.is_for_removal"
                                                         />
                                                     </td>
                                                     <td class="border px-2 py-1">
@@ -406,7 +344,7 @@
                                                             :max="fixedAllowanceLimits.connectivity?.max_amount ?? undefined"
                                                             :minFractionDigits="2"
                                                             :maxFractionDigits="2"
-                                                            :disabled="!batchPermissions.canEdit"
+                                                            :disabled="!batchPermissions.canEdit || row.is_for_removal"
                                                         />
                                                     </td>
                                                     <td class="border px-2 py-1">
@@ -417,23 +355,53 @@
                                                             :max="fixedAllowanceLimits.clothing?.max_amount ?? undefined"
                                                             :minFractionDigits="2"
                                                             :maxFractionDigits="2"
-                                                            :disabled="!batchPermissions.canEdit"
+                                                            :disabled="!batchPermissions.canEdit || row.is_for_removal"
                                                         />
                                                     </td>
                                                     <td class="border px-2 py-1 text-right font-semibold">
                                                         {{ formatMoney(rowTotal(row)) }}
                                                     </td>
-                                                    <td v-if="canBuildPayroll" class="border px-2 py-1 text-center">
+                                                    <td v-if="showRecipientActionColumn" class="border px-2 py-1 text-center">
+                                                        <div v-if="canBuildPayroll" class="flex items-center justify-center gap-1">
+                                                            <DefaultButton
+                                                                v-if="row.is_for_removal"
+                                                                size="small"
+                                                                severity="secondary"
+                                                                text
+                                                                rounded
+                                                                :icon="IconInfoCircle"
+                                                                tooltip="View reason"
+                                                                class-name="!text-amber-600 hover:!bg-amber-50"
+                                                                @click="openRemovalReasonDialog(row)"
+                                                            />
+                                                            <DefaultButton
+                                                                size="small"
+                                                                severity="danger"
+                                                                text
+                                                                rounded
+                                                                :icon="IconTrash"
+                                                                tooltip="Remove from payroll"
+                                                                :disabled="!batchPermissions.canEdit"
+                                                                :loading="removeForm.processing && removingId === row.id"
+                                                                @click="removeRecipient(row)"
+                                                            />
+                                                        </div>
                                                         <DefaultButton
+                                                            v-else-if="canMarkRecipientsForRemoval"
                                                             size="small"
-                                                            severity="danger"
+                                                            severity="secondary"
                                                             text
                                                             rounded
-                                                            :icon="IconTrash"
-                                                            tooltip="Remove from payroll"
-                                                            :disabled="!batchPermissions.canEdit"
-                                                            :loading="removeForm.processing && removingId === row.id"
-                                                            @click="removeRecipient(row)"
+                                                            :icon="row.is_for_removal ? IconX : IconUserMinus"
+                                                            :icon-size="18"
+                                                            class-name="!text-slate-500 hover:!bg-slate-100 hover:!text-slate-700"
+                                                            :tooltip="row.is_for_removal ? 'Cancel for removal' : 'Mark for removal'"
+                                                            :loading="
+                                                                row.is_for_removal
+                                                                    ? cancelRemovalForm.processing && cancellingRemovalId === row.id
+                                                                    : forRemovalForm.processing && markingForRemovalId === row.id
+                                                            "
+                                                            @click="row.is_for_removal ? cancelForRemoval(row) : openForRemovalDialog(row)"
                                                         />
                                                     </td>
                                                 </tr>
@@ -461,7 +429,7 @@
                                                     <td class="border px-2 py-1 text-right">
                                                         {{ formatMoney(group.totals.grand_total) }}
                                                     </td>
-                                                    <td v-if="canBuildPayroll" class="border px-2 py-1"></td>
+                                                    <td v-if="showRecipientActionColumn" class="border px-2 py-1"></td>
                                                 </tr>
                                             </template>
                                             <tr
@@ -491,7 +459,7 @@
                                                 <td class="border px-2 py-1 text-right">
                                                     {{ formatMoney(payrollGrandTotals.grand_total) }}
                                                 </td>
-                                                <td v-if="canBuildPayroll" class="border px-2 py-1"></td>
+                                                <td v-if="showRecipientActionColumn" class="border px-2 py-1"></td>
                                             </tr>
                                             <tr v-if="!filteredPayrollRows.length">
                                                 <td
@@ -506,17 +474,71 @@
                                 </div>
 
                                 <div
-                                    v-if="hasReturnRemarks || batchPermissions.canSubmit || batchPermissions.canReject || batchPermissions.canApprove"
-                                    class="grid gap-2 border-t border-slate-100 pt-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+                                    v-if="hasPayrollFooter"
+                                    class="grid gap-2 border-t border-slate-100 pt-2 xl:grid-cols-[minmax(18rem,0.8fr)_minmax(18rem,1fr)_auto] xl:items-end"
                                 >
                                     <div
+                                        v-if="showPayrollAttachment"
+                                        class="min-w-0 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                                    >
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                            <div class="flex min-w-0 items-center gap-2">
+                                                <IconFileTypePdf :size="17" class="shrink-0 text-slate-500" />
+                                                <div class="min-w-0">
+                                                    <div class="truncate text-sm text-slate-700">
+                                                        {{ attachmentName }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="ml-auto flex min-w-0 items-center justify-end gap-2">
+                                                <button
+                                                    v-if="submissionPdf"
+                                                    type="button"
+                                                    class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                                                    @click="clearSubmissionPdf"
+                                                >
+                                                    <IconX :size="14" />
+                                                </button>
+                                                <DefaultButton
+                                                    v-if="details?.payroll_file"
+                                                    size="small"
+                                                    label="Preview"
+                                                    severity="secondary"
+                                                    outlined
+                                                    @click="openSubmittedPayrollPdf"
+                                                />
+                                                <label
+                                                    v-if="batchPermissions.canSubmit"
+                                                    class="inline-flex shrink-0 cursor-pointer items-center justify-center rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                                >
+                                                    {{ details?.payroll_file ? "Replace" : "Choose" }}
+                                                    <input
+                                                        ref="submissionPdfInput"
+                                                        type="file"
+                                                        accept="application/pdf,.pdf"
+                                                        class="hidden"
+                                                        @change="selectSubmissionPdf"
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            v-if="submissionPdfError || statusForm.errors.payroll_file"
+                                            class="mt-1 text-xs font-medium text-red-600"
+                                        >
+                                            {{ submissionPdfError || statusForm.errors.payroll_file }}
+                                        </div>
+                                    </div>
+                                    <div v-else class="hidden xl:block"></div>
+                                    <div
                                         v-if="hasReturnRemarks"
-                                        class="min-w-0 rounded-lg border border-dashed border-red-200 bg-red-50/50 px-3 py-2 text-sm text-red-700 lg:max-w-5xl"
+                                        class="min-w-0 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 lg:max-w-5xl"
                                     >
                                         <div class="flex min-w-0 items-start gap-2">
                                             <IconMessageReport
-                                                :size="20"
-                                                class="mt-0.5 shrink-0 text-red-500"
+                                                :size="17"
+                                                class="mt-0.5 shrink-0 text-slate-500"
                                             />
                                             <div class="min-w-0">
                                                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -533,13 +555,13 @@
                                                         </span>
                                                     </span>
                                                 </div>
-                                                <div class="mt-0.5 line-clamp-2 whitespace-pre-line text-xs leading-5">
+                                                <div class="mt-0.5 line-clamp-2 whitespace-pre-line text-xs leading-5 text-slate-600">
                                                     {{ details.remarks }}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div v-else class="hidden lg:block"></div>
+                                    <div v-else class="hidden xl:block"></div>
                                     <div
                                         v-if="batchPermissions.canSubmit || batchPermissions.canReject || batchPermissions.canApprove"
                                         class="flex flex-wrap justify-end gap-2 lg:pl-3"
@@ -574,6 +596,58 @@
                                             @click="openSubmitConfirmDialog"
                                         />
                                     </div>
+                                </div>
+                            </div>
+                        </TabPanel>
+                        <TabPanel value="activity" class="h-full">
+                            <div class="flex h-full flex-col gap-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="text-sm font-semibold text-slate-700">Activity Log</div>
+                                    <div class="text-xs text-slate-500">{{ activityLogs.length }} event(s)</div>
+                                </div>
+                                <div class="flex-1 overflow-auto rounded border border-slate-200 bg-white">
+                                    <table class="w-full min-w-[900px] text-xs">
+                                        <thead class="sticky top-0 bg-slate-50 text-left text-[11px] uppercase text-slate-500">
+                                            <tr>
+                                                <th class="border-b px-3 py-2 font-semibold">Date</th>
+                                                <th class="border-b px-3 py-2 font-semibold">Activity</th>
+                                                <th class="border-b px-3 py-2 font-semibold">Scholar</th>
+                                                <th class="border-b px-3 py-2 font-semibold">By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr
+                                                v-for="log in activityLogs"
+                                                :key="log.id"
+                                                class="border-b border-slate-100 last:border-b-0"
+                                            >
+                                                <td class="whitespace-nowrap px-3 py-2 text-slate-500">
+                                                    {{ log.created_at || "-" }}
+                                                </td>
+                                                <td class="px-3 py-2">
+                                                    <div class="font-medium text-slate-700">{{ log.label }}</div>
+                                                    <div
+                                                        v-if="log.remarks"
+                                                        class="mt-0.5 max-w-xl truncate text-[11px] text-slate-500"
+                                                        :title="log.remarks"
+                                                    >
+                                                        {{ log.remarks }}
+                                                    </div>
+                                                </td>
+                                                <td class="px-3 py-2 uppercase text-slate-600">
+                                                    {{ log.scholar_name || "-" }}
+                                                </td>
+                                                <td class="whitespace-nowrap px-3 py-2 text-slate-500">
+                                                    {{ log.created_by || "System" }}
+                                                </td>
+                                            </tr>
+                                            <tr v-if="!activityLogs.length">
+                                                <td colspan="5" class="py-8 text-center text-sm text-gray-500">
+                                                    No payroll activity recorded yet.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </TabPanel>
@@ -657,6 +731,124 @@
                 :icon="IconSend"
                 :loading="statusForm.processing"
                 @click="confirmSubmitPayroll"
+            />
+        </template>
+    </Dialog>
+
+    <Dialog
+        v-model:visible="forRemovalSubmitDialog"
+        modal
+        header="Remove Marked Scholars"
+        :style="{ width: '28rem' }"
+    >
+        <div class="space-y-2 text-sm text-slate-600">
+            <p>
+                Remove scholars marked for removal from the payroll before submitting.
+            </p>
+            <div class="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                {{ forRemovalPayrollRows.length }} scholar(s) marked for removal still on the list.
+            </div>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="OK"
+                severity="secondary"
+                @click="forRemovalSubmitDialog = false"
+            />
+        </template>
+    </Dialog>
+
+    <Dialog
+        v-model:visible="removalReasonDialog"
+        modal
+        header="For Removal Reason"
+        class="w-[92vw] max-w-[480px]"
+        :pt="{
+            header: '!px-5 !pt-4 !pb-2',
+            content: '!px-5 !py-2',
+            footer: '!px-5 !pt-2 !pb-4',
+        }"
+    >
+        <div v-if="removalReasonTarget" class="space-y-3 text-sm text-slate-700">
+            <div class="flex items-center gap-2 text-base font-bold uppercase text-slate-800">
+                <IconUserMinus :size="18" class="shrink-0 text-amber-600" />
+                <span>{{ removalReasonTarget.name }}</span>
+            </div>
+            <div class="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                {{ removalReasonTarget.for_removal_reason || "No reason provided." }}
+            </div>
+            <div class="grid gap-1 text-xs text-slate-500">
+                <div v-if="removalReasonTarget.for_removal_by">
+                    Marked by {{ removalReasonTarget.for_removal_by }}
+                </div>
+                <div v-if="removalReasonTarget.for_removal_at">
+                    {{ removalReasonTarget.for_removal_at }}
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="Close"
+                severity="secondary"
+                outlined
+                @click="removalReasonDialog = false"
+            />
+        </template>
+    </Dialog>
+
+    <Dialog
+        v-model:visible="forRemovalDialog"
+        modal
+        header="For Removal"
+        :style="{ width: '32rem' }"
+        :pt="{
+            header: '!px-5 !pt-4 !pb-2',
+            content: '!px-5 !py-2',
+            footer: '!px-5 !pt-2 !pb-4',
+        }"
+    >
+        <div class="flex flex-col gap-3">
+            <div v-if="forRemovalTarget" class="flex items-center gap-2 text-base font-bold uppercase text-slate-800">
+                <IconUserMinus :size="18" class="shrink-0 text-amber-600" />
+                <span>{{ forRemovalTarget.name }}</span>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-slate-700" for="for-removal-remarks">Reason</label>
+                <Textarea
+                    id="for-removal-remarks"
+                    v-model="forRemovalRemarks"
+                    rows="5"
+                    class="w-full !text-sm"
+                    placeholder="Reason"
+                    autoResize
+                />
+            </div>
+            <small v-if="forRemovalRemarksError" class="text-red-500">
+                Reason is required when marking a scholar for removal.
+            </small>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="Cancel"
+                severity="secondary"
+                outlined
+                @click="forRemovalDialog = false"
+            />
+            <DefaultButton
+                size="small"
+                label="Mark for Removal"
+                severity="warning"
+                :icon="IconUserMinus"
+                :icon-size="18"
+                class-name="!bg-amber-500 !border-amber-500 hover:!bg-amber-400 hover:!border-amber-400 active:!bg-amber-600 active:!border-amber-600 !text-white"
+                :loading="forRemovalForm.processing"
+                @click="submitForRemoval"
             />
         </template>
     </Dialog>
@@ -761,9 +953,12 @@ import {
     IconDeviceFloppy,
     IconFileSpreadsheet,
     IconFileTypePdf,
+    IconHistory,
+    IconInfoCircle,
     IconMessageReport,
     IconSend,
     IconTrash,
+    IconUserMinus,
     IconUserPlus,
     IconX,
 } from "@tabler/icons-vue";
@@ -790,6 +985,7 @@ const rejectDialog = ref(false);
 const rejectRemarks = ref("");
 const rejectRemarksError = ref(false);
 const submitConfirmDialog = ref(false);
+const forRemovalSubmitDialog = ref(false);
 const exportingPayroll = ref(null);
 const submissionPdf = ref(null);
 const submissionPdfError = ref("");
@@ -800,16 +996,46 @@ const preparedBy = ref([]);
 const notedBy = ref(null);
 const certifiedBy = ref(null);
 const signatoryError = ref(false);
+const forRemovalDialog = ref(false);
+const forRemovalTarget = ref(null);
+const forRemovalRemarks = ref("");
+const forRemovalRemarksError = ref(false);
+const removalReasonDialog = ref(false);
+const removalReasonTarget = ref(null);
+const markingForRemovalId = ref(null);
 
 const details = computed(() => page.props.details);
+const activityLogs = computed(() => details.value?.activity_logs ?? []);
 const hasReturnRemarks = computed(
     () => details.value?.status === "rejected_payroll" && Boolean(details.value?.remarks),
 );
 const shouldShowPayrollAttachment = computed(() =>
-    ["submitted_payroll", "rejected_payroll", "approved_payroll"].includes(
+    ["submitted_payroll", "resubmitted_payroll", "rejected_payroll", "approved_payroll"].includes(
         details.value?.status,
     ),
 );
+const showPayrollAttachment = computed(() =>
+    batchPermissions.value.canSubmit ||
+    Boolean(details.value?.payroll_file) ||
+    shouldShowPayrollAttachment.value,
+);
+const hasPayrollFooter = computed(() =>
+    showPayrollAttachment.value ||
+    hasReturnRemarks.value ||
+    batchPermissions.value.canReject ||
+    batchPermissions.value.canApprove,
+);
+const attachmentName = computed(() => {
+    if (submissionPdf.value) {
+        return submissionPdf.value.name;
+    }
+
+    if (details.value?.payroll_file?.name) {
+        return details.value.payroll_file.name;
+    }
+
+    return "No file selected";
+});
 const eligibleScholars = computed(
     () =>
         page.props.eligibleScholars ?? {
@@ -828,12 +1054,17 @@ const payrollForm = useForm({
     recipients: [],
 });
 const removeForm = useForm({});
+const forRemovalForm = useForm({
+    remarks: null,
+});
+const cancelRemovalForm = useForm({});
 const statusForm = useForm({
     status: null,
     remarks: null,
     payroll_file: null,
 });
 const removingId = ref(null);
+const cancellingRemovalId = ref(null);
 
 const batchPermissions = computed(
     () =>
@@ -846,6 +1077,14 @@ const batchPermissions = computed(
         },
 );
 const canBuildPayroll = computed(() => batchPermissions.value.canEdit);
+const canMarkRecipientsForRemoval = computed(
+    () =>
+        batchPermissions.value.canReject &&
+        ["submitted_payroll", "resubmitted_payroll"].includes(details.value?.status),
+);
+const showRecipientActionColumn = computed(
+    () => canBuildPayroll.value || canMarkRecipientsForRemoval.value,
+);
 const payrollDescription = computed(() =>
     canBuildPayroll.value
         ? "Edit, export, and submit payroll details ."
@@ -863,6 +1102,10 @@ const statusMeta = computed(() => {
             label: "Submitted Payroll",
             class: "bg-blue-50 text-blue-600",
         },
+        resubmitted_payroll: {
+            label: "Resubmitted Payroll",
+            class: "bg-cyan-50 text-cyan-600",
+        },
         rejected_payroll: {
             label: "Returned Payroll",
             class: "bg-red-50 text-red-600",
@@ -876,6 +1119,21 @@ const statusMeta = computed(() => {
         class: "bg-slate-50 text-slate-600",
     };
 });
+
+const statusLabel = (status) =>
+    ({
+        draft: "Draft",
+        pending: "Pending",
+        submitted: "Submitted",
+        resubmitted_payroll: "Resubmitted Payroll",
+        approved: "Approved",
+        rejected: "Rejected",
+        for_removal: "For Removal",
+        submitted_payroll: "Submitted Payroll",
+        rejected_payroll: "Returned Payroll",
+        approved_payroll: "Approved Payroll",
+        for_removal_from_payroll: "For Removal",
+    })[status] ?? status;
 
 const fixedAllowanceLimits = computed(() => page.props.allowanceLimits ?? {});
 const signatoryOptions = computed(() => page.props.signatoryOptions ?? []);
@@ -931,7 +1189,7 @@ const filteredPayrollRows = computed(() => {
     });
 });
 
-const payrollColumnCount = computed(() => 16 + (canBuildPayroll.value ? 1 : 0));
+const payrollColumnCount = computed(() => 16 + (showRecipientActionColumn.value ? 1 : 0));
 
 const emptyPayrollTotals = () => ({
     month_1: 0,
@@ -975,17 +1233,24 @@ const groupedPayrollRows = computed(() => {
 
         const group = groups.get(program);
         group.rows.push(row);
-        addRowToTotals(group.totals, row);
+
+        if (!row.is_for_removal) {
+            addRowToTotals(group.totals, row);
+        }
     });
 
     return [...groups.values()];
 });
 
 const payrollGrandTotals = computed(() =>
-    filteredPayrollRows.value.reduce(
+    filteredPayrollRows.value.filter((row) => !row.is_for_removal).reduce(
         (totals, row) => addRowToTotals(totals, row),
         emptyPayrollTotals(),
     ),
+);
+
+const forRemovalPayrollRows = computed(() =>
+    payrollRows.value.filter((row) => row.is_for_removal),
 );
 
 const reloadBatch = (extra = {}) => {
@@ -1137,6 +1402,64 @@ const removeRecipient = (row) => {
     });
 };
 
+const openForRemovalDialog = (row) => {
+    if (!row?.id || !canMarkRecipientsForRemoval.value || row.is_for_removal) return;
+
+    forRemovalTarget.value = row;
+    forRemovalRemarks.value = "";
+    forRemovalRemarksError.value = false;
+    forRemovalDialog.value = true;
+};
+
+const openRemovalReasonDialog = (row) => {
+    if (!row?.is_for_removal) return;
+
+    removalReasonTarget.value = row;
+    removalReasonDialog.value = true;
+};
+
+const submitForRemoval = () => {
+    if (!forRemovalTarget.value?.id) return;
+
+    if (!forRemovalRemarks.value?.trim()) {
+        forRemovalRemarksError.value = true;
+        return;
+    }
+
+    forRemovalRemarksError.value = false;
+    markingForRemovalId.value = forRemovalTarget.value.id;
+    forRemovalForm.remarks = forRemovalRemarks.value.trim();
+    forRemovalForm.put(route("stipends.recipients.mark-for-removal", forRemovalTarget.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            forRemovalDialog.value = false;
+            forRemovalTarget.value = null;
+            forRemovalRemarks.value = "";
+            activeTab.value = "payroll";
+            reloadBatch({ eligible_page: 1 });
+        },
+        onFinish: () => {
+            markingForRemovalId.value = null;
+        },
+    });
+};
+
+const cancelForRemoval = (row) => {
+    if (!row?.id || !canMarkRecipientsForRemoval.value || !row.is_for_removal) return;
+
+    cancellingRemovalId.value = row.id;
+    cancelRemovalForm.put(route("stipends.recipients.cancel-removal", row.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            activeTab.value = "payroll";
+            reloadBatch({ eligible_page: 1 });
+        },
+        onFinish: () => {
+            cancellingRemovalId.value = null;
+        },
+    });
+};
+
 const openRejectDialog = () => {
     rejectRemarks.value = "";
     rejectRemarksError.value = false;
@@ -1160,6 +1483,12 @@ const openSubmittedPayrollPdf = () => {
 };
 
 const openSubmitConfirmDialog = () => {
+    if (forRemovalPayrollRows.value.length) {
+        forRemovalSubmitDialog.value = true;
+        activeTab.value = "payroll";
+        return;
+    }
+
     if (!submissionPdf.value) {
         submissionPdfError.value = "Upload a PDF file before submitting payroll.";
         return;
@@ -1170,7 +1499,11 @@ const openSubmitConfirmDialog = () => {
 };
 
 const confirmSubmitPayroll = () => {
-    updateBatchStatus("submitted_payroll");
+    updateBatchStatus(
+        details.value?.status === "rejected_payroll"
+            ? "resubmitted_payroll"
+            : "submitted_payroll",
+    );
 };
 
 const selectSubmissionPdf = (event) => {
@@ -1212,19 +1545,25 @@ const formatFileSize = (size) => {
 const updateBatchStatus = async (status, shouldSaveFirst = true, remarks = null) => {
     if (!details.value?.id) return;
 
-    if (status === "submitted_payroll" && !submissionPdf.value) {
+    if (["submitted_payroll", "resubmitted_payroll"].includes(status) && !submissionPdf.value) {
         submissionPdfError.value = "Upload a PDF file before submitting payroll.";
         return;
     }
 
-    if (status === "submitted_payroll" && batchPermissions.value.canEdit && shouldSaveFirst) {
+    if (
+        ["submitted_payroll", "resubmitted_payroll"].includes(status) &&
+        batchPermissions.value.canEdit &&
+        shouldSaveFirst
+    ) {
         savePayroll(() => updateBatchStatus(status, false));
         return;
     }
 
     statusForm.status = status;
     statusForm.remarks = remarks;
-    statusForm.payroll_file = status === "submitted_payroll" ? submissionPdf.value : null;
+    statusForm.payroll_file = ["submitted_payroll", "resubmitted_payroll"].includes(status)
+        ? submissionPdf.value
+        : null;
     statusForm
         .transform((data) => ({
             ...data,
@@ -1304,3 +1643,28 @@ watch(
     },
 );
 </script>
+
+<style scoped>
+:deep(.compact-payroll-tabs .p-tablist-tab-list) {
+    gap: 0.25rem;
+}
+
+:deep(.compact-payroll-tabs .p-tab) {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.8125rem;
+}
+
+:deep(.compact-payroll-tabs .p-tabpanels) {
+    padding-top: 0.25rem;
+}
+
+:deep(.compact-payroll-tabs .p-inputtext),
+:deep(.compact-payroll-tabs .p-select) {
+    min-height: 2.25rem;
+}
+
+:deep(.compact-payroll-tabs .p-inputnumber-input) {
+    padding-block: 0.35rem;
+}
+</style>
+

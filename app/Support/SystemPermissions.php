@@ -162,6 +162,8 @@ class SystemPermissions
         'stipends.store' => 'payroll.create',
         'stipends.recipients.store' => 'payroll.edit',
         'stipends.payroll.update' => 'payroll.edit',
+        'stipends.recipients.mark-for-removal' => 'payroll.review',
+        'stipends.recipients.cancel-removal' => 'payroll.review',
         'stipends.export' => 'payroll.view',
         'stipends.update' => 'payroll.view',
         'stipends.destroy' => 'payroll.delete',
@@ -394,7 +396,8 @@ class SystemPermissions
 
     public function canReviewPayroll(User $user, string $status): bool
     {
-        return $this->can($user, 'payroll.review') && $status === 'submitted_payroll';
+        return $this->can($user, 'payroll.review')
+            && in_array($status, ['submitted_payroll', 'resubmitted_payroll'], true);
     }
 
     private function canAccessPayrollRegion(User $user, object $batch): bool
@@ -445,3 +448,4 @@ class SystemPermissions
             && Schema::hasTable('list_permission_routes');
     }
 }
+

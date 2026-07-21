@@ -25,9 +25,24 @@ class Batches extends Model
         return $this->hasMany(BatchLogs::class, 'batch_id');
     }
 
+    public function latestLog()
+    {
+        return $this->hasOne(BatchLogs::class, 'batch_id')->latestOfMany('created_at');
+    }
+
     public function recipients()
     {
         return $this->hasMany(BatchRecipients::class, 'batch_id');
+    }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(PayrollBatchActivityLog::class, 'batch_id');
+    }
+
+    public function revisions()
+    {
+        return $this->hasMany(PayrollBatchRevision::class, 'batch_id');
     }
 
     public function term()
