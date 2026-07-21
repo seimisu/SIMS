@@ -326,6 +326,10 @@ const batchStatusMeta = (status) =>
             label: "Submitted Payroll",
             class: "bg-blue-50 text-blue-500",
         },
+        resubmitted_payroll: {
+            label: "Resubmitted Payroll",
+            class: "bg-cyan-50 text-cyan-600",
+        },
         rejected_payroll: {
             label: "Returned Payroll",
             class: "bg-red-50 text-red-500",
