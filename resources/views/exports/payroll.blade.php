@@ -1,10 +1,19 @@
 @php
     $money = fn ($value) => (float) ($value ?? 0);
     $display = fn ($value) => $money($value) > 0 ? $money($value) : '-';
-    $customAllowances = collect($customAllowances ?? []);
-    $columnCount = 17 + $customAllowances->count();
+    $columnCount = 17;
     $region = trim(str_replace('DOST', '', $batch->region ?? ''));
     $title = 'PAYROLL OF REGION ' . ($region ?: '____') . ' - MONITORED DOST UNDERGRADUATE SCHOLARS';
+    $preparedSignatories = collect($preparedBy ?? [])
+        ->map(fn ($signatory) => [
+            'name' => strtoupper($signatory['name'] ?? ''),
+            'designation' => strtoupper($signatory['designation'] ?? ''),
+        ])
+        ->values();
+    $notedName = strtoupper($notedBy['name'] ?? '');
+    $notedDesignation = strtoupper($notedBy['designation'] ?? '');
+    $certifiedName = strtoupper($certifiedBy['name'] ?? '');
+    $certifiedDesignation = strtoupper($certifiedBy['designation'] ?? '');
 @endphp
 
 <table>
@@ -26,9 +35,6 @@
         <th colspan="2">WITHHELD STIPEND/S</th>
         <th rowspan="2">LEARNING MATERIALS AND/OR CONNECTIVITY ALLOWANCE</th>
         <th rowspan="2">CLOTHING ALLOWANCE<br>(if applicable)</th>
-        @foreach ($customAllowances as $allowance)
-            <th rowspan="2">{{ strtoupper($allowance['name'] ?? $allowance['code']) }}</th>
-        @endforeach
         <th rowspan="2">TOTAL</th>
     </tr>
     <tr>
@@ -49,7 +55,6 @@
             'withheld' => 0,
             'learning_materials' => 0,
             'clothing' => 0,
-            'custom_allowances' => $customAllowances->mapWithKeys(fn ($allowance) => [$allowance['code'] => 0])->all(),
             'total' => 0,
         ];
     @endphp
@@ -65,7 +70,6 @@
                 'withheld' => 0,
                 'learning_materials' => 0,
                 'clothing' => 0,
-                'custom_allowances' => $customAllowances->mapWithKeys(fn ($allowance) => [$allowance['code'] => 0])->all(),
                 'total' => 0,
             ];
         @endphp
@@ -85,13 +89,6 @@
                 $grand['learning_materials'] += $money($row['learning_materials_amount'] ?? 0);
                 $grand['clothing'] += $money($row['clothing_amount'] ?? 0);
                 $grand['total'] += $money($row['grand_total'] ?? 0);
-
-                foreach ($customAllowances as $allowance) {
-                    $code = $allowance['code'];
-                    $amount = $money($row['custom_allowances'][$code] ?? 0);
-                    $subtotal['custom_allowances'][$code] += $amount;
-                    $grand['custom_allowances'][$code] += $amount;
-                }
             @endphp
             <tr>
                 <td>{{ $row['spas_no'] }}</td>
@@ -108,9 +105,6 @@
                 <td>{{ $row['remarks'] }}</td>
                 <td data-format="#,##0.00">{{ $display($row['learning_materials_amount'] ?? 0) }}</td>
                 <td data-format="#,##0.00">{{ $display($row['clothing_amount'] ?? 0) }}</td>
-                @foreach ($customAllowances as $allowance)
-                    <td data-format="#,##0.00">{{ $display($row['custom_allowances'][$allowance['code']] ?? 0) }}</td>
-                @endforeach
                 <td data-format="#,##0.00">{{ $display($row['grand_total'] ?? 0) }}</td>
             </tr>
         @endforeach
@@ -130,9 +124,6 @@
             <td></td>
             <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($subtotal['learning_materials']) }}</td>
             <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($subtotal['clothing']) }}</td>
-            @foreach ($customAllowances as $allowance)
-                <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($subtotal['custom_allowances'][$allowance['code']] ?? 0) }}</td>
-            @endforeach
             <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($subtotal['total']) }}</td>
         </tr>
     @empty
@@ -156,9 +147,6 @@
         <td></td>
         <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($grand['learning_materials']) }}</td>
         <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($grand['clothing']) }}</td>
-        @foreach ($customAllowances as $allowance)
-            <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($grand['custom_allowances'][$allowance['code']] ?? 0) }}</td>
-        @endforeach
         <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($grand['total']) }}</td>
     </tr>
 
@@ -171,24 +159,40 @@
     </tr>
     <tr><td colspan="{{ $columnCount }}"></td></tr>
     <tr>
-        <td colspan="3" style="font-weight: bold;">PREPARED BY:</td>
+        <td colspan="4" style="font-weight: bold;">PREPARED BY:</td>
+        <td colspan="3"></td>
+        <td colspan="4" style="font-weight: bold;">NOTED BY:</td>
+        <td colspan="2"></td>
+        <td colspan="4" style="font-weight: bold;">CERTIFIED CORRECT:</td>
     </tr>
     <tr><td colspan="{{ $columnCount }}"></td></tr>
     <tr><td colspan="{{ $columnCount }}"></td></tr>
-    <tr><td colspan="{{ $columnCount }}"></td></tr>
-    <tr>
-        <td colspan="4">Printed Name and Signature of Scholarship Project Staff</td>
-    </tr>
-    <tr><td colspan="{{ $columnCount }}"></td></tr>
-    <tr>
-        <td colspan="9"></td>
-        <td colspan="3" style="font-weight: bold;">CERTIFIED CORRECT:</td>
-    </tr>
-    <tr><td colspan="{{ $columnCount }}"></td></tr>
-    <tr><td colspan="{{ $columnCount }}"></td></tr>
-    <tr><td colspan="{{ $columnCount }}"></td></tr>
-    <tr>
-        <td colspan="9"></td>
-        <td colspan="5">Printed Name and Signature of Scholarship Technical Coordinator</td>
-    </tr>
+    @foreach ($preparedSignatories as $index => $prepared)
+        <tr>
+            <td colspan="4" style="font-weight: bold; font-size: 12px;">{{ $prepared['name'] }}</td>
+            <td colspan="3"></td>
+            @if ($index === 0)
+                <td colspan="4" style="font-weight: bold; font-size: 12px;">{{ $notedName }}</td>
+                <td colspan="2"></td>
+                <td colspan="4" style="font-weight: bold; font-size: 12px;">{{ $certifiedName }}</td>
+            @else
+                <td colspan="10"></td>
+            @endif
+        </tr>
+        <tr>
+            <td colspan="4" style="font-size: 10px;">{{ $prepared['designation'] }}</td>
+            <td colspan="3"></td>
+            @if ($index === 0)
+                <td colspan="4" style="font-size: 10px;">{{ $notedDesignation }}</td>
+                <td colspan="2"></td>
+                <td colspan="4" style="font-size: 10px;">{{ $certifiedDesignation }}</td>
+            @else
+                <td colspan="10"></td>
+            @endif
+        </tr>
+        @if (! $loop->last)
+            <tr><td colspan="{{ $columnCount }}"></td></tr>
+            <tr><td colspan="{{ $columnCount }}"></td></tr>
+        @endif
+    @endforeach
 </table>

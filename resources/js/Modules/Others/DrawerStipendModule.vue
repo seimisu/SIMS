@@ -31,7 +31,7 @@
         <template #default>
             <div class="flex flex-col w-full h-full gap-3">
                 <Tabs v-model:value="activeTab" class="flex-1 flex flex-col min-h-0">
-                    <TabList>
+                    <TabList v-if="canBuildPayroll">
                         <Tab v-if="canBuildPayroll" value="eligible">Validated Scholars</Tab>
                         <Tab value="payroll">Payroll</Tab>
                     </TabList>
@@ -153,7 +153,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="flex flex-col xl:flex-row gap-2 xl:items-center">
+                                    <div class="ml-auto flex flex-col xl:flex-row gap-2 xl:items-center">
                                         <InputText
                                             v-model="payrollSearch"
                                             placeholder="Search SPAS or name"
@@ -180,16 +180,31 @@
                                             showClear
                                             class="!text-sm min-w-44"
                                         />
-                                        <MultiSelect
+                                        <DefaultButton
                                             v-if="canBuildPayroll"
-                                            v-model="selectedCustomAllowanceCodes"
-                                            :options="customAllowanceOptions"
-                                            optionLabel="name"
-                                            optionValue="code"
-                                            placeholder="Add allowance column"
-                                            display="chip"
-                                            :disabled="!batchPermissions.canEdit"
-                                            class="!text-sm min-w-72 max-w-[28rem]"
+                                            size="small"
+                                            tooltip="Download Excel"
+                                            severity="success"
+                                            outlined
+                                            :icon="IconFileSpreadsheet"
+                                            :icon-size="20"
+                                            class-name="!h-9 !w-9 !p-0"
+                                            :loading="exportingPayroll === 'excel'"
+                                            :disabled="!payrollRows.length || payrollForm.processing"
+                                            @click="openExportDialog('excel')"
+                                        />
+                                        <DefaultButton
+                                            v-if="canBuildPayroll"
+                                            size="small"
+                                            tooltip="Download PDF"
+                                            severity="danger"
+                                            outlined
+                                            :icon="IconFileTypePdf"
+                                            :icon-size="20"
+                                            class-name="!h-9 !w-9 !p-0"
+                                            :loading="exportingPayroll === 'pdf'"
+                                            :disabled="!payrollRows.length || payrollForm.processing"
+                                            @click="openExportDialog('pdf')"
                                         />
                                         <DefaultButton
                                             v-if="canBuildPayroll"
@@ -200,74 +215,97 @@
                                             :disabled="!payrollRows.length || !batchPermissions.canEdit"
                                             @click="savePayroll"
                                         />
-                                        <DefaultButton
-                                            size="small"
-                                            label="Excel"
-                                            outlined
-                                            :icon="IconFileSpreadsheet"
-                                            :loading="exportingPayroll === 'excel'"
-                                            :disabled="!payrollRows.length || payrollForm.processing"
-                                            @click="exportPayroll('excel')"
-                                        />
-                                        <DefaultButton
-                                            size="small"
-                                            label="PDF"
-                                            outlined
-                                            :icon="IconFileTypePdf"
-                                            :loading="exportingPayroll === 'pdf'"
-                                            :disabled="!payrollRows.length || payrollForm.processing"
-                                            @click="exportPayroll('pdf')"
-                                        />
-                                        <DefaultButton
-                                            v-if="batchPermissions.canSubmit"
-                                            size="small"
-                                            label="Submit"
-                                            severity="success"
-                                            :icon="IconSend"
-                                            :loading="statusForm.processing"
-                                            :disabled="!payrollRows.length"
-                                            @click="updateBatchStatus('submitted_payroll')"
-                                        />
-                                        <DefaultButton
-                                            v-if="batchPermissions.canReject"
-                                            size="small"
-                                            label="Reject"
-                                            severity="danger"
-                                            outlined
-                                            :icon="IconX"
-                                            :loading="statusForm.processing"
-                                            @click="openRejectDialog"
-                                        />
-                                        <DefaultButton
-                                            v-if="batchPermissions.canApprove"
-                                            size="small"
-                                            label="Approve"
-                                            severity="success"
-                                            outlined
-                                            :icon="IconChecks"
-                                            :loading="statusForm.processing"
-                                            @click="updateBatchStatus('approved_payroll')"
-                                        />
                                     </div>
                                 </div>
 
                                 <div
-                                    v-if="details?.status === 'rejected_payroll' && details?.remarks"
-                                    class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                                    v-if="batchPermissions.canSubmit"
+                                    class="rounded-lg border border-dashed border-red-200 bg-red-50/50 px-3 py-2"
                                 >
-                                    <div class="font-semibold">Rejection Remarks</div>
-                                    <div class="mt-1 whitespace-pre-line text-xs leading-5">
-                                        {{ details.remarks }}
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex min-w-0 items-center gap-2">
+                                            <IconFileTypePdf :size="20" class="shrink-0 text-red-500" />
+                                            <div class="text-sm font-medium text-slate-700">
+                                                Upload scanned payroll with signatories before submission.
+                                            </div>
+                                            <span class="text-xs text-slate-400">PDF only, up to 10 MB.</span>
+                                        </div>
+                                        <div class="ml-auto flex min-w-0 items-center justify-end gap-2">
+                                            <div
+                                                v-if="submissionPdf"
+                                                class="flex min-w-0 items-center gap-1 rounded-md border border-red-100 bg-white px-2 py-1 text-xs text-slate-600"
+                                            >
+                                                <span class="max-w-64 truncate">
+                                                    {{ submissionPdf.name }}
+                                                </span>
+                                                <span class="shrink-0 text-slate-400">
+                                                    {{ formatFileSize(submissionPdf.size) }}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    class="ml-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                                    @click="clearSubmissionPdf"
+                                                >
+                                                    <IconX :size="14" />
+                                                </button>
+                                            </div>
+                                            <label
+                                                class="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+                                            >
+                                                Choose PDF
+                                                <input
+                                                    ref="submissionPdfInput"
+                                                    type="file"
+                                                    accept="application/pdf,.pdf"
+                                                    class="hidden"
+                                                    @change="selectSubmissionPdf"
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
+
                                     <div
-                                        v-if="details?.remarks_by || details?.remarks_at"
-                                        class="mt-1 text-[11px] text-red-500"
+                                        v-if="submissionPdfError || statusForm.errors.payroll_file"
+                                        class="mt-2 text-xs font-medium text-red-600"
                                     >
-                                        {{ details.remarks_by }}
-                                        <span v-if="details?.remarks_by && details?.remarks_at">
-                                            |
-                                        </span>
-                                        {{ details.remarks_at }}
+                                        {{ submissionPdfError || statusForm.errors.payroll_file }}
+                                    </div>
+                                </div>
+
+                                <div v-if="details?.payroll_file" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex min-w-0 items-center gap-2">
+                                            <IconFileTypePdf :size="20" class="shrink-0 text-red-500" />
+                                            <div class="min-w-0">
+                                                <div class="truncate text-sm font-medium text-slate-700">
+                                                    {{ details.payroll_file.name || "Submitted payroll PDF" }}
+                                                </div>
+                                                <div class="text-xs text-slate-500">
+                                                    Uploaded by {{ details.payroll_file.uploaded_by || "Unknown" }}
+                                                    <span v-if="details.payroll_file.uploaded_at">
+                                                        | {{ details.payroll_file.uploaded_at }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="ml-auto flex items-center gap-2">
+                                            <DefaultButton
+                                                size="small"
+                                                label="Preview"
+                                                severity="secondary"
+                                                outlined
+                                                @click="openSubmittedPayrollPdf"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    v-else-if="shouldShowPayrollAttachment"
+                                    class="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+                                >
+                                    <div class="flex items-center gap-2">
+                                        <IconFileTypePdf :size="20" class="shrink-0 text-slate-400" />
+                                        <span>No submitted payroll PDF is attached.</span>
                                     </div>
                                 </div>
 
@@ -292,13 +330,6 @@
                                                 <th class="border px-2 py-2 text-left">Remarks</th>
                                                 <th class="border px-2 py-2 text-right">LMA/Connectivity</th>
                                                 <th class="border px-2 py-2 text-right">Clothing</th>
-                                                <th
-                                                    v-for="allowance in selectedCustomAllowanceOptions"
-                                                    :key="allowance.code"
-                                                    class="border px-2 py-2 text-right"
-                                                >
-                                                    {{ allowance.name }}
-                                                </th>
                                                 <th class="border px-2 py-2 text-right">Total</th>
                                                 <th
                                                     v-if="canBuildPayroll"
@@ -389,21 +420,6 @@
                                                             :disabled="!batchPermissions.canEdit"
                                                         />
                                                     </td>
-                                                    <td
-                                                        v-for="allowance in selectedCustomAllowanceOptions"
-                                                        :key="allowance.code"
-                                                        class="border px-2 py-1"
-                                                    >
-                                                        <InputNumber
-                                                            v-model="row.custom_allowances[allowance.code]"
-                                                            inputClass="!text-xs !text-right w-28"
-                                                            :min="0"
-                                                            :max="allowance.max_amount ?? undefined"
-                                                            :minFractionDigits="2"
-                                                            :maxFractionDigits="2"
-                                                            :disabled="!batchPermissions.canEdit"
-                                                        />
-                                                    </td>
                                                     <td class="border px-2 py-1 text-right font-semibold">
                                                         {{ formatMoney(rowTotal(row)) }}
                                                     </td>
@@ -442,13 +458,6 @@
                                                     <td class="border px-2 py-1 text-right">
                                                         {{ formatMoney(group.totals.clothing_amount) }}
                                                     </td>
-                                                    <td
-                                                        v-for="allowance in selectedCustomAllowanceOptions"
-                                                        :key="`subtotal-${group.program}-${allowance.code}`"
-                                                        class="border px-2 py-1 text-right"
-                                                    >
-                                                        {{ formatMoney(group.totals.custom_allowances[allowance.code]) }}
-                                                    </td>
                                                     <td class="border px-2 py-1 text-right">
                                                         {{ formatMoney(group.totals.grand_total) }}
                                                     </td>
@@ -479,13 +488,6 @@
                                                 <td class="border px-2 py-1 text-right">
                                                     {{ formatMoney(payrollGrandTotals.clothing_amount) }}
                                                 </td>
-                                                <td
-                                                    v-for="allowance in selectedCustomAllowanceOptions"
-                                                    :key="`grand-${allowance.code}`"
-                                                    class="border px-2 py-1 text-right"
-                                                >
-                                                    {{ formatMoney(payrollGrandTotals.custom_allowances[allowance.code]) }}
-                                                </td>
                                                 <td class="border px-2 py-1 text-right">
                                                     {{ formatMoney(payrollGrandTotals.grand_total) }}
                                                 </td>
@@ -502,6 +504,77 @@
                                         </tbody>
                                     </table>
                                 </div>
+
+                                <div
+                                    v-if="hasReturnRemarks || batchPermissions.canSubmit || batchPermissions.canReject || batchPermissions.canApprove"
+                                    class="grid gap-2 border-t border-slate-100 pt-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end"
+                                >
+                                    <div
+                                        v-if="hasReturnRemarks"
+                                        class="min-w-0 rounded-lg border border-dashed border-red-200 bg-red-50/50 px-3 py-2 text-sm text-red-700 lg:max-w-5xl"
+                                    >
+                                        <div class="flex min-w-0 items-start gap-2">
+                                            <IconMessageReport
+                                                :size="20"
+                                                class="mt-0.5 shrink-0 text-red-500"
+                                            />
+                                            <div class="min-w-0">
+                                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                    <span class="shrink-0 font-semibold text-slate-700">
+                                                        Return remarks
+                                                    </span>
+                                                    <span
+                                                        v-if="details?.remarks_by || details?.remarks_at"
+                                                        class="text-[11px] text-slate-500"
+                                                    >
+                                                        {{ details.remarks_by || "Scholarship staff" }}
+                                                        <span v-if="details?.remarks_at">
+                                                            | {{ details.remarks_at }}
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                                <div class="mt-0.5 line-clamp-2 whitespace-pre-line text-xs leading-5">
+                                                    {{ details.remarks }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else class="hidden lg:block"></div>
+                                    <div
+                                        v-if="batchPermissions.canSubmit || batchPermissions.canReject || batchPermissions.canApprove"
+                                        class="flex flex-wrap justify-end gap-2 lg:pl-3"
+                                    >
+                                        <DefaultButton
+                                            v-if="batchPermissions.canReject"
+                                            size="small"
+                                            label="Return Payroll"
+                                            severity="danger"
+                                            outlined
+                                            :icon="IconX"
+                                            :loading="statusForm.processing"
+                                            @click="openRejectDialog"
+                                        />
+                                        <DefaultButton
+                                            v-if="batchPermissions.canApprove"
+                                            size="small"
+                                            label="Approve Payroll"
+                                            severity="success"
+                                            :icon="IconChecks"
+                                            :loading="statusForm.processing"
+                                            @click="updateBatchStatus('approved_payroll')"
+                                        />
+                                        <DefaultButton
+                                            v-if="batchPermissions.canSubmit"
+                                            size="small"
+                                            label="Submit Payroll"
+                                            severity="success"
+                                            :icon="IconSend"
+                                            :loading="statusForm.processing"
+                                            :disabled="!payrollRows.length || !submissionPdf"
+                                            @click="openSubmitConfirmDialog"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </TabPanel>
                     </TabPanels>
@@ -513,7 +586,7 @@
     <Dialog
         v-model:visible="rejectDialog"
         modal
-        header="Reject Payroll"
+        header="Return Payroll"
         :style="{ width: '32rem' }"
     >
         <div class="flex flex-col gap-2">
@@ -523,11 +596,11 @@
                 v-model="rejectRemarks"
                 rows="5"
                 class="w-full !text-sm"
-                placeholder="Explain why this payroll is rejected."
+                placeholder="Explain why this payroll is returned."
                 autoResize
             />
             <small v-if="rejectRemarksError" class="text-red-500">
-                Remarks are required when rejecting a payroll.
+                Remarks are required when returning a payroll.
             </small>
         </div>
 
@@ -541,11 +614,141 @@
             />
             <DefaultButton
                 size="small"
-                label="Reject"
+                label="Return"
                 severity="danger"
                 :icon="IconX"
                 :loading="statusForm.processing"
                 @click="submitReject"
+            />
+        </template>
+    </Dialog>
+
+    <Dialog
+        v-model:visible="submitConfirmDialog"
+        modal
+        header="Submit Payroll"
+        :style="{ width: '32rem' }"
+    >
+        <div class="space-y-2 text-sm text-slate-600">
+            <p>
+                Submit this payroll for review? Please confirm that the uploaded PDF is the scanned payroll with complete signatories.
+            </p>
+            <div
+                v-if="submissionPdf"
+                class="flex items-center justify-between gap-2 rounded-md border border-red-100 bg-red-50 px-3 py-2 text-xs"
+            >
+                <span class="min-w-0 truncate font-medium text-slate-700">{{ submissionPdf.name }}</span>
+                <span class="shrink-0 text-slate-500">{{ formatFileSize(submissionPdf.size) }}</span>
+            </div>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="Cancel"
+                severity="secondary"
+                outlined
+                @click="submitConfirmDialog = false"
+            />
+            <DefaultButton
+                size="small"
+                label="Submit"
+                severity="success"
+                :icon="IconSend"
+                :loading="statusForm.processing"
+                @click="confirmSubmitPayroll"
+            />
+        </template>
+    </Dialog>
+
+    <Dialog
+        v-model:visible="exportDialog"
+        modal
+        header="Payroll Signatories"
+        :style="{ width: '36rem' }"
+    >
+        <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Prepared by</label>
+                <MultiSelect
+                    v-model="preparedBy"
+                    :options="signatoryOptions"
+                    optionLabel="name"
+                    placeholder="Select prepared by"
+                    filter
+                    display="chip"
+                    :maxSelectedLabels="3"
+                    class="w-full !text-sm"
+                >
+                    <template #option="slotProps">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-xs text-gray-500">
+                                {{ slotProps.option.designation || "No designation" }}
+                            </span>
+                        </div>
+                    </template>
+                </MultiSelect>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Noted by</label>
+                <Select
+                    v-model="notedBy"
+                    :options="signatoryOptions"
+                    optionLabel="name"
+                    placeholder="Select noted by"
+                    filter
+                    class="w-full !text-sm"
+                >
+                    <template #option="slotProps">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-xs text-gray-500">
+                                {{ slotProps.option.designation || "No designation" }}
+                            </span>
+                        </div>
+                    </template>
+                </Select>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Certified correct</label>
+                <Select
+                    v-model="certifiedBy"
+                    :options="signatoryOptions"
+                    optionLabel="name"
+                    placeholder="Select certified correct"
+                    filter
+                    class="w-full !text-sm"
+                >
+                    <template #option="slotProps">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-xs text-gray-500">
+                                {{ slotProps.option.designation || "No designation" }}
+                            </span>
+                        </div>
+                    </template>
+                </Select>
+            </div>
+            <small v-if="signatoryError" class="text-red-500">
+                Select prepared by, noted by, and certified correct before exporting.
+            </small>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="Cancel"
+                severity="secondary"
+                outlined
+                @click="exportDialog = false"
+            />
+            <DefaultButton
+                size="small"
+                label="Export"
+                :icon="pendingExportFormat === 'pdf' ? IconFileTypePdf : IconFileSpreadsheet"
+                :loading="Boolean(exportingPayroll)"
+                @click="confirmExport"
             />
         </template>
     </Dialog>
@@ -558,6 +761,7 @@ import {
     IconDeviceFloppy,
     IconFileSpreadsheet,
     IconFileTypePdf,
+    IconMessageReport,
     IconSend,
     IconTrash,
     IconUserPlus,
@@ -582,13 +786,30 @@ const payrollSearch = ref(null);
 const payrollProgram = ref(null);
 const payrollUniversity = ref(null);
 const payrollStatus = ref(null);
-const selectedCustomAllowanceCodes = ref([]);
 const rejectDialog = ref(false);
 const rejectRemarks = ref("");
 const rejectRemarksError = ref(false);
+const submitConfirmDialog = ref(false);
 const exportingPayroll = ref(null);
+const submissionPdf = ref(null);
+const submissionPdfError = ref("");
+const submissionPdfInput = ref(null);
+const exportDialog = ref(false);
+const pendingExportFormat = ref("excel");
+const preparedBy = ref([]);
+const notedBy = ref(null);
+const certifiedBy = ref(null);
+const signatoryError = ref(false);
 
 const details = computed(() => page.props.details);
+const hasReturnRemarks = computed(
+    () => details.value?.status === "rejected_payroll" && Boolean(details.value?.remarks),
+);
+const shouldShowPayrollAttachment = computed(() =>
+    ["submitted_payroll", "rejected_payroll", "approved_payroll"].includes(
+        details.value?.status,
+    ),
+);
 const eligibleScholars = computed(
     () =>
         page.props.eligibleScholars ?? {
@@ -610,6 +831,7 @@ const removeForm = useForm({});
 const statusForm = useForm({
     status: null,
     remarks: null,
+    payroll_file: null,
 });
 const removingId = ref(null);
 
@@ -642,7 +864,7 @@ const statusMeta = computed(() => {
             class: "bg-blue-50 text-blue-600",
         },
         rejected_payroll: {
-            label: "Rejected Payroll",
+            label: "Returned Payroll",
             class: "bg-red-50 text-red-600",
         },
         approved_payroll: {
@@ -655,22 +877,8 @@ const statusMeta = computed(() => {
     };
 });
 
-const customAllowanceOptions = computed(() => page.props.allowanceOptions ?? []);
 const fixedAllowanceLimits = computed(() => page.props.allowanceLimits ?? {});
-const selectedCustomAllowanceOptions = computed(() =>
-    customAllowanceOptions.value.filter((allowance) =>
-        selectedCustomAllowanceCodes.value.includes(allowance.code),
-    ),
-);
-
-const customAllowanceDefaults = computed(() =>
-    Object.fromEntries(
-        customAllowanceOptions.value.map((allowance) => [
-            allowance.code,
-            allowance.is_variable ? 0 : Number(allowance.default_amount ?? 0),
-        ]),
-    ),
-);
+const signatoryOptions = computed(() => page.props.signatoryOptions ?? []);
 
 const syncPayrollRows = () => {
     payrollRows.value = (page.props.payrollRecipients ?? []).map((row) => ({
@@ -680,36 +888,7 @@ const syncPayrollRows = () => {
         month_3: row.months?.month_3 ?? 0,
         month_4: row.months?.month_4 ?? 0,
         month_5: row.months?.month_5 ?? 0,
-        custom_allowances: row.custom_allowances ?? {},
     }));
-
-    const savedCustomAllowanceCodes = [
-        ...new Set(
-            payrollRows.value.flatMap((row) =>
-                Object.entries(row.custom_allowances ?? {})
-                    .filter(
-                        ([code, amount]) =>
-                            Number(amount ?? 0) > 0 &&
-                            customAllowanceOptions.value.some((option) => option.code === code),
-                    )
-                    .map(([code]) => code),
-            ),
-        ),
-    ];
-
-    selectedCustomAllowanceCodes.value = [
-        ...new Set([...selectedCustomAllowanceCodes.value, ...savedCustomAllowanceCodes]),
-    ];
-
-    payrollRows.value.forEach((row) => {
-        row.custom_allowances ??= {};
-
-        selectedCustomAllowanceCodes.value.forEach((code) => {
-            if (row.custom_allowances[code] === undefined) {
-                row.custom_allowances[code] = customAllowanceDefaults.value[code] ?? 0;
-            }
-        });
-    });
 };
 
 const uniqueOptions = (items, key) =>
@@ -752,9 +931,7 @@ const filteredPayrollRows = computed(() => {
     });
 });
 
-const payrollColumnCount = computed(
-    () => 16 + selectedCustomAllowanceOptions.value.length + (canBuildPayroll.value ? 1 : 0),
-);
+const payrollColumnCount = computed(() => 16 + (canBuildPayroll.value ? 1 : 0));
 
 const emptyPayrollTotals = () => ({
     month_1: 0,
@@ -765,9 +942,6 @@ const emptyPayrollTotals = () => ({
     total_withheld: 0,
     learning_materials_amount: 0,
     clothing_amount: 0,
-    custom_allowances: Object.fromEntries(
-        selectedCustomAllowanceCodes.value.map((code) => [code, 0]),
-    ),
     grand_total: 0,
 });
 
@@ -779,11 +953,6 @@ const addRowToTotals = (totals, row) => {
     totals.total_withheld += Number(row.total_withheld ?? 0);
     totals.learning_materials_amount += Number(row.learning_materials_amount ?? 0);
     totals.clothing_amount += Number(row.clothing_amount ?? 0);
-
-    selectedCustomAllowanceCodes.value.forEach((code) => {
-        totals.custom_allowances[code] ??= 0;
-        totals.custom_allowances[code] += Number(row.custom_allowances?.[code] ?? 0);
-    });
 
     totals.grand_total += rowTotal(row);
 
@@ -831,7 +1000,7 @@ const reloadBatch = (extra = {}) => {
             eligible_status: eligibleStatus.value,
             ...extra,
         },
-        only: ["details", "eligibleScholars", "payrollRecipients", "allowanceOptions", "allowanceLimits"],
+        only: ["details", "eligibleScholars", "payrollRecipients", "allowanceLimits", "signatoryOptions"],
         preserveScroll: true,
         onSuccess: () => {
             selectedEligible.value = [];
@@ -882,7 +1051,6 @@ const buildPayrollRecipients = async () => {
         remarks: row.remarks,
         learning_materials_amount: row.learning_materials_amount ?? 0,
         clothing_amount: row.clothing_amount ?? 0,
-        custom_allowances: row.custom_allowances ?? {},
     }));
 };
 
@@ -913,6 +1081,7 @@ const downloadPayroll = (format = "excel") => {
     if (!details.value?.id) return;
 
     exportingPayroll.value = null;
+    exportDialog.value = false;
     const url = route("stipends.export", details.value.id);
     const params = new URLSearchParams();
 
@@ -920,17 +1089,31 @@ const downloadPayroll = (format = "excel") => {
         params.set("format", "pdf");
     }
 
-    selectedCustomAllowanceCodes.value.forEach((code) => {
-        params.append("allowances[]", code);
+    preparedBy.value.forEach((signatory) => {
+        params.append("prepared_by[]", signatory.id);
     });
+    params.set("noted_by", notedBy.value.id);
+    params.set("certified_by", certifiedBy.value.id);
 
     const query = params.toString();
     window.location.href = query ? `${url}?${query}` : url;
 };
 
-const exportPayroll = (format = "excel") => {
+const openExportDialog = (format = "excel") => {
     if (!details.value?.id || !payrollRows.value.length) return;
 
+    pendingExportFormat.value = format;
+    signatoryError.value = false;
+    exportDialog.value = true;
+};
+
+const confirmExport = () => {
+    if (!preparedBy.value.length || !notedBy.value || !certifiedBy.value) {
+        signatoryError.value = true;
+        return;
+    }
+
+    const format = pendingExportFormat.value;
     exportingPayroll.value = format;
 
     if (canBuildPayroll.value && batchPermissions.value.canEdit) {
@@ -970,8 +1153,69 @@ const submitReject = () => {
     updateBatchStatus("rejected_payroll", false, rejectRemarks.value.trim());
 };
 
+const openSubmittedPayrollPdf = () => {
+    if (!details.value?.payroll_file?.url) return;
+
+    window.open(details.value.payroll_file.url, "_blank", "noopener,noreferrer");
+};
+
+const openSubmitConfirmDialog = () => {
+    if (!submissionPdf.value) {
+        submissionPdfError.value = "Upload a PDF file before submitting payroll.";
+        return;
+    }
+
+    submissionPdfError.value = "";
+    submitConfirmDialog.value = true;
+};
+
+const confirmSubmitPayroll = () => {
+    updateBatchStatus("submitted_payroll");
+};
+
+const selectSubmissionPdf = (event) => {
+    const file = event.target.files?.[0] ?? null;
+    submissionPdf.value = null;
+    submissionPdfError.value = "";
+
+    if (!file) {
+        return;
+    }
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        submissionPdfError.value = "Only PDF files are allowed.";
+        event.target.value = "";
+        return;
+    }
+
+    submissionPdf.value = file;
+};
+
+const clearSubmissionPdf = () => {
+    submissionPdf.value = null;
+    submissionPdfError.value = "";
+
+    if (submissionPdfInput.value) {
+        submissionPdfInput.value.value = "";
+    }
+};
+
+const formatFileSize = (size) => {
+    if (!size) return "0 Bytes";
+
+    const units = ["Bytes", "KB", "MB", "GB"];
+    const index = Math.min(Math.floor(Math.log(size) / Math.log(1024)), units.length - 1);
+
+    return `${(size / Math.pow(1024, index)).toFixed(2)} ${units[index]}`;
+};
+
 const updateBatchStatus = async (status, shouldSaveFirst = true, remarks = null) => {
     if (!details.value?.id) return;
+
+    if (status === "submitted_payroll" && !submissionPdf.value) {
+        submissionPdfError.value = "Upload a PDF file before submitting payroll.";
+        return;
+    }
 
     if (status === "submitted_payroll" && batchPermissions.value.canEdit && shouldSaveFirst) {
         savePayroll(() => updateBatchStatus(status, false));
@@ -980,12 +1224,25 @@ const updateBatchStatus = async (status, shouldSaveFirst = true, remarks = null)
 
     statusForm.status = status;
     statusForm.remarks = remarks;
-    statusForm.put(route("stipends.update", { id: details.value.id, type: "status" }), {
+    statusForm.payroll_file = status === "submitted_payroll" ? submissionPdf.value : null;
+    statusForm
+        .transform((data) => ({
+            ...data,
+            _method: "put",
+        }))
+        .post(route("stipends.update", { id: details.value.id, type: "status" }), {
         preserveScroll: true,
+        forceFormData: true,
         onSuccess: () => {
             rejectDialog.value = false;
+            submitConfirmDialog.value = false;
             rejectRemarks.value = "";
+            submissionPdf.value = null;
+            submissionPdfError.value = "";
             reloadBatch();
+        },
+        onError: (errors) => {
+            submissionPdfError.value = errors.payroll_file ?? "";
         },
     });
 };
@@ -996,35 +1253,13 @@ const rowTotal = (row) => {
         0,
     );
 
-    const customAllowances = selectedCustomAllowanceCodes.value.reduce(
-        (sum, code) => sum + Number(row.custom_allowances?.[code] ?? 0),
-        0,
-    );
-
     return (
         stipend +
         Number(row.total_withheld ?? 0) +
         Number(row.learning_materials_amount ?? 0) +
-        Number(row.clothing_amount ?? 0) +
-        customAllowances
+        Number(row.clothing_amount ?? 0)
     );
 };
-
-watch(
-    selectedCustomAllowanceCodes,
-    (codes) => {
-        payrollRows.value.forEach((row) => {
-            row.custom_allowances ??= {};
-
-            codes.forEach((code) => {
-                if (row.custom_allowances[code] === undefined) {
-                    row.custom_allowances[code] = customAllowanceDefaults.value[code] ?? 0;
-                }
-            });
-        });
-    },
-    { deep: true },
-);
 
 const formatMoney = (value) =>
     new Intl.NumberFormat("en-PH", {

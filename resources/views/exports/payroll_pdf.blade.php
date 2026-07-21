@@ -1,18 +1,22 @@
 @php
     $money = fn ($value) => (float) ($value ?? 0);
     $display = fn ($value) => $money($value) > 0 ? number_format($money($value), 2) : '-';
-    $customAllowances = collect($customAllowances ?? []);
-    $columnCount = 17 + $customAllowances->count();
-    $allowanceColumnCount = 2 + $customAllowances->count();
+    $columnCount = 17;
+    $allowanceColumnCount = 2;
     $allowanceColumnWidth = max(3.2, min(5.5, 22 / max(1, $allowanceColumnCount)));
-    $bodyFontSize = match (true) {
-        $customAllowances->count() >= 4 => '4.8px',
-        $customAllowances->count() >= 2 => '5.3px',
-        $customAllowances->isNotEmpty() => '5.8px',
-        default => '6.5px',
-    };
+    $bodyFontSize = '6.5px';
     $region = trim(str_replace('DOST', '', $batch->region ?? ''));
     $title = 'PAYROLL OF REGION ' . ($region ?: '____') . ' - MONITORED DOST UNDERGRADUATE SCHOLARS';
+    $preparedSignatories = collect($preparedBy ?? [])
+        ->map(fn ($signatory) => [
+            'name' => strtoupper($signatory['name'] ?? ''),
+            'designation' => strtoupper($signatory['designation'] ?? ''),
+        ])
+        ->values();
+    $notedName = strtoupper($notedBy['name'] ?? '');
+    $notedDesignation = strtoupper($notedBy['designation'] ?? '');
+    $certifiedName = strtoupper($certifiedBy['name'] ?? '');
+    $certifiedDesignation = strtoupper($certifiedBy['designation'] ?? '');
     $grand = [
         'month_1' => 0,
         'month_2' => 0,
@@ -22,7 +26,6 @@
         'withheld' => 0,
         'learning_materials' => 0,
         'clothing' => 0,
-        'custom_allowances' => $customAllowances->mapWithKeys(fn ($allowance) => [$allowance['code'] => 0])->all(),
         'total' => 0,
     ];
 @endphp
@@ -95,7 +98,17 @@
         }
 
         .signature-space {
-            height: 30px;
+            height: 24px;
+        }
+
+        .signature-name {
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        .signature-designation {
+            font-size: 6.5px;
+            font-weight: normal;
         }
 
         .col-spas { width: 5%; }
@@ -130,9 +143,6 @@
             <th colspan="2">WITHHELD STIPEND/S</th>
             <th rowspan="2" class="col-allowance">LEARNING MATERIALS AND/OR CONNECTIVITY ALLOWANCE</th>
             <th rowspan="2" class="col-allowance">CLOTHING ALLOWANCE<br>(if applicable)</th>
-            @foreach ($customAllowances as $allowance)
-                <th rowspan="2" class="col-allowance">{{ strtoupper($allowance['name'] ?? $allowance['code']) }}</th>
-            @endforeach
             <th rowspan="2" class="col-total">TOTAL</th>
         </tr>
         <tr>
@@ -154,7 +164,6 @@
                     'withheld' => 0,
                     'learning_materials' => 0,
                     'clothing' => 0,
-                    'custom_allowances' => $customAllowances->mapWithKeys(fn ($allowance) => [$allowance['code'] => 0])->all(),
                     'total' => 0,
                 ];
             @endphp
@@ -174,13 +183,6 @@
                     $grand['learning_materials'] += $money($row['learning_materials_amount'] ?? 0);
                     $grand['clothing'] += $money($row['clothing_amount'] ?? 0);
                     $grand['total'] += $money($row['grand_total'] ?? 0);
-
-                    foreach ($customAllowances as $allowance) {
-                        $code = $allowance['code'];
-                        $amount = $money($row['custom_allowances'][$code] ?? 0);
-                        $subtotal['custom_allowances'][$code] += $amount;
-                        $grand['custom_allowances'][$code] += $amount;
-                    }
                 @endphp
                 <tr>
                     <td>{{ $row['spas_no'] }}</td>
@@ -197,9 +199,6 @@
                     <td>{{ $row['remarks'] }}</td>
                     <td class="right">{{ $display($row['learning_materials_amount'] ?? 0) }}</td>
                     <td class="right">{{ $display($row['clothing_amount'] ?? 0) }}</td>
-                    @foreach ($customAllowances as $allowance)
-                        <td class="right">{{ $display($row['custom_allowances'][$allowance['code']] ?? 0) }}</td>
-                    @endforeach
                     <td class="right">{{ $display($row['grand_total'] ?? 0) }}</td>
                 </tr>
             @endforeach
@@ -219,9 +218,6 @@
                 <td></td>
                 <td class="right">{{ $display($subtotal['learning_materials']) }}</td>
                 <td class="right">{{ $display($subtotal['clothing']) }}</td>
-                @foreach ($customAllowances as $allowance)
-                    <td class="right">{{ $display($subtotal['custom_allowances'][$allowance['code']] ?? 0) }}</td>
-                @endforeach
                 <td class="right">{{ $display($subtotal['total']) }}</td>
             </tr>
         @empty
@@ -245,9 +241,6 @@
             <td></td>
             <td class="right">{{ $display($grand['learning_materials']) }}</td>
             <td class="right">{{ $display($grand['clothing']) }}</td>
-            @foreach ($customAllowances as $allowance)
-                <td class="right">{{ $display($grand['custom_allowances'][$allowance['code']] ?? 0) }}</td>
-            @endforeach
             <td class="right">{{ $display($grand['total']) }}</td>
         </tr>
 
@@ -260,26 +253,40 @@
         </tr>
         <tr class="blank-row"><td colspan="{{ $columnCount }}" class="spacer"></td></tr>
         <tr class="signature-row">
-            <td colspan="3" class="bold">PREPARED BY:</td>
-            <td colspan="{{ $columnCount - 3 }}"></td>
+            <td colspan="4" class="bold">PREPARED BY:</td>
+            <td colspan="3"></td>
+            <td colspan="4" class="bold">NOTED BY:</td>
+            <td colspan="2"></td>
+            <td colspan="4" class="bold">CERTIFIED CORRECT:</td>
         </tr>
         <tr class="signature-row"><td colspan="{{ $columnCount }}" class="signature-space"></td></tr>
-        <tr class="signature-row">
-            <td colspan="4">Printed Name and Signature of Scholarship Project Staff</td>
-            <td colspan="{{ $columnCount - 4 }}"></td>
-        </tr>
-        <tr class="blank-row"><td colspan="{{ $columnCount }}" class="spacer"></td></tr>
-        <tr class="signature-row">
-            <td colspan="9"></td>
-            <td colspan="3" class="bold">CERTIFIED CORRECT:</td>
-            <td colspan="{{ $columnCount - 12 }}"></td>
-        </tr>
-        <tr class="signature-row"><td colspan="{{ $columnCount }}" class="signature-space"></td></tr>
-        <tr class="signature-row">
-            <td colspan="9"></td>
-            <td colspan="5">Printed Name and Signature of Scholarship Technical Coordinator</td>
-            <td colspan="{{ $columnCount - 14 }}"></td>
-        </tr>
+        @foreach ($preparedSignatories as $index => $prepared)
+            <tr class="signature-row">
+                <td colspan="4" class="signature-name">{{ $prepared['name'] }}</td>
+                <td colspan="3"></td>
+                @if ($index === 0)
+                    <td colspan="4" class="signature-name">{{ $notedName }}</td>
+                    <td colspan="2"></td>
+                    <td colspan="4" class="signature-name">{{ $certifiedName }}</td>
+                @else
+                    <td colspan="10"></td>
+                @endif
+            </tr>
+            <tr class="signature-row">
+                <td colspan="4" class="signature-designation">{{ $prepared['designation'] }}</td>
+                <td colspan="3"></td>
+                @if ($index === 0)
+                    <td colspan="4" class="signature-designation">{{ $notedDesignation }}</td>
+                    <td colspan="2"></td>
+                    <td colspan="4" class="signature-designation">{{ $certifiedDesignation }}</td>
+                @else
+                    <td colspan="10"></td>
+                @endif
+            </tr>
+            @if (! $loop->last)
+                <tr class="signature-row"><td colspan="{{ $columnCount }}" style="height: 10px;"></td></tr>
+            @endif
+        @endforeach
     </table>
 </body>
 </html>

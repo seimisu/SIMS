@@ -152,9 +152,6 @@
                         </div>
                     </div>
 
-                    <div class="w-fit">
-                        <SelectInput v-model="dasd"></SelectInput>
-                    </div>
                 </div>
                 <div
                     class="flex flex-col lg:flex-row justify-between items-center"
@@ -445,7 +442,6 @@ import {
 
 import { ref, computed } from "vue";
 import ApexChart from "vue3-apexcharts";
-import SelectInput from "../../Components/inputs/SelectInput.vue";
 import DefaultScrollTable from "../../Components/tables/DefaultScrollTable.vue";
 
 const { campus_cnt, card, campuses_details, timeline, user, gender } =

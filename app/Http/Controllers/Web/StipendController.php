@@ -16,6 +16,7 @@ use App\Models\RecipientAllowance;
 use App\Models\RecipientStipend;
 use App\Models\RecipientWithheld;
 use App\Models\Scholars;
+use App\Models\User;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -157,23 +159,9 @@ class StipendController extends Controller
         return AllowanceType::whereIn('code', [
             'connectivity',
             'clothing',
-            'tuition_school_fees',
-            'transportation',
-            'thesis',
-            'graduation',
         ])
             ->pluck('id', 'code')
             ->all();
-    }
-
-    private function customAllowanceCodes(): array
-    {
-        return [
-            'tuition_school_fees',
-            'transportation',
-            'thesis',
-            'graduation',
-        ];
     }
 
     private function visibleFixedAllowanceDefaults(): array
@@ -220,33 +208,6 @@ class StipendController extends Controller
         return (float) ($allowance?->amount ?? $fallback);
     }
 
-    private function recipientCustomAllowanceAmounts(BatchRecipients $recipient, array $allowanceTypeIds): array
-    {
-        $customCodes = $this->customAllowanceCodes();
-        $customTypeIds = collect($customCodes)
-            ->map(fn($code) => $allowanceTypeIds[$code] ?? null)
-            ->filter()
-            ->values()
-            ->all();
-
-        return RecipientAllowance::with('allowanceType')
-            ->where('recipient_id', $recipient->id)
-            ->where(function ($query) use ($customCodes, $customTypeIds) {
-                $query->whereIn('classification', $customCodes);
-
-                if (!empty($customTypeIds)) {
-                    $query->orWhereIn('allowance_type_id', $customTypeIds);
-                }
-            })
-            ->get()
-            ->mapWithKeys(function ($allowance) {
-                $code = $allowance->allowanceType?->code ?? $allowance->classification;
-
-                return [$code => (float) $allowance->amount];
-            })
-            ->only($customCodes)
-            ->all();
-    }
 
     private function payrollRegionCode(array|string|null $region): string
     {
@@ -365,13 +326,18 @@ class StipendController extends Controller
     {
         $user = Auth::user();
         $permissions = $this->permissions();
+        $batchRegion = $this->inputArrayValue($request->input('region'));
+        $batchTerm = $request->input('term_id');
+        $batchTermName = $request->input('term_name');
+        $batchAcademicYear = $this->inputArrayValue($request->input('academic_year'));
+        $batchStatus = $this->inputArrayValue($request->input('status'));
 
         return Inertia::render('Web/stipendPage', [
-            'payrollPermissions' => [
+            'payrollPermissions' => fn() => [
                 'canCreate' => $permissions->can($user, 'payroll.create'),
                 'regionLocked' => $permissions->shouldScopeToRegion($user),
             ],
-            'agencyOption' =>  ListAgencies::where('is_active', true)
+            'agencyOption' => fn() => ListAgencies::where('is_active', true)
                 ->where('is_delete', false)
                 ->when($permissions->shouldScopeToRegion($user), function ($query) use ($user) {
                     $query->whereKey($user->profile?->agency_id);
@@ -385,7 +351,7 @@ class StipendController extends Controller
                         'region_code' => $role->region_code,
                     ];
                 }),
-            'termOptions' => ListReferences::where('is_active', true)
+            'termOptions' => fn() => ListReferences::where('is_active', true)
                 ->where('is_delete', false)
                 ->whereRaw("TRIM(type) = 'Term'")
                 ->orderBy('classification')
@@ -396,11 +362,45 @@ class StipendController extends Controller
                     'name' => trim($term->classification . ' - ' . $term->name),
                     'term_name' => $term->name,
                 ]),
-            'academicYearOptions' => $this->academicYearOptions(),
-            'nextBatchNumber' => $this->nextBatchNumber($request),
-            'batches' => Batches::whereNull('deleted_at')
+            'academicYearOptions' => fn() => $this->academicYearOptions(),
+            'nextBatchNumber' => fn() => $this->nextBatchNumber($request),
+            'statusOptions' => fn() => $this->batchStatusOptions(),
+            'batchFilters' => fn() => [
+                'region' => $batchRegion,
+                'term_id' => $batchTerm,
+                'term_name' => $batchTermName,
+                'academic_year' => $batchAcademicYear,
+                'status' => $batchStatus,
+            ],
+            'batches' => fn() => Batches::whereNull('deleted_at')
                 ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
                     $query->whereRaw('LOWER(region) = ?', [Str::lower($permissions->agencyNameFor($user) ?? '')]);
+                })
+                ->when($batchRegion, function ($query) use ($batchRegion) {
+                    $query->whereRaw('LOWER(region) = ?', [Str::lower($batchRegion)]);
+                })
+                ->when($batchTerm || $batchTermName, function ($query) use ($batchTerm, $batchTermName) {
+                    $query->where(function ($query) use ($batchTerm, $batchTermName) {
+                        if (is_numeric($batchTerm)) {
+                            $query->where('term_id', $batchTerm);
+                        }
+
+                        if ($batchTermName) {
+                            $query->orWhereRaw('LOWER(academic_term) = ?', [Str::lower($batchTermName)]);
+                        }
+                    });
+                })
+                ->when($batchAcademicYear, function ($query) use ($batchAcademicYear) {
+                    $query->where('school_year', $batchAcademicYear);
+                })
+                ->when($batchStatus, function ($query) use ($batchStatus) {
+                    $query->whereRaw("COALESCE((
+                        SELECT status
+                        FROM batches_logs
+                        WHERE batches_logs.batch_id = batches.id
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    ), 'draft') = ?", [$batchStatus]);
                 })
                 ->when($permissions->isScholarshipReviewer($user), function ($query) {
                     $query->whereRaw("(
@@ -417,7 +417,16 @@ class StipendController extends Controller
                         ->select('id', 'batch_id', 'status', 'remarks', 'action_by', 'created_at')
                         ->orderBy('created_at', 'desc')
                 ])
+                ->orderByDesc(DB::raw("COALESCE((
+                    SELECT created_at
+                    FROM batches_logs
+                    WHERE batches_logs.batch_id = batches.id
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ), batches.created_at)"))
+                ->orderByDesc('id')
                 ->paginate(10)
+                ->withQueryString()
                 ->through(fn($q) => [
                     'id'            => Hashids::encode($q->id),
                     'name'          => $q->name,
@@ -433,20 +442,20 @@ class StipendController extends Controller
                     'status'        => $q->logs->first()?->status ?? 'draft',
                     'permissions'   => $permissions->payrollBatchPermissions($user, $q, $q->logs->first()?->status ?? 'draft'),
                 ]),
-            'details' => request('id')
+            'details' => fn() => request('id')
                 ? $this->batchDetails(request('id'))
                 : null,
-            'eligibleScholars' => request('id')
+            'eligibleScholars' => fn() => request('id')
                 ? $this->eligibleScholars(request('id'), $request)
                 : null,
-            'payrollRecipients' => request('id')
+            'payrollRecipients' => fn() => request('id')
                 ? $this->payrollRecipients(request('id'))
                 : null,
-            'allowanceOptions' => request('id')
-                ? $this->allowanceOptions()
-                : [],
-            'allowanceLimits' => request('id')
+            'allowanceLimits' => fn() => request('id')
                 ? $this->allowanceLimits()
+                : [],
+            'signatoryOptions' => fn() => request('id')
+                ? $this->payrollSignatoryOptions()
                 : [],
         ]);
     }
@@ -486,6 +495,16 @@ class StipendController extends Controller
                 'id' => $year,
                 'name' => $year,
             ]);
+    }
+
+    private function batchStatusOptions(): array
+    {
+        return [
+            ['id' => 'draft', 'name' => 'Draft'],
+            ['id' => 'submitted_payroll', 'name' => 'Submitted Payroll'],
+            ['id' => 'rejected_payroll', 'name' => 'Returned Payroll'],
+            ['id' => 'approved_payroll', 'name' => 'Approved Payroll'],
+        ];
     }
 
     private function inputArrayValue(mixed $value, string $key = 'name'): mixed
@@ -556,23 +575,62 @@ class StipendController extends Controller
             ]);
     }
 
-    private function allowanceOptions()
-    {
-        return $this->allowanceMetadata($this->customAllowanceCodes());
-    }
-
     private function allowanceLimits()
     {
         return $this->allowanceMetadata(['connectivity', 'clothing'])
             ->keyBy('code');
     }
 
+    private function payrollSignatoryOptions()
+    {
+        $user = Auth::user();
+        $permissions = $this->permissions();
+
+        return User::query()
+            ->where('is_delete', false)
+            ->where('is_active', true)
+            ->whereHas('profile')
+            ->with(['profile.agency'])
+            ->when($permissions->shouldScopeToRegion($user), function ($query) use ($user) {
+                $query->whereHas('profile', function ($profile) use ($user) {
+                    $profile->where('agency_id', $user->profile?->agency_id);
+                });
+            })
+            ->orderBy('email')
+            ->get()
+            ->map(fn($signatory) => [
+                'id' => $signatory->id,
+                'name' => $signatory->profile?->fullname ?? $signatory->email,
+                'designation' => $signatory->profile?->designation,
+                'agency' => $signatory->profile?->agency?->name,
+            ])
+            ->values();
+    }
+
+    private function payrollSignatory(int|string|null $id): ?array
+    {
+        if (! $id) {
+            return null;
+        }
+
+        return $this->payrollSignatoryOptions()
+            ->firstWhere('id', (int) $id);
+    }
+
+    private function payrollSignatories(array $ids): array
+    {
+        $allowedSignatories = $this->payrollSignatoryOptions()->keyBy('id');
+
+        return collect($ids)
+            ->map(fn($id) => $allowedSignatories->get((int) $id))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
     private function enforceAllowanceMaximums(array $recipients): void
     {
-        $maxAmounts = AllowanceType::whereIn('code', array_merge(
-            ['connectivity', 'clothing'],
-            $this->customAllowanceCodes()
-        ))
+        $maxAmounts = AllowanceType::whereIn('code', ['connectivity', 'clothing'])
             ->whereNotNull('max_amount')
             ->pluck('max_amount', 'code')
             ->map(fn($amount) => (float) $amount);
@@ -600,19 +658,6 @@ class StipendController extends Controller
                     $errors["recipients.{$index}.{$field}"] = "The amount must not exceed {$maxAmount}.";
                 }
             }
-
-            foreach (($recipient['custom_allowances'] ?? []) as $code => $amount) {
-                if (! $maxAmounts->has($code)) {
-                    continue;
-                }
-
-                $amount = (float) ($amount ?? 0);
-                $maxAmount = $maxAmounts[$code];
-
-                if ($amount > $maxAmount) {
-                    $errors["recipients.{$index}.custom_allowances.{$code}"] = "The amount must not exceed {$maxAmount}.";
-                }
-            }
         }
 
         if (! empty($errors)) {
@@ -623,10 +668,18 @@ class StipendController extends Controller
     private function batchDetails(string $hashId): ?array
     {
         $batchId = Hashids::decode($hashId)[0] ?? 0;
+        $hasPayrollFileColumns = Schema::hasColumn('batches_logs', 'payroll_file_path')
+            && Schema::hasColumn('batches_logs', 'payroll_file_name');
+        $logColumns = ['id', 'batch_id', 'status', 'remarks', 'action_by', 'created_at'];
+
+        if ($hasPayrollFileColumns) {
+            $logColumns = array_merge($logColumns, ['payroll_file_path', 'payroll_file_name']);
+        }
+
         $batch = Batches::select('id', 'name', 'region', 'academic_term', 'term_id', 'level_id', 'school_year')
             ->with([
                 'logs' => fn($q) => $q
-                    ->select('id', 'batch_id', 'status', 'remarks', 'action_by', 'created_at')
+                    ->select($logColumns)
                     ->orderBy('created_at', 'desc')
             ])
             ->whereId($batchId)
@@ -637,6 +690,9 @@ class StipendController extends Controller
         }
 
         $status = $batch->logs->first()?->status ?? 'draft';
+        $latestPayrollFile = $hasPayrollFileColumns
+            ? $batch->logs->first(fn($log) => filled($log->payroll_file_path))
+            : null;
         $permissions = $this->permissions()->payrollBatchPermissions(Auth::user(), $batch, $status);
 
         if (! $permissions['canView']) {
@@ -657,6 +713,14 @@ class StipendController extends Controller
             'remarks_at' => $batch->logs->first()?->created_at
                 ? Carbon::parse($batch->logs->first()->created_at)->format('M d, Y | h:i a')
                 : null,
+            'payroll_file' => $latestPayrollFile ? [
+                'name' => $latestPayrollFile->payroll_file_name,
+                'url' => Storage::disk('public')->url($latestPayrollFile->payroll_file_path),
+                'uploaded_by' => $latestPayrollFile->action_by,
+                'uploaded_at' => $latestPayrollFile->created_at
+                    ? Carbon::parse($latestPayrollFile->created_at)->format('M d, Y | h:i a')
+                    : null,
+            ] : null,
             'is_editable' => $permissions['canEdit'],
             'permissions' => $permissions,
         ];
@@ -944,12 +1008,6 @@ class StipendController extends Controller
                     'clothing',
                     (float) $recipient->clothing_amount
                 );
-                $customAllowances = $recipient->allowances
-                    ->filter(fn($allowance) => in_array($allowance->allowanceType?->code ?? $allowance->classification, $this->customAllowanceCodes(), true))
-                    ->mapWithKeys(fn($allowance) => [
-                        ($allowance->allowanceType?->code ?? $allowance->classification) => (float) $allowance->amount,
-                    ]);
-
                 return [
                     'id' => Hashids::encode($recipient->id),
                     'scholar_id' => Hashids::encode($recipient->scholar_id),
@@ -973,7 +1031,6 @@ class StipendController extends Controller
                     'remarks' => $recipient->remarks,
                     'learning_materials_amount' => (float) $learningMaterials,
                     'clothing_amount' => (float) $clothing,
-                    'custom_allowances' => $customAllowances,
                     'grand_total' => (float) $recipient->grand_total,
                     'status' => $recipient->status,
                 ];
@@ -1074,7 +1131,7 @@ class StipendController extends Controller
         }
     }
 
-    private function payrollExportPayload(string $id, array $requestedAllowanceCodes = []): array
+    private function payrollExportPayload(string $id): array
     {
         $batchId = Hashids::decode($id)[0] ?? 0;
         $batch = Batches::with([
@@ -1109,35 +1166,10 @@ class StipendController extends Controller
                     'month_3' => (float) ($row['months']['month_3'] ?? 0),
                     'month_4' => (float) ($row['months']['month_4'] ?? 0),
                     'month_5' => (float) ($row['months']['month_5'] ?? 0),
-                    'custom_allowances' => collect($row['custom_allowances'] ?? [])->all(),
                 ];
             })
             ->groupBy('program')
             ->sortKeys()
-            ->all();
-
-        $customAllowanceCodes = collect($rows)
-            ->flatten(1)
-            ->flatMap(fn($row) => array_keys($row['custom_allowances'] ?? []))
-            ->merge($requestedAllowanceCodes)
-            ->filter(fn($code) => in_array($code, $this->customAllowanceCodes(), true))
-            ->unique()
-            ->values();
-
-        $customAllowances = $this->allowanceOptions()
-            ->filter(fn($allowance) => $customAllowanceCodes->contains($allowance['code']))
-            ->values();
-
-        $fallbackAllowances = $customAllowanceCodes
-            ->diff($customAllowances->pluck('code'))
-            ->map(fn($code) => [
-                'code' => $code,
-                'name' => Str::headline(str_replace('_', ' ', $code)),
-            ]);
-
-        $customAllowances = $customAllowances
-            ->concat($fallbackAllowances)
-            ->values()
             ->all();
 
         preg_match('/Batch([A-Za-z0-9]+)/i', $batch->name ?? '', $batchMatches);
@@ -1148,30 +1180,42 @@ class StipendController extends Controller
             $batchMatches[1] ?? $batch->id
         );
 
-        return [$batch, $rows, $filenameBase, $customAllowances];
+        return [$batch, $rows, $filenameBase];
     }
 
     public function export(Request $request, string $id)
     {
-        $requestedAllowanceCodes = collect($request->input('allowances', []))
-            ->filter(fn($code) => is_string($code))
-            ->values()
-            ->all();
+        $data = $request->validate([
+            'prepared_by' => ['required', 'array', 'min:1'],
+            'prepared_by.*' => ['required', 'integer'],
+            'noted_by' => ['required', 'integer'],
+            'certified_by' => ['required', 'integer'],
+        ]);
 
-        [$batch, $rows, $filenameBase, $customAllowances] = $this->payrollExportPayload($id, $requestedAllowanceCodes);
+        $preparedBy = $this->payrollSignatories($data['prepared_by']);
+        $notedBy = $this->payrollSignatory($data['noted_by']);
+        $certifiedBy = $this->payrollSignatory($data['certified_by']);
+
+        if (count($preparedBy) !== count(array_unique(array_map('intval', $data['prepared_by']))) || ! $notedBy || ! $certifiedBy) {
+            abort(403);
+        }
+
+        [$batch, $rows, $filenameBase] = $this->payrollExportPayload($id);
 
         if ($request->query('format') === 'pdf') {
             return Pdf::loadView('exports.payroll_pdf', [
                 'batch' => $batch,
                 'rows' => $rows,
                 'monthLabels' => collect(range(1, 5))->map(fn($month) => "Month {$month}"),
-                'customAllowances' => $customAllowances,
+                'preparedBy' => $preparedBy,
+                'notedBy' => $notedBy,
+                'certifiedBy' => $certifiedBy,
             ])
                 ->setPaper('legal', 'landscape')
                 ->download($filenameBase . '.pdf');
         }
 
-        return Excel::download(new PayrollExport($batch, $rows, $customAllowances), $filenameBase . '.xlsx');
+        return Excel::download(new PayrollExport($batch, $rows, $preparedBy, $notedBy, $certifiedBy), $filenameBase . '.xlsx');
     }
 
     public function update(Request $request, $id, $type)
@@ -1188,6 +1232,7 @@ class StipendController extends Controller
         $data = $request->validate([
             'status' => ['required', 'in:submitted_payroll,rejected_payroll,approved_payroll'],
             'remarks' => ['required_if:status,rejected_payroll', 'nullable', 'string'],
+            'payroll_file' => ['required_if:status,submitted_payroll', 'nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
         ]);
 
         $batch = Batches::findOrFail($batchId);
@@ -1218,11 +1263,30 @@ class StipendController extends Controller
             ]);
         }
 
-        $batch->logs()->create([
+        $payrollFilePath = null;
+        $payrollFileName = null;
+
+        if (($data['status'] ?? null) === 'submitted_payroll' && $request->hasFile('payroll_file')) {
+            $payrollFile = $request->file('payroll_file');
+            $payrollFilePath = $payrollFile->store('payroll-submissions', 'public');
+            $payrollFileName = $payrollFile->getClientOriginalName();
+        }
+
+        $logData = [
             'status' => $data['status'],
             'remarks' => $data['remarks'] ?? null,
             'action_by' => Auth::user()->profile?->fullname,
-        ]);
+        ];
+
+        if (
+            Schema::hasColumn('batches_logs', 'payroll_file_path')
+            && Schema::hasColumn('batches_logs', 'payroll_file_name')
+        ) {
+            $logData['payroll_file_path'] = $payrollFilePath;
+            $logData['payroll_file_name'] = $payrollFileName;
+        }
+
+        $batch->logs()->create($logData);
 
         $this->syncBatchRecipientTermStatuses($batch, $data['status']);
         $this->syncBatchFinancialStatuses($batch, $data['status']);
@@ -1444,8 +1508,6 @@ class StipendController extends Controller
             'recipients.*.remarks' => ['nullable', 'string'],
             'recipients.*.learning_materials_amount' => ['nullable', 'numeric', 'min:0'],
             'recipients.*.clothing_amount' => ['nullable', 'numeric', 'min:0'],
-            'recipients.*.custom_allowances' => ['nullable', 'array'],
-            'recipients.*.custom_allowances.*' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $this->enforceAllowanceMaximums($data['recipients']);
@@ -1479,13 +1541,7 @@ class StipendController extends Controller
                 $totalWithheld = (float) ($item['total_withheld'] ?? 0);
                 $learningMaterials = (float) ($item['learning_materials_amount'] ?? 0);
                 $clothing = (float) ($item['clothing_amount'] ?? 0);
-                $submittedCustomAllowances = collect($item['custom_allowances'] ?? [])
-                    ->only($this->customAllowanceCodes())
-                    ->map(fn($amount) => (float) ($amount ?? 0))
-                    ->filter(fn($amount) => $amount > 0);
-                $customAllowances = collect($this->recipientCustomAllowanceAmounts($recipient, $allowanceTypeIds))
-                    ->merge($submittedCustomAllowances);
-                $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing + $customAllowances->sum();
+                $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing;
 
                 $recipient->update([
                     'total_stipend' => $totalStipend,
@@ -1532,23 +1588,6 @@ class StipendController extends Controller
                         [
                             'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
                             'amount' => $amount,
-                            'remarks' => $item['remarks'] ?? null,
-                            'status' => 'pending',
-                        ]
-                    );
-                }
-
-                foreach ($submittedCustomAllowances as $code => $amount) {
-                    $amount = (float) ($amount ?? 0);
-
-                    RecipientAllowance::updateOrCreate(
-                        [
-                            'recipient_id' => $recipient->id,
-                            'classification' => $code,
-                        ],
-                        [
-                            'amount' => $amount,
-                            'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
                             'remarks' => $item['remarks'] ?? null,
                             'status' => 'pending',
                         ]
