@@ -16,6 +16,8 @@
         :loading="loading"
         @page="onPageChange"
         responsiveLayout="scroll"
+        :scrollable="scrollable"
+        :scrollHeight="scrollHeight"
         :showGridlines="grid"
         :pt="{
             root: {
@@ -47,6 +49,10 @@
             },
         }"
     >
+        <template v-if="$slots.header" #header>
+            <slot name="header" />
+        </template>
+
         <template #groupheader="slotProps">
             <slot name="groupheader" v-bind="slotProps" />
         </template>
@@ -105,6 +111,14 @@ const props = defineProps({
         default: null,
     },
     rowGroupMode: {
+        type: String,
+        default: null,
+    },
+    scrollable: {
+        type: Boolean,
+        default: false,
+    },
+    scrollHeight: {
         type: String,
         default: null,
     },

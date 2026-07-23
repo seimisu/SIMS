@@ -385,7 +385,10 @@ import { router, usePage } from "@inertiajs/vue3";
 
 const page = usePage();
 const isDark = ref(false);
-const sidebar = ref(false);
+const savedSidebar = typeof window !== "undefined"
+    ? localStorage.getItem("sidebar") === "true"
+    : false;
+const sidebar = ref(savedSidebar);
 const popNotif = ref(null);
 const isMobile = ref(false);
 const drawerMobile = ref(false);
@@ -430,7 +433,6 @@ function applyTheme() {
 onMounted(() => {
     isDark.value = localStorage.getItem("theme") === "dark";
     applyTheme();
-    sidebar.value = localStorage.getItem("sidebar") === "true";
 });
 checkIfMobile();
 onMounted(() => {

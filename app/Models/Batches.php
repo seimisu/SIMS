@@ -13,12 +13,10 @@ class Batches extends Model
         'region',
         'academic_term',
         'term_id',
-        'level_id',
         'school_year',
         'is_lock',
+        'status',
     ];
-
-    public $timestamps = false;
 
     public function logs()
     {
@@ -50,8 +48,4 @@ class Batches extends Model
         return $this->belongsTo(ListReferences::class, 'term_id');
     }
 
-    public function level()
-    {
-        return $this->belongsTo(ListReferences::class, 'level_id');
-    }
 }

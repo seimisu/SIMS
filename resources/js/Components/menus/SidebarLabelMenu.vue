@@ -32,9 +32,15 @@
                     v-show="item.subItem ? false : true"
                     :stroke-width="1.5"
                 />
-                <span class="text-nowrap truncate text-xs capitalize">{{
+                <span class="min-w-0 flex-1 text-nowrap truncate text-xs capitalize">{{
                     item.label
                 }}</span>
+                <span
+                    v-if="Number(item.badge ?? 0) > 0"
+                    class="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold leading-none text-red-600"
+                >
+                    {{ item.badge }}
+                </span>
             </Link>
 
             <a
@@ -56,6 +62,12 @@
                     <span class="ml-2 text-xs text-nowrap capitalize">{{
                         item.label
                     }}</span>
+                    <span
+                        v-if="Number(item.badge ?? 0) > 0"
+                        class="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold leading-none text-red-600"
+                    >
+                        {{ item.badge }}
+                    </span>
                 </div>
 
                 <span

@@ -23,6 +23,7 @@ use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\RouteController;
 use App\Http\Controllers\Web\Scholar1Controller;
 use App\Http\Controllers\Web\ScholarController;
+use App\Http\Controllers\Web\ScholarSubmissionController;
 use App\Http\Controllers\Web\SchoolCampusCurriculumController;
 use App\Http\Controllers\Web\SchoolCampusInfoController;
 use App\Http\Controllers\Web\SchoolCampusSemesterController;
@@ -137,8 +138,6 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('scholar/{id}/grade-delete', [ScholarController::class, 'gradeDelete'])->name('scholar.grade-delete');
     Route::post('geolocation', [GeolocationController::class, 'store'])->name('geolocation.store');
 
-    Route::post('stipends', [StipendController::class, 'store'])->name('stipends.store');
-    Route::post('stipends/{id}/recipients', [StipendController::class, 'addRecipients'])->name('stipends.recipients.store');
     Route::put('stipends/recipients/{id}/mark-for-removal', [StipendController::class, 'markRecipientForRemoval'])->name('stipends.recipients.mark-for-removal');
     Route::put('stipends/recipients/{id}/cancel-removal', [StipendController::class, 'cancelRecipientForRemoval'])->name('stipends.recipients.cancel-removal');
     Route::put('stipends/{id}/payroll', [StipendController::class, 'savePayroll'])->name('stipends.payroll.update');
@@ -183,6 +182,7 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('scholar/statuses', [StatusController::class, 'index'])->name('statuses');
     // Route::get('scholarsV1/oldVersion', [ScholarController::class, 'index'])->name('scholarsOldVersion');
     Route::get('scholars', [Scholar1Controller::class, 'index'])->name('scholars');
+    Route::get('scholar-submissions', [ScholarSubmissionController::class, 'index'])->name('scholar-submissions');
     Route::get('programs', [programController::class, 'index'])->name('programs');
     Route::get('events', [eventController::class, 'index'])->name('events');
     Route::get('stipends', [StipendController::class, 'index'])->name('stipends');
@@ -191,4 +191,3 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('geolocation', [GeolocationController::class, 'index']);
     Route::get('scholar-review', [ScholarController::class, 'index'])->name('review');
 });
-

@@ -382,9 +382,6 @@ class Scholar1Controller extends Controller
                 ];
             }) : [];
 
-        $profileRequestIds = StudentProfileRequest::where('status', 'pending')->pluck('spas_no')->toArray();
-        $landbankRequestIds = studentLandbankRequest::where('status', 'pending')->pluck('spas_no')->toArray();
-
         $generateSubjects = Inertia::optional(
             fn () => SchoolCampusCourseCurriculumSubjects::where('is_active', true)
                 ->where('is_delete', false)
@@ -406,12 +403,6 @@ class Scholar1Controller extends Controller
         return Inertia::render(
             'Web/scholarsPage',
             [
-                'request_cnt' => collect([
-                    'landbank' => strval(studentLandbankRequest::where('status', 'pending')->count()),
-                    'profile' => strval(StudentProfileRequest::where('status', 'pending')->count()),
-                    'grades' => strval(ScholarTerm::where('verification_status', 'submitted')->count()),
-                ]),
-                'grade_request_cnt' => Str::of(ScholarTerm::where('verification_status', 'submitted')->count())->toString(),
                 'scholars' => Scholars::select(
                     'scholars.id',
                     'scholars.spas_no',
@@ -497,19 +488,6 @@ class Scholar1Controller extends Controller
                                 ->where('verification_status', $monitoringSubmissionStatus);
                         });
                     })
-                    ->when($request->input('profileRequest'), function ($q) use ($profileRequestIds) {
-                        $q->whereIn('spas_no', $profileRequestIds);
-                    })
-                    ->when(
-                        $request->input('gradeRequest'),
-                        fn ($q) => $q->whereHas(
-                            'termRecords',
-                            fn ($q) => $q->where('verification_status', 'submitted')
-                        )
-                    )
-                    ->when($request->input('landbankRequest'), function ($q) use ($landbankRequestIds) {
-                        $q->whereIn('spas_no', $landbankRequestIds);
-                    })
                     ->orderBy('scholar_profiles.lname', 'ASC')
                     ->paginate(10)
                     ->through(function ($q) use ($monitoringAcademicYear, $monitoringTermId, $academicStatusOptions) {
@@ -533,13 +511,6 @@ class Scholar1Controller extends Controller
                         }
 
                         return [
-                            'count' => [
-                                'profile' => (string) $q->profileRequest->where('status', 'pending')->count(),
-                                'landbank' => (string) $q->landbankRequest->where('status', 'pending')->count(),
-                                'grades' => (string) $q->termRecords->where('verification_status', 'submitted')->count(),
-                            ],
-                            'hasRequest' => $q->profileRequest()->where('status', 'pending')->exists()
-                                            || $q->landbankRequest()->where('status', 'pending')->exists() || $q->termRecords()->where('verification_status', 'submitted')->exists(),
                             'id' => Hashids::encode($q->id),
                             'spas_no' => $q->spas_no,
                             'photo' => $q->profile?->photo,
@@ -567,226 +538,6 @@ class Scholar1Controller extends Controller
                             'region' => $q->schoolInfo?->first()?->campus?->address?->region_array,
                         ];
                     }),
-                'personalRequest' => Inertia::optional(function () use ($request, $permissions, $user) {
-
-                    $id = Hashids::decode($request->input('id'))[0] ?? 0;
-
-                    $scholar = Scholars::query()
-                        ->whereKey($id)
-                        ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
-                            $query->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
-                                $address->where('region_code', $permissions->regionCodeFor($user));
-                            });
-                        })
-                        ->with([
-                            'profile',
-                            'address',
-                            'program:id,name',
-                            'type:id,name',
-                            'profileRequest' => fn ($q) => $q->latest('id'),
-                        ])
-                        ->first();
-
-                    if (! $scholar) {
-                        return collect();
-                    }
-
-                    $fullname = trim(implode(' ', array_filter([
-                        $scholar->profile?->lname ? "{$scholar->profile->lname}," : null,
-                        $scholar->profile?->fname,
-                        $scholar->profile?->mname,
-                        $scholar->profile?->suffix,
-                    ])));
-
-                    $requests = $scholar->profileRequest->values();
-
-                    $requestNumbers = $requests
-                        ->values()
-                        ->map(function ($request, $index) use ($requests) {
-                            return Carbon::parse($request->requested_at)->format('Ymd').'-'.
-                                 str_pad($requests->count() - $index, 3, '0', STR_PAD_LEFT);
-                        });
-
-                    $histories = requestHistory::query()
-                        ->where('request_type', 'profile')
-                        ->whereIn('request_no', $requestNumbers)
-                        ->get()
-                        ->keyBy('request_no');
-
-                    return $requests
-                        ->values()
-                        ->map(function ($item, $index) use (
-                            $requests,
-                            $histories,
-                            $scholar,
-                            $fullname
-                        ) {
-
-                            $requestedAt = Carbon::parse($item->requested_at);
-
-                            $requestNo = $requestedAt->format('Ymd').'-'.
-                                 str_pad($requests->count() - $index, 3, '0', STR_PAD_LEFT);
-
-                            $reviewedAt = $item->reviewed_at
-                                 ? Carbon::parse($item->reviewed_at)
-                                 : null;
-
-                            return [
-                                'count' => $requestNo,
-                                'request_id' => $item->id,
-                                'purpose' => $item->purpose,
-                                'address' => $item->address,
-                                'barangay' => $item->barangay,
-                                'municipality' => $item->municipality,
-                                'province' => $item->province,
-                                'region' => $item->region,
-                                'civil_status' => $item->civil_status,
-                                'contact_no' => $item->contact_no,
-                                'email' => $item->email,
-
-                                'fullAddress' => implode(', ', array_filter([
-                                    $item->address,
-                                    $item->barangay,
-                                    $item->municipality,
-                                    $item->province,
-                                    $item->region,
-                                ])),
-
-                                'fullAddressStored' => $scholar->address?->full_address_with_street,
-
-                                'file_type' => $item->proof_type,
-                                'remarks' => $item->remarks,
-
-                                'requested_at' => $requestedAt->diffForHumans(),
-                                'request_date' => $requestedAt->format('F d, Y h:i A'),
-
-                                'reviewed_at' => $reviewedAt?->diffForHumans(),
-                                'reviewed_by' => $item->reviewed_by,
-
-                                'status' => $item->status,
-                                'file' => $item->proof,
-
-                                'emailStored' => $scholar->profile?->email,
-                                'contactStored' => $scholar->profile?->contact_no,
-                                'civilStored' => $scholar->profile?->civil_status,
-
-                                'spas_no' => $scholar->spas_no,
-                                'fullname' => $fullname,
-                                'program' => $scholar->program?->name,
-                                'scholarshipProgram' => $scholar->type?->name,
-
-                                'records' => $histories->get($requestNo),
-                            ];
-                        });
-                }),
-
-                'subjectRequest' => Inertia::optional(
-                    fn () => ScholarTerm::where('scholar_id', Hashids::decode($request->input('id'))[0] ?? 0)
-                        ->latest('created_at')
-                        ->take(2)
-
-                        ->get()
-                        ->sortBy('verification_status')
-                        ->values()
-                        ->map(function ($q) {
-                            return [
-                                'id' => $q->id,
-                                'term' => $q->term?->name,
-                                'termType' => $q->termType?->name,
-                                'subjects' => $q->subjects->map(function ($subject) {
-                                    return [
-                                        'subject' => $subject->subject->name,
-                                        'class' => $subject->subject->subject_class,
-                                        'code' => $subject->subject->subject_code,
-                                        'unit' => $subject->subject->unit,
-                                        'grade' => $subject->grade,
-
-                                    ];
-                                }),
-                                'totalUnit' => $q->subjects->sum(function ($subject) {
-                                    return (int) ($subject->subject->unit ?? 0);
-                                }),
-
-                                'school' => $q->schoolInfo?->campus?->generated_name,
-                                'course' => $q->schoolInfo?->course?->course?->name,
-                                'academicYear' => $q->academic_year,
-                                'status' => $q->verification_status,
-                                'remarks' => null,
-                                'scholarshipStatus' => null,
-                                'files' => StudentDocument::where('term', $q->id)->get(),
-                            ];
-                        })
-                ),
-                'landbankRequest' => Inertia::optional(
-                    fn () => Scholars::where('id', Hashids::decode($request->input('id'))[0] ?? 0)
-                        ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                            $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
-                                $address->where('region_code', $permissions->regionCodeFor($user));
-                            });
-                        })
-                        ->with([
-                            'landbankRequest',
-                            'landbank',
-                            'profile',
-                            'program:id,name',
-                            'type:id,name',
-                        ])
-                        ->get()
-                        ->flatMap(function ($scholar) {
-
-                            $requests = $scholar->landbankRequest()
-                                ->orderByDesc('id')
-                                ->get();
-
-                            return $requests->map(function ($q, $index) use ($scholar, $requests) {
-
-                                $requestNo = Carbon::parse($q->requested_at)->format('Ymd')
-                                    .'-'.str_pad($requests->count() - $index, 3, '0', STR_PAD_LEFT);
-
-                                return [
-                                    'count' => $requestNo,
-                                    'request_id' => $q->id,
-                                    'spas_no' => $q->spas_no,
-                                    'fullname' => trim(collect([
-                                        $scholar->profile?->lname.',',
-                                        $scholar->profile?->fname,
-                                        $scholar->profile?->mname,
-                                        $scholar->profile?->suffix,
-                                    ])->filter()->implode(' ')),
-                                    'program' => $scholar->program?->name,
-                                    'scholarshipProgram' => $scholar->type?->name,
-
-                                    'requested_at' => Carbon::parse($q->requested_at)->diffForHumans(),
-
-                                    'reviewed_at' => $q->reviewed_at
-                                        ? Carbon::parse($q->reviewed_at)->diffForHumans()
-                                        : null,
-
-                                    'request_date' => Carbon::parse($q->requested_at)->format('F d, Y h:i A'),
-
-                                    'reviewed_by' => $q->reviewed_by,
-
-                                    'nameStored' => $scholar->landbank?->account_name,
-                                    'noStored' => $scholar->landbank?->account_number,
-
-                                    'status' => $q->status,
-
-                                    'name' => $q->acc_name,
-                                    'reject' => $q->rejection_reason,
-                                    'no' => $q->acc_no,
-
-                                    'file' => $q->uploaded_file,
-                                    'remarks' => $q->request_purpose,
-                                    'type' => $q->uploaded_type,
-
-                                    'records' => requestHistory::where('request_no', $requestNo)
-                                        ->where('request_type', 'landbank')
-                                        ->first(),
-                                ];
-                            });
-                        })
-                        ->values()
-                ),
                 'details' => $request->input('id') ?
                     function () use ($request, $permissions, $user) {
                         $id = Hashids::decode($request->input('id'))[0] ?? 0;
@@ -1401,6 +1152,11 @@ class Scholar1Controller extends Controller
 
     public function profileRequest(string $type, Request $request)
     {
+        $permission = $type === 'accept' ? 'profile-requests.approve' : 'profile-requests.reject';
+        if (! app(SystemPermissions::class)->can(Auth::user(), $permission)) {
+            abort(403, 'Unauthorized');
+        }
+
         $data = $request->input('data');
         $scholar = Scholars::where('spas_no', $data['spas_no'])->firstOrFail();
 
@@ -1501,6 +1257,11 @@ class Scholar1Controller extends Controller
 
     public function landbankRequest(string $type, Request $request)
     {
+        $permission = $type === 'accept' ? 'landbank-requests.approve' : 'landbank-requests.reject';
+        if (! app(SystemPermissions::class)->can(Auth::user(), $permission)) {
+            abort(403, 'Unauthorized');
+        }
+
         $data = $request->input('data');
         $scholar = Scholars::where('spas_no', $data['spas_no'])->firstOrFail();
 
@@ -1589,6 +1350,10 @@ class Scholar1Controller extends Controller
 
     public function gradeRequest(string $type, Request $request)
     {
+        $permission = $type === 'accept' ? 'grade-submissions.approve' : 'grade-submissions.reject';
+        if (! app(SystemPermissions::class)->can(Auth::user(), $permission)) {
+            abort(403, 'Unauthorized');
+        }
 
         $data = $request->input('data');
 
@@ -1634,6 +1399,8 @@ class Scholar1Controller extends Controller
                             'updated_by' => Auth::user()->profile->fullname,
                         ]
                     );
+
+                app(StipendController::class)->autoAttachApprovedTerm($term);
             }
         } else {
 

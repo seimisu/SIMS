@@ -2,6 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ScholarTerm;
+use App\Models\studentLandbankRequest;
+use App\Models\StudentProfileRequest;
 use App\References\ListClass;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
@@ -66,8 +69,39 @@ class HandleInertiaRequests extends Middleware
                         : null;
                     return $notification;
                 }),
-            'menu' => fn() => $this->menu?->getMenu('sidebar'),
+            'menu' => fn() => $this->menuWithBadges(),
             'permissions' => fn() => app(SystemPermissions::class)->permissionsFor(Auth::user()),
         ]);
+    }
+
+    private function menuWithBadges()
+    {
+        $menu = $this->menu?->getMenu('sidebar');
+        $submissionTotal = $this->scholarSubmissionPendingCount();
+
+        return $menu?->map(function ($item) use ($submissionTotal) {
+            if (($item['slug'] ?? null) === 'scholar-submissions') {
+                $item['badge'] = $submissionTotal;
+            }
+
+            if (! empty($item['items'])) {
+                $item['items'] = collect($item['items'])->map(function ($child) use ($submissionTotal) {
+                    if (($child['slug'] ?? null) === 'scholar-submissions') {
+                        $child['badge'] = $submissionTotal;
+                    }
+
+                    return $child;
+                })->toArray();
+            }
+
+            return $item;
+        });
+    }
+
+    private function scholarSubmissionPendingCount(): int
+    {
+        return ScholarTerm::where('verification_status', 'submitted')->count()
+            + StudentProfileRequest::where('status', 'pending')->count()
+            + studentLandbankRequest::where('status', 'pending')->count();
     }
 }
