@@ -25,72 +25,73 @@ class DashboardController extends Controller
         $regionCode = $user->profile->agency->region_code;
         $currentYear = Carbon::now()->year;
 
-        $scholars = Scholars::with([
-            'program:id,name',
-            'profile:sex,scholar_id',
-        ])
-            ->whereHas(
-                'schoolInfo.campus.address',
-                fn ($q) => $q->where('region_code', $regionCode)
-            )
-            ->get();
+        // $campuses = SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')
+        //     ->where('is_delete', false)
+        //     ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+        //         $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+        //     })
+        //     ->with([
+        //         'school' => fn ($q) => $q
+        //             ->select('id', 'shortcut')
+        //             ->where('is_delete', false),
+        //         'address',
+        //         'semesters' => fn ($q) => $q
+        //             ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
+        //             ->whereDate('start_date', '<=', now())
+        //             ->whereDate('end_date', '>=', now()),
+        //     ])
+        //     ->get();
 
-        $categories = $scholars
-            ->pluck('award_year')
-            ->flatten()
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
-
-        $series = $scholars
-            ->groupBy(fn ($s) => $s->program->name)
-            ->map(function ($rows, $program) use ($categories) {
-                $data = collect($categories)->map(function ($year) use ($rows) {
-                    return $rows->filter(
-                        fn ($s) => $s->award_year == $year
-                    )->count();
-                })->toArray();
-
-                return [
-                    'name' => $program,
-                    'data' => $data,
-                ];
-            })
-            ->values()
-            ->toArray();
-
-        $timelineTotal = $scholars
-            ->groupBy(fn ($s) => $s->program->name)
-            ->map(function ($rows, $program) {
-
-                return [
-                    'name' => $program,
-                    'data' => $rows->count(),
-                ];
-            })
-            ->values()
-            ->toArray();
-        $campuses = SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')
-            ->where('is_delete', false)
-            ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
-            })
-            ->with([
-                'school' => fn ($q) => $q
-                    ->select('id', 'shortcut')
-                    ->where('is_delete', false),
-                'address',
-                'semesters' => fn ($q) => $q
-                    ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
-                    ->whereDate('start_date', '<=', now())
-                    ->whereDate('end_date', '>=', now()),
-            ])
-            ->get();
-
-        // Duplicate for testing
-        $campuses = $campuses->merge($campuses);
+        // // Duplicate for testing
+        // $campuses = $campuses->merge($campuses);
         if ($permissions->isRegionalRole($user)) {
+            $scholars = Scholars::with([
+                'program:id,name',
+                'profile:sex,scholar_id',
+            ])
+                ->whereHas(
+                    'schoolInfo.campus.address',
+                    fn ($q) => $q->where('region_code', $regionCode)
+                )
+                ->get();
+
+            $categories = $scholars
+                ->pluck('award_year')
+                ->flatten()
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            $series = $scholars
+                ->groupBy(fn ($s) => $s->program->name)
+                ->map(function ($rows, $program) use ($categories) {
+                    $data = collect($categories)->map(function ($year) use ($rows) {
+                        return $rows->filter(
+                            fn ($s) => $s->award_year == $year
+                        )->count();
+                    })->toArray();
+
+                    return [
+                        'name' => $program,
+                        'data' => $data,
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            $timelineTotal = $scholars
+                ->groupBy(fn ($s) => $s->program->name)
+                ->map(function ($rows, $program) {
+
+                    return [
+                        'name' => $program,
+                        'data' => $rows->count(),
+                    ];
+                })
+                ->values()
+                ->toArray();
+
             return Inertia::render('Web/dashboardPage', [
                 'dashboardType' => $permissions->dashboardType($user),
                 'campus_cnt' => SchoolCampuses::where('is_delete', false)
@@ -300,7 +301,6 @@ class DashboardController extends Controller
                     'programs' => $timelineTotal,
                     'programSeries' => $timelineTotal->pluck('data')->toArray(),
                 ],
-
                 'course' => [
                     'series' => [
                         [
@@ -313,8 +313,7 @@ class DashboardController extends Controller
                             })->values(),
                         ],
                     ],
-
-                    'table' => $courseTreemap->map(function ($course) use ($totalCourse) {
+                    'table' => $courseTreemap->where('campus_id', Auth::user()->school_id)->sortByDesc('scholar_course_count')->map(function ($course) use ($totalCourse) {
                         return [
                             'name' => Str::upper($course->course->name ?? $course->name),
                             'percent' => $totalCourse > 0
@@ -323,7 +322,6 @@ class DashboardController extends Controller
                             'total' => $course->scholar_course_count,
                         ];
                     })->values(),
-
                     'total' => $totalCourse,
                 ],
                 'gender' => [

@@ -473,7 +473,7 @@
                 <Column field="name">
                     <template #header>
                         <div class="text-sm w-full text-left font-medium">
-                            School Campus
+                            School Courses
                         </div>
                     </template>
                     <template #body="{ data }">
