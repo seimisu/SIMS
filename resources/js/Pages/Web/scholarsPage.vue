@@ -562,7 +562,7 @@
                                 <template #item="{ item, props }">
                                     <a
                                         v-ripple
-                                        class="flex items-center !text-gray-500"
+                                        class="flex items-center text-gray-500!"
                                         v-bind="props.action"
                                     >
                                         <div>
@@ -639,6 +639,7 @@
         <DialogScholarLandbankRequest
             v-if="dialogLandbankRequest"
             v-model="dialogLandbankRequest"
+            :user="selectedRow"
         />
     </AuthLayout>
 </template>

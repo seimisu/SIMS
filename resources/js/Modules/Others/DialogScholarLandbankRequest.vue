@@ -505,7 +505,7 @@
                                                                     'http://172.16.8.35/' +
                                                                     selectedRow.file
                                                                 "
-                                                                class="w-full h-[500px] border-0"
+                                                                class="w-full h-[500px]! border-0"
                                                             />
                                                         </div>
                                                     </Popover>
@@ -745,6 +745,10 @@ import { ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
+
+const props = defineProps({
+    user: Array,
+});
 
 const modelValue = defineModel("modelValue");
 const page = usePage();
