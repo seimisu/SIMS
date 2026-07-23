@@ -181,24 +181,14 @@
                                     <div
                                         class="text-lg font-bold text-gray-900 leading-5"
                                     >
-                                        {{
-                                            (
-                                                selectedRow ??
-                                                personalRequest?.[0]
-                                            )?.fullname ?? "-"
-                                        }}
+                                        {{ props.user?.fullname }}
                                     </div>
 
                                     <div
                                         class="mt-1 flex items-center gap-1 text-sm text-gray-500"
                                     >
                                         <IconHash :size="14" />
-                                        {{
-                                            (
-                                                selectedRow ??
-                                                personalRequest?.[0]
-                                            )?.spas_no ?? "-"
-                                        }}
+                                        {{ props.user?.spas_no }}
                                     </div>
                                 </div>
                             </div>
@@ -212,12 +202,7 @@
                                     </div>
 
                                     <div class="font-semibold text-gray-800">
-                                        {{
-                                            (
-                                                selectedRow ??
-                                                personalRequest?.[0]
-                                            )?.scholarshipProgram ?? "-"
-                                        }}
+                                        {{ props.user?.type }}
                                     </div>
                                 </div>
 
@@ -231,12 +216,7 @@
                                     </div>
 
                                     <div class="font-semibold text-gray-800">
-                                        {{
-                                            (
-                                                selectedRow ??
-                                                personalRequest?.[0]
-                                            )?.program ?? "-"
-                                        }}
+                                        {{ props.user.subProgram }}
                                     </div>
                                 </div>
                             </div>
@@ -884,6 +864,10 @@ import { ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
+
+const props = defineProps({
+    user: Array,
+});
 
 const modelValue = defineModel("modelValue");
 const page = usePage();

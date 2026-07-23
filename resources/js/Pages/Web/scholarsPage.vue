@@ -630,6 +630,7 @@
         <DialogScholarDetailRequest
             v-if="drawerDetailsRequest"
             v-model="drawerDetailsRequest"
+            :user="selectedRow"
         />
         <DialogScholarGradeRequest
             v-if="drawerGradeRequest"
