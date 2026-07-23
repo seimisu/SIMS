@@ -57,7 +57,7 @@
                         />
                         <SelectInput
                             v-model="statusFilter"
-                            :options="statusOptions"
+                            :options="activeStatusOptions"
                             placeholder="Status"
                             class="w-full sm:w-44"
                             clearable
@@ -94,6 +94,15 @@
                         </div>
                     </template>
                 </Column>
+                <Column v-if="activeTab === 'history'" header="Records">
+                    <template #body="props">
+                        <div class="text-sm text-slate-700">
+                            {{ props.data.terms_count ?? 0 }} term records
+                            <span class="text-slate-400">/</span>
+                            {{ props.data.files_count ?? 0 }} files
+                        </div>
+                    </template>
+                </Column>
                 <Column header="Status">
                     <template #body="props">
                         <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs uppercase text-slate-600">
@@ -112,6 +121,10 @@
                 v-if="gradeDialog"
                 v-model="gradeDialog"
             />
+            <DialogScholarAcademicHistoryRequest
+                v-if="historyDialog"
+                v-model="historyDialog"
+            />
             <DialogScholarLandbankRequest
                 v-if="landbankDialog"
                 v-model="landbankDialog"
@@ -128,6 +141,7 @@ import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
+import DialogScholarAcademicHistoryRequest from "../../Modules/Others/DialogScholarAcademicHistoryRequest.vue";
 import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
@@ -137,22 +151,15 @@ import { route } from "ziggy-js";
 const page = usePage();
 const activeTab = ref(page.props.filters?.tab ?? "grades");
 const searchInput = ref(page.props.filters?.search ?? null);
-const statusFilter = ref(
-    [
-        { id: "pending", name: "Pending" },
-        { id: "submitted", name: "Submitted" },
-        { id: "approved", name: "Approved" },
-        { id: "rejected", name: "Rejected" },
-        { id: "all", name: "All" },
-    ].find((status) => status.id === (page.props.filters?.status ?? "pending")) ?? null,
-);
 const timer = ref(null);
 const gradeDialog = ref(false);
+const historyDialog = ref(false);
 const profileDialog = ref(false);
 const landbankDialog = ref(false);
 
 const tabs = [
     { id: "grades", label: "Grade Submissions" },
+    { id: "history", label: "Academic History" },
     { id: "profile", label: "Profile Requests" },
     { id: "landbank", label: "Landbank Requests" },
 ];
@@ -163,10 +170,24 @@ const statusOptions = [
     { id: "rejected", name: "Rejected" },
     { id: "all", name: "All" },
 ];
+const gradeStatusOptions = [
+    { id: "submitted", name: "Submitted" },
+    { id: "approved", name: "Approved" },
+    { id: "rejected", name: "Rejected" },
+    { id: "all", name: "All" },
+];
+const activeStatusOptions = computed(() =>
+    ["grades", "history"].includes(activeTab.value) ? gradeStatusOptions : statusOptions,
+);
+const selectedStatus = page.props.filters?.status ?? (["grades", "history"].includes(activeTab.value) ? "submitted" : "pending");
+const statusFilter = ref(
+    activeStatusOptions.value.find((status) => status.id === selectedStatus) ?? activeStatusOptions.value[0],
+);
 const counts = computed(() => page.props.counts ?? {});
 const activeRows = computed(() => {
     if (activeTab.value === "profile") return page.props.profileRequests ?? {};
     if (activeTab.value === "landbank") return page.props.landbankRequests ?? {};
+    if (activeTab.value === "history") return page.props.academicHistorySubmissions ?? {};
     return page.props.gradeSubmissions ?? {};
 });
 
@@ -187,23 +208,25 @@ const loadPage = (pageNumber = 1) => {
 
 const switchTab = (tab) => {
     activeTab.value = tab;
-    statusFilter.value = statusOptions[0];
+    statusFilter.value = activeStatusOptions.value[0];
     loadPage(1);
 };
 
 const openSubmission = (row) => {
-    if (!row?.scholar_id) return;
+    if (!row?.scholar_id && activeTab.value !== "history") return;
 
     const dialog = activeTab.value;
+    const dialogData = dialog === "history"
+        ? { submission: row.id, dialog }
+        : { scholar: row.scholar_id, dialog };
+
     router.reload({
-        data: requestData(activeRows.value.current_page ?? 1, {
-            scholar: row.scholar_id,
-            dialog,
-        }),
-        only: ["details", "subjectRequest", "personalRequest", "landbankRequest"],
+        data: requestData(activeRows.value.current_page ?? 1, dialogData),
+        only: ["details", "subjectRequest", "personalRequest", "landbankRequest", "academicHistoryRequest"],
         preserveScroll: true,
         onSuccess: () => {
             gradeDialog.value = dialog === "grades";
+            historyDialog.value = dialog === "history";
             profileDialog.value = dialog === "profile";
             landbankDialog.value = dialog === "landbank";
         },

@@ -154,6 +154,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('scholar-review/{id}/publish', [ScholarController::class, 'publish'])->name('review.publish');
 
     Route::post('scholar-grade-request/{type}', [Scholar1Controller::class, 'gradeRequest'])->name('scholar.grade-request');
+    Route::post('scholar-academic-history/{id}/{type}', [ScholarSubmissionController::class, 'academicHistoryDecision'])->name('scholar-academic-history.decision');
     Route::post('profileRequest/{type}', [Scholar1Controller::class, 'profileRequest'])->name('profile.request');
     Route::post('landbankRequest/{type}', [Scholar1Controller::class, 'landbankRequest'])->name('landbank.request');
 

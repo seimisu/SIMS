@@ -1381,7 +1381,15 @@ class Scholar1Controller extends Controller
                 ->get();
 
             foreach ($terms as $term) {
-                $term->update([
+                DB::table('scholar_term_records')
+                    ->where('id', $term->id)
+                    ->update([
+                        'verification_status' => 'approved',
+                        'verified_by' => Auth::id(),
+                        'updated_at' => now(),
+                    ]);
+
+                $term->forceFill([
                     'verification_status' => 'approved',
                     'verified_by' => Auth::id(),
                 ]);
@@ -1400,7 +1408,7 @@ class Scholar1Controller extends Controller
                         ]
                     );
 
-                app(StipendController::class)->autoAttachApprovedTerm($term);
+                app(StipendController::class)->autoAttachApprovedTerm($term->fresh());
             }
         } else {
 
@@ -1423,7 +1431,16 @@ class Scholar1Controller extends Controller
                 ->get();
 
             foreach ($terms as $term) {
-                $term->update([
+                DB::table('scholar_term_records')
+                    ->where('id', $term->id)
+                    ->update([
+                        'verification_status' => 'rejected',
+                        'rejection_reason' => $remarks,
+                        'verified_by' => Auth::id(),
+                        'updated_at' => now(),
+                    ]);
+
+                $term->forceFill([
                     'verification_status' => 'rejected',
                     'rejection_reason' => $remarks,
                     'verified_by' => Auth::id(),

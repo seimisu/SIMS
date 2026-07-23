@@ -133,7 +133,7 @@ class StipendController extends Controller
                         'spas_no' => $term->spas_no,
                         'payroll' => $payrollStatus,
                         'updated_at' => now(),
-                        'updated_by' => Auth::user()->profile?->fullname,
+                        'updated_by' => $this->actorName(),
                     ]
                 );
         }
@@ -872,15 +872,15 @@ class StipendController extends Controller
 
     private function canScholarJoinPayroll(Scholars $scholar): bool
     {
-        $eligibleStatusIds = [1, 2, 3];
-        $eligibleStatuses = ListStatuses::whereIn('id', $eligibleStatusIds)
-            ->pluck('name')
-            ->map(fn($name) => Str::upper(trim($name)))
-            ->merge(collect($eligibleStatusIds)->map(fn($id) => (string) $id))
+        $eligibleStatusNames = ['NEW', 'ONGOING', 'GRADUATING'];
+        $eligibleStatusIds = ListStatuses::where('type', 'progress')
+            ->whereIn(DB::raw('UPPER(name)'), $eligibleStatusNames)
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
             ->all();
 
         return in_array((int) $scholar->status_id, $eligibleStatusIds, true)
-            || in_array(Str::upper(trim($scholar->academic_status ?? '')), $eligibleStatuses, true);
+            || in_array(Str::upper(trim($scholar->academic_status ?? '')), $eligibleStatusNames, true);
     }
 
     public function autoAttachApprovedTerm(ScholarTerm $term): ?Batches
