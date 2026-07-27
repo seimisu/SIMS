@@ -1354,8 +1354,16 @@ const selectedRow = ref(null);
 const menu = ref(null);
 const menuGrade = ref(null);
 const hideRemoveButton = ref("create");
-const { can } = usePermissions();
-const canManageSchools = computed(() => can("schools.manage"));
+const { canAny } = usePermissions();
+const canManageSchools = computed(() =>
+    canAny([
+        "schools.create",
+        "schools.update",
+        "schools.delete",
+        "schools.curriculum.copy",
+        "schools.curriculum.paste",
+    ]),
+);
 
 const props = defineProps({
     id: [Number, String],

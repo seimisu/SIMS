@@ -19,6 +19,7 @@ use App\Models\RecipientAllowance;
 use App\Models\RecipientStipend;
 use App\Models\RecipientWithheld;
 use App\Models\Scholars;
+use App\Models\ScholarTerm;
 use App\Models\User;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
@@ -48,10 +49,19 @@ class StipendController extends Controller
         return match ($batchStatus) {
             'rejected_payroll' => 'REJECTED',
             'submitted_payroll' => 'SUBMITTED',
-            'resubmitted_payroll' => 'RESUBMITTED',
             'approved_payroll' => 'APPROVED',
             default => 'DRAFT',
         };
+    }
+
+    private function currentBatchStatus(?Batches $batch): string
+    {
+        return $batch?->status ?: 'draft';
+    }
+
+    private function setBatchStatus(Batches $batch, string $status): void
+    {
+        $batch->forceFill(['status' => $status])->save();
     }
 
     private function scholarTermPayrollQuery(Batches $batch, int $scholarId)
@@ -85,10 +95,6 @@ class StipendController extends Controller
                     ->whereColumn('list_references.id', 'scholar_term_records.term_id')
                     ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
             });
-        }
-
-        if ($batch->level_id) {
-            $query->where('level_id', $batch->level_id);
         }
 
         return $query;
@@ -127,7 +133,7 @@ class StipendController extends Controller
                         'spas_no' => $term->spas_no,
                         'payroll' => $payrollStatus,
                         'updated_at' => now(),
-                        'updated_by' => Auth::user()->profile?->fullname,
+                        'updated_by' => $this->actorName(),
                     ]
                 );
         }
@@ -194,7 +200,6 @@ class StipendController extends Controller
     {
         return match ($batchStatus) {
             'submitted_payroll' => 'submitted',
-            'resubmitted_payroll' => 'submitted',
             'approved_payroll' => 'approved',
             'rejected_payroll' => 'rejected',
             default => 'pending',
@@ -283,6 +288,11 @@ class StipendController extends Controller
             $revision,
             collect($rows)
         );
+
+        BatchRecipients::where('batch_id', $batch->id)
+            ->whereNotNull('moved_from_batch_id')
+            ->whereNull('moved_notice_cleared_at')
+            ->update(['moved_notice_cleared_at' => now()]);
     }
 
     private function storeRevisionRecipientRows(PayrollBatchRevision $revision, $rows): void
@@ -452,6 +462,31 @@ class StipendController extends Controller
                     'created_at' => $log->created_at
                         ? Carbon::parse($log->created_at)->format('M d, Y | h:i a')
                         : null,
+                    'raw_created_at' => $log->created_at,
+                ],
+            ]);
+    }
+
+    private function movedFromReturnedPayrollDetailsByScholar(Batches $batch)
+    {
+        $latestSubmittedAt = PayrollBatchRevision::where('batch_id', $batch->id)
+            ->max('submitted_at');
+
+        return PayrollBatchActivityLog::where('batch_id', $batch->id)
+            ->where('action', 'scholar_moved_from_returned_payroll')
+            ->whereNotNull('scholar_id')
+            ->when($latestSubmittedAt, fn($query) => $query->where('created_at', '>', $latestSubmittedAt))
+            ->orderByDesc('created_at')
+            ->get(['scholar_id', 'remarks', 'created_by', 'created_at', 'metadata'])
+            ->unique('scholar_id')
+            ->mapWithKeys(fn($log) => [
+                (int) $log->scholar_id => [
+                    'remarks' => $log->remarks,
+                    'created_by' => $log->created_by,
+                    'created_at' => $log->created_at
+                        ? Carbon::parse($log->created_at)->format('M d, Y | h:i a')
+                        : null,
+                    'source_batch_name' => $log->metadata['source_batch_name'] ?? null,
                 ],
             ]);
     }
@@ -472,19 +507,19 @@ class StipendController extends Controller
             $query->whereIn('action', [
                 'batch_created',
                 'scholars_added',
+                'scholar_moved_from_returned_payroll',
                 'payroll_saved',
                 'payroll_submitted',
-                'payroll_resubmitted',
                 'payroll_returned',
                 'scholar_removed',
             ]);
         } elseif ($this->permissions()->isScholarshipReviewer($user)) {
             $query->whereIn('action', [
                 'payroll_submitted',
-                'payroll_resubmitted',
                 'payroll_returned',
                 'payroll_approved',
                 'scholar_marked_for_removal',
+                'scholar_moved_from_returned_payroll',
                 'scholar_removal_cancelled',
             ]);
         }
@@ -688,6 +723,205 @@ class StipendController extends Controller
             . $batchNo;
     }
 
+    private function acceptingBatch(
+        string $region,
+        string $academicYear,
+        int|string|null $termId,
+        ?string $termName,
+        ?int $excludeBatchId = null
+    ): ?Batches
+    {
+        return Batches::query()
+            ->whereNull('deleted_at')
+            ->where('school_year', $academicYear)
+            ->where('region', $region)
+            ->where('status', 'draft')
+            ->when($excludeBatchId, fn($query) => $query->where('id', '!=', $excludeBatchId))
+            ->when($termId, fn($query) => $query->where('term_id', $termId), function ($query) use ($termName) {
+                $query->whereRaw('LOWER(academic_term) = ?', [Str::lower($termName)]);
+            })
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
+    private function createAutoBatch(
+        string $region,
+        string $academicYear,
+        int|string|null $termId,
+        ?string $termName,
+        string $remarks = 'Payroll batch was auto-created.'
+    ): Batches
+    {
+        $batchNo = $this->calculatedNextBatchNumber($region, $academicYear, $termId, $termName);
+        $batch = Batches::create([
+            'region' => $region,
+            'academic_term' => $termName,
+            'term_id' => $termId,
+            'school_year' => $academicYear,
+            'name' => $this->payrollBatchName($region, $termName, $academicYear, $batchNo),
+            'status' => 'draft',
+        ]);
+
+        $batch->logs()->create([
+            'status' => 'draft',
+            'action_by' => $region,
+        ]);
+
+        $this->logPayrollActivity($batch, 'batch_created', remarks: $remarks);
+
+        return $batch;
+    }
+
+    private function moveMarkedRecipientsToNextBatch(Batches $sourceBatch): int
+    {
+        $recipients = BatchRecipients::with(['stipends', 'withhelds', 'allowances'])
+            ->where('batch_id', $sourceBatch->id)
+            ->where(function ($query) {
+                $query->where('is_for_removal_from_payroll', true)
+                    ->orWhere('status', 'for_removal_from_payroll');
+            })
+            ->get();
+
+        if ($recipients->isEmpty()) {
+            return 0;
+        }
+
+        $scholarIds = $recipients
+            ->pluck('scholar_id')
+            ->filter()
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($scholarIds->isEmpty()) {
+            return 0;
+        }
+
+        $targetBatch = $this->acceptingBatch(
+            $sourceBatch->region,
+            $sourceBatch->school_year,
+            $sourceBatch->term_id,
+            $sourceBatch->academic_term,
+            $sourceBatch->id
+        ) ?? $this->createAutoBatch(
+            $sourceBatch->region,
+            $sourceBatch->school_year,
+            $sourceBatch->term_id,
+            $sourceBatch->academic_term,
+            'Payroll batch was auto-created for scholars removed from a returned payroll.'
+        );
+        $removalDetails = $this->forRemovalDetailsByScholar($sourceBatch);
+
+        foreach ($recipients as $recipient) {
+            $details = $removalDetails->get((int) $recipient->scholar_id, []);
+
+            $this->logPayrollActivity(
+                $sourceBatch,
+                'scholar_removed',
+                $recipient,
+                $recipient->status,
+                null,
+                $details['remarks'] ?? 'Scholar was removed from the returned payroll and moved to the next accepting payroll batch.',
+                ['target_batch_id' => $targetBatch->id, 'target_batch_name' => $targetBatch->name]
+            );
+
+            $recipient->stipends()->delete();
+            $recipient->withhelds()->delete();
+            $recipient->allowances()->delete();
+            $recipient->delete();
+        }
+
+        $result = $this->attachScholarsToBatch($targetBatch, $scholarIds, [$sourceBatch->id]);
+
+        if ($result['attached'] > 0) {
+            BatchRecipients::where('batch_id', $targetBatch->id)
+                ->whereIn('scholar_id', $scholarIds)
+                ->get()
+                ->each(function (BatchRecipients $recipient) use ($targetBatch, $sourceBatch, $removalDetails) {
+                    $details = $removalDetails->get((int) $recipient->scholar_id, []);
+                    $recipient->update([
+                        'moved_from_batch_id' => $sourceBatch->id,
+                        'moved_from_batch_name' => $sourceBatch->name,
+                        'moved_from_reason' => $details['remarks'] ?? null,
+                        'moved_from_marked_by' => $details['created_by'] ?? null,
+                        'moved_from_marked_at' => isset($details['raw_created_at'])
+                            ? Carbon::parse($details['raw_created_at'])
+                            : null,
+                        'moved_notice_cleared_at' => null,
+                    ]);
+
+                    $this->logPayrollActivity(
+                        $targetBatch,
+                        'scholar_moved_from_returned_payroll',
+                        $recipient,
+                        null,
+                        $recipient->status,
+                        $details['remarks'] ?? "Scholar was moved from returned payroll {$sourceBatch->name}.",
+                        [
+                            'source_batch_id' => $sourceBatch->id,
+                            'source_batch_name' => $sourceBatch->name,
+                            'marked_for_removal_by' => $details['created_by'] ?? null,
+                            'marked_for_removal_at' => $details['created_at'] ?? null,
+                        ]
+                    );
+                });
+        }
+
+        return $result['attached'];
+    }
+
+    private function canScholarJoinPayroll(Scholars $scholar): bool
+    {
+        $eligibleStatusNames = ['NEW', 'ONGOING', 'GRADUATING'];
+        $eligibleStatusIds = ListStatuses::where('type', 'progress')
+            ->whereIn(DB::raw('UPPER(name)'), $eligibleStatusNames)
+            ->pluck('id')
+            ->map(fn($id) => (int) $id)
+            ->all();
+
+        return in_array((int) $scholar->status_id, $eligibleStatusIds, true)
+            || in_array(Str::upper(trim($scholar->academic_status ?? '')), $eligibleStatusNames, true);
+    }
+
+    public function autoAttachApprovedTerm(ScholarTerm $term): ?Batches
+    {
+        $term->loadMissing([
+            'term:id,name',
+            'scholar.status:id,name',
+            'schoolInfo.campus.agency:id,name',
+        ]);
+
+        $scholar = $term->scholar;
+        $region = $term->schoolInfo?->campus?->agency?->name;
+        $termName = $term->term?->name;
+
+        if (!$scholar || !$region || !$term->academic_year || (!$term->term_id && !$termName) || !$this->canScholarJoinPayroll($scholar)) {
+            return null;
+        }
+
+        $batch = $this->acceptingBatch($region, $term->academic_year, $term->term_id, $termName)
+            ?? $this->createAutoBatch(
+                $region,
+                $term->academic_year,
+                $term->term_id,
+                $termName,
+                'Payroll batch was auto-created by grade validation.'
+            );
+
+        $result = $this->attachScholarsToBatch($batch, [$scholar->id]);
+
+        if ($result['attached'] > 0) {
+            $this->logPayrollActivity(
+                $batch,
+                'scholars_added',
+                remarks: '1 scholar was auto-attached after grade validation.',
+                metadata: ['source' => 'grade_validation', 'term_record_id' => $term->id]
+            );
+        }
+
+        return $batch;
+    }
+
     public function index(Request $request): Response
     {
         $user = Auth::user();
@@ -697,10 +931,10 @@ class StipendController extends Controller
         $batchTermName = $request->input('term_name');
         $batchAcademicYear = $this->inputArrayValue($request->input('academic_year'));
         $batchStatus = $this->inputArrayValue($request->input('status'));
+        $search = Str::lower($request->input('search'));
 
         return Inertia::render('Web/stipendPage', [
             'payrollPermissions' => fn() => [
-                'canCreate' => $permissions->can($user, 'payroll.create'),
                 'regionLocked' => $permissions->shouldScopeToRegion($user),
             ],
             'agencyOption' => fn() => ListAgencies::where('is_active', true)
@@ -729,7 +963,6 @@ class StipendController extends Controller
                     'term_name' => $term->name,
                 ]),
             'academicYearOptions' => fn() => $this->academicYearOptions(),
-            'nextBatchNumber' => fn() => $this->nextBatchNumber($request),
             'statusOptions' => fn() => $this->batchStatusOptions(),
             'batchFilters' => fn() => [
                 'region' => $batchRegion,
@@ -740,10 +973,16 @@ class StipendController extends Controller
             ],
             'batches' => fn() => Batches::whereNull('deleted_at')
                 ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
-                    $query->whereRaw('LOWER(region) = ?', [Str::lower($permissions->agencyNameFor($user) ?? '')]);
+                    $query->where('region', $permissions->agencyNameFor($user) ?? '');
                 })
                 ->when($batchRegion, function ($query) use ($batchRegion) {
-                    $query->whereRaw('LOWER(region) = ?', [Str::lower($batchRegion)]);
+                    $query->where('region', $batchRegion);
+                })
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($query) use ($search) {
+                        $query->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                            ->orWhereRaw('LOWER(region) LIKE ?', ["%{$search}%"]);
+                    });
                 })
                 ->when($batchTerm || $batchTermName, function ($query) use ($batchTerm, $batchTermName) {
                     $query->where(function ($query) use ($batchTerm, $batchTermName) {
@@ -760,34 +999,24 @@ class StipendController extends Controller
                     $query->where('school_year', $batchAcademicYear);
                 })
                 ->when($batchStatus, function ($query) use ($batchStatus) {
-                    $query->whereRaw("COALESCE((
-                        SELECT status
-                        FROM batches_logs
-                        WHERE batches_logs.batch_id = batches.id
-                        ORDER BY created_at DESC
-                        LIMIT 1
-                    ), 'draft') = ?", [$batchStatus]);
+                    $query->where('status', $batchStatus);
                 })
                 ->when($permissions->isScholarshipReviewer($user), function ($query) {
-                    $query->whereRaw("(
-                        SELECT status
-                        FROM batches_logs
-                        WHERE batches_logs.batch_id = batches.id
-                        ORDER BY created_at DESC
-                        LIMIT 1
-                    ) IN (?, ?, ?, ?)", ['submitted_payroll', 'resubmitted_payroll', 'rejected_payroll', 'approved_payroll']);
+                    $query->whereIn('status', ['submitted_payroll', 'rejected_payroll', 'approved_payroll']);
                 })
                 ->with([
-                    'level:id,name',
                     'latestLog'
                 ])
-                ->orderByDesc(DB::raw("COALESCE((
-                    SELECT created_at
-                    FROM batches_logs
-                    WHERE batches_logs.batch_id = batches.id
-                    ORDER BY created_at DESC
-                    LIMIT 1
-                ), batches.created_at)"))
+                ->withCount([
+                    'recipients as scholars_count' => fn($query) => $query
+                        ->where(function ($query) {
+                            $query->where('is_for_removal_from_payroll', false)
+                                ->orWhereNull('is_for_removal_from_payroll');
+                        })
+                        ->where('status', '!=', 'for_removal_from_payroll'),
+                ])
+                ->orderByDesc('updated_at')
+                ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->paginate(10)
                 ->withQueryString()
@@ -796,21 +1025,18 @@ class StipendController extends Controller
                     'name'          => $q->name,
                     'region'        => $q->region,
                     'term'          => $q->academic_term,
-                    'level'         => $q->level?->name,
                     'sy'            => $q->school_year,
+                    'scholars_count' => $q->scholars_count,
                     'user'          => $q->latestLog?->action_by,
                     'created_at'    => $q->latestLog?->created_at
                         ? Carbon::parse($q->latestLog->created_at)->format('M d, Y | h:i a')
                         : null,
                     'remarks'       => $q->latestLog?->remarks,
-                    'status'        => $q->latestLog?->status ?? 'draft',
-                    'permissions'   => $permissions->payrollBatchPermissions($user, $q, $q->latestLog?->status ?? 'draft'),
+                    'status'        => $this->currentBatchStatus($q),
+                    'permissions'   => $permissions->payrollBatchPermissions($user, $q, $this->currentBatchStatus($q)),
                 ]),
             'details' => fn() => request('id')
                 ? $this->batchDetails(request('id'))
-                : null,
-            'eligibleScholars' => fn() => request('id')
-                ? $this->eligibleScholars(request('id'), $request)
                 : null,
             'payrollRecipients' => fn() => request('id')
                 ? $this->payrollRecipients(request('id'))
@@ -866,7 +1092,6 @@ class StipendController extends Controller
         return [
             ['id' => 'draft', 'name' => 'Draft'],
             ['id' => 'submitted_payroll', 'name' => 'Submitted Payroll'],
-            ['id' => 'resubmitted_payroll', 'name' => 'Resubmitted Payroll'],
             ['id' => 'rejected_payroll', 'name' => 'Returned Payroll'],
             ['id' => 'approved_payroll', 'name' => 'Approved Payroll'],
         ];
@@ -886,7 +1111,7 @@ class StipendController extends Controller
         $usedNumbers = Batches::query()
             ->whereNull('deleted_at')
             ->where('school_year', $academicYear)
-            ->whereRaw('LOWER(region) = ?', [Str::lower($region)])
+            ->where('region', $region)
             ->when($termId, fn($query) => $query->where('term_id', $termId), function ($query) use ($termName) {
                 $query->whereRaw('LOWER(academic_term) = ?', [Str::lower($termName)]);
             })
@@ -907,21 +1132,6 @@ class StipendController extends Controller
         }
 
         return $next;
-    }
-
-    private function nextBatchNumber(Request $request): ?int
-    {
-        $region = $this->inputArrayValue($request->input('batch_region'));
-        $academicYear = $this->inputArrayValue($request->input('batch_academic_year'));
-        $term = $request->input('batch_term');
-        $termId = is_array($term) ? ($term['id'] ?? null) : null;
-        $termName = is_array($term) ? ($term['term_name'] ?? $term['name'] ?? null) : $term;
-
-        if (! $region || ! $academicYear || (! $termId && ! $termName)) {
-            return null;
-        }
-
-        return $this->calculatedNextBatchNumber($region, $academicYear, $termId, $termName);
     }
 
     private function allowanceMetadata(array $codes)
@@ -1041,7 +1251,7 @@ class StipendController extends Controller
             $logColumns = array_merge($logColumns, ['payroll_file_path', 'payroll_file_name']);
         }
 
-        $batch = Batches::select('id', 'name', 'region', 'academic_term', 'term_id', 'level_id', 'school_year')
+        $batch = Batches::select('id', 'name', 'region', 'academic_term', 'term_id', 'school_year', 'status')
             ->whereId($batchId)
             ->first();
 
@@ -1053,7 +1263,7 @@ class StipendController extends Controller
             ->select($logColumns)
             ->latest('created_at')
             ->first();
-        $status = $latestLog?->status ?? 'draft';
+        $status = $this->currentBatchStatus($batch);
         $showingSubmittedSnapshot = $this->shouldShowSubmittedSnapshot($batch, $status)
             && (bool) $this->latestSubmittedRevision($batch);
         $latestPayrollFile = $hasPayrollFileColumns
@@ -1077,7 +1287,6 @@ class StipendController extends Controller
             'region' => $batch->region,
             'term' => $batch->academic_term,
             'term_id' => $batch->term_id,
-            'level_id' => $batch->level_id,
             'school_year' => $batch->school_year,
             'status' => $status,
             'showing_submitted_snapshot' => $showingSubmittedSnapshot,
@@ -1125,180 +1334,14 @@ class StipendController extends Controller
             'scholars_added' => 'Scholars added',
             'payroll_saved' => 'Payroll saved',
             'payroll_submitted' => 'Payroll submitted',
-            'payroll_resubmitted' => 'Payroll resubmitted',
             'payroll_approved' => 'Payroll approved',
             'payroll_returned' => 'Payroll returned',
             'scholar_marked_for_removal' => 'Scholar marked for removal',
+            'scholar_moved_from_returned_payroll' => 'Scholar moved from returned payroll',
             'scholar_removal_cancelled' => 'Scholar removal cancelled',
             'scholar_removed' => 'Scholar removed from draft payroll',
             default => Str::of($action)->replace('_', ' ')->headline()->toString(),
         };
-    }
-
-    private function eligibleScholars(string $hashId, Request $request)
-    {
-        $batchId = Hashids::decode($hashId)[0] ?? 0;
-        $batch = Batches::find($batchId);
-        $search = Str::lower($request->input('eligible_search'));
-        $program = Str::lower($request->input('eligible_program'));
-        $university = Str::lower($request->input('eligible_university'));
-        $status = Str::lower($request->input('eligible_status'));
-        $eligibleProgressStatusIds = [1, 2, 3];
-        $eligibleProgressStatuses = ListStatuses::whereIn('id', $eligibleProgressStatusIds)
-            ->pluck('name')
-            ->map(fn($name) => Str::upper(trim($name)))
-            ->merge(collect($eligibleProgressStatusIds)->map(fn($id) => (string) $id))
-            ->unique()
-            ->values()
-            ->all();
-
-        if (!$batch) {
-            return Scholars::whereRaw('1 = 0')->paginate(10, ['*'], 'eligible_page');
-        }
-
-        $batchPermissions = $this->permissions()->payrollBatchPermissions(
-            Auth::user(),
-            $batch,
-            $batch->logs()->latest('created_at')->value('status') ?? 'draft'
-        );
-
-        if (! $batchPermissions['canView']) {
-            return Scholars::whereRaw('1 = 0')->paginate(10, ['*'], 'eligible_page');
-        }
-
-        $sameTermRecipientScholarIds = BatchRecipients::query()
-            ->whereHas('batch', function ($query) use ($batch) {
-                $query->where('region', $batch->region)
-                    ->where('school_year', $batch->school_year)
-                    ->whereNull('deleted_at');
-
-                if ($batch->term_id) {
-                    $query->where('term_id', $batch->term_id);
-                } else {
-                    $query->where('academic_term', $batch->academic_term);
-                }
-
-                if ($batch->level_id) {
-                    $query->where('level_id', $batch->level_id);
-                }
-            })
-            ->pluck('scholar_id')
-            ->filter();
-
-        $standingScholarIds = null;
-
-        if ($status) {
-            $standingTermRows = DB::table('scholar_term_records')
-                ->where('academic_year', $batch->school_year)
-                ->when($batch->term_id, function ($query) use ($batch) {
-                    $query->where('term_id', $batch->term_id);
-                }, function ($query) use ($batch) {
-                    $query->whereExists(function ($exists) use ($batch) {
-                        $exists->select(DB::raw(1))
-                            ->from('list_references')
-                            ->whereColumn('list_references.id', 'scholar_term_records.term_id')
-                            ->whereRaw('LOWER(list_references.name) = ?', [Str::lower($batch->academic_term)]);
-                    });
-                })
-                ->when($batch->level_id, fn($query) => $query->where('level_id', $batch->level_id))
-                ->select('id', 'scholar_id')
-                ->get();
-
-            $standingTermIds = DB::connection('scholars')
-                ->table('scholar_processes')
-                ->whereIn('term_record_id', $standingTermRows->pluck('id'))
-                ->whereRaw('LOWER(scholarship_status) = ?', [$status])
-                ->pluck('term_record_id');
-
-            $standingScholarIds = $standingTermRows
-                ->whereIn('id', $standingTermIds)
-                ->pluck('scholar_id')
-                ->unique()
-                ->values();
-        }
-
-        $eligibleScholars = Scholars::query()
-            ->with([
-                'profile:scholar_id,fname,mname,lname,suffix,email,birthdate',
-                'program:id,name',
-                'landbank:scholar_id,account_number',
-                'schoolInfo' => fn($q) => $q
-                    ->select('id', 'scholar_id', 'campus_id')
-                    ->latest('id')
-                    ->with('campus:id,name,generated_name,agency_id'),
-            ])
-            ->where('is_active', true)
-            ->where('is_delete', false)
-            ->where(function ($query) use ($eligibleProgressStatusIds, $eligibleProgressStatuses) {
-                $query->whereIn('status_id', $eligibleProgressStatusIds)
-                    ->orWhereIn(DB::raw('UPPER(TRIM(academic_status))'), $eligibleProgressStatuses);
-            })
-            ->whereHas('termRecords', function ($termQuery) use ($batch) {
-                $termQuery->where('verification_status', 'approved')
-                    ->where('academic_year', $batch->school_year);
-
-                if ($batch->term_id) {
-                    $termQuery->where('term_id', $batch->term_id);
-                } else {
-                    $termQuery->whereHas('term', function ($term) use ($batch) {
-                        $term->whereRaw('LOWER(name) = ?', [Str::lower($batch->academic_term)]);
-                    });
-                }
-            })
-            ->when(!Str::contains(Str::lower($batch->region), 'science education institute'), function ($query) use ($batch) {
-                $query->whereHas('schoolInfo.campus.agency', function ($agency) use ($batch) {
-                    $agency->whereRaw('LOWER(name) = ?', [Str::lower($batch->region)]);
-                });
-            })
-            ->whereNotIn('id', $sameTermRecipientScholarIds)
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(spas_no) LIKE ?', ["%{$search}%"])
-                        ->orWhereHas('profile', function ($profile) use ($search) {
-                            $profile->whereRaw("LOWER(CONCAT_WS(' ', fname, mname, lname, suffix)) LIKE ?", ["%{$search}%"]);
-                        });
-                });
-            })
-            ->when($program, function ($query) use ($program) {
-                $query->whereHas('program', function ($programQuery) use ($program) {
-                    $programQuery->whereRaw('LOWER(name) = ?', [$program]);
-                });
-            })
-            ->when($university, function ($query) use ($university) {
-                $query->whereHas('schoolInfo.campus', function ($campusQuery) use ($university) {
-                    $campusQuery->whereRaw('LOWER(COALESCE(generated_name, name)) = ?', [$university]);
-                });
-            })
-            ->when($status, function ($query) use ($standingScholarIds) {
-                $standingScholarIds->isNotEmpty()
-                    ? $query->whereIn('id', $standingScholarIds)
-                    : $query->whereRaw('1 = 0');
-            })
-            ->orderBy('spas_no')
-            ->orderBy('id')
-            ->paginate(10, ['*'], 'eligible_page');
-
-        $pageScholarIds = $eligibleScholars->getCollection()->pluck('id')->filter()->unique();
-        $standingsByScholar = $this->scholarshipStatusesByScholar($batch, $pageScholarIds);
-
-        return $eligibleScholars
-            ->through(fn($scholar) => [
-                'id' => Hashids::encode($scholar->id),
-                'spas_no' => $scholar->spas_no,
-                'name' => trim(collect([
-                    $scholar->profile?->lname,
-                    $scholar->profile?->fname,
-                    $scholar->profile?->mname,
-                    $scholar->profile?->suffix,
-                ])->filter()->join(' ')),
-                'email' => $scholar->profile?->email,
-                'birthday' => $scholar->profile?->birthdate,
-                'account_no' => $scholar->landbank?->account_number,
-                'program' => $scholar->program?->name,
-                'university' => $scholar->schoolInfo->first()?->campus?->generated_name
-                    ?? $scholar->schoolInfo->first()?->campus?->name,
-                'status' => $standingsByScholar->get($scholar->id),
-            ]);
     }
 
     private function payrollRecipients(string $hashId)
@@ -1310,7 +1353,7 @@ class StipendController extends Controller
             return collect();
         }
 
-        $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
+        $latestStatus = $this->currentBatchStatus($batch);
         $batchPermissions = $this->permissions()->payrollBatchPermissions(
             Auth::user(),
             $batch,
@@ -1365,6 +1408,12 @@ class StipendController extends Controller
                 'is_for_removal_from_payroll',
                 'marked_for_removal_by',
                 'marked_for_removal_at',
+                'moved_from_batch_id',
+                'moved_from_batch_name',
+                'moved_from_reason',
+                'moved_from_marked_by',
+                'moved_from_marked_at',
+                'moved_notice_cleared_at',
             ])
             ->where('batch_id', $batch->id)
             ->orderBy('id')
@@ -1376,9 +1425,10 @@ class StipendController extends Controller
         );
 
         $forRemovalDetails = $this->forRemovalDetailsByScholar($batch);
+        $shouldShowMovedDetails = $this->permissions()->isRegionalRole(Auth::user());
 
         return $recipients
-            ->map(function ($recipient) use ($processStandingsByScholar, $forRemovalDetails) {
+            ->map(function ($recipient) use ($processStandingsByScholar, $forRemovalDetails, $shouldShowMovedDetails) {
                 $learningMaterials = $this->recipientAllowanceAmount(
                     $recipient,
                     'connectivity',
@@ -1392,6 +1442,9 @@ class StipendController extends Controller
                     (float) $recipient->clothing_amount
                 );
                 $removalDetails = $forRemovalDetails->get((int) $recipient->scholar_id, []);
+                $isMovedNoticeActive = $shouldShowMovedDetails
+                    && $recipient->moved_from_batch_id
+                    && ! $recipient->moved_notice_cleared_at;
 
                 return [
                     'id' => Hashids::encode($recipient->id),
@@ -1425,104 +1478,15 @@ class StipendController extends Controller
                     'for_removal_at' => $removalDetails['created_at'] ?? ($recipient->marked_for_removal_at
                         ? Carbon::parse($recipient->marked_for_removal_at)->format('M d, Y | h:i a')
                         : null),
+                    'is_moved_from_returned_payroll' => (bool) $isMovedNoticeActive,
+                    'moved_removal_reason' => $isMovedNoticeActive ? $recipient->moved_from_reason : null,
+                    'moved_removal_by' => $isMovedNoticeActive ? $recipient->moved_from_marked_by : null,
+                    'moved_removal_at' => $isMovedNoticeActive && $recipient->moved_from_marked_at
+                        ? Carbon::parse($recipient->moved_from_marked_at)->format('M d, Y | h:i a')
+                        : null,
+                    'moved_from_batch' => $isMovedNoticeActive ? $recipient->moved_from_batch_name : null,
                 ];
             });
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        if (! $this->permissions()->can(Auth::user(), 'payroll.create')) {
-            return redirect()->back()->with('flash', [
-                'status' => 'error',
-                'title' => 'Unauthorized',
-                'message' => 'You are not allowed to create payroll batches.',
-            ]);
-        }
-
-        try {
-            DB::beginTransaction();
-            $data = $request->validate([
-                'region' => ['required', 'array'],
-                'region.id' => ['required', 'integer', 'exists:list_agencies,id'],
-                'region.name' => ['required', 'string'],
-                'term' => ['required', 'array'],
-                'term.id' => ['required', 'integer', 'exists:list_references,id'],
-                'term.term_name' => ['nullable', 'string'],
-                'term.name' => ['required', 'string'],
-                'academic_year' => ['required', 'regex:/^\d{4}-\d{4}$/'],
-                'batch' => ['required'],
-            ]);
-
-            if ($this->permissions()->shouldScopeToRegion(Auth::user())
-                && (int) $data['region']['id'] !== (int) Auth::user()->profile?->agency_id
-            ) {
-                DB::rollBack();
-
-                return redirect()->back()->with('flash', [
-                    'status' => 'error',
-                    'title' => 'Invalid region',
-                    'message' => 'Regional users can only create payroll batches for their assigned region.',
-                ]);
-            }
-
-            foreach ($data as $key => $value) {
-                if (is_string($value)) {
-                    $data[$key] = Str::lower(Str::trim($value));
-                }
-            }
-
-            $termName = $data['term']['term_name'] ?? $data['term']['name'];
-            $data['batch'] = (string) $this->calculatedNextBatchNumber(
-                $data['region']['name'],
-                $data['academic_year'],
-                $data['term']['id'],
-                $termName
-            );
-            $name = $this->payrollBatchName($data['region'], $termName, $data['academic_year'], $data['batch']);
-
-            $exists = Batches::where('name', $name)
-                ->whereNull('deleted_at')
-                ->exists();
-
-            if ($exists) {
-                DB::rollBack();
-
-                return redirect()->back()->with('flash', [
-                    'status' => 'error',
-                    'title'  => 'Batch already exists',
-                    'message' => 'A payroll batch with the same region, term, academic year, and batch number already exists.',
-                ]);
-            }
-
-            $parent = Batches::create([
-                'region'        => $data['region']['name'],
-                'academic_term' => $termName,
-                'term_id'       => $data['term']['id'],
-                'school_year'   => $data['academic_year'],
-                'name'          => $name
-            ]);
-
-            $parent->logs()->create([
-                'action_by' => $this->actorName()
-            ]);
-
-            $this->logPayrollActivity($parent, 'batch_created', remarks: 'Payroll batch was created.');
-
-
-            DB::commit();
-            return redirect()->back()->with('flash', [
-                'status' => 'success',
-                'title'  => 'Payroll Batch created',
-                'message' => 'Payroll batch successfully created.',
-            ]);
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return redirect()->back()->with('flash', [
-                'status' => 'error',
-                'title'  => 'Something went wrong.',
-                'message' => $th->getMessage(),
-            ]);
-        }
     }
 
     private function payrollExportPayload(string $id): array
@@ -1543,7 +1507,7 @@ class StipendController extends Controller
             'recipients.allowances.allowanceType',
         ])->findOrFail($batchId);
 
-        $latestStatus = $batch->logs->first()?->status ?? 'draft';
+        $latestStatus = $this->currentBatchStatus($batch);
 
         if (! $this->permissions()->payrollBatchPermissions(Auth::user(), $batch, $latestStatus)['canView']) {
             abort(403);
@@ -1625,21 +1589,19 @@ class StipendController extends Controller
 
         $batchId = Hashids::decode($id)[0] ?? 0;
         $data = $request->validate([
-            'status' => ['required', 'in:submitted_payroll,resubmitted_payroll,rejected_payroll,approved_payroll'],
+            'status' => ['required', 'in:submitted_payroll,rejected_payroll,approved_payroll'],
             'remarks' => ['required_if:status,rejected_payroll', 'nullable', 'string'],
-            'payroll_file' => ['required_if:status,submitted_payroll,resubmitted_payroll', 'nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
+            'payroll_file' => ['required_if:status,submitted_payroll', 'nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
         ]);
 
         $batch = Batches::findOrFail($batchId);
-        $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
+        $latestStatus = $this->currentBatchStatus($batch);
         $permissions = $this->permissions();
         $isAllowed = match ($data['status']) {
-            'submitted_payroll' => $permissions->canEditPayroll(Auth::user(), $batch, $latestStatus),
-            'resubmitted_payroll' => $latestStatus === 'rejected_payroll'
-                && $permissions->canEditPayroll(Auth::user(), $batch, $latestStatus),
+            'submitted_payroll' => $permissions->canSubmitPayroll(Auth::user(), $batch, $latestStatus),
             'approved_payroll' => $permissions->can(Auth::user(), 'payroll.approve')
                 && $permissions->canReviewPayroll(Auth::user(), $latestStatus),
-            'rejected_payroll' => $permissions->can(Auth::user(), 'payroll.reject')
+            'rejected_payroll' => $permissions->can(Auth::user(), 'payroll.return')
                 && $permissions->canReviewPayroll(Auth::user(), $latestStatus),
             default => false,
         };
@@ -1660,27 +1622,10 @@ class StipendController extends Controller
             ]);
         }
 
-        if (in_array($data['status'], ['submitted_payroll', 'resubmitted_payroll'], true)) {
-            $forRemovalCount = BatchRecipients::where('batch_id', $batch->id)
-                ->where(function ($query) {
-                    $query->where('is_for_removal_from_payroll', true)
-                        ->orWhere('status', 'for_removal_from_payroll');
-                })
-                ->count();
-
-            if ($forRemovalCount > 0) {
-                return redirect()->back()->with('flash', [
-                    'status' => 'error',
-                    'title' => 'Remove marked scholars',
-                    'message' => 'Remove scholars marked for removal before submitting.',
-                ]);
-            }
-        }
-
         $payrollFilePath = null;
         $payrollFileName = null;
 
-        if (in_array($data['status'] ?? null, ['submitted_payroll', 'resubmitted_payroll'], true) && $request->hasFile('payroll_file')) {
+        if (($data['status'] ?? null) === 'submitted_payroll' && $request->hasFile('payroll_file')) {
             $payrollFile = $request->file('payroll_file');
             $payrollFilePath = $payrollFile->store('payroll-submissions', 'public');
             $payrollFileName = $payrollFile->getClientOriginalName();
@@ -1700,39 +1645,43 @@ class StipendController extends Controller
             $logData['payroll_file_name'] = $payrollFileName;
         }
 
-        $batch->logs()->create($logData);
+        $movedScholarCount = 0;
 
-        if (in_array($data['status'], ['submitted_payroll', 'resubmitted_payroll'], true)) {
-            $this->createSubmittedRevision($batch, $payrollFilePath, $payrollFileName);
-        }
+        DB::transaction(function () use ($batch, $data, $logData, $payrollFilePath, $payrollFileName, $latestStatus, &$movedScholarCount) {
+            $this->setBatchStatus($batch, $data['status']);
+            $batch->logs()->create($logData);
 
-        $this->logPayrollActivity(
-            $batch,
-            match ($data['status']) {
-                'submitted_payroll' => 'payroll_submitted',
-                'resubmitted_payroll' => 'payroll_resubmitted',
-                'approved_payroll' => 'payroll_approved',
-                'rejected_payroll' => 'payroll_returned',
-            },
-            oldStatus: $latestStatus,
-            newStatus: $data['status'],
-            remarks: $data['remarks'] ?? null,
-            metadata: array_filter([
-                'payroll_file_name' => $payrollFileName,
-            ])
-        );
+            if ($data['status'] === 'submitted_payroll') {
+                $this->createSubmittedRevision($batch, $payrollFilePath, $payrollFileName);
+            }
 
-        $this->syncBatchRecipientTermStatuses($batch, $data['status']);
-        $this->syncBatchFinancialStatuses($batch, $data['status']);
+            $this->logPayrollActivity(
+                $batch,
+                match ($data['status']) {
+                    'submitted_payroll' => 'payroll_submitted',
+                    'approved_payroll' => 'payroll_approved',
+                    'rejected_payroll' => 'payroll_returned',
+                },
+                oldStatus: $latestStatus,
+                newStatus: $data['status'],
+                remarks: $data['remarks'] ?? null,
+                metadata: array_filter([
+                    'payroll_file_name' => $payrollFileName,
+                ])
+            );
+
+            $movedScholarCount = $data['status'] === 'rejected_payroll'
+                ? $this->moveMarkedRecipientsToNextBatch($batch)
+                : 0;
+
+            $this->syncBatchRecipientTermStatuses($batch, $data['status']);
+            $this->syncBatchFinancialStatuses($batch, $data['status']);
+        });
 
         $successFlash = match ($data['status']) {
             'submitted_payroll' => [
                 'title' => 'Payroll submitted',
                 'message' => 'The payroll batch was successfully submitted.',
-            ],
-            'resubmitted_payroll' => [
-                'title' => 'Payroll resubmitted',
-                'message' => 'The payroll batch was successfully resubmitted.',
             ],
             'approved_payroll' => [
                 'title' => 'Payroll approved',
@@ -1740,7 +1689,9 @@ class StipendController extends Controller
             ],
             'rejected_payroll' => [
                 'title' => 'Payroll rejected',
-                'message' => 'The payroll batch was successfully rejected.',
+                'message' => $movedScholarCount > 0
+                    ? "The payroll batch was returned. {$movedScholarCount} marked scholar(s) were moved to the next accepting payroll batch."
+                    : 'The payroll batch was successfully rejected.',
             ],
         };
 
@@ -1750,209 +1701,110 @@ class StipendController extends Controller
         ]);
     }
 
-    public function addRecipients(Request $request, string $id): RedirectResponse
+    private function attachScholarsToBatch(Batches $batch, iterable $scholarIds, array $ignoredDuplicateBatchIds = []): array
     {
-        $batchId = Hashids::decode($id)[0] ?? 0;
-        $batch = Batches::findOrFail($batchId);
-        $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
+        $scholarIds = collect($scholarIds)
+            ->filter()
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values();
+        $ignoredDuplicateBatchIds = collect($ignoredDuplicateBatchIds)
+            ->push($batch->id)
+            ->filter()
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        $latestStatus = $this->currentBatchStatus($batch);
+        $scholars = Scholars::with(['profile:scholar_id,birthdate', 'landbank:scholar_id,account_number'])
+            ->whereIn('id', $scholarIds)
+            ->get()
+            ->keyBy('id');
+        $sameTermRecipientScholarIds = BatchRecipients::whereIn('scholar_id', $scholarIds)
+            ->whereNotIn('batch_id', $ignoredDuplicateBatchIds)
+            ->whereHas('batch', function ($query) use ($batch) {
+                $query->where('region', $batch->region)
+                    ->where('school_year', $batch->school_year)
+                    ->whereNull('deleted_at');
 
-        if (! $this->permissions()->canEditPayroll(Auth::user(), $batch, $latestStatus)) {
-            return redirect()->back()->with('flash', [
-                'status' => 'error',
-                'title' => 'Unauthorized',
-                'message' => 'You are not allowed to edit this payroll batch.',
-            ]);
-        }
+                $batch->term_id
+                    ? $query->where('term_id', $batch->term_id)
+                    : $query->where('academic_term', $batch->academic_term);
 
-        $data = $request->validate([
-            'scholar_ids' => ['required', 'array', 'min:1'],
-            'scholar_ids.*' => ['required', 'string'],
-        ]);
+            })
+            ->pluck('scholar_id')
+            ->map(fn($id) => (int) $id)
+            ->flip();
+        $standingsByScholar = $this->scholarshipStatusesByScholar($batch, $scholarIds);
+        $allowanceDefaults = $this->visibleFixedAllowanceDefaults();
+        $allowanceTypeIds = $this->allowanceTypeIds();
+        $monthlyLiving = $allowanceDefaults['monthly_living'] ?? 0;
+        $addedCount = 0;
+        $attachedCount = 0;
 
-        try {
-            DB::beginTransaction();
-            $addedCount = 0;
-            $attachedCount = 0;
-            $scholarIds = collect($data['scholar_ids'])
-                ->map(fn($hashScholarId) => Hashids::decode($hashScholarId)[0] ?? null)
-                ->filter()
-                ->map(fn($id) => (int) $id)
-                ->unique()
-                ->values();
+        foreach ($scholarIds as $scholarId) {
+            $scholar = $scholars->get($scholarId);
 
-            if ($scholarIds->isEmpty()) {
-                DB::rollBack();
-
-                return redirect()->back()->with('flash', [
-                    'status' => 'error',
-                    'title' => 'No scholars added',
-                    'message' => 'No valid scholars were selected.',
-                ]);
+            if (!$scholar || $sameTermRecipientScholarIds->has($scholar->id)) {
+                continue;
             }
 
-            $scholars = Scholars::with([
-                'profile:scholar_id,birthdate',
-                'landbank:scholar_id,account_number',
-            ])
-                ->whereIn('id', $scholarIds)
-                ->get()
-                ->keyBy('id');
-            $sameTermRecipientScholarIds = BatchRecipients::whereIn('scholar_id', $scholarIds)
-                ->where('batch_id', '!=', $batch->id)
-                ->whereHas('batch', function ($query) use ($batch) {
-                    $query->where('region', $batch->region)
-                        ->where('school_year', $batch->school_year)
-                        ->whereNull('deleted_at');
+            $standing = $standingsByScholar->get($scholar->id);
+            $recipientMonthlyLiving = $this->isPartialAllowanceStanding($standing) ? $monthlyLiving / 2 : $monthlyLiving;
+            $totalMonthlyLiving = $recipientMonthlyLiving * 5;
+            $recipient = BatchRecipients::firstOrCreate(
+                ['batch_id' => $batch->id, 'scholar_id' => $scholar->id],
+                [
+                    'account_no' => $scholar->landbank?->account_number,
+                    'birthday' => $scholar->profile?->birthdate,
+                    'period' => trim($batch->academic_term . ' AY ' . $batch->school_year),
+                    'scholarship_status' => $standing,
+                    'total_stipend' => $totalMonthlyLiving,
+                    'learning_materials_amount' => $allowanceDefaults['connectivity'] ?? 0,
+                    'clothing_amount' => $allowanceDefaults['clothing'] ?? 0,
+                    'grand_total' => $totalMonthlyLiving + ($allowanceDefaults['connectivity'] ?? 0) + ($allowanceDefaults['clothing'] ?? 0),
+                    'status' => 'pending',
+                ]
+            );
 
-                    if ($batch->term_id) {
-                        $query->where('term_id', $batch->term_id);
-                    } else {
-                        $query->where('academic_term', $batch->academic_term);
-                    }
-
-                    if ($batch->level_id) {
-                        $query->where('level_id', $batch->level_id);
-                    }
-                })
-                ->pluck('scholar_id')
-                ->map(fn($id) => (int) $id)
-                ->flip();
-            $standingsByScholar = $this->scholarshipStatusesByScholar($batch, $scholarIds);
-            $allowanceDefaults = $this->visibleFixedAllowanceDefaults();
-            $allowanceTypeIds = $this->allowanceTypeIds();
-            $monthlyLiving = $allowanceDefaults['monthly_living'] ?? 0;
-            $defaultConnectivity = $allowanceDefaults['connectivity'] ?? 0;
-            $defaultClothing = $allowanceDefaults['clothing'] ?? 0;
-
-            foreach ($scholarIds as $scholarId) {
-                $scholar = $scholars->get($scholarId);
-                if (!$scholar) {
-                    continue;
-                }
-
-                if ($sameTermRecipientScholarIds->has($scholar->id)) {
-                    continue;
-                }
-
-                $standing = $standingsByScholar->get($scholar->id);
-                $recipientMonthlyLiving = $this->isPartialAllowanceStanding($standing)
-                    ? $monthlyLiving / 2
-                    : $monthlyLiving;
-                $totalMonthlyLiving = $recipientMonthlyLiving * 5;
-
-                $recipient = BatchRecipients::firstOrCreate(
-                    [
-                        'batch_id' => $batch->id,
-                        'scholar_id' => $scholar->id,
-                    ],
-                    [
-                        'account_no' => $scholar->landbank?->account_number,
-                        'birthday' => $scholar->profile?->birthdate,
-                        'period' => trim($batch->academic_term . ' AY ' . $batch->school_year),
-                        'scholarship_status' => null,
-                        'total_stipend' => $totalMonthlyLiving,
-                        'learning_materials_amount' => $defaultConnectivity,
-                        'clothing_amount' => $defaultClothing,
-                        'grand_total' => $totalMonthlyLiving + $defaultConnectivity + $defaultClothing,
-                        'status' => 'pending',
-                    ]
-                );
-
-                if ($recipient->wasRecentlyCreated) {
-                    $addedCount++;
-                }
-                $attachedCount++;
+            if ($recipient->wasRecentlyCreated) {
+                $addedCount++;
 
                 foreach (range(1, 5) as $month) {
-                    $recipient->stipends()->firstOrCreate(
-                        ['month_no' => $month],
-                        [
-                            'month' => 'Month ' . $month,
-                            'amount' => $recipientMonthlyLiving,
-                            'status' => 'pending',
-                        ]
-                    );
+                    $recipient->stipends()->create([
+                        'month_no' => $month,
+                        'month' => 'Month ' . $month,
+                        'amount' => $recipientMonthlyLiving,
+                        'status' => 'pending',
+                    ]);
                 }
 
-                if ($recipient->wasRecentlyCreated) {
-                    foreach ([
-                        'connectivity' => [
-                            'classification' => 'connectivity',
-                            'amount' => $allowanceDefaults['connectivity'] ?? 0,
-                        ],
-                        'clothing' => [
-                            'classification' => 'clothing',
-                            'amount' => $allowanceDefaults['clothing'] ?? 0,
-                        ],
-                    ] as $code => $allowanceData) {
-                        if ($allowanceData['amount'] <= 0) {
-                            continue;
-                        }
+                foreach (['connectivity', 'clothing'] as $code) {
+                    $amount = $allowanceDefaults[$code] ?? 0;
 
+                    if ($amount > 0) {
                         $recipient->allowances()->create([
                             'allowance_type_id' => $allowanceTypeIds[$code] ?? null,
-                            'classification' => $allowanceData['classification'],
-                            'amount' => $allowanceData['amount'],
+                            'classification' => $code,
+                            'amount' => $amount,
                             'status' => 'pending',
                         ]);
                     }
                 }
-
-                $this->updateScholarTermPayrollStatus($batch, $scholar->id, $latestStatus);
             }
 
-            if ($attachedCount === 0) {
-                DB::rollBack();
-
-                return redirect()->back()->with('flash', [
-                    'status' => 'error',
-                    'title' => 'No scholars added',
-                    'message' => 'The selected scholars may already be included in this payroll or another payroll for the same term and year.',
-                ]);
-            }
-
-            $this->logPayrollActivity(
-                $batch,
-                'scholars_added',
-                remarks: "{$attachedCount} scholar(s) were attached to the payroll.",
-                metadata: [
-                    'added_count' => $addedCount,
-                    'attached_count' => $attachedCount,
-                ]
-            );
-
-            DB::commit();
-
-            $message = $addedCount > 0
-                ? "{$addedCount} scholar(s) were added to the payroll."
-                : 'The selected scholar(s) are already attached to this payroll.';
-
-            return redirect()->back()->with('flash', [
-                'status' => 'success',
-                'title' => 'Scholars added',
-                'message' => $message,
-            ]);
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            Log::error('Failed to add scholars to stipend payroll.', [
-                'batch_id' => $batch->id ?? null,
-                'scholar_ids' => $data['scholar_ids'] ?? [],
-                'message' => $th->getMessage(),
-            ]);
-
-            return redirect()->back()->with('flash', [
-                'status' => 'error',
-                'title' => 'Something went wrong.',
-                'message' => $th->getMessage(),
-            ]);
+            $attachedCount++;
+            $this->updateScholarTermPayrollStatus($batch, $scholar->id, $latestStatus);
         }
+
+        return ['added' => $addedCount, 'attached' => $attachedCount];
     }
 
     public function savePayroll(Request $request, string $id): RedirectResponse
     {
         $batchId = Hashids::decode($id)[0] ?? 0;
         $batch = Batches::findOrFail($batchId);
-        $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
+        $latestStatus = $this->currentBatchStatus($batch);
 
         if (! $this->permissions()->canEditPayroll(Auth::user(), $batch, $latestStatus)) {
             return redirect()->back()->with('flash', [
@@ -2115,9 +1967,13 @@ class StipendController extends Controller
 
             $recipient = BatchRecipients::with('batch.logs')->findOrFail($recipientId);
             $batch = $recipient->batch;
-            $latestStatus = $batch?->logs()->latest('created_at')->value('status') ?? 'draft';
+            $latestStatus = $this->currentBatchStatus($batch);
 
-            if (! $batch || ! $this->permissions()->canReviewPayroll(Auth::user(), $latestStatus)) {
+            if (
+                ! $batch
+                || ! $this->permissions()->can(Auth::user(), 'payroll.recipients.manage-removal')
+                || ! $this->permissions()->canReviewPayroll(Auth::user(), $latestStatus)
+            ) {
                 DB::rollBack();
 
                 return redirect()->back()->with('flash', [
@@ -2188,9 +2044,13 @@ class StipendController extends Controller
 
             $recipient = BatchRecipients::with('batch.logs')->findOrFail($recipientId);
             $batch = $recipient->batch;
-            $latestStatus = $batch?->logs()->latest('created_at')->value('status') ?? 'draft';
+            $latestStatus = $this->currentBatchStatus($batch);
 
-            if (! $batch || ! $this->permissions()->canReviewPayroll(Auth::user(), $latestStatus)) {
+            if (
+                ! $batch
+                || ! $this->permissions()->can(Auth::user(), 'payroll.recipients.manage-removal')
+                || ! $this->permissions()->canReviewPayroll(Auth::user(), $latestStatus)
+            ) {
                 DB::rollBack();
 
                 return redirect()->back()->with('flash', [
@@ -2262,7 +2122,7 @@ class StipendController extends Controller
                 DB::beginTransaction();
 
                 $batch = Batches::with('recipients.stipends', 'recipients.withhelds', 'recipients.allowances')->findOrFail($batchId);
-                $latestStatus = $batch->logs()->latest('created_at')->value('status') ?? 'draft';
+                $latestStatus = $this->currentBatchStatus($batch);
 
                 if (! $this->permissions()->payrollBatchPermissions(Auth::user(), $batch, $latestStatus)['canDelete']) {
                     DB::rollBack();
@@ -2320,15 +2180,15 @@ class StipendController extends Controller
                 DB::beginTransaction();
 
                 $recipient = BatchRecipients::findOrFail($recipientId);
-                $latestStatus = $recipient->batch?->logs()->latest('created_at')->value('status') ?? 'draft';
+                $latestStatus = $this->currentBatchStatus($recipient->batch);
 
-                if (! $recipient->batch || ! $this->permissions()->canEditPayroll(Auth::user(), $recipient->batch, $latestStatus)) {
+                if (! $recipient->batch || ! $this->permissions()->isAdministrator(Auth::user())) {
                     DB::rollBack();
 
                     return redirect()->back()->with('flash', [
                         'status' => 'error',
                         'title' => 'Unauthorized',
-                        'message' => 'You are not allowed to edit this payroll batch.',
+                        'message' => 'Scholars can only be removed through the scholarship review return workflow.',
                     ]);
                 }
             $batch = $recipient->batch;
@@ -2367,4 +2227,3 @@ class StipendController extends Controller
         }
     }
 }
-

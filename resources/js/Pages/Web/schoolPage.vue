@@ -551,8 +551,16 @@ const confirmRef = ref(null);
 const drawerRef = ref(false);
 const menu = ref(null);
 
-const { can } = usePermissions();
-const canManageSchools = computed(() => can("schools.manage"));
+const { canAny } = usePermissions();
+const canManageSchools = computed(() =>
+    canAny([
+        "schools.create",
+        "schools.update",
+        "schools.delete",
+        "schools.curriculum.copy",
+        "schools.curriculum.paste",
+    ]),
+);
 const universityForm = useForm({
     id: null,
     name: null,

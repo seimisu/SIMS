@@ -262,70 +262,6 @@
                         </Popover>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-2">
-                    <ToggleButton
-                        v-model="filterProfileRequest"
-                        size="small"
-                        :disabled="page.props?.request_cnt?.profile == 0"
-                        class="!rounded-xl h-8.5"
-                        @update:model-value="toggleRequest"
-                    >
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Profile Request</div>
-                                <Badge
-                                    v-if="page.props?.request_cnt?.profile != 0"
-                                    :value="page.props?.request_cnt?.profile"
-                                    size="small"
-                                    severity="danger"
-                                ></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                    <ToggleButton
-                        v-model="filterLandbankRequest"
-                        size="small"
-                        :disabled="page.props?.request_cnt?.landbank == 0"
-                        class="!rounded-xl h-8.5"
-                        @update:model-value="toggleRequest"
-                    >
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Landbank Request</div>
-                                <Badge
-                                    v-if="
-                                        page.props?.request_cnt?.landbank != '0'
-                                    "
-                                    :value="page.props?.request_cnt?.landbank"
-                                    size="small"
-                                    severity="danger"
-                                ></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                    <ToggleButton
-                        v-model="filterTorRequest"
-                        size="small"
-                        :disabled="page.props?.request_cnt?.grades == 0"
-                        class="!rounded-xl h-8.5"
-                        @update:model-value="toggleRequest"
-                    >
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Grade Submitted</div>
-                                <Badge
-                                    v-if="
-                                        page.props?.request_cnt?.grades != '0'
-                                    "
-                                    :value="page.props?.request_cnt?.grades"
-                                    size="small"
-                                    severity="danger"
-                                ></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                </div>
             </div>
             <DefaultSelectionTable
                 :items="page.props.scholars.data"
@@ -342,31 +278,7 @@
                     <template #body="props">
                         <div class="flex items-center gap-2">
                             <div class="">
-                                <OverlayBadge
-                                    severity="danger"
-                                    class="inline-flex"
-                                    v-if="props.data.hasRequest"
-                                >
-                                    <Avatar
-                                        :label="
-                                            props.data.fullname
-                                                .charAt(0)
-                                                .toUpperCase()
-                                        "
-                                        style="
-                                            background-color: #dee9fc;
-                                            color: #1a2551;
-                                        "
-                                        class="!w-[40px] !h-[40px] !rounded-xl"
-                                        :image="
-                                            props.data.photo == null
-                                                ? null
-                                                : props.data.photo
-                                        "
-                                    />
-                                </OverlayBadge>
                                 <Avatar
-                                    v-else
                                     :label="
                                         props.data.fullname
                                             .charAt(0)
@@ -577,41 +489,6 @@
                                         }}</span>
                                         <Badge
                                             v-if="
-                                                selectedRow?.count?.profile !=
-                                                    '0' &&
-                                                item.label == 'Profile Request'
-                                            "
-                                            class="ml-auto"
-                                            size="small"
-                                            severity="danger"
-                                            :value="selectedRow?.count?.profile"
-                                        />
-                                        <Badge
-                                            v-if="
-                                                selectedRow?.count?.landbank !=
-                                                    '0' &&
-                                                item.label == 'Landbank Request'
-                                            "
-                                            class="ml-auto"
-                                            size="small"
-                                            severity="danger"
-                                            :value="
-                                                selectedRow?.count?.landbank
-                                            "
-                                        />
-                                        <Badge
-                                            v-if="
-                                                selectedRow?.count?.grades !=
-                                                    '0' &&
-                                                item.label == 'Grade Submitted'
-                                            "
-                                            class="ml-auto"
-                                            size="small"
-                                            severity="danger"
-                                            :value="selectedRow?.count?.grades"
-                                        />
-                                        <Badge
-                                            v-if="
                                                 selectedRow.activationRequested &&
                                                 item.label == 'Activation Link'
                                             "
@@ -627,28 +504,10 @@
                 </Column>
             </DefaultSelectionTable>
         </div>
-        <DialogScholarDetailRequest
-            v-if="drawerDetailsRequest"
-            v-model="drawerDetailsRequest"
-            :user="selectedRow"
-        />
-        <DialogScholarGradeRequest
-            v-if="drawerGradeRequest"
-            v-model="drawerGradeRequest"
-        />
         <DrawerScholar1Module v-if="drawerScholar" v-model="drawerScholar" />
-        <DialogScholarLandbankRequest
-            v-if="dialogLandbankRequest"
-            v-model="dialogLandbankRequest"
-            :user="selectedRow"
-        />
     </AuthLayout>
 </template>
 <script setup>
-import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
-import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
-import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
-import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Module.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
@@ -692,15 +551,7 @@ const filterMonitoringTerm = ref(page.props?.selectedMonitoringTerm ?? null);
 const filterSubmissionStatus = ref(
     page.props?.selectedSubmissionStatus ?? { id: "all", name: "All Status" },
 );
-const filterSubjectRequest = ref(false);
-const filterGradeRequest = ref(false);
-const filterProfileRequest = ref(false);
-const filterLandbankRequest = ref(false);
-const filterTorRequest = ref(false);
-const drawerDetailsRequest = ref(false);
-const drawerGradeRequest = ref(false);
 const drawerScholar = ref(false);
-const dialogLandbankRequest = ref(false);
 const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
@@ -747,63 +598,6 @@ const menuItems = computed((item) => {
             },
         },
         {
-            label: "Profile Request",
-            icon: TablerIcons.IconUserQuestion,
-            class: "text-cyan-500",
-
-            command: () => {
-                router.reload({
-                    only: ["personalRequest"],
-                    data: { id: selectedRow.value.id },
-                    preserveState: false,
-                    showProgress: true,
-                    replace: true,
-                    onFinish: () => {
-                        drawerDetailsRequest.value = true;
-                    },
-                });
-            },
-        },
-        {
-            label: "Landbank Request",
-            icon: TablerIcons.IconCreditCard,
-            class: "text-cyan-500",
-            command: () => {
-                router.reload({
-                    only: ["landbankRequest"],
-                    data: { id: selectedRow.value.id },
-                    preserveState: false,
-                    showProgress: true,
-                    replace: true,
-                    onFinish: () => {
-                        dialogLandbankRequest.value = true;
-                    },
-                });
-            },
-        },
-        {
-            label: "Grade Submitted",
-            icon: TablerIcons.IconId,
-            disabled: selectedRow.value.count.grades == "0" ? true : false,
-            class: "text-cyan-500",
-            command: () => {
-                router.reload({
-                    only: ["subjectRequest", "details"],
-                    data: { id: selectedRow.value.id },
-
-                    preserveState: false,
-                    showProgress: true,
-                    replace: true,
-                    onFinish: () => {
-                        drawerGradeRequest.value = true;
-                    },
-                });
-            },
-        },
-        {
-            separator: true,
-        },
-        {
             label: "Chat Support",
             icon: TablerIcons.IconMessageChatbot,
             class: "text-cyan-500",
@@ -846,15 +640,6 @@ const loadPage = (page, options = {}) => {
                 : {}),
             ...(!useLatestMonitoring && filterSubmissionStatus.value
                 ? { monitoringSubmissionStatus: filterSubmissionStatus.value }
-                : {}),
-            ...(filterProfileRequest.value
-                ? { profileRequest: filterProfileRequest.value }
-                : {}),
-            ...(filterLandbankRequest.value
-                ? { landbankRequest: filterLandbankRequest.value }
-                : {}),
-            ...(filterTorRequest.value
-                ? { gradeRequest: filterTorRequest.value }
                 : {}),
         },
         {

@@ -1562,11 +1562,7 @@
                                                                                         slotProps
                                                                                             .item
                                                                                             .action ==
-                                                                                        'submitted_payroll' ||
-                                                                                        slotProps
-                                                                                            .item
-                                                                                            .action ==
-                                                                                        'resubmitted_payroll'
+                                                                                        'submitted_payroll'
                                                                                     "
                                                                                 />
                                                                                 <IconCircleX
@@ -1616,11 +1612,7 @@
                                                                                         slotProps
                                                                                             .item
                                                                                             .action ===
-                                                                                        'submitted_payroll' ||
-                                                                                        slotProps
-                                                                                            .item
-                                                                                            .action ===
-                                                                                        'resubmitted_payroll'
+                                                                                        'submitted_payroll'
                                                                                     "
                                                                                 >
                                                                                     Ready

@@ -2,6 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Batches;
+use App\Models\ScholarTerm;
+use App\Models\studentLandbankRequest;
+use App\Models\StudentProfileRequest;
 use App\References\ListClass;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
@@ -66,8 +70,75 @@ class HandleInertiaRequests extends Middleware
                         : null;
                     return $notification;
                 }),
-            'menu' => fn() => $this->menu?->getMenu('sidebar'),
+            'menu' => fn() => $this->menuWithBadges(),
             'permissions' => fn() => app(SystemPermissions::class)->permissionsFor(Auth::user()),
         ]);
+    }
+
+    private function menuWithBadges()
+    {
+        $menu = $this->menu?->getMenu('sidebar');
+        $submissionTotal = $this->scholarSubmissionPendingCount();
+        $payrollTotal = $this->payrollActionCount();
+
+        return $menu?->map(function ($item) use ($submissionTotal, $payrollTotal) {
+            if (($item['slug'] ?? null) === 'scholar-submissions') {
+                $item['badge'] = $submissionTotal;
+            }
+
+            if (($item['slug'] ?? null) === 'stipends' || ($item['route'] ?? null) === '/stipends') {
+                $item['badge'] = $payrollTotal;
+            }
+
+            if (! empty($item['items'])) {
+                $item['items'] = collect($item['items'])->map(function ($child) use ($submissionTotal, $payrollTotal) {
+                    if (($child['slug'] ?? null) === 'scholar-submissions') {
+                        $child['badge'] = $submissionTotal;
+                    }
+
+                    if (($child['slug'] ?? null) === 'stipends' || ($child['route'] ?? null) === '/stipends') {
+                        $child['badge'] = $payrollTotal;
+                    }
+
+                    return $child;
+                })->toArray();
+            }
+
+            return $item;
+        });
+    }
+
+    private function scholarSubmissionPendingCount(): int
+    {
+        return ScholarTerm::where('verification_status', 'submitted')->count()
+            + StudentProfileRequest::where('status', 'pending')->count()
+            + studentLandbankRequest::where('status', 'pending')->count();
+    }
+
+    private function payrollActionCount(): int
+    {
+        $user = Auth::user();
+        $permissions = app(SystemPermissions::class);
+
+        if (! $user) {
+            return 0;
+        }
+
+        if ($permissions->isRegionalRole($user)) {
+            return Batches::query()
+                ->whereIn('status', ['draft', 'rejected_payroll'])
+                ->when($permissions->agencyNameFor($user), fn ($query, $agency) => $query->where('region', $agency))
+                ->count();
+        }
+
+        if ($permissions->isScholarshipReviewer($user)) {
+            return Batches::where('status', 'submitted_payroll')->count();
+        }
+
+        if ($permissions->isAdministrator($user)) {
+            return Batches::whereIn('status', ['draft', 'rejected_payroll', 'submitted_payroll'])->count();
+        }
+
+        return 0;
     }
 }

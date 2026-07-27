@@ -655,7 +655,7 @@
                                     as="a"
                                     target="_blank"
                                     :href="
-                                        'http://172.16.8.35/' +
+                                        'http://172.16.8.98:85/' +
                                         selectedFile.file_path
                                     "
                                     v-tooltip.top="'Open in new tab'"
@@ -674,7 +674,7 @@
 
                         <iframe
                             :src="
-                                'http://172.16.8.35/' + selectedFile.file_path
+                                'http://172.16.8.98:85/' + selectedFile.file_path
                             "
                             class="w-full h-[700px] rounded-xl border"
                         >
