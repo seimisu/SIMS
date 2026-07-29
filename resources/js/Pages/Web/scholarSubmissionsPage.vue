@@ -55,13 +55,6 @@
                             placeholder="Search SPAS or scholar"
                             class="w-full sm:w-72"
                         />
-                        <SelectInput
-                            v-model="statusFilter"
-                            :options="activeStatusOptions"
-                            placeholder="Status"
-                            class="w-full sm:w-44"
-                            clearable
-                        />
                     </div>
                 </template>
 
@@ -138,7 +131,6 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
-import SelectInput from "../../Components/inputs/SelectInput.vue";
 import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
 import DialogScholarAcademicHistoryRequest from "../../Modules/Others/DialogScholarAcademicHistoryRequest.vue";
@@ -163,26 +155,6 @@ const tabs = [
     { id: "profile", label: "Profile Requests" },
     { id: "landbank", label: "Landbank Requests" },
 ];
-const statusOptions = [
-    { id: "pending", name: "Pending" },
-    { id: "submitted", name: "Submitted" },
-    { id: "approved", name: "Approved" },
-    { id: "rejected", name: "Rejected" },
-    { id: "all", name: "All" },
-];
-const gradeStatusOptions = [
-    { id: "submitted", name: "Submitted" },
-    { id: "approved", name: "Approved" },
-    { id: "rejected", name: "Rejected" },
-    { id: "all", name: "All" },
-];
-const activeStatusOptions = computed(() =>
-    ["grades", "history"].includes(activeTab.value) ? gradeStatusOptions : statusOptions,
-);
-const selectedStatus = page.props.filters?.status ?? (["grades", "history"].includes(activeTab.value) ? "submitted" : "pending");
-const statusFilter = ref(
-    activeStatusOptions.value.find((status) => status.id === selectedStatus) ?? activeStatusOptions.value[0],
-);
 const counts = computed(() => page.props.counts ?? {});
 const activeRows = computed(() => {
     if (activeTab.value === "profile") return page.props.profileRequests ?? {};
@@ -195,7 +167,6 @@ const requestData = (pageNumber = 1, extra = {}) => ({
     tab: activeTab.value,
     page: pageNumber,
     ...(searchInput.value ? { search: searchInput.value } : {}),
-    ...(statusFilter.value ? { status: statusFilter.value.id } : {}),
     ...extra,
 });
 
@@ -208,7 +179,6 @@ const loadPage = (pageNumber = 1) => {
 
 const switchTab = (tab) => {
     activeTab.value = tab;
-    statusFilter.value = activeStatusOptions.value[0];
     loadPage(1);
 };
 
@@ -217,8 +187,10 @@ const openSubmission = (row) => {
 
     const dialog = activeTab.value;
     const dialogData = dialog === "history"
-        ? { submission: row.id, dialog }
+        ? { submission: row.submission_id, dialog }
         : { scholar: row.scholar_id, dialog };
+
+    if (dialog === "history" && !dialogData.submission) return;
 
     router.reload({
         data: requestData(activeRows.value.current_page ?? 1, dialogData),
@@ -234,7 +206,7 @@ const openSubmission = (row) => {
 };
 
 watch(
-    () => [searchInput.value, statusFilter.value],
+    () => searchInput.value,
     () => {
         clearTimeout(timer.value);
         timer.value = setTimeout(() => loadPage(1), 300);

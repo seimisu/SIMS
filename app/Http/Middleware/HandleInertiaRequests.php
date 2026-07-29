@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Batches;
+use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarTerm;
 use App\Models\studentLandbankRequest;
 use App\Models\StudentProfileRequest;
@@ -111,6 +112,7 @@ class HandleInertiaRequests extends Middleware
     private function scholarSubmissionPendingCount(): int
     {
         return ScholarTerm::where('verification_status', 'submitted')->count()
+            + ScholarAcademicHistorySubmission::where('status', 'submitted')->count()
             + StudentProfileRequest::where('status', 'pending')->count()
             + studentLandbankRequest::where('status', 'pending')->count();
     }
