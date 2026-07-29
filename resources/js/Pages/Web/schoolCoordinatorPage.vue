@@ -125,7 +125,7 @@
                             <Button
                                 size="small"
                                 label="Create Program"
-                                :loading="loading.openCreateProgram"
+                                :disabled="loading.openCreateProgram"
                                 raised
                                 class="rounded-lg!"
                                 @click="openCreateProgram"
@@ -398,8 +398,7 @@
                                                     />
                                                     <div>
                                                         {{
-                                                            slotProps.item
-                                                                .created_at
+                                                            slotProps.item.date
                                                         }}
                                                     </div>
                                                 </div>

@@ -68,7 +68,7 @@ class SchoolCoordinatorController extends Controller
                         'old_data' => $log->old_data,
                         'new_data' => $log->new_data,
                         'created_at' => Carbon::parse($log->created_at)->diffForHumans(),
-                        'date' => Carbon::parse($log->created_at)->format('F j, Y'),
+                        'date' => Carbon::parse($log->created_at)->format('F j, Y g:i A'),
                     ];
                 }),
             'programOptions' => Inertia::optional(fn () => ListCourse::where('is_delete', false)
