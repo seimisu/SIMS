@@ -168,6 +168,9 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('video-resources', [VideoResourceController::class, 'store'])->name('video-resources.store');
     Route::put('video-resources/{videoResource}', [VideoResourceController::class, 'update'])->name('video-resources.update');
     Route::delete('video-resources/{videoResource}', [VideoResourceController::class, 'destroy'])->name('video-resources.destroy');
+
+    Route::put('schoolCoordinator/info', [SchoolCoordinatorController::class, 'updateInfo'])->name('schoolCoordinator.updateInfo');
+    Route::post('schoolCoordinator/program', [SchoolCoordinatorController::class, 'createProgram'])->name('schoolCoordinator.createProgram');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

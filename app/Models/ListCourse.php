@@ -25,4 +25,10 @@ class ListCourse extends Model
             'name' => $this->field,
         ] : null;
     }
+
+    public function schoolCampuses()
+    {
+        return $this->belongsToMany(SchoolCampuses::class, 'school_campus_courses', 'course_id', 'campus_id')
+            ->withPivot('years', 'is_delete');
+    }
 }

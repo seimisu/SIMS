@@ -12,9 +12,73 @@
                             <IconSchool size="30" />
                         </Avatar>
                         <div class="">
-                            <h1 class="text-xl font-semibold">
-                                {{ campus?.name }}
-                            </h1>
+                            <div class="flex gap-1">
+                                <h1 class="text-xl font-semibold">
+                                    {{ campus?.name }}
+                                </h1>
+                                <div class="flex justify-between">
+                                    <Button
+                                        class="rounded-full! w-7 h-7"
+                                        text
+                                        severity="secondary"
+                                    >
+                                        <div>
+                                            <IconPencilCog :size="18" />
+                                        </div>
+                                    </Button>
+                                    <Popover ref="editOp">
+                                        <div class="max-w-72 w-full">
+                                            <div
+                                                class="flex items-center justify-between"
+                                            >
+                                                <span class="font-semibold"
+                                                    >Create a New
+                                                    Workspace</span
+                                                >
+                                            </div>
+                                            <p
+                                                class="text-sm text-muted-color mt-2 mb-0!"
+                                            >
+                                                Name your workspace to get
+                                                started. You can always change
+                                                this later.
+                                            </p>
+                                            <InputText
+                                                placeholder="Workspace Name"
+                                                class="mt-3 w-full"
+                                            />
+                                            <div
+                                                class="flex items-center justify-between mt-4"
+                                            >
+                                                <span
+                                                    class="text-xs text-surface-500 dark:text-surface-400"
+                                                    >Lowercase letters and
+                                                    dashes only</span
+                                                >
+                                                <div
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <Button
+                                                        type="button"
+                                                        severity="secondary"
+                                                        variant="outlined"
+                                                        size="small"
+                                                        @click="hide"
+                                                        >Cancel</Button
+                                                    >
+                                                    <Button
+                                                        type="button"
+                                                        size="small"
+                                                        @click="hide"
+                                                        >Create</Button
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Popover>
+                                </div>
+                            </div>
+
                             <div
                                 class="text-sm text-gray-600 flex items-center gap-1"
                             >
@@ -27,10 +91,48 @@
                     </div>
                 </div>
             </div>
-            <div class="flex-1 flex gap-2">
-                <div class="flex-3 rounded-xl p-3">
-                    {{ programs }}
-                    <!-- <DefaultSelectionTable
+            <div class="flex-1 flex flex-col lg:flex-row gap-2">
+                <div
+                    class="flex-1 lg:flex-3 flex flex-col gap-3 rounded-xl p-3"
+                >
+                    <div class="flex justify-between">
+                        <div class="flex items-center gap-1">
+                            <IconTextInput
+                                :icon="Tablericon.IconSearch"
+                                placeholder="Search keywords..."
+                                v-model="search.program"
+                                class="lg:w-90"
+                            />
+                            <Button
+                                size="small"
+                                severity="secondary"
+                                class="rounded-full! w-9 h-9"
+                                v-if="search.program"
+                                @click="search.program = null"
+                            >
+                                <IconX :size="20" />
+                            </Button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Button
+                                size="small"
+                                class="rounded-lg!"
+                                @click="openGradeSystem"
+                                severity="secondary"
+                            >
+                                <div><IconFileInvoice size="20" /></div>
+                            </Button>
+                            <Button
+                                size="small"
+                                label="Create Program"
+                                :loading="loading.openCreateProgram"
+                                raised
+                                class="rounded-lg!"
+                                @click="openCreateProgram"
+                            ></Button>
+                        </div>
+                    </div>
+                    <DefaultSelectionTable
                         :items="programs?.data"
                         :pagination="{
                             total: programs?.total,
@@ -46,33 +148,445 @@
                                 {{ data.course }}
                             </template>
                         </Column>
-                    </DefaultSelectionTable> -->
+                        <Column header="Abbreviation">
+                            <template #body="{ data }">
+                                {{ data.abbreviation }}
+                            </template>
+                        </Column>
+                        <Column>
+                            <template #header>
+                                <div class="font-semibold text-center w-full">
+                                    Year Level
+                                </div>
+                            </template>
+                            <template #body="{ data }">
+                                <div class="text-center font-medium w-full">
+                                    {{ data.yearLevel }}
+                                </div>
+                            </template>
+                        </Column>
+                    </DefaultSelectionTable>
                 </div>
-                <div class="flex-1"></div>
+                <Card class="flex-2">
+                    <template #header>
+                        <div class="flex items-center justify-between p-3">
+                            <div class="font-semibold">School Information</div>
+                            <div class="flex items-center gap-2">
+                                <Button
+                                    size="small"
+                                    severity="secondary"
+                                    class="rounded-lg!"
+                                    v-if="editSchoolInfo != true"
+                                    @click="editSchoolInfo = true"
+                                >
+                                    <div class="flex items-center gap-1.5">
+                                        <IconPencilCog :size="15" />
+                                        <div class="text-sm">
+                                            Update details
+                                        </div>
+                                    </div>
+                                </Button>
+                                <div v-else class="flex items-center gap-2">
+                                    <Button
+                                        size="small"
+                                        class="rounded-lg!"
+                                        @click="saveInfo"
+                                        :disabled="loading.infoForm"
+                                    >
+                                        <div class="flex items-center gap-1.5">
+                                            <IconCheck
+                                                :size="15"
+                                                v-if="!loading.infoForm"
+                                            />
+                                            <IconLoader2
+                                                :size="15"
+                                                v-else
+                                                class="animate-spin"
+                                            />
+                                            <div class="text-sm">Save</div>
+                                        </div>
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        severity="secondary"
+                                        class="rounded-lg!"
+                                        text
+                                        @click="cancelEditSchoolInfo()"
+                                    >
+                                        <div class="flex items-center gap-1.5">
+                                            <IconX :size="15" />
+                                            <div class="text-sm">Cancel</div>
+                                        </div>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template #content>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="flex flex-1 flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <Avatar
+                                            size="small"
+                                            class="bg-blue-100! text-blue-500! rounded-lg! shadow w-10! h-10! shadow-blue-300!"
+                                        >
+                                            <IconSchool :size="20" />
+                                        </Avatar>
+
+                                        <div class="flex flex-1 flex-col">
+                                            <div class="font-semibold text-sm">
+                                                President
+                                            </div>
+                                            <div
+                                                class="text-gray-600"
+                                                v-if="!editSchoolInfo"
+                                            >
+                                                {{ infoForm.president }}
+                                            </div>
+                                            <InputText
+                                                v-else
+                                                type="text"
+                                                v-model="infoForm.president"
+                                                placeholder="Enter text"
+                                                size="small"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <Avatar
+                                            size="small"
+                                            class="bg-blue-100! text-blue-500! rounded-lg! shadow w-10! h-10! shadow-blue-300!"
+                                        >
+                                            <IconCalculator :size="20" />
+                                        </Avatar>
+
+                                        <div class="flex flex-1 flex-col">
+                                            <div class="font-semibold text-sm">
+                                                Registrar
+                                            </div>
+                                            <div
+                                                class="text-gray-600"
+                                                v-if="!editSchoolInfo"
+                                            >
+                                                {{ infoForm.registrar }}
+                                            </div>
+                                            <InputText
+                                                v-else
+                                                type="text"
+                                                v-model="infoForm.registrar"
+                                                placeholder="Enter text"
+                                                size="small"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="flex flex-1 flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <Avatar
+                                            size="small"
+                                            class="bg-blue-100! text-blue-500! rounded-lg! shadow w-10! h-10! shadow-blue-300!"
+                                        >
+                                            <IconDeviceMobile :size="20" />
+                                        </Avatar>
+
+                                        <div class="flex flex-1 flex-col">
+                                            <div class="font-semibold text-sm">
+                                                Contact
+                                            </div>
+                                            <div
+                                                class="text-gray-600"
+                                                v-if="!editSchoolInfo"
+                                            >
+                                                {{ infoForm.contact }}
+                                            </div>
+                                            <InputText
+                                                v-else
+                                                type="text"
+                                                v-model="infoForm.contact"
+                                                placeholder="Enter text"
+                                                size="small"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-1 flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <Avatar
+                                            size="small"
+                                            class="bg-blue-100! text-blue-500! rounded-lg! shadow w-10! h-10! shadow-blue-300!"
+                                        >
+                                            <IconSend :size="20" />
+                                        </Avatar>
+
+                                        <div class="flex flex-1 flex-col">
+                                            <div class="font-semibold text-sm">
+                                                Email
+                                                <span
+                                                    v-tooltip.top="errors.email"
+                                                    v-if="errors.email"
+                                                    class="text-red-400 font-medium cursor-default"
+                                                    >*</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="text-gray-600"
+                                                v-if="!editSchoolInfo"
+                                            >
+                                                {{ infoForm.email }}
+                                            </div>
+                                            <InputText
+                                                v-else
+                                                type="text"
+                                                v-model="infoForm.email"
+                                                placeholder="Enter email address"
+                                                size="small"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <Divider class="mt-8!" align="right">
+                            <span class="font-semibold text-sm"
+                                >Activity Logs</span
+                            >
+                        </Divider>
+                        <div class="max-h-130 overflow-y-auto">
+                            <Timeline
+                                v-if="logs"
+                                :value="logs"
+                                align="left"
+                                class="p-1"
+                                :pt="{
+                                    eventOpposite: '!hidden',
+                                    eventSeparator: '!min-w-[3rem]',
+                                }"
+                            >
+                                <template #marker="slotProps">
+                                    <div
+                                        class="w-10 h-10 bg-slate-50 border-gray-300 rounded-2xl border flex items-center justify-center shadow-sm"
+                                    >
+                                        <IconWood
+                                            class="text-gray-600"
+                                            :size="22"
+                                        />
+                                    </div>
+                                </template>
+
+                                <template #content="slotProps">
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex flex-col">
+                                            <div
+                                                class="text-sm py-1 font-medium"
+                                            >
+                                                {{ slotProps.item.action }}
+                                            </div>
+                                            <div
+                                                class="text-xs flex gap-4 items-center text-gray-400"
+                                            >
+                                                <div
+                                                    class="flex gap-1 items-center"
+                                                >
+                                                    <IconHourglassLow
+                                                        :size="15"
+                                                    />
+                                                    <div>
+                                                        {{
+                                                            slotProps.item
+                                                                .created_at
+                                                        }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="p-2 text-sm rounded-r-xl border-l-amber-600 border-l-4 bg-amber-50"
+                                        >
+                                            <div
+                                                v-for="(value, key) in slotProps
+                                                    .item.new_data"
+                                                :key="key"
+                                                class="flex items-center gap-2"
+                                            >
+                                                <span
+                                                    class="text-gray-700 min-w-36 capitalize"
+                                                >
+                                                    {{
+                                                        key.replaceAll("_", " ")
+                                                    }}
+                                                </span>
+
+                                                <span class="text-red-500">
+                                                    {{
+                                                        slotProps.item
+                                                            .old_data?.[key] !=
+                                                        ""
+                                                            ? slotProps.item
+                                                                  .old_data?.[
+                                                                  key
+                                                              ]
+                                                            : "Not Set"
+                                                    }}
+                                                </span>
+
+                                                <IconArrowRight
+                                                    :size="14"
+                                                    class="text-gray-400"
+                                                />
+
+                                                <span
+                                                    class="text-emerald-600 font-medium"
+                                                >
+                                                    {{
+                                                        value != ""
+                                                            ? value
+                                                            : "Removed"
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </Timeline>
+                            <div
+                                v-else
+                                class="flex items-center justify-center p-4"
+                            >
+                                <div class="text-gray-400 text-sm">
+                                    No activity logs found.
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </Card>
             </div>
         </div>
     </AuthLayout>
+    <Dialog
+        v-model:visible="dialog.createProgram"
+        modal
+        :style="{ width: '35rem' }"
+    >
+        <template #header>
+            <div class="flex gap-2 items-center">
+                <Avatar
+                    size="small"
+                    class="bg-blue-100! text-blue-500! rounded-lg! shadow w-9! h-9! shadow-blue-300!"
+                >
+                    <IconBook2 :size="20" />
+                </Avatar>
+                <div class="flex flex-col">
+                    <div class="font-semibold">Create Program</div>
+                    <div class="text-xs text-gray-500">
+                        Create a new program for the school campus.
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template #default>
+            <div class="flex flex-col gap-3 mt-5 mb-2">
+                <SelectInput
+                    v-model="courseForm.course"
+                    label="Program"
+                    :options="programOptions"
+                    clearable
+                    filter
+                >
+                </SelectInput>
+                <TextInput v-model="courseForm.years" label="Years"></TextInput>
+                <div class="flex items-center justify-end gap-2 mt-4">
+                    <Button
+                        size="small"
+                        severity="secondary"
+                        text
+                        @click="dialog.createProgram = false"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        size="small"
+                        label="Create Program"
+                        raised
+                        :loading="loading.createProgram"
+                        @click="createProgram"
+                    ></Button>
+                </div>
+            </div>
+        </template>
+    </Dialog>
 </template>
 <script setup>
-import AuthLayout from "../../Layouts/AuthLayout.vue";
-import { Head, router, usePage } from "@inertiajs/vue3";
-import { IconMapPin, IconSchool } from "@tabler/icons-vue";
-import { onMounted, ref, watch } from "vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
+import IconTextInput from "../../Components/inputs/IconTextInput.vue";
+import AuthLayout from "../../Layouts/AuthLayout.vue";
+import TextInput from "../../Components/inputs/TextInput.vue";
+import SelectInput from "../../Components/inputs/SelectInput.vue";
+import * as Tablericon from "@tabler/icons-vue";
+import { Head, router, usePage, useForm } from "@inertiajs/vue3";
+import {
+    IconMapPin,
+    IconSchool,
+    IconX,
+    IconCalculator,
+    IconFileInvoice,
+    IconPencilCog,
+    IconSend,
+    IconBook2,
+    IconLoader2,
+    IconCheck,
+    IconWood,
+    IconArrowRight,
+    IconDeviceMobile,
+    IconHourglassLow,
+} from "@tabler/icons-vue";
+import { onMounted, ref, watch } from "vue";
+import { useToast } from "primevue/usetoast";
 
-const page = usePage();
-const campus = ref(null);
-const search = ref({
-    programs: null,
-});
+const toast = useToast();
 
 const props = defineProps({
     programs: Object,
+    campus: Object,
+    info: Object,
+    errors: Object,
+    flash: Object,
+    logs: Object,
+    programOptions: Object,
+});
+const dialog = ref({
+    createProgram: false,
+    gradeSystem: false,
+});
+const page = usePage();
+const timerBounce = ref(null);
+const editOp = ref(null);
+const editSchoolInfo = ref(false);
+const infoForm = useForm({
+    president: props.info?.president ?? "",
+    registrar: props.info?.registrar ?? "",
+    contact: props.info?.contact ?? "",
+    email: props.info?.email ?? "",
+});
+const courseForm = useForm({
+    course: null,
+    years: null,
+});
+const search = ref({
+    program: null,
 });
 
 // const programs = ref(page.props?.programs ?? []);
 const loading = ref({
     programTable: false,
+    infoForm: false,
+    openCreateProgram: false,
+    createProgram: false,
 });
 
 const loadPage = (page) => {
@@ -80,7 +594,9 @@ const loadPage = (page) => {
         route("schoolCoordinator"),
         {
             page,
-            search: search.value.programs,
+            ...(search.value.program && {
+                search: search.value.program,
+            }),
         },
         {
             preserveState: true,
@@ -89,21 +605,97 @@ const loadPage = (page) => {
     );
 };
 
-const selectPrograms = () => {
-    console.log("test");
+const saveInfo = () => {
+    loading.value.infoForm = true;
+    infoForm.put(route("schoolCoordinator.updateInfo"), {
+        onSuccess: () => {
+            editSchoolInfo.value = false;
+            toast.add({
+                severity: props.flash?.status,
+                summary: props.flash?.title,
+                detail: props.flash?.message,
+                life: 3000,
+            });
+        },
+        onFinish: () => {
+            loading.value.infoForm = false;
+        },
+        onError: (errors) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: "Failed to update school information.",
+                life: 3000,
+            });
+        },
+    });
 };
 
-// watch(
-//     () => search.value.programs,
-//     () => {
-//         clearTimeout(timerBounce.value);
-//         timerBounce.value = setTimeout(() => {
-//             loadPage(1);
-//         }, 300);
-//     },
-// );
+const selectPrograms = (data) => {
+    console.log(data);
+};
 
-onMounted(() => {
-    campus.value = page.props?.campus;
-});
+const openGradeSystem = () => {
+    dialog.value.gradeSystem = true;
+};
+
+const openCreateProgram = () => {
+    openCreateProgram.value = true;
+    loading.value.openCreateProgram = true;
+    router.reload({
+        only: ["programOptions"],
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            dialog.value.createProgram = true;
+        },
+        onFinish: () => {
+            loading.value.openCreateProgram = false;
+        },
+    });
+};
+
+const createProgram = () => {
+    loading.value.createProgram = true;
+    courseForm.post(route("schoolCoordinator.createProgram"), {
+        onSuccess: () => {
+            dialog.value.createProgram = false;
+            toast.add({
+                severity: props.flash?.status,
+                summary: props.flash?.title,
+                detail: props.flash?.message,
+                life: 3000,
+            });
+        },
+        onError: (errors) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: "Failed to create program.",
+                life: 3000,
+            });
+        },
+        onFinish: () => {
+            loading.value.createProgram = false;
+        },
+    });
+};
+
+const cancelEditSchoolInfo = () => {
+    editSchoolInfo.value = false;
+    infoForm.president = props.info?.president ?? "";
+    infoForm.registrar = props.info?.registrar ?? "";
+    infoForm.contact = props.info?.contact ?? "";
+    infoForm.email = props.info?.email ?? "";
+};
+
+watch(
+    () => search.value.program,
+    () => {
+        clearTimeout(timerBounce.value);
+        timerBounce.value = setTimeout(() => {
+            loadPage(1);
+        }, 300);
+    },
+);
 </script>
