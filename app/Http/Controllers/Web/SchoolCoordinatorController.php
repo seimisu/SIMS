@@ -133,7 +133,7 @@ class SchoolCoordinatorController extends Controller
                 'fail' => $grade->fail ? 'Set true' : 'Set false',
                 'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
             ],
-            'action' => 'Created new program',
+            'action' => 'Created new grade',
         ]);
 
         return redirect()->back()->with([

@@ -336,8 +336,12 @@
                                             <div class="font-semibold text-sm">
                                                 Email
                                                 <span
-                                                    v-tooltip.top="errors.email"
-                                                    v-if="errors.email"
+                                                    v-tooltip.top="
+                                                        infoForm.errors?.email
+                                                    "
+                                                    v-if="
+                                                        infoForm.errors?.email
+                                                    "
                                                     class="text-red-400 font-medium cursor-default"
                                                     >*</span
                                                 >
@@ -555,9 +559,16 @@
                             class="rounded-lg!"
                             @click="toggleOpGrade"
                         >
-                            <div class="flex items-center gap-1">
+                            <div
+                                class="flex items-center gap-1"
+                                v-if="!selectedGrade"
+                            >
                                 <IconPlus :size="20" />
                                 <div class="text-sm">Add Grade</div>
+                            </div>
+                            <div class="flex items-center gap-1" v-else>
+                                <IconEdit :size="20" />
+                                <div class="text-sm">Update Grade</div>
                             </div>
                         </Button>
                         <Popover ref="opAddGrades">
@@ -578,21 +589,35 @@
                                 <div class="flex flex-col gap-5 mt-5">
                                     <TextInput
                                         v-model="gradeForm.grade"
-                                        :error="errors?.grade"
+                                        :error="gradeForm?.errors?.grade"
                                         :error-mark="
-                                            errors?.grade ? true : false
+                                            gradeForm?.errors?.grade
+                                                ? true
+                                                : false
                                         "
                                         label="Grade"
                                         placeholder="e.g. A, B, C, etc."
                                     ></TextInput>
                                     <div class="flex gap-5 items-center">
                                         <TextInput
+                                            :error="gradeForm?.errors?.lower"
+                                            :error-mark="
+                                                gradeForm?.errors?.lower
+                                                    ? true
+                                                    : false
+                                            "
                                             v-model="gradeForm.lower"
                                             label="Lower Limit"
                                             placeholder="e.g. 90, 80, etc."
                                         ></TextInput>
                                         <TextInput
                                             v-model="gradeForm.upper"
+                                            :error="gradeForm?.errors?.upper"
+                                            :error-mark="
+                                                gradeForm?.errors?.upper
+                                                    ? true
+                                                    : false
+                                            "
                                             label="Upper Limit"
                                             placeholder="e.g. 100, 89, etc."
                                         ></TextInput>
@@ -698,10 +723,12 @@
                     </div>
                 </div>
                 <DataTable
-                    stripedRows
+                    v-model:selection="selectedGrade"
                     :value="grades"
                     size="small"
                     class="text-sm border border-b-0 border-t-gray-200 border-x-gray-200"
+                    selectionMode="single"
+                    dataKey="id"
                 >
                     <Column header="Description">
                         <template #body="props">
@@ -780,6 +807,25 @@
                             </div>
                         </template>
                     </Column>
+                    <Column>
+                        <template #header>
+                            <div class="flex justify-center w-full">
+                                <IconSettings :size="20" />
+                            </div>
+                        </template>
+                        <template #body="{ body }">
+                            <div class="flex gap-2 justify-center w-full">
+                                <Button
+                                    size="small"
+                                    severity="danger"
+                                    class="rounded-full h-8! w-8! p-0!"
+                                    text
+                                >
+                                    <IconTrash :size="18" />
+                                </Button>
+                            </div>
+                        </template>
+                    </Column>
                 </DataTable>
             </div>
         </template>
@@ -797,9 +843,11 @@ import { Head, router, usePage, useForm } from "@inertiajs/vue3";
 import {
     IconMapPin,
     IconSchool,
+    IconTrash,
     IconX,
     IconCalculator,
     IconReportAnalytics,
+    IconSettings,
     IconPencilCog,
     IconSend,
     IconBook2,
@@ -813,6 +861,7 @@ import {
     IconCalendar,
     IconCircleX,
     IconCircleCheck,
+    IconEdit,
     IconPlus,
     IconCalendarWeek,
     IconDeviceFloppy,
@@ -856,12 +905,17 @@ const search = ref({
     program: null,
 });
 
+const selectedGrade = ref();
+
 const toggleOpGrade = (event) => {
     opAddGrades.value.toggle(event);
-    gradeForm.resetAndClearErrors();
+    if (!selectedGrade) {
+        gradeForm.resetAndClearErrors();
+    }
 };
 
 const gradeForm = useForm({
+    id: null,
     grade: null,
     lower: null,
     upper: null,
@@ -1014,6 +1068,8 @@ const cancelEditSchoolInfo = () => {
     infoForm.registrar = props.info?.registrar ?? "";
     infoForm.contact = props.info?.contact ?? "";
     infoForm.email = props.info?.email ?? "";
+
+    infoForm.clearErrors();
 };
 
 watch(
@@ -1052,6 +1108,26 @@ watch(
         if (val) {
             gradeForm.drop = false;
             gradeForm.fail = false;
+        }
+    },
+);
+
+watch(
+    () => selectedGrade.value,
+    (val) => {
+        if (val) {
+            Object.assign(gradeForm, {
+                id: val.id,
+                grade: val.grade,
+                lower: val.lower,
+                upper: val.upper,
+                fail: val.is_failed ? true : false,
+                incomplete: val.is_incomplete ? true : false,
+                drop: val.is_drop ? true : false,
+            });
+            console.log(gradeForm);
+        } else {
+            gradeForm.resetAndClearErrors();
         }
     },
 );
