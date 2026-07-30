@@ -124,6 +124,14 @@
                             </Button>
                             <Button
                                 size="small"
+                                class="rounded-lg!"
+                                @click="openGradeSystem"
+                                severity="secondary"
+                            >
+                                <div><IconFileInvoice size="20" /></div>
+                            </Button>
+                            <Button
+                                size="small"
                                 label="Create Program"
                                 :disabled="loading.openCreateProgram"
                                 raised
