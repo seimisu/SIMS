@@ -71,6 +71,21 @@ class SchoolCoordinatorController extends Controller
                         'date' => Carbon::parse($log->created_at)->format('F j, Y g:i A'),
                     ];
                 }),
+            'grades' => Inertia::optional(fn () => $campus->grades()
+                ->where('is_delete', false)
+                ->orderBy('grade', 'asc')
+                ->get()
+                ->map(fn ($grade) => [
+                    'id' => Hashids::encode($grade->id),
+                    'grade' => $grade->grade,
+                    'lower' => $grade->lower,
+                    'upper' => $grade->upper,
+                    'is_failed' => $grade->is_failed,
+                    'is_incomplete' => $grade->is_incomplete,
+                    'is_drop' => $grade->is_drop,
+                    'is_active' => $grade->is_active,
+                ])
+            ),
             'programOptions' => Inertia::optional(fn () => ListCourse::where('is_delete', false)
                 ->whereDoesntHave('schoolCampuses', fn ($q) => $q->where('campus_id', $campus_id))
                 ->get()
@@ -81,6 +96,54 @@ class SchoolCoordinatorController extends Controller
                 ])
             ),
         ]);
+    }
+
+    public function createGrade(Request $request)
+    {
+        $campus_id = Auth::user()->school_id;
+
+        $validated = $request->validate([
+            'grade' => ['required', 'string'],
+            'lower' => ['nullable', 'integer', 'lte:upper'],
+            'upper' => ['nullable', 'integer', 'gte:lower'],
+            'drop' => ['nullable', 'boolean'],
+            'fail' => ['nullable', 'boolean'],
+            'incomplete' => ['nullable', 'boolean'],
+        ]);
+
+        $campus = SchoolCampuses::findOrFail($campus_id);
+
+        $grade = $campus->grades()->create([
+            'grade' => $validated['grade'],
+            'lower' => $validated['lower'] ?? null,
+            'upper' => $validated['upper'] ?? null,
+            'is_drop' => $validated['drop'] ?? false,
+            'is_delete' => false,
+            'is_failed' => $validated['fail'] ?? false,
+            'is_incomplete' => $validated['incomplete'] ?? false,
+        ]);
+
+        AuditLogs::create([
+            'user_id' => Auth::id(),
+            'old_data' => null,
+            'new_data' => [
+                'grade' => $grade->grade,
+                'range' => $grade->upper || $grade->lower ? $grade->lower.'-'.$grade->upper : 'Not Set',
+                'drop' => $grade->drop ? 'Set true' : 'Set false',
+                'fail' => $grade->fail ? 'Set true' : 'Set false',
+                'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
+            ],
+            'action' => 'Created new program',
+        ]);
+
+        return redirect()->back()->with([
+            'flash' => [
+                'status' => 'success',
+                'title' => 'Grade Created',
+                'message' => 'The grade has been successfully created.',
+            ],
+        ]);
+
     }
 
     public function createProgram(Request $request)
@@ -134,7 +197,7 @@ class SchoolCoordinatorController extends Controller
             'flash' => [
                 'status' => 'success',
                 'title' => 'Program Created',
-                'message' => "The program {$course->name} has been successfully created.",
+                'message' => 'The program has been successfully created.',
             ],
         ]);
     }

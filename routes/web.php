@@ -171,6 +171,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
 
     Route::put('schoolCoordinator/info', [SchoolCoordinatorController::class, 'updateInfo'])->name('schoolCoordinator.updateInfo');
     Route::post('schoolCoordinator/program', [SchoolCoordinatorController::class, 'createProgram'])->name('schoolCoordinator.createProgram');
+    Route::post('schoolCoordinator/grade', [SchoolCoordinatorController::class, 'createGrade'])->name('schoolCoordinator.createGrade');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

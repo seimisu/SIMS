@@ -120,7 +120,7 @@
                                 @click="openGradeSystem"
                                 severity="secondary"
                             >
-                                <div><IconFileInvoice size="20" /></div>
+                                <div><IconCalendarWeek size="20" /></div>
                             </Button>
                             <Button
                                 size="small"
@@ -128,7 +128,7 @@
                                 @click="openGradeSystem"
                                 severity="secondary"
                             >
-                                <div><IconFileInvoice size="20" /></div>
+                                <div><IconReportAnalytics size="20" /></div>
                             </Button>
                             <Button
                                 size="small"
@@ -401,9 +401,7 @@
                                                 <div
                                                     class="flex gap-1 items-center"
                                                 >
-                                                    <IconHourglassLow
-                                                        :size="15"
-                                                    />
+                                                    <IconCalendar :size="15" />
                                                     <div>
                                                         {{
                                                             slotProps.item.date
@@ -527,9 +525,269 @@
             </div>
         </template>
     </Dialog>
+    <Dialog
+        v-model:visible="dialog.gradeSystem"
+        modal
+        :style="{ width: '35rem' }"
+    >
+        <template #header>
+            <div class="flex gap-2 items-center">
+                <Avatar
+                    size="small"
+                    class="bg-blue-100! text-blue-500! rounded-lg! shadow w-9! h-9! shadow-blue-300!"
+                >
+                    <IconReportAnalytics :size="20" />
+                </Avatar>
+                <div class="flex flex-col">
+                    <div class="font-semibold">Create Grade System</div>
+                    <div class="text-xs text-gray-500">
+                        Create a new grade system for the school campus.
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template #default>
+            <div class="flex flex-col gap-3 mt-5 mb-2">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <Button
+                            size="small"
+                            class="rounded-lg!"
+                            @click="toggleOpGrade"
+                        >
+                            <div class="flex items-center gap-1">
+                                <IconPlus :size="20" />
+                                <div class="text-sm">Add Grade</div>
+                            </div>
+                        </Button>
+                        <Popover ref="opAddGrades">
+                            <div class="max-w-82 w-full">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-semibold"
+                                        >Create a new grade</span
+                                    >
+                                </div>
+                                <p
+                                    class="text-xs text-muted-color mt-2 text-justify mb-0!"
+                                >
+                                    Define a new grade by specifying its
+                                    description, grade equivalent, and score
+                                    range. The grade will be added to the
+                                    grading scale for this campus.
+                                </p>
+                                <div class="flex flex-col gap-5 mt-5">
+                                    <TextInput
+                                        v-model="gradeForm.grade"
+                                        :error="errors?.grade"
+                                        :error-mark="
+                                            errors?.grade ? true : false
+                                        "
+                                        label="Grade"
+                                        placeholder="e.g. A, B, C, etc."
+                                    ></TextInput>
+                                    <div class="flex gap-5 items-center">
+                                        <TextInput
+                                            v-model="gradeForm.lower"
+                                            label="Lower Limit"
+                                            placeholder="e.g. 90, 80, etc."
+                                        ></TextInput>
+                                        <TextInput
+                                            v-model="gradeForm.upper"
+                                            label="Upper Limit"
+                                            placeholder="e.g. 100, 89, etc."
+                                        ></TextInput>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <Divider type="dashed" />
+                                    <div
+                                        class="flex justify-between items-center"
+                                    >
+                                        <div class="text-sm">
+                                            Is it a failing grade?
+                                        </div>
+
+                                        <DefaultToggle
+                                            v-model="gradeForm.fail"
+                                            :check-icon="IconCheck"
+                                            :un-check-icon="IconX"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <Divider type="dashed" />
+                                    <div
+                                        class="flex justify-between items-center"
+                                    >
+                                        <div class="text-sm">
+                                            Is it an incomplete grade?
+                                        </div>
+
+                                        <DefaultToggle
+                                            v-model="gradeForm.incomplete"
+                                            :check-icon="IconCheck"
+                                            :un-check-icon="IconX"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <Divider type="dashed" />
+                                    <div
+                                        class="flex justify-between items-center"
+                                    >
+                                        <div class="text-sm">
+                                            Is it a drop grade?
+                                        </div>
+
+                                        <DefaultToggle
+                                            v-model="gradeForm.drop"
+                                            :check-icon="IconCheck"
+                                            :un-check-icon="IconX"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-end mt-4">
+                                    <div class="flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            severity="secondary"
+                                            variant="outlined"
+                                            size="small"
+                                            @click="toggleOpGrade"
+                                            >Cancel</Button
+                                        >
+                                        <Button
+                                            type="button"
+                                            size="small"
+                                            @click="createGrade"
+                                            :disabled="loading.createGrade"
+                                        >
+                                            <div
+                                                class="flex items-center gap-1"
+                                            >
+                                                <div>
+                                                    <IconDeviceFloppy
+                                                        :size="20"
+                                                        v-if="
+                                                            !loading.createGrade
+                                                        "
+                                                    />
+                                                    <IconLoader2
+                                                        :size="20"
+                                                        v-else
+                                                        class="animate-spin"
+                                                    />
+                                                </div>
+
+                                                <div>Save Grade</div>
+                                            </div>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Popover>
+                    </div>
+
+                    <div
+                        class="px-4 bg-blue-50 border rounded-md py-2 text-xs font-medium text-blue-500 flex items-center gap-1"
+                    >
+                        <IconList :size="16" />
+                        <div class="flex">
+                            {{ grades.length }} Grades Configured
+                        </div>
+                    </div>
+                </div>
+                <DataTable
+                    stripedRows
+                    :value="grades"
+                    size="small"
+                    class="text-sm border border-b-0 border-t-gray-200 border-x-gray-200"
+                >
+                    <Column header="Description">
+                        <template #body="props">
+                            <div class="flex items-center">
+                                <div v-if="props.data.is_failed">
+                                    <div
+                                        class="font-semibold flex items-center gap-1 text-red-600"
+                                    >
+                                        <IconCircleX
+                                            size="20"
+                                            stroke-width="2"
+                                        />
+                                        <div>FAILED</div>
+                                    </div>
+                                </div>
+                                <div v-else-if="props.data.is_incomplete">
+                                    <div
+                                        class="font-semibold flex items-center gap-1 text-yellow-600"
+                                    >
+                                        <IconDotsCircleHorizontal
+                                            size="20"
+                                            stroke-width="2"
+                                        />
+                                        <div>INCOMPLETE</div>
+                                    </div>
+                                </div>
+                                <div v-else-if="props.data.is_drop">
+                                    <div
+                                        class="font-semibold flex items-center gap-1 text-red-600"
+                                    >
+                                        <IconCircleX
+                                            size="20"
+                                            stroke-width="2"
+                                        />
+                                        <div>DROPPED</div>
+                                    </div>
+                                </div>
+                                <div v-else>
+                                    <div
+                                        class="font-semibold flex items-center gap-1 text-green-600"
+                                    >
+                                        <IconCircleCheck
+                                            size="20"
+                                            stroke-width="2"
+                                        />
+                                        <div>PASSED</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </Column>
+                    <Column field="grade">
+                        <template #header>
+                            <div class="text-center w-full font-semibold">
+                                Grade
+                            </div>
+                        </template>
+                        <template #body="{ data }">
+                            <div class="text-center w-full">
+                                {{ data.grade }}
+                            </div>
+                        </template>
+                    </Column>
+                    <Column field="grade">
+                        <template #header>
+                            <div class="text-center w-full font-semibold">
+                                Score Range
+                            </div>
+                        </template>
+                        <template #body="{ data }">
+                            <div
+                                v-if="data.lower && data.upper"
+                                class="text-center"
+                            >
+                                {{ data.lower }} - {{ data.upper }}
+                            </div>
+                        </template>
+                    </Column>
+                </DataTable>
+            </div>
+        </template>
+    </Dialog>
 </template>
 <script setup>
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
+
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
@@ -541,19 +799,27 @@ import {
     IconSchool,
     IconX,
     IconCalculator,
-    IconFileInvoice,
+    IconReportAnalytics,
     IconPencilCog,
     IconSend,
     IconBook2,
     IconLoader2,
     IconCheck,
     IconWood,
+    IconDotsCircleHorizontal,
     IconArrowRight,
     IconDeviceMobile,
-    IconHourglassLow,
+    IconList,
+    IconCalendar,
+    IconCircleX,
+    IconCircleCheck,
+    IconPlus,
+    IconCalendarWeek,
+    IconDeviceFloppy,
 } from "@tabler/icons-vue";
 import { onMounted, ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
+import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 
 const toast = useToast();
 
@@ -565,11 +831,13 @@ const props = defineProps({
     flash: Object,
     logs: Object,
     programOptions: Object,
+    grades: Object,
 });
 const dialog = ref({
     createProgram: false,
     gradeSystem: false,
 });
+const opAddGrades = ref(null);
 const page = usePage();
 const timerBounce = ref(null);
 const editOp = ref(null);
@@ -588,12 +856,25 @@ const search = ref({
     program: null,
 });
 
-// const programs = ref(page.props?.programs ?? []);
+const toggleOpGrade = (event) => {
+    opAddGrades.value.toggle(event);
+    gradeForm.resetAndClearErrors();
+};
+
+const gradeForm = useForm({
+    grade: null,
+    lower: null,
+    upper: null,
+    fail: false,
+    incomplete: false,
+    drop: false,
+});
 const loading = ref({
     programTable: false,
     infoForm: false,
     openCreateProgram: false,
     createProgram: false,
+    createGrade: false,
 });
 
 const loadPage = (page) => {
@@ -643,7 +924,14 @@ const selectPrograms = (data) => {
 };
 
 const openGradeSystem = () => {
-    dialog.value.gradeSystem = true;
+    router.reload({
+        only: ["grades"],
+        preserveState: true,
+        preserveScroll: true,
+        onFinish: () => {
+            dialog.value.gradeSystem = true;
+        },
+    });
 };
 
 const openCreateProgram = () => {
@@ -673,6 +961,7 @@ const createProgram = () => {
                 detail: props.flash?.message,
                 life: 3000,
             });
+            courseForm.resetAndClearErrors();
         },
         onError: (errors) => {
             toast.add({
@@ -684,6 +973,37 @@ const createProgram = () => {
         },
         onFinish: () => {
             loading.value.createProgram = false;
+        },
+    });
+};
+
+const createGrade = () => {
+    loading.value.createGrade = true;
+    gradeForm.post(route("schoolCoordinator.createGrade"), {
+        only: ["grades"],
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            dialog.value.createGrade = false;
+            toast.add({
+                severity: props.flash?.status,
+                summary: props.flash?.title,
+                detail: props.flash?.message,
+                life: 3000,
+            });
+
+            gradeForm.resetAndClearErrors();
+        },
+        onError: (errors) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: "Failed to create program.",
+                life: 3000,
+            });
+        },
+        onFinish: () => {
+            loading.value.createGrade = false;
         },
     });
 };
@@ -703,6 +1023,36 @@ watch(
         timerBounce.value = setTimeout(() => {
             loadPage(1);
         }, 300);
+    },
+);
+
+watch(
+    () => gradeForm.drop,
+    (val) => {
+        if (val) {
+            gradeForm.fail = false;
+            gradeForm.incomplete = false;
+        }
+    },
+);
+
+watch(
+    () => gradeForm.fail,
+    (val) => {
+        if (val) {
+            gradeForm.drop = false;
+            gradeForm.incomplete = false;
+        }
+    },
+);
+
+watch(
+    () => gradeForm.incomplete,
+    (val) => {
+        if (val) {
+            gradeForm.drop = false;
+            gradeForm.fail = false;
+        }
     },
 );
 </script>
