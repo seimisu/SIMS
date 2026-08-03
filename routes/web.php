@@ -28,6 +28,7 @@ use App\Http\Controllers\Web\SchoolCampusCurriculumController;
 use App\Http\Controllers\Web\SchoolCampusInfoController;
 use App\Http\Controllers\Web\SchoolCampusSemesterController;
 use App\Http\Controllers\Web\SchoolController;
+use App\Http\Controllers\Web\SchoolCoordinatorController;
 use App\Http\Controllers\Web\StatusController;
 use App\Http\Controllers\Web\StipendController;
 use App\Http\Controllers\Web\UserController;
@@ -167,6 +168,10 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('video-resources', [VideoResourceController::class, 'store'])->name('video-resources.store');
     Route::put('video-resources/{videoResource}', [VideoResourceController::class, 'update'])->name('video-resources.update');
     Route::delete('video-resources/{videoResource}', [VideoResourceController::class, 'destroy'])->name('video-resources.destroy');
+
+    Route::put('schoolCoordinator/info', [SchoolCoordinatorController::class, 'updateInfo'])->name('schoolCoordinator.updateInfo');
+    Route::post('schoolCoordinator/program', [SchoolCoordinatorController::class, 'createProgram'])->name('schoolCoordinator.createProgram');
+    Route::post('schoolCoordinator/grade', [SchoolCoordinatorController::class, 'createGrade'])->name('schoolCoordinator.createGrade');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -188,6 +193,7 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('events', [eventController::class, 'index'])->name('events');
     Route::get('stipends', [StipendController::class, 'index'])->name('stipends');
     Route::get('documents', [DocumentController::class, 'index'])->name('documents');
+    Route::get('schoolCoordinator', [SchoolCoordinatorController::class, 'index'])->name('schoolCoordinator');
     Route::get('video-resources', [VideoResourceController::class, 'index'])->name('video-resources');
     Route::get('geolocation', [GeolocationController::class, 'index']);
     Route::get('scholar-review', [ScholarController::class, 'index'])->name('review');

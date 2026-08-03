@@ -262,7 +262,6 @@
                         </Popover>
                     </div>
                 </div>
-
             </div>
             <DefaultSelectionTable
                 :items="page.props.scholars.data"
@@ -475,7 +474,7 @@
                                 <template #item="{ item, props }">
                                     <a
                                         v-ripple
-                                        class="flex items-center !text-gray-500"
+                                        class="flex items-center text-gray-500!"
                                         v-bind="props.action"
                                     >
                                         <div>

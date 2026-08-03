@@ -36,377 +36,534 @@
                 />
             </div>
         </div>
-        <div class="flex flex-col gap-4">
-            <div class="flex flex-col lg:flex-row items-start w-full gap-4">
-                <Card class="flex-1 w-full h-full">
-                    <template #content>
-                        <div class="flex justify-between">
-                            <div class="flex flex-col">
-                                <div class="text-sm">Graduated Scholars</div>
-                                <div class="text-4xl font-semibold">
-                                    <CountTo
-                                        :start-val="0"
-                                        :end-val="
-                                            page.props.card?.graduated ?? 0
-                                        "
-                                        v-if="!loading.count"
-                                        :duration="1000"
-                                        class="text-4xl font-semibold"
-                                    />
-                                    <Skeleton
-                                        width="5rem"
-                                        height="2.5rem"
-                                        v-else
-                                    />
-                                </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
+            <Card class="">
+                <template #content>
+                    <div class="flex justify-between">
+                        <div class="flex flex-col">
+                            <div class="text-sm">Graduated Scholars</div>
+                            <div class="text-4xl font-semibold">
+                                <CountTo
+                                    :start-val="0"
+                                    :end-val="page.props.card?.graduated ?? 0"
+                                    v-if="!loading.count"
+                                    :duration="1000"
+                                    class="text-4xl font-semibold"
+                                />
+                                <Skeleton width="5rem" height="2.5rem" v-else />
                             </div>
-                            <Avatar
-                                class="rounded-xl! border border-green-500 shadow shadow-green-300 text-green-600! bg-green-100!"
-                                size="large"
-                            >
-                                <IconSchool size="25" />
-                            </Avatar>
                         </div>
-                    </template>
-                    <template #footer>
-                        <div class="text-sm text-green-600 font-medium">
-                            ↑ 8.2% from last {{ FilterDate.value }}
-                        </div>
-                    </template>
-                </Card>
-                <Card class="flex-1 w-full h-full">
-                    <template #content>
-                        <div class="flex justify-between">
-                            <div class="flex flex-col">
-                                <div class="text-sm">Active Scholars</div>
-                                <div class="text-4xl font-semibold">
-                                    <CountTo
-                                        :start-val="0"
-                                        :end-val="page.props.card?.active ?? 0"
-                                        v-if="!loading.count"
-                                        :duration="1000"
-                                        class="text-4xl font-semibold"
-                                    />
-                                    <Skeleton
-                                        width="5rem"
-                                        height="2.5rem"
-                                        v-else
-                                    />
-                                </div>
+                        <Avatar
+                            class="rounded-xl! border border-green-500 shadow shadow-green-300 text-green-600! bg-green-100!"
+                            size="large"
+                        >
+                            <IconSchool size="25" />
+                        </Avatar>
+                    </div>
+                </template>
+                <template #footer>
+                    <div class="text-sm text-green-600 font-medium">
+                        ↑ 8.2% from last {{ FilterDate.value }}
+                    </div>
+                </template>
+            </Card>
+            <Card class="">
+                <template #content>
+                    <div class="flex justify-between">
+                        <div class="flex flex-col">
+                            <div class="text-sm">Active Scholars</div>
+                            <div class="text-4xl font-semibold">
+                                <CountTo
+                                    :start-val="0"
+                                    :end-val="page.props.card?.active ?? 0"
+                                    v-if="!loading.count"
+                                    :duration="1000"
+                                    class="text-4xl font-semibold"
+                                />
+                                <Skeleton width="5rem" height="2.5rem" v-else />
                             </div>
-                            <Avatar
-                                class="rounded-xl! border! border-blue-500 shadow shadow-blue-300 text-blue-600! bg-blue-100!"
-                                size="large"
-                            >
-                                <IconUser size="25" />
-                            </Avatar>
                         </div>
-                    </template>
-                    <template #footer>
-                        <div class="text-sm text-green-600 font-medium">
-                            ↑ 8.2% from last {{ FilterDate.value }}
-                        </div>
-                    </template>
-                </Card>
-                <Card class="flex-1 w-full h-full">
-                    <template #content>
-                        <div class="flex justify-between">
-                            <div class="flex flex-col">
-                                <div class="text-sm">
-                                    Scholars with Compliance Issues
-                                </div>
-                                <div class="text-4xl font-semibold">
-                                    <CountTo
-                                        :start-val="0"
-                                        :end-val="page.props.card?.issue ?? 0"
-                                        v-if="!loading.count"
-                                        :duration="1000"
-                                        class="text-4xl font-semibold"
-                                    />
-                                    <Skeleton
-                                        width="5rem"
-                                        height="2.5rem"
-                                        v-else
-                                    />
-                                </div>
+                        <Avatar
+                            class="rounded-xl! border! border-blue-500 shadow shadow-blue-300 text-blue-600! bg-blue-100!"
+                            size="large"
+                        >
+                            <IconUser size="25" />
+                        </Avatar>
+                    </div>
+                </template>
+                <template #footer>
+                    <div class="text-sm text-green-600 font-medium">
+                        ↑ 8.2% from last {{ FilterDate.value }}
+                    </div>
+                </template>
+            </Card>
+            <Card class="">
+                <template #content>
+                    <div class="flex justify-between">
+                        <div class="flex flex-col">
+                            <div class="text-sm">
+                                Scholars with Compliance Issues
                             </div>
-                            <Avatar
-                                class="rounded-xl! border border-yellow-500 shadow shadow-yellow-300 text-yellow-600! bg-yellow-100!"
-                                size="large"
-                            >
-                                <IconUserExclamation size="25" />
-                            </Avatar>
-                        </div>
-                    </template>
-                    <template #footer>
-                        <div class="text-sm text-green-600 font-medium">
-                            ↑ 8.2% from last {{ FilterDate.value }}
-                        </div>
-                    </template>
-                </Card>
-                <Card class="flex-1 w-full h-full">
-                    <template #content>
-                        <div class="flex justify-between">
-                            <div class="flex flex-col">
-                                <div class="text-sm">Terminated Scholars</div>
-                                <div class="text-4xl font-semibold">
-                                    <CountTo
-                                        :start-val="0"
-                                        :end-val="page.props.card?.issue ?? 0"
-                                        v-if="!loading.count"
-                                        :duration="1000"
-                                        class="text-4xl font-semibold"
-                                    />
-                                    <Skeleton
-                                        width="5rem"
-                                        height="2.5rem"
-                                        v-else
-                                    />
-                                </div>
+                            <div class="text-4xl font-semibold">
+                                <CountTo
+                                    :start-val="0"
+                                    :end-val="page.props.card?.issue ?? 0"
+                                    v-if="!loading.count"
+                                    :duration="1000"
+                                    class="text-4xl font-semibold"
+                                />
+                                <Skeleton width="5rem" height="2.5rem" v-else />
                             </div>
-                            <Avatar
-                                class="rounded-xl! border border-red-500 shadow shadow-red-300 text-red-600! bg-red-100!"
-                                size="large"
-                            >
-                                <IconUserX size="25" />
-                            </Avatar>
                         </div>
-                    </template>
-                    <template #footer>
-                        <div class="text-sm text-green-600 font-medium">
-                            ↑ 8.2% from last {{ FilterDate.value }}
+                        <Avatar
+                            class="rounded-xl! border border-yellow-500 shadow shadow-yellow-300 text-yellow-600! bg-yellow-100!"
+                            size="large"
+                        >
+                            <IconUserExclamation size="25" />
+                        </Avatar>
+                    </div>
+                </template>
+                <template #footer>
+                    <div class="text-sm text-green-600 font-medium">
+                        ↑ 8.2% from last {{ FilterDate.value }}
+                    </div>
+                </template>
+            </Card>
+            <Card class="">
+                <template #content>
+                    <div class="flex justify-between">
+                        <div class="flex flex-col">
+                            <div class="text-sm">Terminated Scholars</div>
+                            <div class="text-4xl font-semibold">
+                                <CountTo
+                                    :start-val="0"
+                                    :end-val="page.props.card?.issue ?? 0"
+                                    v-if="!loading.count"
+                                    :duration="1000"
+                                    class="text-4xl font-semibold"
+                                />
+                                <Skeleton width="5rem" height="2.5rem" v-else />
+                            </div>
                         </div>
-                    </template>
-                </Card>
-            </div>
-            <div
-                class="flex flex-col lg:flex-row w-full items-start gap-4 lg:h-110"
+                        <Avatar
+                            class="rounded-xl! border border-red-500 shadow shadow-red-300 text-red-600! bg-red-100!"
+                            size="large"
+                        >
+                            <IconUserX size="25" />
+                        </Avatar>
+                    </div>
+                </template>
+                <template #footer>
+                    <div class="text-sm text-green-600 font-medium">
+                        ↑ 8.2% from last {{ FilterDate.value }}
+                    </div>
+                </template>
+            </Card>
+            <Card
+                class="col-span-2"
+                :pt="{
+                    body: '!p-0',
+                    content: 'border-t border-gray-200 ',
+                }"
             >
-                <Card
-                    class="flex-1 w-full h-full"
-                    :pt="{
-                        body: '!p-0',
-                        content: 'border-t border-gray-200 ',
-                    }"
-                >
-                    <template #title>
-                        <div class="flex justify-between">
-                            <div
-                                class="flex flex-1 items-center gap-3 pt-4 px-4"
+                <template #title>
+                    <div class="flex justify-between">
+                        <div class="flex flex-1 items-center gap-3 pt-4 px-4">
+                            <Avatar
+                                class="bg-indigo-100! text-indigo-600! rounded-lg! shadow"
                             >
-                                <Avatar
-                                    class="bg-indigo-100! text-indigo-600! rounded-lg! shadow"
-                                >
-                                    <IconAward :size="20" :stroke="2" />
-                                </Avatar>
-
-                                <div>
-                                    <div class="text-sm font-semibold">
-                                        Scholarship Awards by Year
-                                    </div>
-                                    <div
-                                        class="text-xs text-surface-500 font-normal"
-                                    >
-                                        Annual scholarship awards
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center px-4 pt-3">
-                                <SelectInput
-                                    :disable="
-                                        page.props?.options?.dateRange != null
-                                            ? false
-                                            : true
-                                    "
-                                    v-model="FilterRangeDate.value"
-                                    :options="page.props?.options?.dateRange"
-                                ></SelectInput>
-                            </div>
-                        </div>
-                    </template>
-                    <template #content>
-                        <div class="flex flex-col lg:flex-row py-4 w-full">
-                            <div class="flex-3 flex flex-col">
-                                <div>
-                                    <ApexChart
-                                        type="bar"
-                                        class=""
-                                        :options="apexOptionsTimeline"
-                                        :series="page.props?.timeline.series"
-                                    />
-                                </div>
-
-                                <div class="flex justify-evenly">
-                                    <div class="flex items-center gap-3">
-                                        <Avatar
-                                            class="h-2.5! w-2.5! bg-blue-500!"
-                                            shape="circle"
-                                        />
-                                        <div class="flex flex-col">
-                                            <div
-                                                class="font-medium text-xs text-gray-500"
-                                            >
-                                                MERIT
-                                            </div>
-                                            <div class="text-lg">
-                                                {{
-                                                    page.props.timeline
-                                                        ?.programs[0]?.data ?? 0
-                                                }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-center gap-3">
-                                        <Avatar
-                                            class="h-2.5! w-2.5! bg-green-500!"
-                                            shape="circle"
-                                        />
-                                        <div class="flex flex-col">
-                                            <div
-                                                class="font-medium text-xs text-gray-500"
-                                            >
-                                                RA 7687
-                                            </div>
-                                            <div class="text-lg">
-                                                {{
-                                                    page.props.timeline
-                                                        ?.programs[1]?.data ?? 0
-                                                }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <Avatar
-                                            class="h-2.5! w-2.5! bg-red-500!"
-                                            shape="circle"
-                                        />
-                                        <div class="flex flex-col">
-                                            <div
-                                                class="font-medium text-xs text-gray-500"
-                                            >
-                                                RA 10612
-                                            </div>
-                                            <div class="text-lg">
-                                                {{
-                                                    page.props.timeline
-                                                        ?.programs[2]?.data ?? 0
-                                                }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <Divider
-                                layout="vertical"
-                                class="hidden lg:flex m-0!"
-                            />
-                            <div class="flex-1 flex flex-col gap-3 p-3">
+                                <IconAward :size="20" :stroke="2" />
+                            </Avatar>
+                            <div>
                                 <div class="text-sm font-semibold">
-                                    Program Distribution
+                                    Scholarship Awards by Year
                                 </div>
                                 <div
-                                    class="flex-1 justify-center flex flex-col gap-4"
+                                    class="text-xs text-surface-500 font-normal"
                                 >
-                                    <div class="flex justify-center">
-                                        <ApexChart
-                                            type="donut"
-                                            :options="chartOptionsProgram"
-                                            :series="
-                                                page.props?.timeline
-                                                    ?.programSeries
-                                            "
-                                            class="w-70"
-                                        />
-                                    </div>
-                                </div>
-                                <p class="text-xs text-center text-surface-500">
-                                    Distribution of scholars across each
-                                    scholarship program.
-                                </p>
-                            </div>
-                        </div>
-                    </template>
-                </Card>
-                <Card
-                    class="flex-1 w-full h-full"
-                    :pt="{
-                        body: '!p-0',
-                        content: 'border-t border-gray-200 ',
-                    }"
-                >
-                    <template #title>
-                        <div class="flex justify-between">
-                            <div
-                                class="flex flex-1 items-center gap-3 pt-4 px-4"
-                            >
-                                <Avatar
-                                    class="bg-indigo-100! text-indigo-600! rounded-lg! shadow"
-                                >
-                                    <IconAward :size="20" :stroke="2" />
-                                </Avatar>
-
-                                <div>
-                                    <div class="text-sm font-semibold">
-                                        Active Scholar Timeline
-                                    </div>
-                                    <div class="text-xs text-surface-500">
-                                        Displays scholarship awards over time.
-                                    </div>
+                                    Annual scholarship awards
                                 </div>
                             </div>
-                            <div class="flex items-center px-4 pt-3"></div>
                         </div>
-                    </template>
-                    <template #content>
-                        <div class="flex flex-col lg:flex-row py-4 w-full">
-                            <div class="flex-3 flex flex-col">
+                        <div class="flex items-center px-4 pt-3">
+                            <SelectInput
+                                :disable="
+                                    page.props?.options?.dateRange != null
+                                        ? false
+                                        : true
+                                "
+                                v-model="FilterRangeDate.value"
+                                :options="page.props?.options?.dateRange"
+                            ></SelectInput>
+                        </div>
+                    </div>
+                </template>
+                <template #content>
+                    <div class="flex flex-col lg:flex-row py-4 w-full">
+                        <div class="flex-3 flex flex-col">
+                            <div>
                                 <ApexChart
-                                    type="rangeBar"
-                                    height="350"
-                                    :options="chartOptions"
-                                    :series="series"
+                                    type="bar"
+                                    class=""
+                                    :options="apexOptionsTimeline"
+                                    :series="page.props?.timeline.series"
                                 />
                             </div>
-                            <Divider
-                                layout="vertical"
-                                class="hidden lg:flex m-0!"
-                            />
-                            <div class="flex-1 flex flex-col gap-3 p-3">
-                                <div class="text-sm font-semibold">
-                                    Program Distribution
-                                </div>
-                                <div
-                                    class="flex-1 justify-center flex flex-col gap-4"
-                                >
-                                    <div class="flex justify-center">
-                                        <!-- <ApexChart
-                                            type="donut"
-                                            :options="chartOptionsProgram"
-                                            :series="
-                                                page.props?.timeline
-                                                    ?.programSeries
-                                            "
-                                            class="w-70"
-                                        /> -->
+
+                            <div class="flex justify-evenly">
+                                <div class="flex items-center gap-3">
+                                    <Avatar
+                                        class="h-2.5! w-2.5! bg-blue-500!"
+                                        shape="circle"
+                                    />
+                                    <div class="flex flex-col">
+                                        <div
+                                            class="font-medium text-sm text-gray-500"
+                                        >
+                                            MERIT
+                                        </div>
+                                        <div class="text-lg">
+                                            {{
+                                                page.props.timeline?.programs[0]
+                                                    ?.data ?? 0
+                                            }}
+                                        </div>
                                     </div>
                                 </div>
-                                <p class="text-xs text-center text-surface-500">
-                                    Distribution of scholars across each
-                                    scholarship program.
-                                </p>
+
+                                <div class="flex items-center gap-3">
+                                    <Avatar
+                                        class="h-2.5! w-2.5! bg-green-500!"
+                                        shape="circle"
+                                    />
+                                    <div class="flex flex-col">
+                                        <div
+                                            class="font-medium text-sm text-gray-500"
+                                        >
+                                            RA 7687
+                                        </div>
+                                        <div class="text-lg">
+                                            {{
+                                                page.props.timeline?.programs[1]
+                                                    ?.data ?? 0
+                                            }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <Avatar
+                                        class="h-2.5! w-2.5! bg-red-500!"
+                                        shape="circle"
+                                    />
+                                    <div class="flex flex-col">
+                                        <div
+                                            class="font-medium text-sm text-gray-500"
+                                        >
+                                            RA 10612
+                                        </div>
+                                        <div class="text-lg">
+                                            {{
+                                                page.props.timeline?.programs[2]
+                                                    ?.data ?? 0
+                                            }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </template>
-                </Card>
-            </div>
+                        <Divider
+                            layout="vertical"
+                            class="hidden lg:flex m-0!"
+                        />
+                        <div class="flex-1 flex flex-col gap-3 p-3">
+                            <div class="text-sm font-semibold">
+                                Program Distribution
+                            </div>
+                            <div
+                                class="flex-1 justify-center flex flex-col gap-4"
+                            >
+                                <div class="flex justify-center">
+                                    <ApexChart
+                                        type="donut"
+                                        :options="chartOptionsProgram"
+                                        :series="
+                                            page.props?.timeline?.programSeries
+                                        "
+                                        class="w-70"
+                                    />
+                                </div>
+                            </div>
+                            <p class="text-xs text-center text-surface-500">
+                                Distribution of scholars across each scholarship
+                                program.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+            </Card>
+            <Card
+                class="col-span-2"
+                :pt="{
+                    body: '!p-0',
+                    content: 'border-t border-gray-200 ',
+                }"
+            >
+                <template #title>
+                    <div class="flex justify-between">
+                        <div class="flex flex-1 items-center gap-3 pt-4 px-4">
+                            <Avatar
+                                class="bg-purple-100! text-purple-600! rounded-lg! shadow"
+                            >
+                                <IconRainbow :size="20" :stroke="2" />
+                            </Avatar>
+                            <div>
+                                <div class="text-sm font-semibold">
+                                    Gender Breakdown of Scholars by Region
+                                </div>
+                                <div class="text-xs text-surface-300">
+                                    Comparison of male and female scholars
+                                    across all Philippine regions.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center px-4 pt-3"></div>
+                    </div>
+                </template>
+                <template #content>
+                    <div class="flex flex-col w-full">
+                        <div class="flex gap-3">
+                            <div class="flex-4">
+                                <ApexChart
+                                    type="line"
+                                    height="350"
+                                    :options="chartOptionsSex"
+                                    :series="page.props?.gender?.series"
+                                />
+                            </div>
+                            <div class="flex-1 w-10">
+                                <ApexChart
+                                    type="bar"
+                                    height="350"
+                                    :options="chartOptionsSexBar"
+                                    :series="page.props?.gender?.bar.series"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </Card>
+            <Card
+                class="col-span-2"
+                :pt="{
+                    body: '!p-0',
+                    content: 'border-t border-gray-200 ',
+                }"
+            >
+                <template #title>
+                    <div class="flex justify-between">
+                        <div class="flex flex-1 items-center gap-3 pt-4 px-4">
+                            <Avatar
+                                class="bg-red-100! text-red-600! rounded-lg! shadow"
+                            >
+                                <IconBuilding :size="20" :stroke="2" />
+                            </Avatar>
+                            <div>
+                                <div class="text-sm font-semibold">
+                                    School Scholar Distribution
+                                </div>
+                                <div class="text-xs text-surface-300">
+                                    Total number of scholars enrolled in each
+                                    school.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center px-4 pt-3">
+                            <Button
+                                label="Details"
+                                size="small"
+                                severity="secondary"
+                                @click="toggleDialogs('schoolTable')"
+                            />
+                        </div>
+                    </div>
+                </template>
+                <template #content>
+                    <div class="px-4">
+                        <ApexChart
+                            type="treemap"
+                            height="350"
+                            :options="chartOptionsSchoolTreemap"
+                            :series="page.props.school.series"
+                        />
+                    </div>
+                </template>
+            </Card>
+            <Card
+                class="col-span-2"
+                :pt="{
+                    body: '!p-0',
+                    content: 'border-t border-gray-200 ',
+                }"
+            >
+                <template #title>
+                    <div class="flex justify-between">
+                        <div class="flex flex-1 items-center gap-3 pt-4 px-4">
+                            <Avatar
+                                class="bg-sky-100! text-sky-600! rounded-lg! shadow"
+                            >
+                                <IconBook2 :size="20" :stroke="2" />
+                            </Avatar>
+                            <div>
+                                <div class="text-sm font-semibold">
+                                    School Course Distribution
+                                </div>
+                                <div class="text-xs text-surface-300">
+                                    Total number of scholars enrolled in each
+                                    course.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center px-4 pt-3">
+                            <Button
+                                label="Details"
+                                size="small"
+                                severity="secondary"
+                                @click="toggleDialogs('courseTable')"
+                            />
+                        </div>
+                    </div>
+                </template>
+                <template #content>
+                    <div class="px-4">
+                        <ApexChart
+                            type="treemap"
+                            height="350"
+                            :options="chartOptionsCourseTreemap"
+                            :series="page.props.course.series"
+                        />
+                    </div>
+                </template>
+            </Card>
         </div>
     </div>
+    <Dialog
+        v-model:visible="dialogDetails.dialog"
+        modal
+        style="width: 70rem"
+        class="m-2"
+    >
+        <template #header>
+            <div
+                class="flex items-center gap-2"
+                v-if="dialogDetails.data == 'schoolTable'"
+            >
+                <Avatar>
+                    <IconTable />
+                </Avatar>
+                <div class="flex flex-col">
+                    <div class="text-sm font-medium">
+                        School Scholar Distribution
+                    </div>
+                    <div class="text-xs">
+                        A summary of scholar distribution by school campus
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2" v-else>
+                <Avatar>
+                    <IconTable />
+                </Avatar>
+                <div class="flex flex-col">
+                    <div class="text-sm font-medium">
+                        Course Scholar Distribution
+                    </div>
+                    <div class="text-xs">
+                        A summary of scholar distribution by Course
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template #default>
+            <DataTable
+                :value="
+                    dialogDetails.data == 'schoolTable'
+                        ? page.props?.school?.table
+                        : page.props?.course?.table
+                "
+                stripedRows
+                tableStyle="min-width: 50rem"
+                class="p-datatable-sm"
+            >
+                <Column field="name">
+                    <template #header>
+                        <div class="text-sm w-full text-left font-medium">
+                            School Campus
+                        </div>
+                    </template>
+                    <template #body="{ data }">
+                        <div class="flex flex-col">
+                            <span class="text-xs text-surface-500">
+                                {{ data.region }}
+                            </span>
+                            <span
+                                class="font-medium text-sm text-surface-900 dark:text-surface-0"
+                            >
+                                {{ data.name }}
+                            </span>
+                        </div>
+                    </template>
+                </Column>
+
+                <Column field="percent" class="w-50">
+                    <template #header>
+                        <div class="text-sm w-full text-left font-medium">
+                            Distribution
+                        </div>
+                    </template>
+                    <template #body="{ data }">
+                        <div class="flex items-center gap-1 w-full">
+                            <ProgressBar
+                                :value="data.percent"
+                                :showValue="false"
+                                class="flex-1 h-2"
+                                :pt="{
+                                    root: 'h-1.5! rounded-full!',
+                                    value: 'bg-blue-600! rounded-full!',
+                                }"
+                            />
+                            <span
+                                class="min-w-14 text-right text-sm text-primary-600"
+                            >
+                                {{ data.percent.toFixed(1) }}%
+                            </span>
+                        </div>
+                    </template>
+                </Column>
+
+                <Column field="total" class="w-30">
+                    <template #header>
+                        <div class="text-sm w-full text-center font-medium">
+                            Scholars
+                        </div>
+                    </template>
+                    <template #body="{ data }">
+                        <div class="text-center w-full font-semibold">
+                            {{ data.total.toLocaleString() }}
+                        </div>
+                    </template>
+                </Column>
+            </DataTable>
+        </template>
+    </Dialog>
 </template>
 <script setup>
 import {
     IconAward,
+    IconBook2,
+    IconBuilding,
+    IconRainbow,
     IconSchool,
+    IconTable,
     IconUser,
     IconUserExclamation,
     IconUserX,
@@ -417,7 +574,10 @@ import { CountTo } from "vue3-count-to";
 import ApexChart from "vue3-apexcharts";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 const page = usePage();
-
+const dialogDetails = ref({
+    dialog: false,
+    data: "schoolTable",
+});
 const FilterDate = ref({
     value: "all",
     options: [
@@ -426,6 +586,11 @@ const FilterDate = ref({
         { label: "This Month", value: "month" },
     ],
 });
+
+const value = ref([
+    { label: "Apps", value: 100, color: "var(--p-violet-500)" },
+    { label: "Messages", value: 16, color: "var(--p-emerald-500)" },
+]);
 
 const FilterRangeDate = ref({
     value: page.props?.options?.dateRange?.at(-1) ?? null,
@@ -470,55 +635,364 @@ const series = ref([
     },
 ]);
 
-const chartOptions = ref({
+const chartOptionsSexBar = ref({
     chart: {
-        type: "rangeBar",
-        height: 350,
-        zoom: {
-            enabled: false,
-        },
+        type: "bar",
+
         toolbar: {
             show: false,
         },
+        animations: {
+            enabled: true,
+            easing: "easeout",
+            speed: 700,
+        },
     },
-
-    colors: ["#EC7D31", "#36BDCB"],
+    colors: [
+        "#EC4899", // Female
+        "#3B82F6", // Male
+    ],
 
     plotOptions: {
         bar: {
-            horizontal: true,
-            isDumbbell: true,
-            dumbbellColors: [["#EC7D31", "#36BDCB"]],
+            distributed: true,
+            borderRadius: 10,
+            borderRadiusApplication: "end",
+            columnWidth: "42%",
+            dataLabels: {
+                position: "center",
+            },
+        },
+    },
+    fill: {
+        type: "gradient",
+        gradient: {
+            shade: "light",
+            type: "vertical",
+            shadeIntensity: 0.2,
+            opacityFrom: 1,
+            opacityTo: 0.85,
+            stops: [0, 100],
+        },
+    },
+    dataLabels: {
+        enabled: true,
+        style: {
+            fontSize: "14px",
+            fontWeight: "bold",
         },
     },
 
     legend: {
-        show: true,
-        showForSingleSeries: true,
-        position: "top",
-        horizontalAlign: "left",
-        customLegendItems: ["Female", "Male"],
+        show: false,
     },
 
-    fill: {
-        type: "gradient",
-        gradient: {
-            gradientToColors: ["#36BDCB"],
-            inverseColors: false,
-            stops: [0, 100],
+    xaxis: {
+        categories: ["Female", "Male"],
+
+        axisBorder: {
+            show: false, // remove bottom line
+        },
+
+        axisTicks: {
+            show: false,
+        },
+
+        labels: {
+            style: {
+                fontSize: "14px",
+                fontWeight: 600,
+                colors: ["#374151", "#374151"],
+            },
+        },
+    },
+    yaxis: {
+        show: false,
+    },
+
+    grid: {
+        borderColor: "#E5E7EB",
+        show: false,
+        strokeDashArray: 4,
+    },
+
+    tooltip: {
+        show: false,
+    },
+});
+
+const chartOptionsCourseTreemap = ref({
+    chart: {
+        type: "treemap",
+        height: 400,
+        toolbar: {
+            show: false,
+        },
+        fontFamily: "Inter, sans-serif",
+        animations: {
+            enabled: true,
+            easing: "easeinout",
+            speed: 700,
+        },
+    },
+
+    legend: {
+        show: false,
+    },
+
+    plotOptions: {
+        treemap: {
+            distributed: true,
+            enableShades: true,
+            shadeIntensity: 0.35,
+            reverseNegativeShade: false,
+            borderRadius: 8,
+        },
+    },
+
+    colors: [
+        "#2563EB",
+        "#3B82F6",
+        "#60A5FA",
+        "#93C5FD",
+        "#06B6D4",
+        "#0EA5E9",
+        "#14B8A6",
+        "#10B981",
+        "#84CC16",
+        "#F59E0B",
+    ],
+
+    dataLabels: {
+        enabled: true,
+        style: {
+            fontSize: "12px",
+            fontWeight: 500,
+        },
+        formatter(text, opts) {
+            const value = opts.value;
+
+            const total = page.props?.school?.total ?? 0;
+
+            const percent =
+                total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
+
+            return [text, `${value.toLocaleString()} (${percent}%)`];
+        },
+        offsetY: -2,
+    },
+
+    tooltip: {
+        theme: "light",
+        y: {
+            formatter: (value) => `${value.toLocaleString()} scholars`,
+        },
+    },
+
+    states: {
+        hover: {
+            filter: {
+                type: "lighten",
+                value: 0.15,
+            },
         },
     },
 
     grid: {
-        xaxis: {
-            lines: {
-                show: true,
+        show: false,
+    },
+});
+
+const chartOptionsSchoolTreemap = ref({
+    chart: {
+        type: "treemap",
+        height: 400,
+        toolbar: {
+            show: false,
+        },
+        fontFamily: "Inter, sans-serif",
+        animations: {
+            enabled: true,
+            easing: "easeinout",
+            speed: 700,
+        },
+    },
+
+    legend: {
+        show: false,
+    },
+
+    plotOptions: {
+        treemap: {
+            distributed: true,
+            enableShades: true,
+            shadeIntensity: 0.35,
+            reverseNegativeShade: false,
+            borderRadius: 8,
+        },
+    },
+
+    colors: [
+        "#2563EB",
+        "#3B82F6",
+        "#60A5FA",
+        "#93C5FD",
+        "#06B6D4",
+        "#0EA5E9",
+        "#14B8A6",
+        "#10B981",
+        "#84CC16",
+        "#F59E0B",
+    ],
+
+    dataLabels: {
+        enabled: true,
+        style: {
+            fontSize: "12px",
+            fontWeight: 500,
+        },
+        formatter(text, opts) {
+            const value = opts.value;
+
+            const total = page.props?.school?.total ?? 0;
+
+            const percent =
+                total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
+
+            return [text, `${value.toLocaleString()} (${percent}%)`];
+        },
+        offsetY: -2,
+    },
+
+    tooltip: {
+        theme: "light",
+        y: {
+            formatter: (value) => `${value.toLocaleString()} scholars`,
+        },
+    },
+
+    states: {
+        hover: {
+            filter: {
+                type: "lighten",
+                value: 0.15,
             },
         },
-        yaxis: {
-            lines: {
-                show: false,
+    },
+
+    grid: {
+        show: false,
+    },
+});
+
+const chartOptionsSex = ref({
+    chart: {
+        type: "line",
+        height: 420,
+        toolbar: {
+            show: false,
+        },
+        zoom: {
+            enabled: false,
+        },
+        animations: {
+            enabled: true,
+            easing: "easeinout",
+            speed: 700,
+        },
+    },
+    colors: [
+        "#EC4899", // Female - Pink
+        "#3B82F6", // Male - Blue
+    ],
+    plotOptions: {
+        line: {
+            isSlopeChart: true,
+        },
+    },
+    stroke: {
+        curve: "smooth",
+        width: [4, 4],
+        dashArray: [0, 0],
+    },
+    markers: {
+        size: 7,
+        strokeWidth: 3,
+        hover: {
+            size: 10,
+        },
+    },
+
+    dataLabels: {
+        enabled: true,
+        offsetY: -8,
+        style: {
+            fontSize: "11px",
+            fontWeight: 600,
+        },
+        background: {
+            enabled: true,
+            borderRadius: 8,
+            opacity: 0.95,
+            padding: 8,
+        },
+        formatter(value, opts) {
+            return value;
+        },
+    },
+
+    legend: {
+        show: false,
+        position: "top",
+        horizontalAlign: "left",
+        fontSize: "14px",
+        fontWeight: 600,
+        markers: {
+            radius: 12,
+        },
+    },
+
+    xaxis: {
+        position: "bottom",
+        labels: {
+            rotate: -45,
+            trim: false,
+            style: {
+                fontSize: "8px",
+                fontWeight: 500,
             },
+        },
+        axisBorder: {
+            show: false,
+        },
+        axisTicks: {
+            show: false,
+        },
+    },
+
+    yaxis: {
+        min: 0,
+        forceNiceScale: true,
+        labels: {
+            formatter: (value) => value.toLocaleString(),
+        },
+    },
+
+    grid: {
+        borderColor: "#E5E7EB",
+        strokeDashArray: 4,
+        padding: {
+            left: 10,
+            right: 10,
+        },
+    },
+
+    tooltip: {
+        shared: true,
+        intersect: false,
+        theme: "light",
+        y: {
+            formatter: (value) => `${value} scholars`,
         },
     },
 });
@@ -664,6 +1138,11 @@ const apexOptionsTimeline = computed(() => ({
         },
     ],
 }));
+
+const toggleDialogs = (tab) => {
+    dialogDetails.value.dialog = true;
+    dialogDetails.value.data = tab;
+};
 
 watch(
     () => FilterRangeDate.value.value,
