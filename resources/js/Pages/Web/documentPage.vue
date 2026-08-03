@@ -352,19 +352,18 @@ const targets = computed(() => {
         return [{ target_type: "all", target_id: null }];
     }
 
+    const dimensionTargets = (type, values) =>
+        values.length
+            ? values.map((item) => ({
+                  target_type: type,
+                  target_id: item.id,
+              }))
+            : [{ target_type: type, target_id: "all" }];
+
     return [
-        ...documentForm.regions.map((item) => ({
-            target_type: "region",
-            target_id: item.id,
-        })),
-        ...documentForm.scholarships.map((item) => ({
-            target_type: "scholarship_program",
-            target_id: item.id,
-        })),
-        ...documentForm.programs.map((item) => ({
-            target_type: "program",
-            target_id: item.id,
-        })),
+        ...dimensionTargets("region", documentForm.regions),
+        ...dimensionTargets("scholarship_program", documentForm.scholarships),
+        ...dimensionTargets("program", documentForm.programs),
     ];
 });
 
@@ -444,6 +443,7 @@ const openDocumentForm = (row = null) => {
 const mapTargets = (row, type, options) => {
     const targetIds = (row.targets ?? [])
         .filter((target) => target.target_type === type)
+        .filter((target) => target.target_id !== "all")
         .map((target) => String(target.target_id));
 
     return options.filter((option) => targetIds.includes(String(option.id)));
@@ -567,6 +567,13 @@ const deleteCategory = (row) => {
 
 const targetLabel = (target) => {
     if (target.target_type === "all") return "All";
+    if (target.target_id === "all") {
+        return {
+            region: "All Regions",
+            scholarship_program: "All Scholarship Programs",
+            program: "All Programs",
+        }[target.target_type] ?? "All";
+    }
 
     const source = {
         region: page.props.regionOptions,

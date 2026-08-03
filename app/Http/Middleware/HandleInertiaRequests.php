@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -54,9 +55,10 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             'user' => fn() => tap(Auth::user()?->load(['role', 'profile', 'profile.agency']), function ($user) {
                 if ($user && $user->profile && $user->profile->avatar) {
-                    $user->profile->avatar_url = asset(
-                        'storage/avatars/' . $user->id . '/' . $user->profile->avatar
-                    );
+                    $avatarPath = 'avatars/' . $user->id . '/' . $user->profile->avatar;
+                    $user->profile->avatar_url = Storage::disk('public')->exists($avatarPath)
+                        ? asset('storage/' . $avatarPath)
+                        : null;
                 }
             }),
             'notif' => fn() => auth('web')

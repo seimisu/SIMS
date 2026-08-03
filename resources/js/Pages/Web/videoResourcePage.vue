@@ -247,19 +247,18 @@ const targets = computed(() => {
         return [{ target_type: "all", target_id: null }];
     }
 
+    const dimensionTargets = (type, values) =>
+        values.length
+            ? values.map((item) => ({
+                  target_type: type,
+                  target_id: item.id,
+              }))
+            : [{ target_type: type, target_id: "all" }];
+
     return [
-        ...resourceForm.regions.map((item) => ({
-            target_type: "region",
-            target_id: item.id,
-        })),
-        ...resourceForm.scholarships.map((item) => ({
-            target_type: "scholarship_program",
-            target_id: item.id,
-        })),
-        ...resourceForm.programs.map((item) => ({
-            target_type: "program",
-            target_id: item.id,
-        })),
+        ...dimensionTargets("region", resourceForm.regions),
+        ...dimensionTargets("scholarship_program", resourceForm.scholarships),
+        ...dimensionTargets("program", resourceForm.programs),
     ];
 });
 
@@ -327,6 +326,7 @@ const handleThumbnail = (event) => {
 const mapTargets = (row, type, options) => {
     const targetIds = (row.targets ?? [])
         .filter((target) => target.target_type === type)
+        .filter((target) => target.target_id !== "all")
         .map((target) => String(target.target_id));
 
     return options.filter((option) => targetIds.includes(String(option.id)));
@@ -354,11 +354,14 @@ const saveResource = () => {
     };
 
     if (resourceForm.id) {
-        resourceForm.transform(() => payload).put(route("video-resources.update", resourceForm.id), options);
+        router.post(route("video-resources.update", resourceForm.id), {
+            ...payload,
+            _method: "put",
+        }, options);
         return;
     }
 
-    resourceForm.transform(() => payload).post(route("video-resources.store"), options);
+    router.post(route("video-resources.store"), payload, options);
 };
 
 const deleteResource = (row) => {
@@ -371,6 +374,13 @@ const deleteResource = (row) => {
 
 const targetLabel = (target) => {
     if (target.target_type === "all") return "All";
+    if (target.target_id === "all") {
+        return {
+            region: "All Regions",
+            scholarship_program: "All Scholarship Programs",
+            program: "All Programs",
+        }[target.target_type] ?? "All";
+    }
 
     const source = {
         region: page.props.regionOptions,

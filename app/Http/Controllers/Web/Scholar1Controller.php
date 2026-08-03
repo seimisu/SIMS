@@ -894,6 +894,10 @@ class Scholar1Controller extends Controller
     public function update(string $id, string $type, Request $request)
     {
         try {
+            if (! app(SystemPermissions::class)->can(Auth::user(), 'scholars.update')) {
+                abort(403, 'Unauthorized');
+            }
+
             $decodedId = Hashids::decode($id)[0] ?? 0;
             $scholar = Scholars::findOrFail($decodedId);
 
