@@ -188,7 +188,11 @@ const openSubmission = (row) => {
     const dialog = activeTab.value;
     const dialogData = dialog === "history"
         ? { submission: row.submission_id, dialog }
-        : { scholar: row.scholar_id, dialog };
+        : {
+              scholar: row.scholar_id,
+              dialog,
+              ...(dialog === "grades" ? { term: row.id } : {}),
+          };
 
     if (dialog === "history" && !dialogData.submission) return;
 

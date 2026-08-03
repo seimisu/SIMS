@@ -478,10 +478,33 @@ class ScholarSubmissionController extends Controller
             return collect();
         }
 
-        return ScholarTerm::where('scholar_id', $scholar->id)
+        $submittedTerms = ScholarTerm::where('scholar_id', $scholar->id)
             ->where('verification_status', 'submitted')
             ->latest('created_at')
-            ->get()
+            ->get();
+
+        $selectedTermId = (int) $request->input('term');
+        $currentTerm = $selectedTermId
+            ? $submittedTerms->firstWhere('id', $selectedTermId)
+            : $submittedTerms->first();
+
+        if ($currentTerm) {
+            $submittedTerms = collect([$currentTerm]);
+        }
+
+        $previousTerm = $currentTerm
+            ? ScholarTerm::where('scholar_id', $scholar->id)
+                ->whereKeyNot($currentTerm->id)
+                ->latest('created_at')
+                ->latest('id')
+                ->first()
+            : null;
+
+        return $submittedTerms
+            ->when(
+                $previousTerm && ! $submittedTerms->contains('id', $previousTerm->id),
+                fn ($terms) => $terms->push($previousTerm)
+            )
             ->map(fn ($term) => [
                 'id' => $term->id,
                 'term' => $term->term?->name,
