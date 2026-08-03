@@ -94,14 +94,14 @@
                     </Column>
                     <Column header="No. of Scholars">
                         <template #body="props">
-                            <div class="text-center font-semibold text-slate-700">
-                                {{ props.data.scholars_count ?? 0 }}
+                            <div class="text-left font-semibold text-slate-700">
+                                {{ props.data.scholars_count ?? 0 }}/{{ props.data.scholars_limit ?? 300 }}
                             </div>
                         </template>
                     </Column>
                     <Column header="Status">
                         <template #body="props">
-                            <div class="flex justify-center">
+                            <div class="flex justify-start">
                                 <div
                                     :class="[
                                         batchStatusMeta(props.data.status).class,
@@ -118,7 +118,7 @@
                     </Column>
                     <Column header="Actions">
                         <template #body="props">
-                            <div class="flex justify-center">
+                            <div class="flex justify-start">
                                 <Button
                                     text
                                     rounded

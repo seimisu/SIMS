@@ -486,12 +486,15 @@
                                         :icon="TablerIcons.IconUserEdit"
                                         label="Edit Details"
                                         size="small"
-                                        v-if="!editBtn.info"
+                                        v-if="canUpdateScholars && !editBtn.info"
                                         @click="EditMode"
                                         raised
                                         class-name="!rounded-xl !px-5"
                                     />
-                                    <div class="flex items-center gap-2" v-else>
+                                    <div
+                                        class="flex items-center gap-2"
+                                        v-else-if="canUpdateScholars && editBtn.info"
+                                    >
                                         <DefaultButton
                                             :icon="TablerIcons.IconUserCancel"
                                             label="Cancel Edit"
@@ -2136,6 +2139,9 @@ import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
 
 const toast = useToast();
 const page = usePage();
+const canUpdateScholars = computed(() =>
+    (page.props?.permissions ?? []).includes("scholars.update"),
+);
 const opTransfer = ref(null);
 const opHistory = ref([]);
 const transferTab = ref("school");
@@ -2333,6 +2339,8 @@ const validateGradeRequest = (data) => {
 };
 
 const storePersonalInfo = async () => {
+    if (!canUpdateScholars.value) return;
+
     loading.value.storePersonalInfo = true;
 
     personalInfo.post(
@@ -2471,6 +2479,8 @@ const transferSubmit = () => {
 };
 
 const EditMode = () => {
+    if (!canUpdateScholars.value) return;
+
     editBtn.value.info = true;
 };
 

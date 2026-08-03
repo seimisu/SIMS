@@ -482,7 +482,10 @@
                                                     </div>
                                                 </template>
                                             </Button>
-                                            <Popover ref="opApprove">
+                                            <Popover
+                                                ref="opApprove"
+                                                :dismissable="false"
+                                            >
                                                 <div
                                                     class="w-[26rem] p-1 flex flex-col gap-4"
                                                 >
@@ -527,12 +530,7 @@
 
                                                         <SelectInput
                                                             v-model="
-                                                                details.find(
-                                                                    (item) =>
-                                                                        item.status ===
-                                                                        'submitted',
-                                                                )
-                                                                    .scholarshipStatus
+                                                                selectedScholarshipStatus
                                                             "
                                                             :options="
                                                                 page.props
@@ -728,7 +726,7 @@ const opApprove = ref(null);
 const details = ref(null);
 const remarks = ref(null);
 const selectedFile = ref(null);
-const standing = ref(null);
+const selectedScholarshipStatus = ref(null);
 
 const selectFile = (file) => {
     selectedFile.value = file;
@@ -737,6 +735,7 @@ const toggleOpReject = (event) => {
     opReject.value.toggle(event);
 };
 const toggleOpAccept = (event) => {
+    selectedScholarshipStatus.value = null;
     opApprove.value.toggle(event);
 };
 
@@ -745,7 +744,7 @@ const approveRequest = (decision) => {
         (item) => item.status === "submitted",
     );
 
-    if (decision === "accept" && !submittedTerm?.scholarshipStatus) {
+    if (decision === "accept" && !selectedScholarshipStatus.value) {
         toast.add({
             severity: "warn",
             summary: "Scholarship Status Required",
@@ -767,7 +766,17 @@ const approveRequest = (decision) => {
     router.post(
         `/scholar-grade-request/${decision}`,
         {
-            data: details.value.filter((item) => item.status === "submitted"),
+            data: details.value
+                .filter((item) => item.status === "submitted")
+                .map((item) => ({
+                    ...item,
+                    ...(decision === "accept"
+                        ? {
+                              scholarshipStatus:
+                                  selectedScholarshipStatus.value,
+                          }
+                        : {}),
+                })),
         },
         {
             onBefore: () => {

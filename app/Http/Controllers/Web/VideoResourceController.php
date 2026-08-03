@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\ListPrograms;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
 use App\Models\VideoResource;
@@ -50,10 +49,18 @@ class VideoResourceController extends Controller
                 ])
                 ->values(),
             'scholarshipOptions' => ListReferences::where('is_active', true)
-                ->orderBy('name')
+                ->where('is_delete', false)
+                ->where('classification', 'Scholarship')
+                ->where('type', 'Category')
+                ->whereIn('name', ['RA 7687', 'MERIT', 'RA 10612'])
+                ->orderByRaw("CASE name WHEN 'RA 7687' THEN 1 WHEN 'MERIT' THEN 2 WHEN 'RA 10612' THEN 3 ELSE 4 END")
                 ->get(['id', 'name']),
-            'programOptions' => ListPrograms::where('is_active', true)
-                ->orderBy('name')
+            'programOptions' => ListReferences::where('is_active', true)
+                ->where('is_delete', false)
+                ->where('classification', 'Type')
+                ->where('type', 'Category')
+                ->whereIn('name', ['Undergraduate', 'JLSS'])
+                ->orderByRaw("CASE name WHEN 'Undergraduate' THEN 1 WHEN 'JLSS' THEN 2 ELSE 3 END")
                 ->get(['id', 'name']),
         ]);
     }
@@ -135,14 +142,25 @@ class VideoResourceController extends Controller
             ->where(function ($query) use ($request) {
                 $query->whereHas('targets', fn ($target) => $target->where('target_type', 'all'));
 
-                foreach (['region', 'scholarship_program', 'program', 'school'] as $type) {
-                    if ($request->filled($type)) {
-                        $query->orWhereHas('targets', function ($target) use ($type, $request) {
-                            $target->where('target_type', $type)
-                                ->where('target_id', (string) $request->input($type));
+                $query->orWhere(function ($scoped) use ($request) {
+                    foreach (['region', 'scholarship_program', 'program', 'school'] as $type) {
+                        $value = $request->input($type);
+
+                        $scoped->where(function ($dimension) use ($type, $value) {
+                            $dimension->whereDoesntHave('targets', fn ($target) => $target->where('target_type', $type))
+                                ->orWhereHas('targets', function ($target) use ($type, $value) {
+                                    $target->where('target_type', $type)
+                                        ->where(function ($target) use ($value) {
+                                            $target->where('target_id', 'all');
+
+                                            if (filled($value)) {
+                                                $target->orWhere('target_id', (string) $value);
+                                            }
+                                        });
+                                });
                         });
                     }
-                }
+                });
             })
             ->latest('published_at')
             ->get()

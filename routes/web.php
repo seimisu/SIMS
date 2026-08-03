@@ -41,6 +41,7 @@ Route::get('/', function () {
 
 Route::get('api/documents', [DocumentController::class, 'publicIndex'])->name('documents.public');
 Route::get('api/video-resources', [VideoResourceController::class, 'publicIndex'])->name('video-resources.public');
+Route::get('documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
 Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
 
 Route::middleware('guest')->group(function () {

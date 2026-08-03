@@ -39,6 +39,8 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class StipendController extends Controller
 {
+    private const BATCH_SCHOLAR_LIMIT = 300;
+
     private function permissions(): SystemPermissions
     {
         return app(SystemPermissions::class);
@@ -740,8 +742,17 @@ class StipendController extends Controller
             ->when($termId, fn($query) => $query->where('term_id', $termId), function ($query) use ($termName) {
                 $query->whereRaw('LOWER(academic_term) = ?', [Str::lower($termName)]);
             })
+            ->whereRaw(
+                '(SELECT COUNT(*) FROM batch_recipients WHERE batch_recipients.batch_id = batches.id) < ?',
+                [self::BATCH_SCHOLAR_LIMIT]
+            )
             ->orderByDesc('created_at')
             ->first();
+    }
+
+    private function activeRecipientCount(Batches $batch): int
+    {
+        return $batch->recipients()->count();
     }
 
     private function createAutoBatch(
@@ -1027,6 +1038,7 @@ class StipendController extends Controller
                     'term'          => $q->academic_term,
                     'sy'            => $q->school_year,
                     'scholars_count' => $q->scholars_count,
+                    'scholars_limit' => self::BATCH_SCHOLAR_LIMIT,
                     'user'          => $q->latestLog?->action_by,
                     'created_at'    => $q->latestLog?->created_at
                         ? Carbon::parse($q->latestLog->created_at)->format('M d, Y | h:i a')
@@ -1416,6 +1428,11 @@ class StipendController extends Controller
                 'moved_notice_cleared_at',
             ])
             ->where('batch_id', $batch->id)
+            ->when($this->permissions()->shouldScopeToRegion(Auth::user()), function ($query) {
+                $query->whereHas('scholar.schoolInfo.campus', function ($campus) {
+                    $campus->where('agency_id', Auth::user()?->profile?->agency_id);
+                });
+            })
             ->orderBy('id')
             ->get();
 
@@ -1741,12 +1758,23 @@ class StipendController extends Controller
         $monthlyLiving = $allowanceDefaults['monthly_living'] ?? 0;
         $addedCount = 0;
         $attachedCount = 0;
+        $attachedScholarIds = [];
+        $remainingSlots = max(0, self::BATCH_SCHOLAR_LIMIT - $this->activeRecipientCount($batch));
 
         foreach ($scholarIds as $scholarId) {
             $scholar = $scholars->get($scholarId);
 
             if (!$scholar || $sameTermRecipientScholarIds->has($scholar->id)) {
                 continue;
+            }
+
+            if (
+                $remainingSlots <= 0
+                && ! BatchRecipients::where('batch_id', $batch->id)
+                    ->where('scholar_id', $scholar->id)
+                    ->exists()
+            ) {
+                break;
             }
 
             $standing = $standingsByScholar->get($scholar->id);
@@ -1769,6 +1797,7 @@ class StipendController extends Controller
 
             if ($recipient->wasRecentlyCreated) {
                 $addedCount++;
+                $remainingSlots--;
 
                 foreach (range(1, 5) as $month) {
                     $recipient->stipends()->create([
@@ -1794,10 +1823,11 @@ class StipendController extends Controller
             }
 
             $attachedCount++;
+            $attachedScholarIds[] = $scholar->id;
             $this->updateScholarTermPayrollStatus($batch, $scholar->id, $latestStatus);
         }
 
-        return ['added' => $addedCount, 'attached' => $attachedCount];
+        return ['added' => $addedCount, 'attached' => $attachedCount, 'scholar_ids' => $attachedScholarIds];
     }
 
     public function savePayroll(Request $request, string $id): RedirectResponse

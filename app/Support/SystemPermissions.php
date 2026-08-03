@@ -59,7 +59,6 @@ class SystemPermissions
             'dashboard.view',
             'schools.view',
             'scholars.view',
-            'scholars.update',
             'scholars.review',
             'profile-requests.view',
             'profile-requests.approve',
@@ -83,7 +82,6 @@ class SystemPermissions
             'dashboard.view',
             'schools.view',
             'scholars.view',
-            'scholars.update',
             'scholars.review',
             'profile-requests.view',
             'profile-requests.approve',
@@ -384,13 +382,17 @@ class SystemPermissions
     public function permissionForRoute(?string $routeName): ?string
     {
         if ($routeName && $this->hasPermissionRouteTables()) {
-            return ListPermissionRoute::query()
+            $permission = ListPermissionRoute::query()
                 ->where('route_name', $routeName)
                 ->whereHas('permission', fn ($query) => $query->where('is_active', true))
                 ->with('permission:id,name')
                 ->first()
                 ?->permission
                 ?->name;
+
+            if ($permission) {
+                return $permission;
+            }
         }
 
         return $routeName ? (self::ROUTE_PERMISSIONS[$routeName] ?? null) : null;

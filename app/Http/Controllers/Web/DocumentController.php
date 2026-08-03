@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\DocumentCategory;
-use App\Models\ListPrograms;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
 use Illuminate\Http\Request;
@@ -56,10 +55,18 @@ class DocumentController extends Controller
                 ])
                 ->values(),
             'scholarshipOptions' => ListReferences::where('is_active', true)
-                ->orderBy('name')
+                ->where('is_delete', false)
+                ->where('classification', 'Scholarship')
+                ->where('type', 'Category')
+                ->whereIn('name', ['RA 7687', 'MERIT', 'RA 10612'])
+                ->orderByRaw("CASE name WHEN 'RA 7687' THEN 1 WHEN 'MERIT' THEN 2 WHEN 'RA 10612' THEN 3 ELSE 4 END")
                 ->get(['id', 'name']),
-            'programOptions' => ListPrograms::where('is_active', true)
-                ->orderBy('name')
+            'programOptions' => ListReferences::where('is_active', true)
+                ->where('is_delete', false)
+                ->where('classification', 'Type')
+                ->where('type', 'Category')
+                ->whereIn('name', ['Undergraduate', 'JLSS'])
+                ->orderByRaw("CASE name WHEN 'Undergraduate' THEN 1 WHEN 'JLSS' THEN 2 ELSE 3 END")
                 ->get(['id', 'name']),
         ]);
     }
@@ -202,14 +209,25 @@ class DocumentController extends Controller
             ->where(function ($query) use ($request) {
                 $query->whereHas('targets', fn ($target) => $target->where('target_type', 'all'));
 
-                foreach (['region', 'scholarship_program', 'program', 'school'] as $type) {
-                    if ($request->filled($type)) {
-                        $query->orWhereHas('targets', function ($target) use ($type, $request) {
-                            $target->where('target_type', $type)
-                                ->where('target_id', (string) $request->input($type));
+                $query->orWhere(function ($scoped) use ($request) {
+                    foreach (['region', 'scholarship_program', 'program', 'school'] as $type) {
+                        $value = $request->input($type);
+
+                        $scoped->where(function ($dimension) use ($type, $value) {
+                            $dimension->whereDoesntHave('targets', fn ($target) => $target->where('target_type', $type))
+                                ->orWhereHas('targets', function ($target) use ($type, $value) {
+                                    $target->where('target_type', $type)
+                                        ->where(function ($target) use ($value) {
+                                            $target->where('target_id', 'all');
+
+                                            if (filled($value)) {
+                                                $target->orWhere('target_id', (string) $value);
+                                            }
+                                        });
+                                });
                         });
                     }
-                }
+                });
             })
             ->latest('published_at')
             ->get()
@@ -222,6 +240,7 @@ class DocumentController extends Controller
                 'mime_type' => $document->mime_type,
                 'file_size' => $document->file_size,
                 'published_at' => $document->published_at?->toDateTimeString(),
+                'preview_url' => route('documents.preview', $document),
                 'download_url' => route('documents.download', $document),
             ]);
 
@@ -234,6 +253,17 @@ class DocumentController extends Controller
         abort_unless(Storage::disk('public')->exists($document->file_path), 404);
 
         return Storage::disk('public')->download($document->file_path, $document->original_filename);
+    }
+
+    public function preview(Document $document)
+    {
+        abort_unless(Auth::check() || ($document->is_active && $document->published_at && $document->published_at->lte(now())), 404);
+        abort_unless(Storage::disk('public')->exists($document->file_path), 404);
+
+        return response()->file(Storage::disk('public')->path($document->file_path), [
+            'Content-Type' => $document->mime_type ?: 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="'.$document->original_filename.'"',
+        ]);
     }
 
     private function validateDocument(Request $request, ?Document $document = null): array
