@@ -114,14 +114,14 @@
                             </Button>
                         </div>
                         <div class="flex items-center gap-2">
-                            <Button
+                            <!-- <Button
                                 size="small"
                                 class="rounded-lg!"
                                 @click="openGradeSystem"
                                 severity="secondary"
                             >
                                 <div><IconCalendarWeek size="20" /></div>
-                            </Button>
+                            </Button> -->
                             <Button
                                 size="small"
                                 class="rounded-lg!"
@@ -416,10 +416,58 @@
                                         </div>
                                         <div
                                             class="p-2 text-sm rounded-r-xl border-l-amber-600 border-l-4 bg-amber-50"
+                                            v-if="slotProps.item.new_data"
                                         >
                                             <div
                                                 v-for="(value, key) in slotProps
                                                     .item.new_data"
+                                                :key="key"
+                                                class="flex items-center gap-2"
+                                            >
+                                                <span
+                                                    class="text-gray-700 min-w-36 capitalize"
+                                                >
+                                                    {{
+                                                        key.replaceAll("_", " ")
+                                                    }}
+                                                </span>
+
+                                                <span class="text-red-500">
+                                                    {{
+                                                        slotProps.item
+                                                            .old_data?.[key] !=
+                                                        ""
+                                                            ? slotProps.item
+                                                                  .old_data?.[
+                                                                  key
+                                                              ]
+                                                            : "Not Set"
+                                                    }}
+                                                </span>
+
+                                                <IconArrowRight
+                                                    :size="14"
+                                                    class="text-gray-400"
+                                                />
+
+                                                <span
+                                                    class="text-emerald-600 font-medium"
+                                                >
+                                                    {{
+                                                        value != ""
+                                                            ? value
+                                                            : "Removed"
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="p-2 text-sm rounded-r-xl border-l-amber-600 border-l-4 bg-amber-50"
+                                            v-else
+                                        >
+                                            <div
+                                                v-for="(value, key) in slotProps
+                                                    .item.old_data"
                                                 :key="key"
                                                 class="flex items-center gap-2"
                                             >
@@ -813,13 +861,14 @@
                                 <IconSettings :size="20" />
                             </div>
                         </template>
-                        <template #body="{ body }">
+                        <template #body="{ data }">
                             <div class="flex gap-2 justify-center w-full">
                                 <Button
                                     size="small"
                                     severity="danger"
                                     class="rounded-full h-8! w-8! p-0!"
                                     text
+                                    @click="confirmDelete(data)"
                                 >
                                     <IconTrash :size="18" />
                                 </Button>
@@ -830,6 +879,582 @@
             </div>
         </template>
     </Dialog>
+    <!-- <DefaultDialog
+        v-model:visible="subjectDialog"
+        :icon="IconBook2"
+        width-set="lg:!w-[70%]"
+        :submit-form="submitCurriculum"
+        :title="selectedRow?.course?.name"
+        @submit-form="submitCurriculum"
+        :hide-footer="!canManageSchools"
+        absolute-div
+        description="View all subjects offered under this course, including their codes, units, and classifications."
+    >
+        <template #message>
+            <DefaultMessages
+                v-if="curriculumForm.hasErrors"
+                message-type="error"
+                :message="curriculumForm.errors"
+            />
+        </template>
+        <template #forms>
+            <div class="mt-5">
+                <Tabs :value="0">
+                    <TabList>
+                        <Tab
+                            v-for="(curItem, curKey) in curriculumForm.multi"
+                            :key="curKey"
+                            class="text-sm !font-bold !p-1 !text-center"
+                            :value="curKey"
+                        >
+                            <span>
+                                <div
+                                    class="flex items-end"
+                                    v-if="!curItem.edit"
+                                >
+                                    <div class="flex items-start">
+                                        <Button
+                                            v-if="canManageSchools"
+                                            severity="danger"
+                                            variant="link"
+                                            size="small"
+                                            @click="
+                                                deleteCurriculumAndSubject({
+                                                    button: 'curriculum',
+                                                    type: !curItem.id,
+                                                    curriculum: curKey,
+                                                })
+                                            "
+                                            class="!p-0"
+                                        >
+                                            <template #icon>
+                                                <IconTrash
+                                                    class="!text-red-600"
+                                                    size="15"
+                                                ></IconTrash>
+                                            </template>
+                                        </Button>
+                                    </div>
+                                    <div>
+                                        Curriculum {{ curItem.yearLevel }}
+                                    </div>
+                                    <div class="flex items-start">
+                                        <Button
+                                            v-if="canManageSchools"
+                                            severity="secondary"
+                                            variant="link"
+                                            size="small"
+                                            @click="curItem.edit = true"
+                                            class="!p-0"
+                                        >
+                                            <template #icon>
+                                                <IconPencil
+                                                    size="15"
+                                                ></IconPencil>
+                                            </template>
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div
+                                    v-else
+                                    class="inline-flex items-center gap-2 font-normal"
+                                >
+                                    <TextInput
+                                        placeholder="Select year"
+                                        class="!w-25"
+                                        v-model="curItem.yearLevel"
+                                    >
+                                    </TextInput>
+
+                                    <DefaultButton
+                                        size="small"
+                                        rounded
+                                        class-name="!w-8 !h-8"
+                                        :icon="IconX"
+                                        @click="curItem.edit = false"
+                                        severity="danger"
+                                        text
+                                    ></DefaultButton>
+                                </div>
+                            </span>
+                        </Tab>
+                        <div class="flex items-end">
+                            <DefaultButton
+                                v-if="canManageSchools"
+                                size="small"
+                                rounded
+                                class-name=" !rounded-xl "
+                                :icon-size="20"
+                                :icon="IconCirclePlusFilled"
+                                @click="addCurriculum"
+                                text
+                            ></DefaultButton>
+                        </div>
+                    </TabList>
+                    <TabPanels class="!p-0 flex flex-col gap-3 mt-3">
+                        <TabPanel
+                            v-for="(curItem, curKey) in curriculumForm.multi"
+                            :key="curKey"
+                            :value="curKey"
+                            class="flex flex-col w-full gap-4"
+                        >
+                            <div class="flex items-center justify-between">
+                                <DefaultButton
+                                    label="Make this template"
+                                    size="small"
+                                    v-if="canManageSchools && curItem.id"
+                                    :disabled="
+                                        curItem.has_replication ||
+                                        curItem.is_duplicated
+                                    "
+                                    :icon="
+                                        curItem.has_replication ||
+                                        curItem.is_duplicated
+                                            ? IconCheck
+                                            : IconDots
+                                    "
+                                    :icon-size="18"
+                                    @click="copyTemplate(curKey)"
+                                    :severity="
+                                        curItem.has_replication ||
+                                        curItem.is_duplicated
+                                            ? 'primary'
+                                            : 'secondary'
+                                    "
+                                    class="!px-4 !text-xs"
+                                />
+                                <div v-else class="flex items-center gap-2">
+                                    <SelectInput
+                                        v-model="templateForm.select"
+                                        :options="page.props?.templateOptions"
+                                        clearable
+                                    />
+                                    <DefaultButton
+                                        v-if="canManageSchools"
+                                        size="small"
+                                        raised
+                                        :disabled="loading.paste"
+                                        :loading="loading.paste"
+                                        label="Apply Template"
+                                        class="text-nowrap w-60"
+                                        @click="pasteTemplate(curKey)"
+                                    ></DefaultButton>
+                                </div>
+                            </div>
+
+                            <div
+                                v-for="year in parseInt(selectedRow.years)"
+                                :key="year"
+                            >
+                                <Panel
+                                    toggleable
+                                    :collapsed="year != 1 ? true : false"
+                                >
+                                    <template #header>
+                                        <div
+                                            class="flex w-full items-center justify-between"
+                                        >
+                                            <div class="text-sm font-semibold">
+                                                {{ convertNumberToWord(year) }}
+                                                Year
+                                            </div>
+                                            <div
+                                                class="flex items-center gap-5 px-10"
+                                            >
+                                                <div
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <IconBooks></IconBooks>
+
+                                                    <div
+                                                        class="text-xs font-bold"
+                                                    >
+                                                        {{
+                                                            totalYearSubject({
+                                                                curriculumKey:
+                                                                    curKey,
+                                                                year: year,
+                                                            })
+                                                        }}
+                                                        <span
+                                                            class="font-medium"
+                                                            >Total
+                                                            Subjects</span
+                                                        >
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <IconNotebook></IconNotebook>
+                                                    <div
+                                                        class="text-xs font-bold"
+                                                    >
+                                                        {{
+                                                            totalYearUnit({
+                                                                curriculumKey:
+                                                                    curKey,
+                                                                year: year,
+                                                            })
+                                                        }}
+                                                        <span
+                                                            class="font-medium"
+                                                            >Total units</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template #default>
+                                        <div
+                                            v-for="(sem, semKey) in page.props
+                                                .semesterOption"
+                                            :key="sem.id"
+                                            :value="semKey"
+                                            class="py-2"
+                                        >
+                                            <Panel
+                                                toggleable
+                                                :collapsed="
+                                                    semKey != 0 ? true : false
+                                                "
+                                                :pt="{
+                                                    root: ['!border-0 '],
+                                                    header: [
+                                                        randomColor(semKey),
+                                                        '!rounded-t-lg',
+                                                    ],
+                                                    content: [
+                                                        '!border-x-1 !rounded-bl-lg !rounded-br-lg !border-b-1  !border-gray-200',
+                                                    ],
+                                                }"
+                                            >
+                                                <template #header>
+                                                    <div
+                                                        class="flex w-full items-center justify-between gap-2"
+                                                    >
+                                                        <div
+                                                            class="flex gap-3 items-center"
+                                                        >
+                                                            <IconGridDots
+                                                                size="15"
+                                                            />
+                                                            <div
+                                                                :class="[
+                                                                    'font-semibold text-sm',
+                                                                ]"
+                                                            >
+                                                                {{ sem.name }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="flex items-center gap-5 px-10"
+                                                        >
+                                                            <div
+                                                                class="flex items-center gap-2"
+                                                            >
+                                                                <IconBooks></IconBooks>
+                                                                <div
+                                                                    class="text-xs font-bold"
+                                                                >
+                                                                    {{
+                                                                        countSubject(
+                                                                            {
+                                                                                curriculumKey:
+                                                                                    curKey,
+                                                                                semesterId:
+                                                                                    sem.id,
+                                                                                semesterKey:
+                                                                                    semKey,
+                                                                                year: year,
+                                                                            },
+                                                                        )
+                                                                    }}
+                                                                    <span
+                                                                        class="font-medium"
+                                                                        >Subjects</span
+                                                                    >
+                                                                </div>
+                                                            </div>
+
+                                                            <div
+                                                                class="flex items-center gap-2"
+                                                            >
+                                                                <IconNotebook></IconNotebook>
+                                                                <div
+                                                                    class="text-xs font-bold"
+                                                                >
+                                                                    {{
+                                                                        countUnit(
+                                                                            {
+                                                                                curriculumKey:
+                                                                                    curKey,
+                                                                                semesterId:
+                                                                                    sem.id,
+                                                                                semesterKey:
+                                                                                    semKey,
+                                                                                year: year,
+                                                                            },
+                                                                        )
+                                                                    }}
+                                                                    <span
+                                                                        class="font-medium"
+                                                                        >Total
+                                                                        units</span
+                                                                    >
+                                                                </div>
+                                                            </div>
+                                                            <div
+                                                                class="flex items-center gap-2"
+                                                            >
+                                                                <IconUserSquareRounded></IconUserSquareRounded>
+                                                                <div
+                                                                    class="text-xs font-medium"
+                                                                >
+                                                                    {{
+                                                                        recentUpdateSubject(
+                                                                            {
+                                                                                curriculumKey:
+                                                                                    curKey,
+                                                                                semesterId:
+                                                                                    sem.id,
+                                                                                semesterKey:
+                                                                                    semKey,
+                                                                                year: year,
+                                                                            },
+                                                                        )
+                                                                    }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template #default>
+                                                    <div
+                                                        class="w-full h-fit pt-5"
+                                                    >
+                                                        <div
+                                                            class="flex items-center gap-2 pb-5"
+                                                        >
+                                                            <div
+                                                                class="bg-slate-100 text-slate-500 p-1 rounded-lg border-1 border-slate-500 shadow-slate-500"
+                                                            >
+                                                                <IconBooks
+                                                                    stroke-width="2"
+                                                                ></IconBooks>
+                                                            </div>
+                                                            <div
+                                                                class="flex-1 flex flex-col"
+                                                            >
+                                                                <div
+                                                                    class="font-bold text-sm"
+                                                                >
+                                                                    Subjects for
+                                                                    this
+                                                                    semester
+                                                                </div>
+                                                                <div
+                                                                    class="text-xs text-gray-400 font-light"
+                                                                >
+                                                                    This section
+                                                                    displays all
+                                                                    subjects
+                                                                    assigned for
+                                                                    the selected
+                                                                    year and
+                                                                    semester.
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div
+                                                            class="w-full"
+                                                            v-for="(
+                                                                item, index
+                                                            ) in curriculumForm
+                                                                .multi[curKey]
+                                                                .subjects"
+                                                            :key="index"
+                                                        >
+                                                            <div
+                                                                class="flex gap-2 items-center py-2"
+                                                                v-if="
+                                                                    item
+                                                                        .semester_array
+                                                                        .name ==
+                                                                        sem.name &&
+                                                                    parseInt(
+                                                                        item.year,
+                                                                    ) == year
+                                                                "
+                                                            >
+                                                                <div
+                                                                    class="w-[20%]"
+                                                                >
+                                                                    <SelectInput
+                                                                        v-model="
+                                                                            item.class_array
+                                                                        "
+                                                                        :disable="
+                                                                            item.is_lock
+                                                                        "
+                                                                        label="Subject Class"
+                                                                        :options="
+                                                                            page
+                                                                                .props
+                                                                                ?.subClassOption
+                                                                        "
+                                                                    ></SelectInput>
+                                                                </div>
+                                                                <div
+                                                                    class="w-[40%]"
+                                                                >
+                                                                    <TextInput
+                                                                        v-model="
+                                                                            item.name
+                                                                        "
+                                                                        :disabled="
+                                                                            item.is_lock
+                                                                        "
+                                                                        capitalize
+                                                                        label="Description"
+                                                                    >
+                                                                    </TextInput>
+                                                                </div>
+                                                                <div
+                                                                    class="w-[20%]"
+                                                                >
+                                                                    <TextInput
+                                                                        v-model="
+                                                                            item.subjectCode
+                                                                        "
+                                                                        :disabled="
+                                                                            item.is_lock
+                                                                        "
+                                                                        label="Subject Code"
+                                                                    ></TextInput>
+                                                                </div>
+                                                                <div
+                                                                    class="w-[10%]"
+                                                                >
+                                                                    <TextInput
+                                                                        v-model="
+                                                                            item.unit
+                                                                        "
+                                                                        :disabled="
+                                                                            item.is_lock
+                                                                        "
+                                                                        label="Unit"
+                                                                    ></TextInput>
+                                                                </div>
+                                                                <div
+                                                                    class="w-[10%] pt-5 gap-2 justify-start flex items-end h-full"
+                                                                >
+                                                                    <DefaultButton
+                                                                        v-if="
+                                                                            canManageSchools
+                                                                        "
+                                                                        size="small"
+                                                                        rounded
+                                                                        text
+                                                                        v-show="
+                                                                            item.is_lock !=
+                                                                            null
+                                                                        "
+                                                                        severity="secondary"
+                                                                        @click="
+                                                                            curriculumForm.multi[
+                                                                                curKey
+                                                                            ].subjects[
+                                                                                index
+                                                                            ].is_lock =
+                                                                                !item.is_lock
+                                                                        "
+                                                                        :icon="
+                                                                            curriculumForm
+                                                                                .multi[
+                                                                                curKey
+                                                                            ]
+                                                                                .subjects[
+                                                                                index
+                                                                            ]
+                                                                                .is_lock
+                                                                                ? IconLock
+                                                                                : IconLockOpen
+                                                                        "
+                                                                        tooltip="Unlock to edit"
+                                                                    />
+
+                                                                    <DefaultButton
+                                                                        v-if="
+                                                                            canManageSchools
+                                                                        "
+                                                                        size="small"
+                                                                        rounded
+                                                                        text
+                                                                        @click="
+                                                                            deleteCurriculumAndSubject(
+                                                                                {
+                                                                                    type: !item.id,
+                                                                                    curriculum:
+                                                                                        curKey,
+                                                                                    subject:
+                                                                                        index,
+                                                                                    subId: item.id,
+                                                                                    button: 'subject',
+                                                                                },
+                                                                            )
+                                                                        "
+                                                                        :tooltip="
+                                                                            !item.id
+                                                                                ? 'Remove'
+                                                                                : 'Delete'
+                                                                        "
+                                                                        severity="danger"
+                                                                        :icon="
+                                                                            !item.id
+                                                                                ? IconCircleMinus
+                                                                                : IconTrash
+                                                                        "
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <Divider
+                                                            type="dashed"
+                                                        ></Divider>
+                                                        <DefaultButton
+                                                            v-if="
+                                                                canManageSchools
+                                                            "
+                                                            size="small"
+                                                            :icon="IconPlus"
+                                                            @click="
+                                                                addSubject(
+                                                                    curKey,
+                                                                    year,
+                                                                    sem,
+                                                                )
+                                                            "
+                                                            class-name="w-full !rounded-xl"
+                                                            label="Add Subjects"
+                                                        >
+                                                        </DefaultButton>
+                                                    </div>
+                                                </template>
+                                            </Panel>
+                                        </div>
+                                    </template>
+                                </Panel>
+                            </div>
+                        </TabPanel>
+                    </TabPanels>
+                </Tabs>
+            </div>
+        </template>
+    </DefaultDialog> -->
 </template>
 <script setup>
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
@@ -869,9 +1494,10 @@ import {
 import { onMounted, ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
+import { useConfirm } from "primevue";
 
 const toast = useToast();
-
+const confirm = useConfirm();
 const props = defineProps({
     programs: Object,
     campus: Object,
@@ -891,6 +1517,7 @@ const page = usePage();
 const timerBounce = ref(null);
 const editOp = ref(null);
 const editSchoolInfo = ref(false);
+const subjectDialog = ref(false);
 const infoForm = useForm({
     president: props.info?.president ?? "",
     registrar: props.info?.registrar ?? "",
@@ -945,6 +1572,53 @@ const loadPage = (page) => {
             preserveScroll: true,
         },
     );
+};
+
+const confirmDelete = (item) => {
+    confirm.require({
+        message: `Are you sure you want to delete "${item.grade} (${item.lower ?? "Not Set"} - ${item.upper ?? "Not Set"})"?"`,
+        header: "Delete Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        rejectLabel: "Cancel",
+        acceptLabel: "Delete",
+        rejectProps: {
+            severity: "secondary",
+            outlined: true,
+        },
+        acceptProps: {
+            severity: "danger",
+        },
+        accept: () => {
+            router.post(
+                route("schoolCoordinator.deleteGrade", item.id),
+                {}, // request data
+                {
+                    only: ["grades"],
+                    preserveState: true,
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.add({
+                            severity: "success",
+                            summary: "Success",
+                            detail: "Grade deleted successfully.",
+                            life: 3000,
+                        });
+                    },
+                    onError: () => {
+                        toast.add({
+                            severity: "error",
+                            summary: "Error",
+                            detail: "Failed to delete grade.",
+                            life: 3000,
+                        });
+                    },
+                },
+            );
+        },
+        reject: () => {
+            // optional
+        },
+    });
 };
 
 const saveInfo = () => {

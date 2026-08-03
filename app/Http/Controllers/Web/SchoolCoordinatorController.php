@@ -146,6 +146,38 @@ class SchoolCoordinatorController extends Controller
 
     }
 
+    public function deleteGrade(Request $request, string $id)
+    {
+        $campus_id = Auth::user()->school_id;
+        $grade_id = Hashids::decode($id)[0] ?? null;
+
+        $campus = SchoolCampuses::findOrFail($campus_id);
+        $grade = $campus->grades()->findOrFail($grade_id);
+
+        $grade->update(['is_delete' => true]);
+
+        AuditLogs::create([
+            'user_id' => Auth::id(),
+            'old_data' => [
+                'grade' => $grade->grade,
+                'range' => $grade->upper || $grade->lower ? $grade->lower.'-'.$grade->upper : 'Not Set',
+                'drop' => $grade->drop ? 'Set true' : 'Set false',
+                'fail' => $grade->fail ? 'Set true' : 'Set false',
+                'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
+            ],
+            'new_data' => null,
+            'action' => 'Deleted grade',
+        ]);
+
+        return redirect()->back()->with([
+            'flash' => [
+                'status' => 'success',
+                'title' => 'Grade Deleted',
+                'message' => 'The grade has been successfully deleted.',
+            ],
+        ]);
+    }
+
     public function createProgram(Request $request)
     {
         $campus_id = Auth::user()->school_id;

@@ -404,6 +404,7 @@
         </div>
     </div>
     <Toast />
+    <ConfirmDialog />
 </template>
 <script setup>
 import SidebarIconMenu from "../Components/menus/SidebarIconMenu.vue";
