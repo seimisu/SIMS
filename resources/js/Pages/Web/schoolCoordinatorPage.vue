@@ -173,6 +173,18 @@
                                 </div>
                             </template>
                         </Column>
+                        <Column>
+                            <template #header>
+                                <div class="font-semibold text-center w-full">
+                                    Curriculum Count
+                                </div>
+                            </template>
+                            <template #body="{ data }">
+                                <div class="text-center font-medium w-full">
+                                    {{ data.curriculumCount }}
+                                </div>
+                            </template>
+                        </Column>
                     </DefaultSelectionTable>
                 </div>
                 <Card class="flex-2">
@@ -879,12 +891,12 @@
             </div>
         </template>
     </Dialog>
-    <!-- <DefaultDialog
+    <DefaultDialog
         v-model:visible="subjectDialog"
         :icon="IconBook2"
         width-set="lg:!w-[70%]"
         :submit-form="submitCurriculum"
-        :title="selectedRow?.course?.name"
+        :title="subjectDetail?.course"
         @submit-form="submitCurriculum"
         :hide-footer="!canManageSchools"
         absolute-div
@@ -998,52 +1010,8 @@
                             :value="curKey"
                             class="flex flex-col w-full gap-4"
                         >
-                            <div class="flex items-center justify-between">
-                                <DefaultButton
-                                    label="Make this template"
-                                    size="small"
-                                    v-if="canManageSchools && curItem.id"
-                                    :disabled="
-                                        curItem.has_replication ||
-                                        curItem.is_duplicated
-                                    "
-                                    :icon="
-                                        curItem.has_replication ||
-                                        curItem.is_duplicated
-                                            ? IconCheck
-                                            : IconDots
-                                    "
-                                    :icon-size="18"
-                                    @click="copyTemplate(curKey)"
-                                    :severity="
-                                        curItem.has_replication ||
-                                        curItem.is_duplicated
-                                            ? 'primary'
-                                            : 'secondary'
-                                    "
-                                    class="!px-4 !text-xs"
-                                />
-                                <div v-else class="flex items-center gap-2">
-                                    <SelectInput
-                                        v-model="templateForm.select"
-                                        :options="page.props?.templateOptions"
-                                        clearable
-                                    />
-                                    <DefaultButton
-                                        v-if="canManageSchools"
-                                        size="small"
-                                        raised
-                                        :disabled="loading.paste"
-                                        :loading="loading.paste"
-                                        label="Apply Template"
-                                        class="text-nowrap w-60"
-                                        @click="pasteTemplate(curKey)"
-                                    ></DefaultButton>
-                                </div>
-                            </div>
-
                             <div
-                                v-for="year in parseInt(selectedRow.years)"
+                                v-for="year in subjectDetail?.yearLevel"
                                 :key="year"
                             >
                                 <Panel
@@ -1328,7 +1296,7 @@
                                                                 >
                                                                     <TextInput
                                                                         v-model="
-                                                                            item.subjectCode
+                                                                            item.subject_code
                                                                         "
                                                                         :disabled="
                                                                             item.is_lock
@@ -1454,11 +1422,13 @@
                 </Tabs>
             </div>
         </template>
-    </DefaultDialog> -->
+    </DefaultDialog>
 </template>
 <script setup>
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
-
+import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
+import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
@@ -1472,12 +1442,19 @@ import {
     IconX,
     IconCalculator,
     IconReportAnalytics,
+    IconNotebook,
     IconSettings,
+    IconGridDots,
     IconPencilCog,
+    IconUserSquareRounded,
     IconSend,
     IconBook2,
+    IconPencil,
+    IconBooks,
     IconLoader2,
     IconCheck,
+    IconLock,
+    IconLockOpen,
     IconWood,
     IconDotsCircleHorizontal,
     IconArrowRight,
@@ -1491,9 +1468,10 @@ import {
     IconCalendarWeek,
     IconDeviceFloppy,
 } from "@tabler/icons-vue";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
+import { usePermissions } from "../../Composables/usePermissions";
 import { useConfirm } from "primevue";
 
 const toast = useToast();
@@ -1507,6 +1485,7 @@ const props = defineProps({
     logs: Object,
     programOptions: Object,
     grades: Object,
+    subjectDetail: Object,
 });
 const dialog = ref({
     createProgram: false,
@@ -1524,6 +1503,16 @@ const infoForm = useForm({
     contact: props.info?.contact ?? "",
     email: props.info?.email ?? "",
 });
+const { canAny } = usePermissions();
+const canManageSchools = computed(() =>
+    canAny([
+        "schools.create",
+        "schools.update",
+        "schools.delete",
+        "schools.curriculum.copy",
+        "schools.curriculum.paste",
+    ]),
+);
 const courseForm = useForm({
     course: null,
     years: null,
@@ -1531,15 +1520,13 @@ const courseForm = useForm({
 const search = ref({
     program: null,
 });
+const selectedProgram = ref(null);
+
+const curriculumForm = useForm({
+    multi: [],
+});
 
 const selectedGrade = ref();
-
-const toggleOpGrade = (event) => {
-    opAddGrades.value.toggle(event);
-    if (!selectedGrade) {
-        gradeForm.resetAndClearErrors();
-    }
-};
 
 const gradeForm = useForm({
     id: null,
@@ -1557,6 +1544,13 @@ const loading = ref({
     createProgram: false,
     createGrade: false,
 });
+
+const toggleOpGrade = (event) => {
+    opAddGrades.value.toggle(event);
+    if (!selectedGrade) {
+        gradeForm.resetAndClearErrors();
+    }
+};
 
 const loadPage = (page) => {
     router.get(
@@ -1648,7 +1642,95 @@ const saveInfo = () => {
 };
 
 const selectPrograms = (data) => {
-    console.log(data);
+    router.reload({
+        data: {
+            campusCourseId: data.id,
+            semTypeId: data.term_id,
+        },
+        only: ["subjectDetail", "semesterOption"],
+        preserveState: true,
+        showProgress: true,
+        preserveScroll: true,
+        onSuccess: () => {
+            curriculumForm.multi = [];
+            if (props.subjectDetail?.curriculum.length != 0) {
+                for (
+                    let index = 0;
+                    index < page.props?.subjectDetail.curriculum.length;
+                    index++
+                ) {
+                    curriculumForm.multi.unshift(
+                        page.props?.subjectDetail.curriculum[index],
+                    );
+                }
+            } else {
+                addCurriculum();
+            }
+
+            subjectDialog.value = true;
+            // curriculumDialog.value = true;
+        },
+    });
+};
+
+const addCurriculum = () => {
+    if (!props.subjectDetail) return [];
+    curriculumForm.multi.push({
+        yearNumber: parseInt(selectedRow.value.years),
+        campus_course_id: selectedRow.value.id,
+        semesterTypeId: page.props?.schoolDetail.term_array.id,
+        edit: false,
+        yearLevel: null,
+        subjects: [],
+        id: null,
+    });
+
+    curriculumForm.multi[curriculumForm.multi.length - 1].subjects.forEach(
+        (cur, curKey) => {
+            for (
+                let indexYear = 0;
+                indexYear < parseInt(selectedRow.value.years);
+                indexYear++
+            ) {
+                page.props?.semesterOption.forEach((sem, semKey) => {
+                    curriculumForm.multi[curKey].subjects.push({
+                        id: null,
+                        curriculumId: null,
+                        year: indexYear + 1,
+                        semester: sem.name,
+                        semester_array: sem,
+                        name: null,
+                        class_array: null,
+                        subjectClass: null,
+                        unit: null,
+                    });
+                });
+            }
+        },
+    );
+};
+
+const submitCurriculum = () => {
+    if (!canManageSchools.value) return;
+
+    curriculumForm.post(route("campus.curriculum.store"), {
+        onSuccess: () => {
+            curriculumForm.resetAndClearErrors();
+            curriculumForm.multi.length = 0;
+            if (page.props?.subjectDetail.length != 0) {
+                for (
+                    let index = 0;
+                    index < page.props?.subjectDetail.length;
+                    index++
+                ) {
+                    curriculumForm.multi.unshift(
+                        page.props?.subjectDetail[index],
+                    );
+                }
+            }
+            toastRef.value.show(page.props.flash);
+        },
+    });
 };
 
 const openGradeSystem = () => {
@@ -1669,6 +1751,7 @@ const openCreateProgram = () => {
         only: ["programOptions"],
         preserveState: true,
         preserveScroll: true,
+
         onSuccess: () => {
             dialog.value.createProgram = true;
         },
@@ -1805,4 +1888,94 @@ watch(
         }
     },
 );
+
+const recentUpdateSubject = (res) => {
+    const mostRecent = curriculumForm.multi[res.curriculumKey].subjects
+        .filter(
+            (s) =>
+                s.semester_id == res.semesterId &&
+                parseInt(s.year) == parseInt(res.year),
+        )
+        .reduce((latest, s) => {
+            return !latest ||
+                new Date(s.updated_at) > new Date(latest.updated_at)
+                ? s
+                : latest;
+        }, null);
+
+    if (mostRecent == null) return;
+
+    const stringRecent =
+        mostRecent.updated_by == null
+            ? mostRecent.created_by + "—" + mostRecent.updated_at_formatted
+            : mostRecent.updated_by + "—" + mostRecent.updated_at_formatted;
+
+    return stringRecent;
+};
+
+const convertNumberToWord = (number) => {
+    const words = [
+        "First",
+        "Second",
+        "Third",
+        "Fourth",
+        "Fifth",
+        "Sixth",
+        "Seventh",
+        "Eighth",
+        "Ninth",
+        "Tenth",
+    ];
+    return words[number - 1] || number;
+};
+
+const countSubject = (res) => {
+    const count = curriculumForm.multi[res.curriculumKey].subjects.filter(
+        (s) =>
+            s.semester_id == res.semesterId &&
+            parseInt(s.year) == parseInt(res.year),
+    ).length;
+    return count;
+};
+
+const totalYearSubject = (res) => {
+    const count = curriculumForm.multi[res.curriculumKey].subjects.filter(
+        (s) => s.year == res.year,
+    ).length;
+
+    return count;
+};
+
+const totalYearUnit = (res) => {
+    const count = curriculumForm.multi[res.curriculumKey].subjects
+        .filter((s) => s.year == res.year)
+        .reduce((sum, s) => sum + parseInt(s.unit), 0);
+
+    return count;
+};
+
+const countUnit = (res) => {
+    const count = curriculumForm.multi[res.curriculumKey].subjects
+        .filter(
+            (s) =>
+                s.semester_id == res.semesterId &&
+                parseInt(s.year) == parseInt(res.year),
+        )
+        .reduce((sum, s) => sum + parseInt(s.unit), 0);
+    return count;
+};
+
+const randomColor = (index) => {
+    const colors = [
+        "!text-sky-600 !bg-sky-50",
+        "!text-indigo-600 !bg-indigo-50",
+        "!text-rose-600 !bg-rose-50",
+        "!text-yellow-600 !bg-yellow-50",
+        "!text-purple-600 !bg-purple-50",
+        "!text-pink-600 !bg-pink-50",
+        "!text-indigo-600 !bg-indigo-50",
+        "!text-teal-600 !bg-teal-50",
+    ];
+    return colors[index % colors.length];
+};
 </script>

@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLogs;
 use App\Models\ListCourse;
+use App\Models\ListReferences;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\CoordinatorUpdateInfoNotification;
+use App\References\ListClass;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -18,7 +20,7 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class SchoolCoordinatorController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, ListClass $ref)
     {
         $campus_id = Auth::user()->school_id;
         $campus = SchoolCampuses::select('id', 'school_id', 'generated_name')->find($campus_id);
@@ -35,8 +37,13 @@ class SchoolCoordinatorController extends Controller
                 'contact' => $campus->info?->contact ?? 'N/A',
                 'email' => $campus->info?->email ?? 'N/A',
             ],
-            'programs' => $campus->courses()
-                ->with('course:id,name,abbreviation')
+            'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
+            'semesterOption' => request('semTypeId')
+               ? $ref->getRefs('option', null, null, ListReferences::find(request('semTypeId'))?->name)
+               : null,
+            'programs' => $campus
+                ->courses()
+                ->with('course:id,name,abbreviation', 'campus')
                 ->where('is_delete', false)
                 ->where(function ($q) use ($search) {
                     $q->where('years', 'like', "%{$search}%")
@@ -56,6 +63,8 @@ class SchoolCoordinatorController extends Controller
                     'course' => $course->course->name,
                     'abbreviation' => $course->course->abbreviation,
                     'yearLevel' => $course->years,
+                    'term_id' => $course->campus->term_id,
+                    'curriculumCount' => $course->curriculum()->where('is_delete', false)->count(),
                 ]),
             'logs' => AuditLogs::where('user_id', Auth::id())
                 ->latest()
@@ -94,6 +103,29 @@ class SchoolCoordinatorController extends Controller
                     'name' => $course->name,
                     'abbreviation' => $course->abbreviation,
                 ])
+            ),
+            'subjectDetail' => Inertia::optional(fn () => $campus->courses()
+                ->with('course:id,name,abbreviation', 'curriculum')
+                ->where('id', Hashids::decode($request->input('campusCourseId'))[0] ?? null)
+                ->where('is_delete', false)
+                ->get()
+                ->map(fn ($course) => [
+                    'id' => Hashids::encode($course->id),
+                    'course' => $course->course->name,
+                    'abbreviation' => $course->course->abbreviation,
+                    'yearLevel' => $course->years,
+                    'curriculum' => $course->curriculum
+                        ->where('is_delete', false)
+                        ->map(fn ($curriculum) => [
+                            'id' => Hashids::encode($curriculum->id),
+                            'campus_course_id' => Hashids::encode($curriculum->campus_course_id),
+                            'years' => $curriculum->years,
+                            'semester_type_id' => $curriculum->semester_type_id,
+                            'is_duplicated' => $curriculum->is_duplicated,
+                            'subjects' => $curriculum->subjects()->where('is_delete', false)->get(),
+                        ]),
+                ])
+                ->first()
             ),
         ]);
     }

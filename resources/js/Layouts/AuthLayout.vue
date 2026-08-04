@@ -319,7 +319,7 @@
                                                         <IconPencilCheck />
                                                     </Avatar>
                                                 </div>
-                                                <div class="p-1" v-else>
+                                                <!-- <div class="p-1" v-else>
                                                     <OverlayBadge
                                                         severity="danger"
                                                         v-if="!item.read_at"
@@ -336,7 +336,7 @@
                                                     >
                                                         <IconDots />
                                                     </Avatar>
-                                                </div>
+                                                </div> -->
                                                 <div class="flex flex-col">
                                                     <div
                                                         class="text-xs font-semibold"
