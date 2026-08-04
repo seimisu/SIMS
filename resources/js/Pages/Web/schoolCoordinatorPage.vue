@@ -26,7 +26,7 @@
                                             <IconPencilCog :size="18" />
                                         </div>
                                     </Button>
-                                    <Popover ref="editOp">
+                                    <!-- <Popover ref="editOp">
                                         <div class="max-w-72 w-full">
                                             <div
                                                 class="flex items-center justify-between"
@@ -75,7 +75,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </Popover>
+                                    </Popover> -->
                                 </div>
                             </div>
 
@@ -114,16 +114,17 @@
                             </Button>
                         </div>
                         <div class="flex items-center gap-2">
-                            <!-- <Button
+                            <Button
                                 size="small"
                                 class="rounded-lg!"
-                                @click="openGradeSystem"
+                                @click="openSemester"
                                 severity="secondary"
                             >
                                 <div><IconCalendarWeek size="20" /></div>
-                            </Button> -->
+                            </Button>
                             <Button
                                 size="small"
+                                v-if="campus.gradeSystem == 'Transmutation'"
                                 class="rounded-lg!"
                                 @click="openGradeSystem"
                                 severity="secondary"
@@ -1423,10 +1424,71 @@
             </div>
         </template>
     </DefaultDialog>
+    <DefaultDialog
+        v-model:visible="dialog.semester"
+        :icon="IconBook2"
+        width-set="lg:!w-[35%]"
+        :loading="semesterForm.processing"
+        @submit-form="submitSemester()"
+        message-type="error"
+        title="Semester Management"
+        description="Manage the academic semesters offered by the institution, including start and end dates."
+    >
+        <template #forms>
+            <div class="pt-5 px-3 gap-5 flex flex-col">
+                <div v-for="(semester, index) in semesterOption" :key="index">
+                    <div
+                        :class="[
+                            'text-xs flex items-center rounded-2xl font-semibold px-2 gap-1 py-1 ',
+                            randomColor(index),
+                        ]"
+                    >
+                        <IconGridDots size="15" />
+                        <div>
+                            {{ semester.name }}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 my-3">
+                        <DatePickerInput
+                            label="Start Date"
+                            v-model="semesterForm.semester[index].startDate"
+                            view="month"
+                            format-date="M yy"
+                        >
+                        </DatePickerInput>
+
+                        <DatePickerInput
+                            label="End Date"
+                            v-model="semesterForm.semester[index].endDate"
+                            view="month"
+                            format-date="M yy"
+                        >
+                        </DatePickerInput>
+                        <DatePickerInput
+                            label="Submission Date"
+                            v-model="
+                                semesterForm.semester[index].submissionDate
+                            "
+                        >
+                        </DatePickerInput>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template #message>
+            <DefaultMessages
+                v-if="semesterForm.hasErrors"
+                message-type="error"
+                :message="semesterForm.errors"
+            />
+        </template>
+    </DefaultDialog>
 </template>
 <script setup>
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
+import DatePickerInput from "../../Components/inputs/DatePickerInput.vue";
 import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
@@ -1486,10 +1548,12 @@ const props = defineProps({
     programOptions: Object,
     grades: Object,
     subjectDetail: Object,
+    semesterOption: Object,
 });
 const dialog = ref({
     createProgram: false,
     gradeSystem: false,
+    semester: false,
 });
 const opAddGrades = ref(null);
 const page = usePage();
@@ -1516,6 +1580,10 @@ const canManageSchools = computed(() =>
 const courseForm = useForm({
     course: null,
     years: null,
+});
+const semesterForm = useForm({
+    semesterType: null,
+    semester: [],
 });
 const search = ref({
     program: null,
@@ -1645,7 +1713,6 @@ const selectPrograms = (data) => {
     router.reload({
         data: {
             campusCourseId: data.id,
-            semTypeId: data.term_id,
         },
         only: ["subjectDetail", "semesterOption"],
         preserveState: true,
@@ -1663,9 +1730,10 @@ const selectPrograms = (data) => {
                         page.props?.subjectDetail.curriculum[index],
                     );
                 }
-            } else {
-                addCurriculum();
             }
+            // else {
+            //     addCurriculum();
+            // }
 
             subjectDialog.value = true;
             // curriculumDialog.value = true;
@@ -1673,41 +1741,64 @@ const selectPrograms = (data) => {
     });
 };
 
-const addCurriculum = () => {
-    if (!props.subjectDetail) return [];
-    curriculumForm.multi.push({
-        yearNumber: parseInt(selectedRow.value.years),
-        campus_course_id: selectedRow.value.id,
-        semesterTypeId: page.props?.schoolDetail.term_array.id,
-        edit: false,
-        yearLevel: null,
-        subjects: [],
-        id: null,
-    });
+// const addCurriculum = () => {
+//     if (!props.subjectDetail) return [];
+//     curriculumForm.multi.push({
+//         yearNumber: parseInt(selectedRow.value.years),
+//         campus_course_id: selectedRow.value.id,
+//         semesterTypeId: page.props?.schoolDetail.term_array.id,
+//         edit: false,
+//         yearLevel: null,
+//         subjects: [],
+//         id: null,
+//     });
 
-    curriculumForm.multi[curriculumForm.multi.length - 1].subjects.forEach(
-        (cur, curKey) => {
-            for (
-                let indexYear = 0;
-                indexYear < parseInt(selectedRow.value.years);
-                indexYear++
-            ) {
-                page.props?.semesterOption.forEach((sem, semKey) => {
-                    curriculumForm.multi[curKey].subjects.push({
-                        id: null,
-                        curriculumId: null,
-                        year: indexYear + 1,
-                        semester: sem.name,
-                        semester_array: sem,
-                        name: null,
-                        class_array: null,
-                        subjectClass: null,
-                        unit: null,
-                    });
-                });
-            }
+//     curriculumForm.multi[curriculumForm.multi.length - 1].subjects.forEach(
+//         (cur, curKey) => {
+//             for (
+//                 let indexYear = 0;
+//                 indexYear < parseInt(selectedRow.value.years);
+//                 indexYear++
+//             ) {
+//                 page.props?.semesterOption.forEach((sem, semKey) => {
+//                     curriculumForm.multi[curKey].subjects.push({
+//                         id: null,
+//                         curriculumId: null,
+//                         year: indexYear + 1,
+//                         semester: sem.name,
+//                         semester_array: sem,
+//                         name: null,
+//                         class_array: null,
+//                         subjectClass: null,
+//                         unit: null,
+//                     });
+//                 });
+//             }
+//         },
+//     );
+// };
+
+const submitSemester = () => {
+    semesterForm.post(route("schoolCoordinator.updateSemester"), {
+        only: ["semesterOption"],
+        onSuccess: () => {
+            // dialog.value.semester = false;
+            toast.add({
+                severity: props.flash?.status,
+                summary: props.flash?.title,
+                detail: props.flash?.message,
+                life: 3000,
+            });
         },
-    );
+        onError: (errors) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: "Failed to update semester.",
+                life: 3000,
+            });
+        },
+    });
 };
 
 const submitCurriculum = () => {
@@ -1740,6 +1831,17 @@ const openGradeSystem = () => {
         preserveScroll: true,
         onFinish: () => {
             dialog.value.gradeSystem = true;
+        },
+    });
+};
+
+const openSemester = () => {
+    router.reload({
+        only: ["semesterOption", "semesterDate"],
+        preserveState: true,
+        preserveScroll: true,
+        onFinish: () => {
+            dialog.value.semester = true;
         },
     });
 };
@@ -1836,6 +1938,20 @@ watch(
         timerBounce.value = setTimeout(() => {
             loadPage(1);
         }, 300);
+    },
+);
+
+watch(
+    () => props.semesterOption,
+    (val) => {
+        if (val) {
+            semesterForm.semester = val.map((sem) => ({
+                name: sem.name,
+                startDate: null,
+                endDate: null,
+                submissionDate: null,
+            }));
+        }
     },
 );
 

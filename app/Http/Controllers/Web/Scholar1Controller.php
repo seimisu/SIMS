@@ -12,7 +12,6 @@ use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
 use App\Models\LocationRegions;
-use App\Models\requestHistory;
 use App\Models\Scholars;
 use App\Models\ScholarTerm;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
@@ -20,8 +19,6 @@ use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
 use App\Models\StudentDocument;
-use App\Models\studentLandbankRequest;
-use App\Models\StudentProfileRequest;
 use App\References\LocationClass;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
@@ -33,6 +30,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -907,7 +905,7 @@ class Scholar1Controller extends Controller
                     'middle_name' => 'nullable|string|max:255',
                     'last_name' => 'nullable|string|max:255',
                     'suffix' => 'nullable|string|max:255',
-                    'email' => 'nullable|email|max:255',
+                    'email' => ['nullable', 'email', 'max:255', Rule::unique('scholar_profiles', 'email')->ignore($scholar->profile?->id)],
                     'contact_no' => 'nullable|string|max:20',
                     'birth_place' => 'nullable|string|max:255',
                     'birth_date' => 'nullable|date',

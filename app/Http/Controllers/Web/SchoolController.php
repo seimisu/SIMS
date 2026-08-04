@@ -75,7 +75,6 @@ class SchoolController extends Controller
                         'updated_by',
                         'created_by',
                     )->where('is_delete', false),
-
                 ])
                     ->select([
                         'id',

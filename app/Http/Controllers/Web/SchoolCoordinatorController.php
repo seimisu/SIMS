@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLogs;
 use App\Models\ListCourse;
-use App\Models\ListReferences;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\CoordinatorUpdateInfoNotification;
@@ -23,13 +22,15 @@ class SchoolCoordinatorController extends Controller
     public function index(Request $request, ListClass $ref)
     {
         $campus_id = Auth::user()->school_id;
-        $campus = SchoolCampuses::select('id', 'school_id', 'generated_name')->find($campus_id);
+        $campus = SchoolCampuses::select('id', 'school_id', 'generated_name', 'grading_id', 'term_id')->find($campus_id);
         $search = $request->input('search');
 
         return Inertia::render('Web/schoolCoordinatorPage', [
             'campus' => [
                 'name' => $campus->generated_name,
                 'address' => $campus->address?->full_address['name'],
+                'gradeSystem' => $campus->grading->name,
+
             ],
             'info' => [
                 'president' => $campus->info?->dean ?? 'N/A',
@@ -38,9 +39,18 @@ class SchoolCoordinatorController extends Controller
                 'email' => $campus->info?->email ?? 'N/A',
             ],
             'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
-            'semesterOption' => request('semTypeId')
-               ? $ref->getRefs('option', null, null, ListReferences::find(request('semTypeId'))?->name)
-               : null,
+            'semesterOption' => Inertia::optional(fn () => $ref->getRefs('option', null, null, $campus->term->name)),
+            'semesterDate' => Inertia::optional(fn () => $campus->semesters()
+                ->where('is_delete', false)
+                ->where('is_active', true)
+                ->get()
+                ->map(fn ($semester) => [
+                    'id' => Hashids::encode($semester->id),
+                    'name' => $semester->name,
+                    'startDate' => $semester->start_date,
+                    'endDate' => $semester->end_date,
+                    'submissionDate' => $semester->submission_date,
+                ])),
             'programs' => $campus
                 ->courses()
                 ->with('course:id,name,abbreviation', 'campus')
@@ -127,6 +137,52 @@ class SchoolCoordinatorController extends Controller
                 ])
                 ->first()
             ),
+        ]);
+    }
+
+    public function updateSemester(Request $request)
+    {
+        $campus_id = Auth::user()->school_id;
+        $campus = SchoolCampuses::findOrFail($campus_id);
+
+        $validatedData = $request->validate([
+            'semester' => ['required', 'array'],
+            'semester.*.id' => ['required', 'string'],
+            'semester.*.startDate' => ['required', 'date'],
+            'semester.*.endDate' => ['required', 'date', 'after:semester.*.startDate'],
+            'semester.*.submissionDate' => ['required', 'date', 'after:semester.*.endDate'],
+        ]);
+
+        foreach ($validatedData['semester'] as $semesterData) {
+            $semesterId = Hashids::decode($semesterData['id'])[0] ?? null;
+
+            if ($semesterId) {
+                $semester = $campus->semesters()->findOrFail($semesterId);
+                $oldData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
+
+                $semester->update([
+                    'start_date' => Carbon::parse($semesterData['startDate'])->format('Y-m-d'),
+                    'end_date' => Carbon::parse($semesterData['endDate'])->format('Y-m-d'),
+                    'submission_date' => Carbon::parse($semesterData['submissionDate'])->format('Y-m-d'),
+                ]);
+
+                $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
+
+                AuditLogs::create([
+                    'user_id' => Auth::id(),
+                    'old_data' => $oldData,
+                    'new_data' => $newData,
+                    'action' => "Updated semester {$semester->name}",
+                ]);
+            }
+        }
+
+        return redirect()->back()->with([
+            'flash' => [
+                'status' => 'success',
+                'title' => 'Semester Updated',
+                'message' => 'The semester dates have been successfully updated.',
+            ],
         ]);
     }
 

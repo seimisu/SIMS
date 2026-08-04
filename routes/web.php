@@ -174,6 +174,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('schoolCoordinator/program', [SchoolCoordinatorController::class, 'createProgram'])->name('schoolCoordinator.createProgram');
     Route::post('schoolCoordinator/grade', [SchoolCoordinatorController::class, 'createGrade'])->name('schoolCoordinator.createGrade');
     Route::post('schoolCoordinator/{id}/DeleteGrade', [SchoolCoordinatorController::class, 'deleteGrade'])->name('schoolCoordinator.deleteGrade');
+    Route::post('schoolCoordinator/semester', [SchoolCoordinatorController::class, 'updateSemester'])->name('schoolCoordinator.updateSemester');
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
