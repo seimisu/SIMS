@@ -118,11 +118,8 @@
 import { nextTick, ref } from "vue";
 import { router, usePage, useForm, useRemember } from "@inertiajs/vue3";
 import {
-    IconUserCircle,
     IconLogout2,
-    IconLockPassword,
     IconPasswordUser,
-    IconExclamationCircleFilled,
 } from "@tabler/icons-vue";
 import DefaultDialog from "../dialogs/DefaultDialog.vue";
 import PasswordInput from "../inputs/PasswordInput.vue";
@@ -147,24 +144,10 @@ const items = ref([
         label: "Options",
         items: [
             {
-                label: "Profile",
-                icons: IconUserCircle,
-                action: () => {
-                    openProfile();
-                },
-            },
-            {
                 label: "Change Password",
                 icons: IconPasswordUser,
                 action: () => {
                     openDialog();
-                },
-            },
-            {
-                label: "Lock Screen",
-                icons: IconLockPassword,
-                action: () => {
-                    lockScreen();
                 },
             },
             {
@@ -204,14 +187,6 @@ const submitForm = () => {
         },
     });
 };
-
-// const openProfile = () => {
-//     router.get(route("profile.index"));
-// };
-
-// const lockScreen = () => {
-//     router.get(route("locked.show"));
-// };
 
 const logout = () => {
     router.post(route("logout"));

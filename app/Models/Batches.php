@@ -16,6 +16,9 @@ class Batches extends Model
         'school_year',
         'is_lock',
         'status',
+        'generated_excel_path',
+        'generated_excel_name',
+        'generated_excel_at',
     ];
 
     public function logs()

@@ -85,19 +85,20 @@
                                             :icon="IconDeviceFloppy"
                                             :icon-size="17"
                                             class-name="!border-blue-600 !bg-blue-600 !text-white hover:!border-blue-500 hover:!bg-blue-500"
-                                            :loading="payrollForm.processing"
-                                            :disabled="!payrollRows.length || !batchPermissions.canEdit"
+                                            :loading="savingPayroll || payrollForm.processing"
+                                            :disabled="savingPayroll || payrollForm.processing || !payrollRows.length || !batchPermissions.canEdit"
                                             @click="savePayroll"
                                         />
                                         <DefaultButton
+                                            v-if="canExportPayroll"
                                             size="small"
                                             label="Export Payroll"
                                             severity="secondary"
                                             outlined
                                             :icon="IconFileSpreadsheet"
                                             class-name="!border-slate-300 !bg-slate-100 !text-slate-700 hover:!bg-slate-200"
-                                            :loading="Boolean(exportingPayroll)"
-                                            :disabled="!payrollRows.length || payrollForm.processing"
+                                            :loading="exportingPayroll"
+                                            :disabled="exportingPayroll || payrollForm.processing || !payrollRows.length || !canExportPayroll"
                                             @click="openExportDialog"
                                         />
                                     </div>
@@ -361,7 +362,7 @@
                                 >
                                     <div class="grid min-w-0 gap-2 lg:max-w-5xl xl:grid-cols-2">
                                         <div
-                                            v-if="details?.payroll_file"
+                                            v-if="hasSubmittedPayrollFile"
                                             class="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
                                         >
                                             <div class="flex min-w-0 items-center gap-2">
@@ -385,6 +386,34 @@
                                                 outlined
                                                 :icon="IconFileTypePdf"
                                                 @click="openSubmittedPayrollPdf"
+                                            />
+                                        </div>
+
+                                        <div
+                                            v-if="hasGeneratedExcelFile"
+                                            class="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                                        >
+                                            <div class="flex min-w-0 items-center gap-2">
+                                                <IconFileSpreadsheet :size="17" class="shrink-0 text-emerald-600" />
+                                                <div class="min-w-0">
+                                                    <div class="truncate font-semibold">
+                                                        {{ details.generated_excel_file.name || "Generated payroll Excel" }}
+                                                    </div>
+                                                    <div class="text-[11px] text-slate-500">
+                                                        Generated payroll Excel
+                                                        <span v-if="details.generated_excel_file.generated_at">
+                                                            | {{ details.generated_excel_file.generated_at }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <DefaultButton
+                                                size="small"
+                                                label="View"
+                                                severity="secondary"
+                                                outlined
+                                                :icon="IconFileSpreadsheet"
+                                                @click="openGeneratedExcelFile"
                                             />
                                         </div>
 
@@ -421,27 +450,30 @@
                                     </div>
                                     <div
                                         v-if="batchPermissions.canReject || batchPermissions.canApprove"
-                                        class="flex flex-wrap justify-end gap-2 lg:pl-3"
+                                        class="flex flex-col items-end gap-2 lg:pl-3"
                                     >
-                                        <DefaultButton
-                                            v-if="batchPermissions.canReject"
-                                            size="small"
-                                            label="Return Payroll"
-                                            severity="danger"
-                                            outlined
-                                            :icon="IconX"
-                                            :loading="statusForm.processing"
-                                            @click="openRejectDialog"
-                                        />
-                                        <DefaultButton
-                                            v-if="batchPermissions.canApprove"
-                                            size="small"
-                                            label="Approve Payroll"
-                                            severity="success"
-                                            :icon="IconChecks"
-                                            :loading="statusForm.processing"
-                                            @click="updateBatchStatus('approved_payroll')"
-                                        />
+                                        <div class="flex flex-wrap justify-end gap-2">
+                                            <DefaultButton
+                                                v-if="batchPermissions.canReject"
+                                                size="small"
+                                                label="Return Payroll"
+                                                severity="danger"
+                                                outlined
+                                                :icon="IconX"
+                                                :loading="statusForm.processing"
+                                                @click="openRejectDialog"
+                                            />
+                                            <DefaultButton
+                                                v-if="batchPermissions.canApprove"
+                                                size="small"
+                                                label="Approve Payroll"
+                                                severity="success"
+                                                :icon="IconChecks"
+                                                :loading="statusForm.processing"
+                                                :disabled="statusForm.processing || hasMarkedRecipientsForRemoval"
+                                                @click="updateBatchStatus('approved_payroll')"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -665,37 +697,6 @@
     >
         <div class="flex flex-col gap-3">
             <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Export type</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button
-                        type="button"
-                        :class="[
-                            pendingExportFormat === 'excel'
-                                ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                                : 'border-slate-200 bg-white text-slate-600',
-                            'flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm font-semibold',
-                        ]"
-                        @click="pendingExportFormat = 'excel'"
-                    >
-                        <IconFileSpreadsheet :size="17" />
-                        Excel
-                    </button>
-                    <button
-                        type="button"
-                        :class="[
-                            pendingExportFormat === 'pdf'
-                                ? 'border-red-300 bg-red-50 text-red-700'
-                                : 'border-slate-200 bg-white text-slate-600',
-                            'flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm font-semibold',
-                        ]"
-                        @click="pendingExportFormat = 'pdf'"
-                    >
-                        <IconFileTypePdf :size="17" />
-                        PDF
-                    </button>
-                </div>
-            </div>
-            <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium">Prepared by</label>
                 <MultiSelect
                     v-model="preparedBy"
@@ -772,9 +773,9 @@
             />
             <DefaultButton
                 size="small"
-                label="Export"
-                :icon="pendingExportFormat === 'pdf' ? IconFileTypePdf : IconFileSpreadsheet"
-                :loading="Boolean(exportingPayroll)"
+                label="Export PDF"
+                :icon="IconFileTypePdf"
+                :loading="exportingPayroll"
                 @click="confirmExport"
             />
         </template>
@@ -809,9 +810,8 @@ const payrollStatus = ref(null);
 const rejectDialog = ref(false);
 const rejectRemarks = ref("");
 const rejectRemarksError = ref(false);
-const exportingPayroll = ref(null);
+const exportingPayroll = ref(false);
 const exportDialog = ref(false);
-const pendingExportFormat = ref("excel");
 const preparedBy = ref([]);
 const notedBy = ref(null);
 const certifiedBy = ref(null);
@@ -823,13 +823,22 @@ const forRemovalRemarksError = ref(false);
 const removalReasonDialog = ref(false);
 const removalReasonTarget = ref(null);
 const markingForRemovalId = ref(null);
+const savingPayroll = ref(false);
 
 const details = computed(() => page.props.details);
 const activityLogs = computed(() => details.value?.activity_logs ?? []);
+const hasSubmittedPayrollFile = computed(() =>
+    details.value?.status !== "draft" && Boolean(details.value?.payroll_file),
+);
+const hasGeneratedExcelFile = computed(() =>
+    batchPermissions.value.canViewGeneratedExcel && Boolean(details.value?.generated_excel_file),
+);
 const hasReturnRemarks = computed(
     () => details.value?.status === "rejected_payroll" && Boolean(details.value?.remarks),
 );
 const hasPayrollFooter = computed(() =>
+    hasSubmittedPayrollFile.value ||
+    hasGeneratedExcelFile.value ||
     hasReturnRemarks.value ||
     batchPermissions.value.canReject ||
     batchPermissions.value.canApprove,
@@ -853,12 +862,18 @@ const batchPermissions = computed(
         details.value?.permissions ?? {
             canEdit: false,
             canSubmit: false,
+            canReview: false,
             canApprove: false,
             canReject: false,
+            canViewGeneratedExcel: false,
             canDelete: false,
         },
 );
 const canBuildPayroll = computed(() => batchPermissions.value.canEdit);
+const canExportPayroll = computed(() =>
+    batchPermissions.value.canSubmit &&
+    ["draft", "rejected_payroll"].includes(details.value?.status),
+);
 const canMarkRecipientsForRemoval = computed(
     () =>
         batchPermissions.value.canReject &&
@@ -1020,6 +1035,7 @@ const payrollGrandTotals = computed(() =>
 const forRemovalPayrollRows = computed(() =>
     payrollRows.value.filter((row) => row.is_for_removal),
 );
+const hasMarkedRecipientsForRemoval = computed(() => forRemovalPayrollRows.value.length > 0);
 const movedPayrollRows = computed(() =>
     payrollRows.value.filter((row) => row.is_moved_from_returned_payroll),
 );
@@ -1061,10 +1077,19 @@ const buildPayrollRecipients = async () => {
 };
 
 const savePayroll = async (onSuccess = null) => {
-    if (!details.value?.id || !canBuildPayroll.value) return;
+    if (
+        savingPayroll.value ||
+        payrollForm.processing ||
+        !details.value?.id ||
+        !canBuildPayroll.value ||
+        !batchPermissions.value.canEdit
+    ) {
+        return;
+    }
 
     const successCallback = typeof onSuccess === "function" ? onSuccess : null;
 
+    savingPayroll.value = true;
     payrollForm.recipients = await buildPayrollRecipients();
     payrollForm.clearErrors();
     payrollForm.put(route("stipends.payroll.update", details.value.id), {
@@ -1078,22 +1103,20 @@ const savePayroll = async (onSuccess = null) => {
             reloadBatch();
         },
         onError: () => {
-            exportingPayroll.value = null;
+            exportingPayroll.value = false;
+        },
+        onFinish: () => {
+            savingPayroll.value = false;
         },
     });
 };
 
-const downloadPayroll = (format = "excel") => {
+const downloadPayroll = () => {
     if (!details.value?.id) return;
 
-    exportingPayroll.value = null;
     exportDialog.value = false;
     const url = route("stipends.export", details.value.id);
     const params = new URLSearchParams();
-
-    if (format === "pdf") {
-        params.set("format", "pdf");
-    }
 
     preparedBy.value.forEach((signatory) => {
         params.append("prepared_by[]", signatory.id);
@@ -1103,12 +1126,15 @@ const downloadPayroll = (format = "excel") => {
 
     const query = params.toString();
     window.location.href = query ? `${url}?${query}` : url;
+    setTimeout(() => {
+        exportingPayroll.value = false;
+        reloadBatch();
+    }, 1200);
 };
 
 const openExportDialog = () => {
-    if (!details.value?.id || !payrollRows.value.length) return;
+    if (!details.value?.id || !payrollRows.value.length || !canExportPayroll.value) return;
 
-    pendingExportFormat.value = "excel";
     signatoryError.value = false;
     exportDialog.value = true;
 };
@@ -1119,21 +1145,28 @@ const openSubmittedPayrollPdf = () => {
     window.open(details.value.payroll_file.url, "_blank", "noopener,noreferrer");
 };
 
+const openGeneratedExcelFile = () => {
+    if (!details.value?.generated_excel_file?.url) return;
+
+    window.open(details.value.generated_excel_file.url, "_blank", "noopener,noreferrer");
+};
+
 const confirmExport = () => {
+    if (!canExportPayroll.value || exportingPayroll.value) return;
+
     if (!preparedBy.value.length || !notedBy.value || !certifiedBy.value) {
         signatoryError.value = true;
         return;
     }
 
-    const format = pendingExportFormat.value;
-    exportingPayroll.value = format;
+    exportingPayroll.value = true;
 
     if (canBuildPayroll.value && batchPermissions.value.canEdit) {
-        savePayroll(() => downloadPayroll(format));
+        savePayroll(downloadPayroll);
         return;
     }
 
-    downloadPayroll(format);
+    downloadPayroll();
 };
 
 const openForRemovalDialog = (row) => {

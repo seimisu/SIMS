@@ -3,7 +3,7 @@
         v-model:visible="visible"
         modal
         header="Academic History Submission"
-        class="w-[min(980px,95vw)]"
+        class="w-[min(1120px,96vw)]"
     >
         <div v-if="history" class="space-y-4">
             <div class="grid gap-2 text-sm sm:grid-cols-2">
@@ -38,10 +38,11 @@
                     <div class="overflow-x-auto">
                         <table class="w-full table-fixed text-left text-sm">
                             <colgroup>
-                                <col class="w-[58%]" />
-                                <col class="w-[18%]" />
+                                <col class="w-[42%]" />
+                                <col class="w-[16%]" />
+                                <col class="w-[10%]" />
                                 <col class="w-[12%]" />
-                                <col class="w-[12%]" />
+                                <col class="w-[20%]" />
                             </colgroup>
                             <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                                 <tr>
@@ -49,13 +50,17 @@
                                     <th class="px-3 py-2">Code</th>
                                     <th class="px-3 py-2">Unit</th>
                                     <th class="px-3 py-2">Grade</th>
+                                    <th class="px-3 py-2">Remarks</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr
                                     v-for="(subject, index) in term.subjects"
                                     :key="`${term.id}-${index}`"
-                                    class="border-t border-slate-100"
+                                    :class="[
+                                        'border-t',
+                                        subjectRowClass(subject),
+                                    ]"
                                 >
                                     <td class="px-3 py-2 font-medium uppercase text-slate-700">
                                         <span class="block truncate" :title="subject.name">
@@ -68,10 +73,24 @@
                                         </span>
                                     </td>
                                     <td class="px-3 py-2 text-slate-600">{{ subject.unit || "-" }}</td>
-                                    <td class="px-3 py-2 text-slate-700">{{ subject.grade || "-" }}</td>
+                                    <td class="px-3 py-2">
+                                        <span
+                                            :class="[
+                                                'inline-flex rounded px-2 py-0.5 text-xs font-semibold uppercase',
+                                                subjectGradeClass(subject),
+                                            ]"
+                                        >
+                                            {{ subject.grade || "-" }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 text-slate-600">
+                                        <span class="block truncate" :title="subject.remarks || '-'">
+                                            {{ subject.remarks || "-" }}
+                                        </span>
+                                    </td>
                                 </tr>
                                 <tr v-if="!term.subjects?.length">
-                                    <td colspan="4" class="px-3 py-4 text-center text-slate-500">
+                                    <td colspan="5" class="px-3 py-4 text-center text-slate-500">
                                         No subjects submitted.
                                     </td>
                                 </tr>
@@ -213,6 +232,34 @@ const allTermStatusesSelected = computed(() =>
     approvalTerms.value.length > 0 &&
     approvalTerms.value.every((term) => Boolean(termStatuses.value[term.id])),
 );
+
+const subjectStatus = (subject) => {
+    if (subject?.is_dropped) return "dropped";
+    if (subject?.is_incomplete) return "incomplete";
+    if (subject?.is_failed) return "failed";
+
+    return null;
+};
+
+const subjectRowClass = (subject) => {
+    const status = subjectStatus(subject);
+
+    return {
+        dropped: "border-slate-200 bg-slate-100/80",
+        incomplete: "border-amber-200 bg-amber-50",
+        failed: "border-red-200 bg-red-50",
+    }[status] ?? "border-slate-100";
+};
+
+const subjectGradeClass = (subject) => {
+    const status = subjectStatus(subject);
+
+    return {
+        dropped: "bg-slate-200 text-slate-700",
+        incomplete: "bg-amber-100 text-amber-800",
+        failed: "bg-red-100 text-red-700",
+    }[status] ?? "bg-slate-100 text-slate-700";
+};
 
 const approveSubmission = () => {
     if (!history.value?.id || !allTermStatusesSelected.value) return;

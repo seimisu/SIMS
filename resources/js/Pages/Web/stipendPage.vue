@@ -354,12 +354,6 @@ const actionMenuItems = computed(() => {
     const batch = selectedActionBatch.value;
 
     return [
-        {
-            label: "Review",
-            icon: IconEye,
-            class: "text-blue-500",
-            command: () => openReview(batch),
-        },
         canSubmitBatch(batch)
             ? {
                   label: "Submit",
@@ -368,6 +362,12 @@ const actionMenuItems = computed(() => {
                   command: () => openSubmitDialog(batch),
               }
             : null,
+        {
+            label: "Review",
+            icon: IconEye,
+            class: "text-blue-500",
+            command: () => openReview(batch),
+        },
         {
             label: "Remarks",
             icon: IconMessageCircle,

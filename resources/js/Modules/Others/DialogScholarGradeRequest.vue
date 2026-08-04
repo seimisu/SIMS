@@ -214,7 +214,10 @@
                                                 subject, key
                                             ) in item.subjects"
                                             :key="key"
-                                            class="hover:bg-gray-50"
+                                            :class="[
+                                                'border-b hover:bg-gray-50',
+                                                subjectRowClass(subject),
+                                            ]"
                                         >
                                             <td
                                                 class="px-3 py-2 uppercase align-text-top"
@@ -235,7 +238,13 @@
                                             <td
                                                 class="px-3 py-2 text-right max-w-35 align-text-top"
                                             >
-                                                <p v-if="subject.grade?.grade">
+                                                <p
+                                                    v-if="subject.grade?.grade"
+                                                    :class="[
+                                                        'inline-flex rounded px-2 py-0.5 text-xs font-semibold',
+                                                        subjectGradeClass(subject),
+                                                    ]"
+                                                >
                                                     {{ subject.grade?.grade }}
                                                 </p>
                                                 <p
@@ -251,87 +260,43 @@
                                                 {{ subject.total ?? "-" }}
                                             </td>
                                             <td class="px-3 py-2 text-center">
-                                                <div
-                                                    v-if="subject?.is_drop"
-                                                    class="text-red-600"
+                                                <span
+                                                    :class="subjectRemarksClass(subject)"
                                                 >
-                                                    Dropped
-                                                </div>
-                                                <div
-                                                    v-else-if="
-                                                        subject?.is_failed
-                                                    "
-                                                    class="text-rose-600"
-                                                >
-                                                    Failed
-                                                </div>
-                                                <div
-                                                    v-else-if="
-                                                        subject?.is_incomplete
-                                                    "
-                                                    class="text-amber-600"
-                                                >
-                                                    Incompleted
-                                                </div>
-                                                <div
-                                                    v-else-if="subject?.grade"
-                                                    class="text-green-600"
-                                                >
-                                                    Passed
-                                                </div>
-                                                <div
-                                                    v-else-if="
-                                                        subject.grade?.is_drop
-                                                    "
-                                                    class="text-red-600"
-                                                >
-                                                    Dropped
-                                                </div>
-                                                <div
-                                                    v-else-if="
-                                                        subject.grade?.is_failed
-                                                    "
-                                                    class="text-rose-600"
-                                                >
-                                                    Failed
-                                                </div>
-                                                <div
-                                                    v-else-if="
-                                                        subject.grade
-                                                            ?.is_incomplete
-                                                    "
-                                                    class="text-amber-600"
-                                                >
-                                                    Incompleted
-                                                </div>
-                                                <div
-                                                    v-else-if="
-                                                        subject.grade?.is_active
-                                                    "
-                                                    class="text-green-600"
-                                                >
-                                                    Passed
-                                                </div>
+                                                    {{ subjectRemarks(subject) }}
+                                                </span>
                                             </td>
                                         </tr>
                                     </tbody>
                                     <tfoot>
                                         <tr
                                             v-if="item.subjects"
-                                            class="border-t border-gray-200 font-medium"
+                                            class="border-t border-gray-200 font-medium text-gray-700"
                                         >
-                                            <td class="px-3 py-2 rounded-l-xl">
+                                            <td
+                                                class="px-3 py-2 rounded-l-xl"
+                                                colspan="2"
+                                            >
                                                 Semester Average
                                             </td>
                                             <td class="px-3 py-2 text-right">
-                                                Total Units:
-                                            </td>
-                                            <td class="px-3 py-2 text-right">
-                                                {{ item.totalUnit }}
+                                                {{
+                                                    item.summary?.units ??
+                                                    item.totalUnit ??
+                                                    0
+                                                }}
                                             </td>
                                             <td
                                                 class="px-3 py-2 text-right"
                                             ></td>
+                                            <td
+                                                class="px-3 py-2 text-right"
+                                            >
+                                                {{
+                                                    item.summary?.average ??
+                                                    "-"
+                                                }}
+                                            </td>
                                             <td
                                                 class="px-3 py-2 rounded-r-xl"
                                             ></td>
@@ -727,6 +692,62 @@ const details = ref(null);
 const remarks = ref(null);
 const selectedFile = ref(null);
 const selectedScholarshipStatus = ref(null);
+
+const subjectStatus = (subject) => {
+    if (subject?.is_drop || subject?.grade?.is_drop) return "dropped";
+    if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
+        return "incomplete";
+    }
+    if (subject?.is_failed || subject?.grade?.is_failed) return "failed";
+
+    return null;
+};
+
+const subjectRowClass = (subject) => {
+    const status = subjectStatus(subject);
+
+    return {
+        dropped: "border-slate-200 bg-slate-100/80",
+        incomplete: "border-amber-200 bg-amber-50",
+        failed: "border-red-200 bg-red-50",
+    }[status] ?? "border-slate-100";
+};
+
+const subjectGradeClass = (subject) => {
+    const status = subjectStatus(subject);
+
+    return {
+        dropped: "bg-slate-200 text-slate-700",
+        incomplete: "bg-amber-100 text-amber-800",
+        failed: "bg-red-100 text-red-700",
+    }[status] ?? "bg-slate-100 text-slate-700";
+};
+
+const subjectRemarks = (subject) => {
+    if (subject?.is_drop || subject?.grade?.is_drop) return "Dropped";
+    if (subject?.is_failed || subject?.grade?.is_failed) return "Failed";
+    if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
+        return "Incompleted";
+    }
+    if (subject?.grade?.id || subject?.grade?.grade || subject?.grade?.is_active) {
+        return "Passed";
+    }
+
+    return "-";
+};
+
+const subjectRemarksClass = (subject) => {
+    if (subject?.is_drop || subject?.grade?.is_drop) return "text-slate-500";
+    if (subject?.is_failed || subject?.grade?.is_failed) return "text-rose-600";
+    if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
+        return "text-amber-600";
+    }
+    if (subject?.grade?.id || subject?.grade?.grade || subject?.grade?.is_active) {
+        return "text-green-600";
+    }
+
+    return "text-slate-400";
+};
 
 const selectFile = (file) => {
     selectedFile.value = file;

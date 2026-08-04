@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Notifications\ScholarUploadedNotification;
 use App\Notifications\ValidatedFilesNotification;
 use App\References\LocationClass;
+use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -589,18 +590,84 @@ class ScholarController extends Controller
 
     public function gradeUpdate(Request $request, string $id)
     {
+        $permissions = app(SystemPermissions::class);
+        if (! $permissions->can(Auth::user(), 'scholars.update')) {
+            abort(403, 'Unauthorized');
+        }
 
         $data = $request->validate([
-
-            'subjects.*.grade' => 'required|array',
-            'subjects.*.subject' => 'required|array',
+            'school' => ['nullable', 'array'],
+            'school.id' => ['nullable', 'integer'],
+            'course' => ['nullable', 'array'],
+            'course.id' => ['nullable', 'integer'],
+            'level' => ['nullable', 'array'],
+            'level.id' => ['nullable', 'integer'],
+            'term' => ['nullable', 'array'],
+            'term.id' => ['nullable', 'integer'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
+            'scholarship_status' => ['nullable'],
+            'subjects' => ['required', 'array'],
+            'deleted_subjects' => ['nullable', 'array'],
+            'deleted_subjects.*' => ['integer'],
+            'subjects.*.id' => ['nullable', 'integer'],
+            'subjects.*.grade' => ['required', 'array'],
+            'subjects.*.grade.id' => ['required', 'integer'],
+            'subjects.*.subject' => ['required', 'array'],
+            'subjects.*.subject.id' => ['required', 'integer'],
         ]);
 
         DB::beginTransaction();
         try {
-            $termRecordId = Hashids::decode($id)[0] ?? 0;
+            $termRecordId = Hashids::decode($id)[0] ?? (ctype_digit($id) ? (int) $id : 0);
+            $termRecord = ScholarTerm::with('schoolInfo.campus.address', 'scholar')->findOrFail($termRecordId);
+
+            if ($permissions->shouldScopeToRegion(Auth::user())) {
+                $regionCode = $termRecord->schoolInfo?->campus?->address?->region_code;
+                if ($regionCode !== $permissions->regionCodeFor(Auth::user())) {
+                    abort(403, 'Unauthorized');
+                }
+            }
+
+            if (! empty($data['school']['id']) || ! empty($data['course']['id'])) {
+                $schoolInfo = ScholarSchoolInfos::updateOrCreate(
+                    [
+                        'id' => $termRecord->scholar_school_id,
+                        'scholar_id' => $termRecord->scholar_id,
+                    ],
+                    [
+                        'campus_id' => $data['school']['id'] ?? $termRecord->schoolInfo?->campus_id,
+                        'campus_course_id' => $data['course']['id'] ?? $termRecord->schoolInfo?->campus_course_id,
+                    ]
+                );
+
+                $termRecord->scholar_school_id = $schoolInfo->id;
+            }
+
+            $termRecord->fill([
+                'term_id' => $data['term']['id'] ?? $termRecord->term_id,
+                'level_id' => $data['level']['id'] ?? $termRecord->level_id,
+                'academic_year' => $data['academic_year'] ?? $termRecord->academic_year,
+            ])->save();
+
+            if (! empty($data['deleted_subjects'])) {
+                ScholarSchoolGrades::where('term_record_id', $termRecordId)
+                    ->whereIn('id', $data['deleted_subjects'])
+                    ->update(['is_deleted' => true]);
+            }
 
             foreach ($data['subjects'] as $key => $value) {
+
+                if (! empty($value['id'])) {
+                    ScholarSchoolGrades::where('term_record_id', $termRecordId)
+                        ->whereKey($value['id'])
+                        ->update([
+                            'subject_id' => $value['subject']['id'],
+                            'grade_id' => $value['grade']['id'],
+                            'is_deleted' => false,
+                        ]);
+
+                    continue;
+                }
 
                 ScholarSchoolGrades::updateOrCreate(
                     [
@@ -609,15 +676,37 @@ class ScholarController extends Controller
                     ],
                     [
                         'grade_id' => $value['grade']['id'],
+                        'is_deleted' => false,
                     ]
                 );
-                DB::commit();
             }
+
+            if (array_key_exists('scholarship_status', $data)) {
+                $status = is_array($data['scholarship_status'])
+                    ? ($data['scholarship_status']['name'] ?? $data['scholarship_status']['id'] ?? null)
+                    : $data['scholarship_status'];
+
+                DB::connection('scholars')
+                    ->table('scholar_processes')
+                    ->updateOrInsert(
+                        ['term_record_id' => $termRecord->id],
+                        [
+                            'spas_no' => $termRecord->scholar?->spas_no,
+                            'scholarship_status' => $status ? Str::upper($status) : null,
+                            'submission' => 'APPROVED',
+                            'payroll' => 'NOT SUBMITTED',
+                            'updated_at' => now(),
+                            'updated_by' => Auth::user()?->profile?->fullname,
+                        ]
+                    );
+            }
+
+            DB::commit();
 
             return redirect()->back()->with('flash', [
                 'status' => 'success',
-                'title' => 'Grades Updated!',
-                'message' => 'The grades have been successfully updated.',
+                'title' => 'Academic Record Updated!',
+                'message' => 'The academic record has been successfully updated.',
             ]);
         } catch (Exception $e) {
             DB::rollBack();
@@ -631,7 +720,20 @@ class ScholarController extends Controller
     public function gradeDelete(int $id)
     {
         try {
-            $grade = ScholarSchoolGrades::findOrFail($id);
+            $permissions = app(SystemPermissions::class);
+            if (! $permissions->can(Auth::user(), 'scholars.update')) {
+                abort(403, 'Unauthorized');
+            }
+
+            $grade = ScholarSchoolGrades::with('termRecord.schoolInfo.campus.address')->findOrFail($id);
+
+            if ($permissions->shouldScopeToRegion(Auth::user())) {
+                $regionCode = $grade->termRecord?->schoolInfo?->campus?->address?->region_code;
+                if ($regionCode !== $permissions->regionCodeFor(Auth::user())) {
+                    abort(403, 'Unauthorized');
+                }
+            }
+
             $grade->update([
                 'is_deleted' => true,
             ]);

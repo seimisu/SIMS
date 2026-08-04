@@ -1263,7 +1263,18 @@ class StipendController extends Controller
             $logColumns = array_merge($logColumns, ['payroll_file_path', 'payroll_file_name']);
         }
 
-        $batch = Batches::select('id', 'name', 'region', 'academic_term', 'term_id', 'school_year', 'status')
+        $batch = Batches::select(
+            'id',
+            'name',
+            'region',
+            'academic_term',
+            'term_id',
+            'school_year',
+            'status',
+            'generated_excel_path',
+            'generated_excel_name',
+            'generated_excel_at',
+        )
             ->whereId($batchId)
             ->first();
 
@@ -1313,6 +1324,13 @@ class StipendController extends Controller
                 'uploaded_by' => $latestPayrollFile->action_by,
                 'uploaded_at' => $latestPayrollFile->created_at
                     ? Carbon::parse($latestPayrollFile->created_at)->format('M d, Y | h:i a')
+                    : null,
+            ] : null,
+            'generated_excel_file' => $batch->generated_excel_path ? [
+                'name' => $batch->generated_excel_name ?: 'Generated payroll Excel',
+                'url' => Storage::disk('public')->url($batch->generated_excel_path),
+                'generated_at' => $batch->generated_excel_at
+                    ? Carbon::parse($batch->generated_excel_at)->format('M d, Y | h:i a')
                     : null,
             ] : null,
             'activity_logs' => $activityLogs->map(fn($log) => [
@@ -1578,20 +1596,41 @@ class StipendController extends Controller
 
         [$batch, $rows, $filenameBase] = $this->payrollExportPayload($id);
 
-        if ($request->query('format') === 'pdf') {
-            return Pdf::loadView('exports.payroll_pdf', [
-                'batch' => $batch,
-                'rows' => $rows,
-                'monthLabels' => collect(range(1, 5))->map(fn($month) => "Month {$month}"),
-                'preparedBy' => $preparedBy,
-                'notedBy' => $notedBy,
-                'certifiedBy' => $certifiedBy,
-            ])
-                ->setPaper('legal', 'landscape')
-                ->download($filenameBase . '.pdf');
+        $latestStatus = $this->currentBatchStatus($batch);
+        $permissions = $this->permissions();
+
+        if (
+            ! $permissions->can($request->user(), 'payroll.export')
+            || ! $permissions->canSubmitPayroll($request->user(), $batch, $latestStatus)
+        ) {
+            abort(403);
         }
 
-        return Excel::download(new PayrollExport($batch, $rows, $preparedBy, $notedBy, $certifiedBy), $filenameBase . '.xlsx');
+        $previousExcelPath = $batch->generated_excel_path;
+        $excelName = $filenameBase . '.xlsx';
+        $excelPath = "payroll-generated/{$excelName}";
+        Excel::store(new PayrollExport($batch, $rows, $preparedBy, $notedBy, $certifiedBy), $excelPath, 'public');
+
+        if ($previousExcelPath && $previousExcelPath !== $excelPath) {
+            Storage::disk('public')->delete($previousExcelPath);
+        }
+
+        $batch->forceFill([
+            'generated_excel_path' => $excelPath,
+            'generated_excel_name' => $excelName,
+            'generated_excel_at' => now(),
+        ])->save();
+
+        return Pdf::loadView('exports.payroll_pdf', [
+            'batch' => $batch,
+            'rows' => $rows,
+            'monthLabels' => collect(range(1, 5))->map(fn($month) => "Month {$month}"),
+            'preparedBy' => $preparedBy,
+            'notedBy' => $notedBy,
+            'certifiedBy' => $certifiedBy,
+        ])
+            ->setPaper('legal', 'landscape')
+            ->download($filenameBase . '.pdf');
     }
 
     public function update(Request $request, $id, $type)
@@ -1636,6 +1675,22 @@ class StipendController extends Controller
                 'status' => 'error',
                 'title' => 'Batch locked',
                 'message' => 'Verified payroll batches can no longer be changed.',
+            ]);
+        }
+
+        if (
+            $data['status'] === 'approved_payroll'
+            && BatchRecipients::where('batch_id', $batch->id)
+                ->where(function ($query) {
+                    $query->where('is_for_removal_from_payroll', true)
+                        ->orWhere('status', 'for_removal_from_payroll');
+                })
+                ->exists()
+        ) {
+            return redirect()->back()->with('flash', [
+                'status' => 'error',
+                'title' => 'Payroll needs return',
+                'message' => 'This payroll has scholar(s) marked for removal. Return the payroll before approving it.',
             ]);
         }
 

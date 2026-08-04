@@ -745,7 +745,7 @@
                                                                                             .grade
                                                                                             ?.is_drop
                                                                                     "
-                                                                                    class="text-red-600"
+                                                                                    class="text-slate-500"
                                                                                 >
                                                                                     Dropped
                                                                                 </div>

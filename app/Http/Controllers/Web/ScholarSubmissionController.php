@@ -419,6 +419,9 @@ class ScholarSubmissionController extends Controller
                     'class' => $subject->matchedSubject?->subject_class ?? $subject->subject_class,
                     'unit' => $subject->unit,
                     'grade' => $gradeLabels->get($subject->grade, $subject->grade),
+                    'is_failed' => $subject->is_failed,
+                    'is_incomplete' => $subject->is_incomplete,
+                    'is_dropped' => $subject->is_dropped,
                     'remarks' => $subject->remarks,
                 ]),
             ]),
@@ -505,26 +508,53 @@ class ScholarSubmissionController extends Controller
                 $previousTerm && ! $submittedTerms->contains('id', $previousTerm->id),
                 fn ($terms) => $terms->push($previousTerm)
             )
-            ->map(fn ($term) => [
-                'id' => $term->id,
-                'term' => $term->term?->name,
-                'termType' => $term->termType?->name,
-                'subjects' => $term->subjects->map(fn ($subject) => [
-                    'subject' => $subject->subject?->name,
-                    'class' => $subject->subject?->subject_class,
-                    'code' => $subject->subject?->subject_code,
-                    'unit' => $subject->subject?->unit,
-                    'grade' => $subject->grade,
-                ]),
-                'totalUnit' => $term->subjects->sum(fn ($subject) => (int) ($subject->subject?->unit ?? 0)),
-                'school' => $term->schoolInfo?->campus?->generated_name,
-                'course' => $term->schoolInfo?->course?->course?->name,
-                'academicYear' => $term->academic_year,
-                'status' => $term->verification_status,
-                'remarks' => null,
-                'scholarshipStatus' => null,
-                'files' => StudentDocument::where('term', $term->id)->get(),
-            ]);
+            ->map(function ($term) {
+                $subjects = $term->subjects->map(function ($subject) {
+                    $gradeValue = is_numeric($subject->grade?->grade) ? (float) $subject->grade->grade : null;
+                    $unit = is_numeric($subject->subject?->unit) ? (float) $subject->subject->unit : null;
+                    $isAcademic = Str::lower($subject->subject?->subject_class ?? '') === 'academic';
+                    $isCounted = $isAcademic
+                        && $gradeValue !== null
+                        && $unit !== null
+                        && ! ($subject->grade?->is_drop || $subject->grade?->is_incomplete);
+
+                    return [
+                        'subject' => $subject->subject?->name,
+                        'class' => $subject->subject?->subject_class,
+                        'code' => $subject->subject?->subject_code,
+                        'unit' => $subject->subject?->unit,
+                        'grade' => $subject->grade,
+                        'is_drop' => (bool) $subject->grade?->is_drop,
+                        'is_failed' => (bool) $subject->grade?->is_failed,
+                        'is_incomplete' => (bool) $subject->grade?->is_incomplete,
+                        'total' => $isCounted ? round($gradeValue * $unit, 2) : null,
+                        'is_counted' => $isCounted,
+                    ];
+                });
+                $countedSubjects = $subjects->where('is_counted', true);
+                $totalUnits = $countedSubjects->sum(fn ($subject) => (float) ($subject['unit'] ?? 0));
+                $totalGradePoints = $countedSubjects->sum(fn ($subject) => (float) ($subject['total'] ?? 0));
+
+                return [
+                    'id' => $term->id,
+                    'term' => $term->term?->name,
+                    'termType' => $term->termType?->name,
+                    'subjects' => $subjects,
+                    'summary' => [
+                        'units' => $totalUnits,
+                        'total' => round($totalGradePoints, 2),
+                        'average' => $totalUnits > 0 ? number_format($totalGradePoints / $totalUnits, 2, '.', '') : null,
+                    ],
+                    'totalUnit' => $totalUnits,
+                    'school' => $term->schoolInfo?->campus?->generated_name,
+                    'course' => $term->schoolInfo?->course?->course?->name,
+                    'academicYear' => $term->academic_year,
+                    'status' => $term->verification_status,
+                    'remarks' => null,
+                    'scholarshipStatus' => null,
+                    'files' => StudentDocument::where('term', $term->id)->get(),
+                ];
+            });
     }
 
     private function personalRequest(Request $request, SystemPermissions $permissions, $user)

@@ -305,13 +305,19 @@ class Scholar1Controller extends Controller
         $subjectOptions = $request->input('id') ?
             SchoolCampusCourseCurriculumSubjects::where('is_active', true)
                 ->where('is_delete', false)
+                ->whereRaw('LOWER(subject_class) = ?', ['academic'])
+                ->whereRaw("LOWER(COALESCE(name, '')) NOT LIKE ?", ['%prerequisite%'])
+                ->whereRaw("LOWER(COALESCE(name, '')) NOT LIKE ?", ['%pre-requisite%'])
+                ->whereRaw("LOWER(COALESCE(subject_code, '')) NOT LIKE ?", ['%prerequisite%'])
+                ->whereRaw("LOWER(COALESCE(subject_code, '')) NOT LIKE ?", ['%pre-requisite%'])
                 ->whereHas('curriculum', function ($q) use ($request) {
                     $q->where('campus_course_id', Scholars::find(Hashids::decode($request->input('id'))[0] ?? 0)->schoolInfo->first()?->campus_course_id);
                 })->get()->map(fn ($q) => [
                     'id' => $q->id,
-                    'name' => $q->name,
-                    'code' => $q->subject_code,
+                    'name' => Str::upper($q->name),
+                    'code' => Str::upper($q->subject_code),
                     'unit' => $q->unit,
+                    'class' => $q->subject_class,
                 ]) : null;
 
         $gradeOptions = $request->input('id') ? SchoolCampusGrades::where('is_active', true)
@@ -575,11 +581,13 @@ class Scholar1Controller extends Controller
                                     ->limit(1),
                                 'termRecords' => fn ($q) => $q
                                     ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id', 'verification_status')
+                                    ->where('verification_status', 'approved')
                                     ->with([
                                         'termType:id,name',
                                         'level:id,name,others',
                                         'subjects' => fn ($q) => $q
                                             ->select('id', 'term_record_id', 'subject_id', 'grade_id')
+                                            ->where('is_deleted', false)
                                             ->with([
                                                 'subject:id,name,year,subject_code,unit,subject_class,semester_id',
                                                 'grade:id,grade,is_failed,is_incomplete,is_drop,is_active',
@@ -709,11 +717,13 @@ class Scholar1Controller extends Controller
                                         && ! ($grade?->is_drop || $grade?->is_incomplete);
 
                                     return [
+                                        'id' => $sub->id,
                                         'subject' => [
-                                            'id' => $sub->id,
+                                            'id' => $sub->subject?->id,
                                             'name' => $sub->subject?->name,
                                             'code' => $sub->subject?->subject_code,
                                             'unit' => $sub->subject?->unit,
+                                            'class' => $sub->subject?->subject_class,
                                         ],
                                         'grade' => [
                                             'id' => $sub->grade?->id,
@@ -732,6 +742,7 @@ class Scholar1Controller extends Controller
                                             'is_active' => null,
                                         ],
                                         'total' => $isCounted ? round($gradeValue * $unit, 2) : null,
+                                        'remarks' => $sub->remarks,
                                         'is_academic' => $isAcademic,
                                         'is_counted' => $isCounted,
                                     ];
@@ -742,7 +753,28 @@ class Scholar1Controller extends Controller
 
                                 return [
                                     'id' => $term->id,
+                                    'term_id' => $term->term_id,
+                                    'level_id' => $term->level_id,
+                                    'schoolInfoId' => $term->scholar_school_id,
                                     'termType' => $term->term->name,
+                                    'termInput' => [
+                                        'id' => $term->term?->id,
+                                        'name' => $term->term?->name,
+                                    ],
+                                    'levelInput' => [
+                                        'id' => $term->level?->id,
+                                        'name' => $term->level?->name,
+                                        'number' => $term->level?->others,
+                                    ],
+                                    'schoolInput' => [
+                                        'id' => $term->schoolInfo?->campus?->id,
+                                        'name' => $term->schoolInfo?->campus?->generated_name,
+                                    ],
+                                    'courseInput' => [
+                                        'id' => $term->schoolInfo?->course?->id,
+                                        'name' => $term->schoolInfo?->course?->course?->name,
+                                        'campus' => $term->schoolInfo?->campus?->generated_name,
+                                    ],
                                     'files' => StudentDocument::where('term', $term->id)->get(),
                                     'academic_year' => $term->academic_year,
                                     'gradeRequest' => false,

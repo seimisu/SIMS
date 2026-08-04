@@ -814,6 +814,38 @@
                                             <div
                                                 class="flex flex-wrap items-center gap-2 lg:justify-end"
                                             >
+                                                <DefaultButton
+                                                    v-if="canUpdateScholars && !editingAcademicRecord(termRecord)"
+                                                    :icon="TablerIcons.IconScript"
+                                                    label="Edit Records"
+                                                    size="small"
+                                                    raised
+                                                    class-name="!rounded-xl !px-4"
+                                                    @click="editAcademicRecord(termRecord)"
+                                                />
+                                                <div
+                                                    v-else-if="canUpdateScholars && editingAcademicRecord(termRecord)"
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <DefaultButton
+                                                        :icon="TablerIcons.IconScriptX"
+                                                        label="Cancel"
+                                                        size="small"
+                                                        severity="danger"
+                                                        class-name="!rounded-xl !px-4"
+                                                        @click="cancelAcademicRecordEdit"
+                                                    />
+                                                    <DefaultButton
+                                                        :icon="TablerIcons.IconDeviceFloppy"
+                                                        label="Save"
+                                                        size="small"
+                                                        raised
+                                                        :loading="academicRecordForm.processing"
+                                                        :disabled="academicRecordForm.processing"
+                                                        class-name="!rounded-xl !px-4"
+                                                        @click="confirmAcademicRecordSave"
+                                                    />
+                                                </div>
                                                 <span
                                                     class="text-xs font-semibold uppercase text-gray-400"
                                                 >
@@ -827,7 +859,7 @@
                                                         v-for="(
                                                             file, index
                                                         ) in termRecord.files"
-                                                        :key="index"
+                                                        :key="file.id ?? `file-${index}`"
                                                     >
                                                         <a
                                                             v-if="
@@ -869,7 +901,10 @@
                                             <div
                                                 class="flex flex-col gap-3 rounded-xl bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                                             >
-                                                <div class="flex flex-col">
+                                                <div
+                                                    v-if="!editingAcademicRecord(termRecord)"
+                                                    class="flex flex-col"
+                                                >
                                                     <div
                                                         class="text-xs text-gray-500"
                                                     >
@@ -888,6 +923,47 @@
                                                     </div>
                                                 </div>
                                                 <div
+                                                    v-else
+                                                    class="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
+                                                >
+                                                    <SelectInput
+                                                        v-model="academicRecordForm.school"
+                                                        label="School"
+                                                        :options="page.props?.schoolOptions ?? []"
+                                                        filter
+                                                        @change="renderAcademicCourse"
+                                                    />
+                                                    <SelectInput
+                                                        v-model="academicRecordForm.course"
+                                                        label="Course"
+                                                        :options="page.props?.courseOptions ?? []"
+                                                        filter
+                                                    />
+                                                    <SelectInput
+                                                        v-model="academicRecordForm.level"
+                                                        label="Year Level"
+                                                        :options="page.props?.yearOptions ?? []"
+                                                        filter
+                                                    />
+                                                    <SelectInput
+                                                        v-model="academicRecordForm.term"
+                                                        label="Semester"
+                                                        :options="page.props?.termOptions ?? []"
+                                                        filter
+                                                    />
+                                                    <TextInput
+                                                        v-model="academicRecordForm.academic_year"
+                                                        label="Academic Year"
+                                                    />
+                                                    <SelectInput
+                                                        v-model="academicRecordForm.scholarship_status"
+                                                        label="Scholarship Status"
+                                                        :options="page.props?.standingOptions ?? []"
+                                                        filter
+                                                    />
+                                                </div>
+                                                <div
+                                                    v-if="!editingAcademicRecord(termRecord)"
                                                     class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-right"
                                                 >
                                                     <div
@@ -921,24 +997,42 @@
                                                             Subject Code
                                                         </th>
                                                         <th
-                                                            class="px-3 py-2 text-right"
+                                                            :class="[
+                                                                'px-3 py-2',
+                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-right',
+                                                            ]"
                                                         >
                                                             Unit
                                                         </th>
                                                         <th
-                                                            class="px-3 py-2 text-right"
+                                                            :class="[
+                                                                'px-3 py-2',
+                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-right',
+                                                            ]"
                                                         >
                                                             Grades
                                                         </th>
                                                         <th
-                                                            class="px-3 py-2 text-right"
+                                                            :class="[
+                                                                'px-3 py-2',
+                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-right',
+                                                            ]"
                                                         >
                                                             Total
                                                         </th>
                                                         <th
-                                                            class="px-3 py-2 text-center rounded-r-xl"
+                                                            :class="[
+                                                                'px-3 py-2',
+                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-center',
+                                                                editingAcademicRecord(termRecord) ? '' : 'rounded-r-xl',
+                                                            ]"
                                                         >
                                                             Remarks
+                                                        </th>
+                                                        <th
+                                                            v-if="editingAcademicRecord(termRecord)"
+                                                            class="w-12 rounded-r-xl px-3 py-2 text-left"
+                                                        >
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -950,7 +1044,7 @@
                                                         "
                                                     >
                                                         <td
-                                                            colspan="6"
+                                                            :colspan="editingAcademicRecord(termRecord) ? 7 : 6"
                                                             class="px-3 py-6 text-center text-gray-500"
                                                         >
                                                             Approved academic
@@ -962,10 +1056,78 @@
                                                     <tr
                                                         v-for="(
                                                             item, index
-                                                        ) in termRecord.subjects"
+                                                        ) in academicRecordRows(termRecord)"
                                                         :key="index"
                                                         class="hover:bg-gray-50"
                                                     >
+                                                        <template
+                                                            v-if="editingAcademicRecord(termRecord)"
+                                                        >
+                                                            <td
+                                                                class="px-3 py-2 min-w-72"
+                                                            >
+                                                                <SelectInput
+                                                                    v-model="item.subject"
+                                                                    :options="academicSubjectOptionsForRow(index)"
+                                                                    filter
+                                                                    uppercase
+                                                                />
+                                                            </td>
+                                                            <td class="px-3 py-2 text-slate-600">
+                                                                    {{
+                                                                    item.subject?.code ??
+                                                                    item.subject?.subject_code ??
+                                                                    "-"
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-left text-slate-600"
+                                                            >
+                                                                    {{
+                                                                    item.subject?.unit ??
+                                                                    "-"
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 min-w-36"
+                                                            >
+                                                                <SelectInput
+                                                                    v-model="item.grade"
+                                                                    :options="academicGradeOptionsForRow(index)"
+                                                                    filter
+                                                                />
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-left text-slate-600"
+                                                            >
+                                                                {{
+                                                                    academicSubjectTotal(item) ??
+                                                                    "-"
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-left"
+                                                            >
+                                                                <span
+                                                                    :class="academicSubjectRemarkClass(item)"
+                                                                >
+                                                                    {{ academicSubjectRemark(item) }}
+                                                                </span>
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-left"
+                                                            >
+                                                                <DefaultButton
+                                                                    :icon="TablerIcons.IconTrash"
+                                                                    text
+                                                                    severity="danger"
+                                                                    size="small"
+                                                                    shape="circle"
+                                                                    @click="removeAcademicSubject(index)"
+                                                                />
+                                                            </td>
+                                                        </template>
+                                                        <template v-else>
                                                         <td
                                                             class="px-3 py-2 uppercase max-w-70"
                                                         >
@@ -1016,7 +1178,7 @@
                                                                     item.request
                                                                         ?.is_drop
                                                                 "
-                                                                class="text-red-600"
+                                                                class="text-slate-500"
                                                             >
                                                                 Dropped
                                                             </div>
@@ -1052,7 +1214,7 @@
                                                                     item.grade
                                                                         ?.is_drop
                                                                 "
-                                                                class="text-red-600"
+                                                                class="text-slate-500"
                                                             >
                                                                 Dropped
                                                             </div>
@@ -1084,11 +1246,27 @@
                                                                 Passed
                                                             </div>
                                                         </td>
+                                                        </template>
+                                                    </tr>
+                                                    <tr
+                                                        v-if="editingAcademicRecord(termRecord)"
+                                                    >
+                                                        <td colspan="7" class="px-3 py-2">
+                                                            <DefaultButton
+                                                                :icon="TablerIcons.IconScriptPlus"
+                                                                label="Add Subject"
+                                                                severity="secondary"
+                                                                size="small"
+                                                                class-name="!rounded-xl w-full !px-5"
+                                                                @click="addAcademicSubject"
+                                                            />
+                                                        </td>
                                                     </tr>
                                                     <tr
                                                         v-if="
                                                             termRecord.subjects
-                                                                ?.length
+                                                                ?.length &&
+                                                            !editingAcademicRecord(termRecord)
                                                         "
                                                         class="bg-blue-50 font-semibold text-gray-700"
                                                     >
@@ -2129,6 +2307,7 @@ import {
 
 import { computed, ref, watch } from "vue";
 import { useToast } from "primevue";
+import { useConfirm } from "primevue/useconfirm";
 import * as TablerIcons from "@tabler/icons-vue";
 import { router, useForm, usePage } from "@inertiajs/vue3";
 import TextInput from "../../Components/inputs/TextInput.vue";
@@ -2138,6 +2317,7 @@ import DatePickerInput from "../../Components/inputs/DatePickerInput.vue";
 import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
 
 const toast = useToast();
+const confirm = useConfirm();
 const page = usePage();
 const canUpdateScholars = computed(() =>
     (page.props?.permissions ?? []).includes("scholars.update"),
@@ -2169,6 +2349,7 @@ const editBtn = ref({
     tr: false,
     stipend: false,
     activity: false,
+    academicRecord: false,
 });
 const loading = ref({
     address: false,
@@ -2214,6 +2395,18 @@ const validateRequestForm = useForm({
 
 const validateGradeForm = useForm({
     reason: null,
+});
+
+const academicRecordForm = useForm({
+    termRecordId: null,
+    school: null,
+    course: null,
+    level: null,
+    term: null,
+    academic_year: null,
+    scholarship_status: null,
+    subjects: [],
+    deleted_subjects: [],
 });
 
 const tabs = ref([
@@ -2273,6 +2466,132 @@ const academicStatusDisplay = computed(() => {
         tcolor: "text-slate-600",
     };
 });
+
+const isPrerequisiteSubject = (subject) => {
+    const text = [
+        subject?.name,
+        subject?.code,
+        subject?.subject_code,
+        subject?.class,
+        subject?.subject_class,
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    return text.includes("prerequisite") || text.includes("pre-requisite");
+};
+
+const academicSubjectOptions = computed(() =>
+    (page.props?.subjectOptions ?? [])
+        .filter((subject) => {
+            const subjectClass = String(subject?.class ?? subject?.subject_class ?? "academic")
+                .trim()
+                .toLowerCase();
+
+            return subjectClass === "academic" && !isPrerequisiteSubject(subject);
+        })
+        .map((subject) => ({
+            ...subject,
+            name: String(subject?.name ?? "").toUpperCase(),
+            code: subject?.code ? String(subject.code).toUpperCase() : subject?.code,
+            subject_code: subject?.subject_code ? String(subject.subject_code).toUpperCase() : subject?.subject_code,
+        })),
+);
+
+const academicSubjectOptionsForRow = (index) => {
+    const selected = academicRecordForm.subjects[index]?.subject;
+    const options = academicSubjectOptions.value;
+
+    if (!selected?.id || options.some((subject) => subject.id === selected.id)) {
+        return options;
+    }
+
+    return [selected, ...options];
+};
+
+const academicGradeOptions = computed(() =>
+    (page.props?.gradeOptions ?? []).map((grade) => normalizeGradeOption(grade)),
+);
+
+const academicGradeOptionsForRow = (index) => {
+    const selected = academicRecordForm.subjects[index]?.grade;
+    const options = academicGradeOptions.value;
+
+    if (!selected?.id) {
+        return options;
+    }
+
+    return [
+        selected,
+        ...options.filter((grade) => grade.id !== selected.id),
+    ];
+};
+
+const normalizeSubjectOption = (subject) => {
+    const code = subject?.code ?? subject?.subject_code;
+
+    return {
+        id: subject?.id,
+        name: subject?.name ? String(subject.name).toUpperCase() : subject?.name,
+        code: code ? String(code).toUpperCase() : code,
+        unit: subject?.unit,
+        class: subject?.class ?? subject?.subject_class,
+    };
+};
+
+const normalizeGradeOption = (grade) => grade
+    ? {
+          id: grade.id,
+          name: grade.name ?? grade.grade,
+          grade: grade.grade ?? grade.name,
+          is_failed: grade.is_failed,
+          is_incomplete: grade.is_incomplete,
+          is_drop: grade.is_drop,
+          is_active: grade.is_active,
+      }
+    : null;
+
+const currentAcademicSubject = (row) => normalizeSubjectOption(row?.subject);
+
+const academicSubjectTotal = (row) => {
+    const gradeValue = Number(row?.grade?.name ?? row?.grade?.grade);
+    const unit = Number(row?.subject?.unit);
+
+    if (
+        !Number.isFinite(gradeValue) ||
+        !Number.isFinite(unit) ||
+        row?.grade?.is_drop ||
+        row?.grade?.is_incomplete
+    ) {
+        return null;
+    }
+
+    return Number((gradeValue * unit).toFixed(2));
+};
+
+const academicSubjectRemark = (row) => {
+    if (row?.grade?.is_drop) return "Dropped";
+    if (row?.grade?.is_failed) return "Failed";
+    if (row?.grade?.is_incomplete) return "Incompleted";
+    if (row?.grade?.id) return "Passed";
+
+    return "-";
+};
+
+const academicSubjectRemarkClass = (row) => {
+    if (row?.grade?.is_drop) return "text-slate-500";
+    if (row?.grade?.is_failed) return "text-rose-600";
+    if (row?.grade?.is_incomplete) return "text-amber-600";
+    if (row?.grade?.id) return "text-green-600";
+
+    return "text-slate-400";
+};
+
+const academicRecordHasUnsavedChanges = computed(() =>
+    Boolean(editBtn.value.academicRecord) &&
+    (
+        academicRecordForm.isDirty ||
+        (academicRecordForm.deleted_subjects?.length ?? 0) > 0
+    ),
+);
 
 const scholarLocationDisplay = computed(() => {
     const details = page.props?.details;
@@ -2364,6 +2683,141 @@ const storePersonalInfo = async () => {
             },
         },
     );
+};
+
+const editingAcademicRecord = (termRecord) =>
+    editBtn.value.academicRecord &&
+    academicRecordForm.termRecordId === termRecord?.id;
+
+const academicRecordRows = (termRecord) =>
+    editingAcademicRecord(termRecord)
+        ? academicRecordForm.subjects
+        : termRecord?.subjects ?? [];
+
+const editAcademicRecord = (termRecord) => {
+    if (!canUpdateScholars.value) return;
+
+    editBtn.value.academicRecord = true;
+    academicRecordForm.clearErrors();
+    academicRecordForm.termRecordId = termRecord.id;
+    academicRecordForm.deleted_subjects = [];
+    academicRecordForm.school = termRecord.schoolInput ?? page.props?.details?.schoolInput ?? null;
+    academicRecordForm.course = termRecord.courseInput ?? page.props?.details?.courseInput ?? null;
+    academicRecordForm.level = termRecord.levelInput ?? null;
+    academicRecordForm.term = termRecord.termInput ?? null;
+    academicRecordForm.academic_year = termRecord.academic_year ?? null;
+    academicRecordForm.scholarship_status =
+        page.props?.standingOptions?.find((status) => {
+            const currentStatus = String(termRecord.scholarshipStatus ?? "").toUpperCase();
+
+            return (
+                status.name?.toUpperCase() === currentStatus ||
+                String(status.id ?? "").toUpperCase() === currentStatus
+            );
+        }) ?? (termRecord.scholarshipStatus
+            ? { id: termRecord.scholarshipStatus, name: termRecord.scholarshipStatus }
+            : null);
+    academicRecordForm.subjects = (termRecord.subjects ?? []).map((subject) => ({
+        id: subject.id ?? null,
+        subject: academicSubjectOptions.value.find((option) => option.id === subject.subject?.id) ??
+            currentAcademicSubject(subject),
+        grade: normalizeGradeOption(subject.grade),
+    }));
+};
+
+const discardAcademicRecordEdit = () => {
+    editBtn.value.academicRecord = false;
+    academicRecordForm.reset();
+};
+
+const cancelAcademicRecordEdit = () => {
+    if (!academicRecordHasUnsavedChanges.value) {
+        discardAcademicRecordEdit();
+        return;
+    }
+
+    confirm.require({
+        group: "global",
+        header: "Discard Changes?",
+        message: "All unsaved academic record changes will not be saved.",
+        icon: "pi pi-exclamation-triangle",
+        severity: "danger",
+        rejectLabel: "Keep Editing",
+        acceptLabel: "Discard",
+        accept: discardAcademicRecordEdit,
+    });
+};
+
+const addAcademicSubject = () => {
+    academicRecordForm.subjects.push({
+        id: null,
+        subject: null,
+        grade: null,
+    });
+};
+
+const removeAcademicSubject = (index) => {
+    const subject = academicRecordForm.subjects[index];
+    academicRecordForm.subjects.splice(index, 1);
+
+    if (subject?.id) {
+        academicRecordForm.deleted_subjects.push(subject.id);
+    }
+};
+
+const renderAcademicCourse = (event) => {
+    const school = event?.value ?? academicRecordForm.school;
+
+    if (!school?.name) return;
+
+    academicRecordForm.course = null;
+    router.reload({
+        only: ["courseOptions"],
+        data: { campus: school.name },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+    });
+};
+
+const updateAcademicRecord = () => {
+    if (!canUpdateScholars.value || !academicRecordForm.termRecordId) return;
+
+    academicRecordForm.post(
+        route("scholar.grade-update", {
+            id: academicRecordForm.termRecordId,
+        }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                editBtn.value.academicRecord = false;
+                academicRecordForm.reset();
+                toast.add({
+                    severity: page.props.flash?.status,
+                    summary: page.props.flash?.title,
+                    detail: page.props.flash?.message,
+                    life: 3000,
+                });
+            },
+        },
+    );
+};
+
+const confirmAcademicRecordSave = () => {
+    if (!canUpdateScholars.value || !academicRecordForm.termRecordId) return;
+
+    confirm.require({
+        group: "global",
+        header: "Save Academic Records?",
+        message: "This will save the changes made to the scholar's academic records.",
+        icon: "pi pi-save",
+        severity: "info",
+        rejectLabel: "Cancel",
+        rejectSeverity: "secondary",
+        acceptLabel: "Save",
+        acceptSeverity: "info",
+        accept: updateAcademicRecord,
+    });
 };
 
 const historyToggle = (event, index) => {

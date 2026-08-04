@@ -404,10 +404,12 @@
         </div>
     </div>
     <Toast />
+    <DefaultConfirmDialog group="global" />
 </template>
 <script setup>
 import SidebarIconMenu from "../Components/menus/SidebarIconMenu.vue";
 import DefaultButton from "../Components/buttons/DefaultButton.vue";
+import DefaultConfirmDialog from "../Components/dialogs/DefaultConfirmDialog.vue";
 import HeadBarButtonMenu from "../Components/menus/HeadBarButtonMenu.vue";
 import {
     IconDashboard,
