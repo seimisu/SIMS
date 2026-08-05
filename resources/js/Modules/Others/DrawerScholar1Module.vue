@@ -3,13 +3,13 @@
         v-model:visible="modelValue"
         position="full"
         :pt="{
-            header: 'border-b-1 border-gray-300 border-dashed',
-            content: 'bg-slate-50',
+            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: 'bg-slate-50 dark:!bg-gray-900 dark:!text-gray-100',
         }"
     >
         <template #header>
             <div
-                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
+                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2 dark:bg-gray-800 dark:text-gray-100"
             >
                 <IconId :size="20" :stroke-width="2" />
                 <div class="uppercase font-medium">Scholar Details</div>
@@ -17,7 +17,7 @@
         </template>
         <template #default>
             <div class="flex flex-col lg:flex-row w-full my-5 gap-3 h-full">
-                <div class="lg:flex-2 flex flex-col bg-white p-2 rounded-2xl">
+                <div class="lg:flex-2 flex flex-col bg-white p-2 rounded-2xl dark:bg-gray-800 dark:text-gray-100">
                     <div class="flex-1">
                         <div class="flex gap-2 items-center">
                             <div class="">
@@ -26,7 +26,7 @@
                                         page.props?.details?.profile?.photo ==
                                         null
                                     "
-                                    class="!w-[9rem] !h-[9rem] !rounded-xl !text-5xl !bg-slate-300"
+                                    class="!w-[9rem] !h-[9rem] !rounded-xl !text-5xl !bg-slate-300 dark:!bg-gray-700 dark:!text-gray-200"
                                 >
                                     <IconUserFilled :size="80" />
                                 </Avatar>
@@ -34,7 +34,7 @@
                                 <Avatar
                                     v-else
                                     :image="page.props.details?.profile?.photo"
-                                    class="!w-[9rem] !h-[9rem] !bg-white shadow p-1 !rounded-xl"
+                                    class="!w-[9rem] !h-[9rem] !bg-white shadow p-1 !rounded-xl dark:!bg-gray-700"
                                 />
                             </div>
                             <div class="flex-1 flex flex-col">
@@ -84,7 +84,7 @@
                                                 />
                                             </div>
                                             <div
-                                                class="font-medium text-gray-600 text-sm uppercase"
+                                                class="font-medium text-gray-600 text-sm uppercase dark:text-gray-100"
                                             >
                                                 {{
                                                     page.props.details?.fullname
@@ -111,7 +111,7 @@
                                                 />
                                             </div>
                                             <div
-                                                class="font-medium text-gray-600 text-sm"
+                                                class="font-medium text-gray-600 text-sm dark:text-gray-100"
                                             >
                                                 {{ page.props.details?.email }}
                                             </div>
@@ -130,7 +130,7 @@
                     <div class="flex-3 flex flex-col">
                         <div class="flex items-center justify-center">
                             <div
-                                class="bg-slate-50 flex gap-7 rounded-2xl py-2 px-10"
+                                class="bg-slate-50 flex gap-7 rounded-2xl py-2 px-10 dark:bg-gray-900 dark:text-gray-100"
                             >
                                 <div
                                     class="flex flex-col items-center justify-center"
@@ -138,7 +138,7 @@
                                     <div>
                                         {{ page.props?.details?.type.name }}
                                     </div>
-                                    <div class="text-xs text-gray-400">
+                                    <div class="text-xs text-gray-400 dark:text-gray-500">
                                         Type
                                     </div>
                                 </div>
@@ -148,7 +148,7 @@
                                     <div>
                                         {{ page.props?.details?.program.name }}
                                     </div>
-                                    <div class="text-xs text-gray-400">
+                                    <div class="text-xs text-gray-400 dark:text-gray-500">
                                         Program
                                     </div>
                                 </div>
@@ -158,7 +158,7 @@
                                     <div>
                                         {{ page.props?.details?.awardYear }}
                                     </div>
-                                    <div class="text-xs text-gray-400">
+                                    <div class="text-xs text-gray-400 dark:text-gray-500">
                                         Award Year
                                     </div>
                                 </div>
@@ -167,7 +167,7 @@
                         <div class="mt-5 flex flex-col gap-3">
                             <div class="flex items-center gap-2">
                                 <Avatar
-                                    class="rounded-full border !bg-blue-50 !text-blue-500"
+                                    class="rounded-full border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
                                     size="small"
                                 >
                                     <IconMapPin :size="20" stroke-width="2" />
@@ -178,7 +178,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <Avatar
-                                    class="rounded-full border !bg-blue-50 !text-blue-500"
+                                    class="rounded-full border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
                                     size="small"
                                 >
                                     <IconSchool :size="20" stroke-width="2" />
@@ -189,7 +189,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <Avatar
-                                    class="rounded-full border !bg-blue-50 !text-blue-500"
+                                    class="rounded-full border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
                                     size="small"
                                 >
                                     <IconBuildingEstate
@@ -231,15 +231,21 @@
                         </Divider>
                     </div>
                     <div class="flex-3">
-                        <Menu :model="tabs">
+                        <Menu
+                            :model="tabs"
+                            :pt="{
+                                root: 'dark:!bg-gray-800 dark:!border-gray-700 dark:!text-gray-100',
+                                submenuLabel: 'dark:!text-gray-400',
+                            }"
+                        >
                             <template #item="{ item, props }">
                                 <a
                                     v-ripple
                                     :class="[
                                         'flex items-center gap-2 px-3 py-2 cursor-pointer',
                                         selectedTab.key == item.key
-                                            ? 'text-blue-600'
-                                            : '',
+                                            ? 'text-blue-600 dark:text-blue-300'
+                                            : 'dark:text-gray-200',
                                     ]"
                                     @click="changeMenu(item)"
                                 >
@@ -274,7 +280,8 @@
                         class="!rounded-xl"
                         v-if="selectedTab.key == 1"
                         :pt="{
-                            header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
+                            header: '!border-b-1 !border-gray-300 !border-dashed !p-0 dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                            content: 'dark:!bg-gray-800 dark:!text-gray-100',
                         }"
                     >
                         <template #header>
@@ -711,6 +718,265 @@
                                     </div>
                                 </section>
 
+                                <Panel
+                                    toggleable
+                                    collapsed
+                                    class="!rounded-xl"
+                                    :pt="{
+                                        root: '!border-slate-200 dark:!border-gray-700 dark:!bg-gray-900',
+                                        header: '!border-b !border-slate-200 !border-dashed !p-3 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+                                        content: '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
+                                    }"
+                                >
+                                    <template #header>
+                                        <div
+                                            class="flex w-full items-center justify-between gap-3"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2"
+                                            >
+                                                <Avatar
+                                                    class="rounded-full !bg-blue-100 !text-blue-500 dark:!bg-blue-950/60 dark:!text-blue-300"
+                                                    size="small"
+                                                >
+                                                    <IconWood
+                                                        :size="18"
+                                                        stroke-width="2"
+                                                    />
+                                                </Avatar>
+                                                <div>
+                                                    <h3
+                                                        class="text-sm font-semibold text-gray-800 dark:text-gray-100"
+                                                    >
+                                                        Activity Logs
+                                                    </h3>
+                                                    <p
+                                                        class="text-xs text-gray-500 dark:text-gray-400"
+                                                    >
+                                                        Personal record edit
+                                                        history
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Badge
+                                                size="small"
+                                                severity="info"
+                                                :value="`${page.props.details.logs.length} record(s)`"
+                                            />
+                                        </div>
+                                    </template>
+                                    <template #default>
+                                        <div
+                                            v-if="
+                                                page.props.details.logs.length
+                                            "
+                                            class="max-h-[22rem] overflow-y-auto p-4"
+                                        >
+                                            <Timeline
+                                                :value="page.props.details.logs"
+                                                align="left"
+                                                class="p-1"
+                                                :pt="{
+                                                    eventOpposite: '!hidden',
+                                                    eventSeparator:
+                                                        '!min-w-[3rem]',
+                                                }"
+                                            >
+                                                <template
+                                                    #marker="slotProps"
+                                                >
+                                                    <div
+                                                        :class="[
+                                                            'w-10 h-10 rounded-2xl border flex items-center justify-center shadow-sm dark:bg-gray-800',
+                                                            {
+                                                                'bg-blue-50 border-blue-200 dark:border-blue-800':
+                                                                    slotProps
+                                                                        .item
+                                                                        .type ===
+                                                                    'profile',
+                                                                'bg-emerald-50 border-emerald-200 dark:border-emerald-800':
+                                                                    slotProps
+                                                                        .item
+                                                                        .type ===
+                                                                    'landbank',
+                                                                'bg-cyan-50 border-cyan-200 dark:border-cyan-800':
+                                                                    slotProps
+                                                                        .item
+                                                                        .type ===
+                                                                    'address',
+                                                                'bg-green-50 border-green-200 dark:border-green-800':
+                                                                    slotProps
+                                                                        .item
+                                                                        .type ===
+                                                                    'school',
+                                                            },
+                                                        ]"
+                                                    >
+                                                        <IconMapPin
+                                                            v-if="
+                                                                slotProps.item
+                                                                    .type ===
+                                                                'address'
+                                                            "
+                                                            class="text-cyan-600 dark:text-cyan-300"
+                                                            :size="22"
+                                                        />
+
+                                                        <IconUser
+                                                            v-else-if="
+                                                                slotProps.item
+                                                                    .type ===
+                                                                'profile'
+                                                            "
+                                                            class="text-blue-600 dark:text-blue-300"
+                                                            :size="22"
+                                                        />
+
+                                                        <IconBuildingBank
+                                                            v-else-if="
+                                                                slotProps.item
+                                                                    .type ===
+                                                                'landbank'
+                                                            "
+                                                            class="text-emerald-600 dark:text-emerald-300"
+                                                            :size="22"
+                                                        />
+
+                                                        <IconSchool
+                                                            v-else
+                                                            class="text-green-600 dark:text-green-300"
+                                                            :size="22"
+                                                        />
+                                                    </div>
+                                                </template>
+
+                                                <template
+                                                    #content="slotProps"
+                                                >
+                                                    <div
+                                                        class="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                                                    >
+                                                        <div
+                                                            class="flex flex-col"
+                                                        >
+                                                            <div
+                                                                class="text-sm font-medium text-gray-800 dark:text-gray-100"
+                                                            >
+                                                                Updated User
+                                                                {{
+                                                                    slotProps
+                                                                        .item
+                                                                        .type
+                                                                }}
+                                                            </div>
+                                                            <div
+                                                                class="text-sm flex gap-4 items-center text-gray-400 dark:text-gray-500"
+                                                            >
+                                                                <div
+                                                                    class="flex gap-1 items-center"
+                                                                >
+                                                                    <IconUserCircle
+                                                                        :size="
+                                                                            20
+                                                                        "
+                                                                    />
+                                                                    <div>
+                                                                        {{
+                                                                            slotProps
+                                                                                .item
+                                                                                .created_by
+                                                                        }}
+                                                                    </div>
+                                                                </div>
+                                                                <div
+                                                                    class="flex gap-1 items-center"
+                                                                >
+                                                                    <IconCalendarFilled
+                                                                        :size="
+                                                                            20
+                                                                        "
+                                                                    />
+                                                                    <div>
+                                                                        {{
+                                                                            slotProps
+                                                                                .item
+                                                                                .date
+                                                                        }}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="text-sm"
+                                                        >
+                                                            <div
+                                                                v-for="(
+                                                                    value, key
+                                                                ) in slotProps
+                                                                    .item
+                                                                    .changes"
+                                                                :key="key"
+                                                                class="flex flex-wrap items-center gap-2 py-0.5"
+                                                            >
+                                                                <span
+                                                                    class="min-w-36 capitalize text-gray-700 dark:text-gray-300"
+                                                                >
+                                                                    {{
+                                                                        key.replaceAll(
+                                                                            "_",
+                                                                            " ",
+                                                                        )
+                                                                    }}
+                                                                </span>
+
+                                                                <span
+                                                                    class="text-red-500 dark:text-red-300"
+                                                                >
+                                                                    {{
+                                                                        slotProps
+                                                                            .item
+                                                                            .previous?.[
+                                                                            key
+                                                                        ] != ""
+                                                                            ? slotProps
+                                                                                  .item
+                                                                                  .previous?.[
+                                                                                  key
+                                                                              ]
+                                                                            : "Not Set"
+                                                                    }}
+                                                                </span>
+
+                                                                <IconArrowRight
+                                                                    :size="14"
+                                                                    class="text-gray-400 dark:text-gray-500"
+                                                                />
+
+                                                                <span
+                                                                    class="font-medium text-emerald-600 dark:text-emerald-300"
+                                                                >
+                                                                    {{
+                                                                        value !=
+                                                                        ""
+                                                                            ? value
+                                                                            : "Removed"
+                                                                    }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </Timeline>
+                                        </div>
+                                        <div
+                                            v-else
+                                            class="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                        >
+                                            No personal record activity yet.
+                                        </div>
+                                    </template>
+                                </Panel>
+
                                 <!-- <Divider align="left">
                                     <span class="text-xs font-semibold"
                                         >Guardian Information</span
@@ -755,11 +1021,11 @@
                         v-if="selectedTab.key == 2"
                     >
                         <div
-                            class="rounded-2xl border border-slate-200 bg-slate-50 p-3"
+                            class="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-gray-700 dark:bg-gray-800"
                             v-if="page.props?.details?.termGrades?.length > 0"
                         >
                             <div
-                                class="mb-3 flex flex-col gap-1 rounded-xl bg-white p-3 text-gray-700 shadow-sm"
+                                class="mb-3 flex flex-col gap-1 rounded-xl bg-white p-3 text-gray-700 shadow-sm dark:bg-gray-900 dark:text-gray-100"
                             >
                                 <div class="flex items-center gap-2">
                                     <IconHistory :size="18" />
@@ -767,7 +1033,7 @@
                                         Academic Records
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
                                     Records are arranged from newest to oldest.
                                     Totals and semester average use academic
                                     subjects only.
@@ -781,7 +1047,8 @@
                                 <Panel
                                     class="!rounded-xl"
                                     :pt="{
-                                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0',
+                                        header: '!border-b-1 !border-gray-300 !border-dashed !p-0 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+                                        content: 'dark:!bg-gray-900 dark:!text-gray-100',
                                     }"
                                 >
                                     <template #header>
@@ -789,21 +1056,21 @@
                                             class="p-3 w-full flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
                                         >
                                             <div
-                                                class="flex items-center gap-3 text-md font-medium text-gray-700"
+                                                class="flex items-center gap-3 text-md font-medium text-gray-700 dark:text-gray-100"
                                             >
                                                 <IconSchool
-                                                    class="text-gray-500"
+                                                    class="text-gray-500 dark:text-gray-400"
                                                     :size="20"
                                                 />
                                                 <span
-                                                    class="px-2 py-0.5 rounded-md bg-slate-200"
+                                                    class="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-gray-700 dark:text-gray-100"
                                                 >
                                                     {{
                                                         termRecord.academic_year
                                                     }}
                                                 </span>
                                                 <span
-                                                    class="px-2 py-0.5 rounded-md bg-gray-100"
+                                                    class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-gray-100"
                                                 >
                                                     {{
                                                         termRecord.termType ??
@@ -847,7 +1114,7 @@
                                                     />
                                                 </div>
                                                 <span
-                                                    class="text-xs font-semibold uppercase text-gray-400"
+                                                    class="text-xs font-semibold uppercase text-gray-400 dark:text-gray-500"
                                                 >
                                                     Documents
                                                 </span>
@@ -870,7 +1137,7 @@
                                                                 file.file_path
                                                             "
                                                             target="_blank"
-                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
                                                         >
                                                             COR:
                                                             {{ file.file_name }}
@@ -884,7 +1151,7 @@
                                                                 file.file_path
                                                             "
                                                             target="_blank"
-                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                            class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
                                                         >
                                                             Proof of Grades:
                                                             {{ file.file_name }}
@@ -899,14 +1166,14 @@
                                             class="w-full flex flex-col pt-5 gap-3"
                                         >
                                             <div
-                                                class="flex flex-col gap-3 rounded-xl bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                                                class="flex flex-col gap-3 rounded-xl bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between dark:bg-gray-800"
                                             >
                                                 <div
                                                     v-if="!editingAcademicRecord(termRecord)"
                                                     class="flex flex-col"
                                                 >
                                                     <div
-                                                        class="text-xs text-gray-500"
+                                                        class="text-xs text-gray-500 dark:text-gray-400"
                                                     >
                                                         {{
                                                             page.props?.details
@@ -914,7 +1181,7 @@
                                                         }}
                                                     </div>
                                                     <div
-                                                        class="text-base font-semibold text-gray-800"
+                                                        class="text-base font-semibold text-gray-800 dark:text-gray-100"
                                                     >
                                                         {{
                                                             page.props?.details
@@ -964,15 +1231,15 @@
                                                 </div>
                                                 <div
                                                     v-if="!editingAcademicRecord(termRecord)"
-                                                    class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-right"
+                                                    class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-right dark:border-amber-800/70 dark:bg-amber-950/30"
                                                 >
                                                     <div
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-amber-600"
+                                                        class="text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-300"
                                                     >
                                                         Scholarship Status
                                                     </div>
                                                     <div
-                                                        class="text-sm font-semibold text-amber-800"
+                                                        class="text-sm font-semibold text-amber-800 dark:text-amber-100"
                                                     >
                                                         {{
                                                             termRecord.scholarshipStatus ??
@@ -985,7 +1252,7 @@
                                                 class="min-w-full !border-none text-sm"
                                             >
                                                 <thead>
-                                                    <tr class="bg-gray-100">
+                                                    <tr class="bg-gray-100 dark:bg-gray-800">
                                                         <th
                                                             class="px-3 py-2 text-left rounded-l-xl"
                                                         >
@@ -1045,7 +1312,7 @@
                                                     >
                                                         <td
                                                             :colspan="editingAcademicRecord(termRecord) ? 7 : 6"
-                                                            class="px-3 py-6 text-center text-gray-500"
+                                                            class="px-3 py-6 text-center text-gray-500 dark:text-gray-400"
                                                         >
                                                             Approved academic
                                                             record found, but no
@@ -1058,7 +1325,7 @@
                                                             item, index
                                                         ) in academicRecordRows(termRecord)"
                                                         :key="index"
-                                                        class="hover:bg-gray-50"
+                                                        class="hover:bg-gray-50 dark:hover:bg-gray-800/80"
                                                     >
                                                         <template
                                                             v-if="editingAcademicRecord(termRecord)"
@@ -1073,7 +1340,7 @@
                                                                     uppercase
                                                                 />
                                                             </td>
-                                                            <td class="px-3 py-2 text-slate-600">
+                                                            <td class="px-3 py-2 text-slate-600 dark:text-gray-300">
                                                                     {{
                                                                     item.subject?.code ??
                                                                     item.subject?.subject_code ??
@@ -1081,7 +1348,7 @@
                                                                 }}
                                                             </td>
                                                             <td
-                                                                class="px-3 py-2 text-left text-slate-600"
+                                                                class="px-3 py-2 text-left text-slate-600 dark:text-gray-300"
                                                             >
                                                                     {{
                                                                     item.subject?.unit ??
@@ -1098,7 +1365,7 @@
                                                                 />
                                                             </td>
                                                             <td
-                                                                class="px-3 py-2 text-left text-slate-600"
+                                                                class="px-3 py-2 text-left text-slate-600 dark:text-gray-300"
                                                             >
                                                                 {{
                                                                     academicSubjectTotal(item) ??
@@ -1178,7 +1445,7 @@
                                                                     item.request
                                                                         ?.is_drop
                                                                 "
-                                                                class="text-slate-500"
+                                                                class="text-slate-500 dark:text-gray-400"
                                                             >
                                                                 Dropped
                                                             </div>
@@ -1187,7 +1454,7 @@
                                                                     item.request
                                                                         ?.is_failed
                                                                 "
-                                                                class="text-rose-600"
+                                                                class="text-rose-600 dark:text-rose-300"
                                                             >
                                                                 Failed
                                                             </div>
@@ -1196,7 +1463,7 @@
                                                                     item.request
                                                                         ?.is_incomplete
                                                                 "
-                                                                class="text-amber-600"
+                                                                class="text-amber-600 dark:text-amber-300"
                                                             >
                                                                 Incompleted
                                                             </div>
@@ -1205,7 +1472,7 @@
                                                                     item.request
                                                                         ?.grade
                                                                 "
-                                                                class="text-green-600"
+                                                                class="text-green-600 dark:text-green-300"
                                                             >
                                                                 Passed
                                                             </div>
@@ -1214,7 +1481,7 @@
                                                                     item.grade
                                                                         ?.is_drop
                                                                 "
-                                                                class="text-slate-500"
+                                                                class="text-slate-500 dark:text-gray-400"
                                                             >
                                                                 Dropped
                                                             </div>
@@ -1223,7 +1490,7 @@
                                                                     item.grade
                                                                         ?.is_failed
                                                                 "
-                                                                class="text-rose-600"
+                                                                class="text-rose-600 dark:text-rose-300"
                                                             >
                                                                 Failed
                                                             </div>
@@ -1232,7 +1499,7 @@
                                                                     item.grade
                                                                         ?.is_incomplete
                                                                 "
-                                                                class="text-amber-600"
+                                                                class="text-amber-600 dark:text-amber-300"
                                                             >
                                                                 Incompleted
                                                             </div>
@@ -1241,7 +1508,7 @@
                                                                     item.grade
                                                                         ?.is_active
                                                                 "
-                                                                class="text-green-600"
+                                                                class="text-green-600 dark:text-green-300"
                                                             >
                                                                 Passed
                                                             </div>
@@ -1268,7 +1535,7 @@
                                                                 ?.length &&
                                                             !editingAcademicRecord(termRecord)
                                                         "
-                                                        class="bg-blue-50 font-semibold text-gray-700"
+                                                        class="bg-blue-50 font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-100"
                                                     >
                                                         <td
                                                             class="px-3 py-2"
@@ -1307,7 +1574,7 @@
                                             <!-- Group Action Buttons -->
                                             <div
                                                 v-if="termRecord.gradeRequest"
-                                                class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200"
+                                                class="flex w-full justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700"
                                             >
                                                 <div>
                                                     <DefaultButton
@@ -1472,6 +1739,192 @@
                                     </template>
                                 </Panel>
                             </div>
+                            <Panel
+                                toggleable
+                                collapsed
+                                class="!rounded-xl"
+                                :pt="{
+                                    root: '!border-slate-200 dark:!border-gray-700 dark:!bg-gray-900',
+                                    header: '!border-b !border-slate-200 !border-dashed !p-3 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+                                    content: '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
+                                }"
+                            >
+                                <template #header>
+                                    <div
+                                        class="flex w-full items-center justify-between gap-3"
+                                    >
+                                        <div class="flex items-center gap-2">
+                                            <Avatar
+                                                class="rounded-full !bg-blue-100 !text-blue-500 dark:!bg-blue-950/60 dark:!text-blue-300"
+                                                size="small"
+                                            >
+                                                <IconHistory
+                                                    :size="18"
+                                                    stroke-width="2"
+                                                />
+                                            </Avatar>
+                                            <div>
+                                                <h3
+                                                    class="text-sm font-semibold text-gray-800 dark:text-gray-100"
+                                                >
+                                                    Academic Record Logs
+                                                </h3>
+                                                <p
+                                                    class="text-xs text-gray-500 dark:text-gray-400"
+                                                >
+                                                    Academic record edit
+                                                    history
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge
+                                            size="small"
+                                            severity="info"
+                                            :value="`${page.props.details.academicLogs?.length ?? 0} record(s)`"
+                                        />
+                                    </div>
+                                </template>
+                                <template #default>
+                                    <div
+                                        v-if="
+                                            page.props.details.academicLogs
+                                                ?.length
+                                        "
+                                        class="max-h-[22rem] overflow-y-auto p-4"
+                                    >
+                                        <Timeline
+                                            :value="
+                                                page.props.details.academicLogs
+                                            "
+                                            align="left"
+                                            class="p-1"
+                                            :pt="{
+                                                eventOpposite: '!hidden',
+                                                eventSeparator:
+                                                    '!min-w-[3rem]',
+                                            }"
+                                        >
+                                            <template #marker>
+                                                <div
+                                                    class="w-10 h-10 rounded-2xl border border-violet-200 bg-violet-50 flex items-center justify-center shadow-sm dark:border-violet-800 dark:bg-gray-800"
+                                                >
+                                                    <IconScript
+                                                        class="text-violet-600 dark:text-violet-300"
+                                                        :size="22"
+                                                    />
+                                                </div>
+                                            </template>
+
+                                            <template #content="slotProps">
+                                                <div
+                                                    class="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                                                >
+                                                    <div class="flex flex-col">
+                                                        <div
+                                                            class="text-sm font-medium text-gray-800 dark:text-gray-100"
+                                                        >
+                                                            Updated Academic
+                                                            Record
+                                                        </div>
+                                                        <div
+                                                            class="text-sm flex gap-4 items-center text-gray-400 dark:text-gray-500"
+                                                        >
+                                                            <div
+                                                                class="flex gap-1 items-center"
+                                                            >
+                                                                <IconUserCircle
+                                                                    :size="20"
+                                                                />
+                                                                <div>
+                                                                    {{
+                                                                        slotProps
+                                                                            .item
+                                                                            .created_by
+                                                                    }}
+                                                                </div>
+                                                            </div>
+                                                            <div
+                                                                class="flex gap-1 items-center"
+                                                            >
+                                                                <IconCalendarFilled
+                                                                    :size="20"
+                                                                />
+                                                                <div>
+                                                                    {{
+                                                                        slotProps
+                                                                            .item
+                                                                            .date
+                                                                    }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-sm">
+                                                        <div
+                                                            v-for="(
+                                                                value, key
+                                                            ) in slotProps.item
+                                                                .changes"
+                                                            :key="key"
+                                                            class="flex flex-wrap items-start gap-2 py-0.5"
+                                                        >
+                                                            <span
+                                                                class="min-w-40 capitalize text-gray-700 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    key.replaceAll(
+                                                                        "_",
+                                                                        " ",
+                                                                    )
+                                                                }}
+                                                            </span>
+
+                                                            <span
+                                                                class="max-w-xl whitespace-pre-line text-red-500 dark:text-red-300"
+                                                            >
+                                                                {{
+                                                                    slotProps
+                                                                        .item
+                                                                        .previous?.[
+                                                                        key
+                                                                    ] != ""
+                                                                        ? slotProps
+                                                                              .item
+                                                                              .previous?.[
+                                                                              key
+                                                                          ]
+                                                                        : "Not Set"
+                                                                }}
+                                                            </span>
+
+                                                            <IconArrowRight
+                                                                :size="14"
+                                                                class="mt-1 text-gray-400 dark:text-gray-500"
+                                                            />
+
+                                                            <span
+                                                                class="max-w-xl whitespace-pre-line font-medium text-emerald-600 dark:text-emerald-300"
+                                                            >
+                                                                {{
+                                                                    value != ""
+                                                                        ? value
+                                                                        : "Removed"
+                                                                }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </Timeline>
+                                    </div>
+                                    <div
+                                        v-else
+                                        class="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                    >
+                                        No academic record activity yet.
+                                    </div>
+                                </template>
+                            </Panel>
                         </div>
                     </div>
                     <div
@@ -1481,17 +1934,17 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <!-- Total Amount -->
                             <div
-                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all dark:bg-gray-800 dark:border-gray-700"
                             >
                                 <div class="flex items-center justify-between">
                                     <span
-                                        class="text-sm font-medium text-slate-500"
+                                        class="text-sm font-medium text-slate-500 dark:text-gray-300"
                                     >
                                         Total Financial Assistance Amount
                                     </span>
 
                                     <div
-                                        class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"
+                                        class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center dark:bg-blue-500/15"
                                     >
                                         <i
                                             class="pi pi-wallet text-blue-600"
@@ -1500,7 +1953,7 @@
                                 </div>
 
                                 <h2
-                                    class="text-3xl font-bold text-slate-800 mt-4"
+                                    class="text-3xl font-bold text-slate-800 mt-4 dark:text-gray-50"
                                 >
                                     ₱
                                     {{
@@ -1509,24 +1962,24 @@
                                     }}
                                 </h2>
 
-                                <p class="text-xs text-slate-400 mt-1">
+                                <p class="text-xs text-slate-400 mt-1 dark:text-gray-400">
                                     Total approved scholarship amount
                                 </p>
                             </div>
 
                             <!-- Amount Received -->
                             <div
-                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all dark:bg-gray-800 dark:border-gray-700"
                             >
                                 <div class="flex items-center justify-between">
                                     <span
-                                        class="text-sm font-medium text-slate-500"
+                                        class="text-sm font-medium text-slate-500 dark:text-gray-300"
                                     >
                                         Total Financial Allowances
                                     </span>
 
                                     <div
-                                        class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"
+                                        class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center dark:bg-green-500/15"
                                     >
                                         <i
                                             class="pi pi-check-circle text-green-600"
@@ -1543,24 +1996,24 @@
                                     }}
                                 </h2>
 
-                                <p class="text-xs text-slate-400 mt-1">
+                                <p class="text-xs text-slate-400 mt-1 dark:text-gray-400">
                                     Successfully received amount
                                 </p>
                             </div>
 
                             <!-- Remaining Balance -->
                             <div
-                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all"
+                                class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all dark:bg-gray-800 dark:border-gray-700"
                             >
                                 <div class="flex items-center justify-between">
                                     <span
-                                        class="text-sm font-medium text-slate-500"
+                                        class="text-sm font-medium text-slate-500 dark:text-gray-300"
                                     >
                                         Remaining Balance
                                     </span>
 
                                     <div
-                                        class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"
+                                        class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center dark:bg-amber-500/15"
                                     >
                                         <i
                                             class="pi pi-chart-line text-amber-600"
@@ -1577,7 +2030,7 @@
                                     }}
                                 </h2>
 
-                                <p class="text-xs text-slate-400 mt-1">
+                                <p class="text-xs text-slate-400 mt-1 dark:text-gray-400">
                                     Outstanding scholarship balance
                                 </p>
                             </div>
@@ -1585,7 +2038,8 @@
                         <Panel
                             class="w-full !rounded-xl"
                             :pt="{
-                                header: '!border-b-1 !border-gray-300 !border-dashed !p-3 ',
+                                header: '!border-b-1 !border-gray-300 !border-dashed !p-3 dark:!border-gray-700',
+                                content: 'dark:!bg-gray-800',
                             }"
                         >
                             <template #header>
@@ -1593,7 +2047,7 @@
                                     class="flex items-center justify-between gap-1"
                                 >
                                     <h3
-                                        class="text-sm font-semibold text-gray-800"
+                                        class="text-sm font-semibold text-gray-800 dark:text-gray-100"
                                     >
                                         Semester Breakdown
                                     </h3>
@@ -1618,7 +2072,7 @@
                                                         class="flex items-center gap-2"
                                                     >
                                                         <div
-                                                            class="text-slate-700 text-sm font-semibold"
+                                                            class="text-slate-700 text-sm font-semibold dark:text-gray-100"
                                                         >
                                                             {{ q.period }}
                                                         </div>
@@ -1630,7 +2084,7 @@
                                                         >
                                                     </div>
                                                     <p
-                                                        class="text-xs text-slate-500"
+                                                        class="text-xs text-slate-500 dark:text-gray-400"
                                                     >
                                                         Monthly Scholarship
                                                         Releases
@@ -1639,7 +2093,7 @@
 
                                                 <div class="text-right">
                                                     <div
-                                                        class="text-xs text-slate-500"
+                                                        class="text-xs text-slate-500 dark:text-gray-400"
                                                     >
                                                         Month Status
                                                     </div>
@@ -1721,7 +2175,7 @@
                                                                         >
                                                                             <Avatar
                                                                                 shape="circle"
-                                                                                class="!bg-white border !border-slate-200 !shadow-sm"
+                                                                                class="!bg-white border !border-slate-200 !shadow-sm dark:!bg-gray-900 dark:!border-gray-700"
                                                                             >
                                                                                 <IconDotsCircleHorizontal
                                                                                     :size="
@@ -1848,7 +2302,7 @@
                                                                                             .item
                                                                                             .remarks
                                                                                     "
-                                                                                    class="mt-3 rounded-lg bg-red-50 px-3 py-2"
+                                                                                    class="mt-3 rounded-lg bg-red-50 px-3 py-2 dark:bg-red-500/10"
                                                                                 >
                                                                                     <div
                                                                                         class="text-xs font-semibold text-red-600"
@@ -1887,7 +2341,7 @@
                                                                         : q.status ==
                                                                             'rejected'
                                                                           ? ' text-red-600 '
-                                                                          : ' text-slate-600 '
+                                                                          : ' text-slate-600 dark:text-gray-300 '
                                                             "
                                                         >
                                                             {{ q.status }}
@@ -1897,10 +2351,10 @@
                                             </div>
 
                                             <div
-                                                class="border border-slate-200 rounded-xl overflow-hidden"
+                                                class="border border-slate-200 rounded-xl overflow-hidden dark:border-gray-600"
                                             >
                                                 <table
-                                                    class="table table-auto w-full"
+                                                    class="table table-auto w-full text-slate-800 dark:text-gray-100"
                                                 >
                                                     <thead>
                                                         <tr>
@@ -1919,14 +2373,14 @@
 
                                                     <tbody>
                                                         <tr
-                                                            class="border-t border-slate-200"
+                                                            class="border-t border-slate-200 dark:border-gray-700"
                                                             v-for="(
                                                                 item, idx
                                                             ) in q.stipends"
                                                             :key="idx"
                                                         >
                                                             <td
-                                                                class="text-sm px-2 text-slate-600 py-1"
+                                                                class="text-sm px-2 text-slate-600 py-1 dark:text-gray-300"
                                                             >
                                                                 {{ item.month }}
                                                             </td>
@@ -1940,11 +2394,11 @@
                                                             </td>
                                                         </tr>
                                                         <tr
-                                                            class="border-t border-slate-200"
+                                                            class="border-t border-slate-200 dark:border-gray-700"
                                                         >
                                                             <td
                                                                 colspan="2"
-                                                                class="text-sm px-2 py-1 font-semibold bg-slate-50 text-slate-700"
+                                                                class="text-sm px-2 py-1 font-semibold bg-slate-50 text-slate-700 dark:bg-gray-900 dark:text-gray-100"
                                                             >
                                                                 <span>
                                                                     Financial
@@ -1953,7 +2407,7 @@
                                                             </td>
                                                         </tr>
                                                         <tr
-                                                            class="border-t border-slate-200"
+                                                            class="border-t border-slate-200 dark:border-gray-700"
                                                             v-for="(
                                                                 allowance,
                                                                 allowanceKey
@@ -1961,7 +2415,7 @@
                                                             :key="allowanceKey"
                                                         >
                                                             <td
-                                                                class="text-sm text-slate-600 px-2 py-1"
+                                                                class="text-sm text-slate-600 px-2 py-1 dark:text-gray-300"
                                                             >
                                                                 {{
                                                                     allowance.name
@@ -1986,19 +2440,19 @@
                                     <div>
                                         <div class="mb-4">
                                             <h3
-                                                class="text-sm font-semibold text-slate-700"
+                                                class="text-sm font-semibold text-slate-700 dark:text-gray-100"
                                             >
                                                 Total Financial Allowances
                                             </h3>
 
-                                            <p class="text-xs text-slate-500">
+                                            <p class="text-xs text-slate-500 dark:text-gray-400">
                                                 Additional Benefits
                                             </p>
                                         </div>
 
                                         <div class="space-y-2.5">
                                             <div
-                                                class="flex justify-between text-sm text-slate-600"
+                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
                                                 <span>Clothing Allowance</span>
 
@@ -2011,7 +2465,7 @@
                                                 >
                                             </div>
                                             <div
-                                                class="flex justify-between text-sm text-slate-600"
+                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
                                                 <span>Transportation</span>
                                                 <span class="font-medium"
@@ -2020,7 +2474,7 @@
                                             </div>
 
                                             <div
-                                                class="flex justify-between text-sm text-slate-600"
+                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
                                                 <span
                                                     >Learning Materials &
@@ -2036,7 +2490,7 @@
                                             </div>
 
                                             <div
-                                                class="flex justify-between text-sm text-slate-600"
+                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
                                                 <span>Book Allowance</span>
                                                 <span class="font-medium"
@@ -2044,7 +2498,7 @@
                                                 >
                                             </div>
                                             <div
-                                                class="flex justify-between text-sm text-slate-600"
+                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
                                                 <span>Thesis Allowance</span>
                                                 <span class="font-medium"
@@ -2052,7 +2506,7 @@
                                                 >
                                             </div>
                                             <div
-                                                class="flex justify-between text-sm text-slate-600"
+                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
                                                 <span
                                                     >Graduation Allowance</span
@@ -2066,13 +2520,13 @@
 
                                             <div class="flex justify-between">
                                                 <span
-                                                    class="text-sm font-semibold text-slate-700"
+                                                    class="text-sm font-semibold text-slate-700 dark:text-gray-100"
                                                 >
                                                     Total Allowances
                                                 </span>
 
                                                 <span
-                                                    class="text-base font-semibold text-slate-800"
+                                                    class="text-base font-semibold text-slate-800 dark:text-gray-50"
                                                 >
                                                     ₱{{
                                                         page.props?.details
@@ -2426,15 +2880,6 @@ const tabs = ref([
         label: "Financial Assistance Records",
         icon: "IconCoins",
         key: 3,
-    },
-    {
-        separator: true,
-    },
-    {
-        label: "Activity Logs",
-        icon: "IconWood",
-        key: 4,
-        disabled: page.props?.details?.logs.length != 0 ? false : true,
     },
 ]);
 

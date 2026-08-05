@@ -142,6 +142,8 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
 
     Route::put('stipends/recipients/{id}/mark-for-removal', [StipendController::class, 'markRecipientForRemoval'])->name('stipends.recipients.mark-for-removal');
     Route::put('stipends/recipients/{id}/cancel-removal', [StipendController::class, 'cancelRecipientForRemoval'])->name('stipends.recipients.cancel-removal');
+    Route::post('stipends/import-historical/preview', [StipendController::class, 'previewHistorical'])->name('stipends.import-historical.preview');
+    Route::post('stipends/import-historical', [StipendController::class, 'importHistorical'])->name('stipends.import-historical');
     Route::put('stipends/{id}/payroll', [StipendController::class, 'savePayroll'])->name('stipends.payroll.update');
     Route::get('stipends/{id}/export', [StipendController::class, 'export'])->name('stipends.export');
     Route::put('stipends/{id}/{type}', [StipendController::class, 'update'])->name('stipends.update');

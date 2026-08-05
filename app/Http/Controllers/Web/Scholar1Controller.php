@@ -676,6 +676,19 @@ class Scholar1Controller extends Controller
 
                             ],
                             'logs' => $q->logs
+                                ->where('request_type', '!=', 'academic')
+                                ->sortByDesc('created_at')
+                                ->take(50)
+                                ->values()
+                                ->map(fn ($log) => [
+                                    'created_by' => $log->created_by,
+                                    'previous' => $log->previous_formatted,
+                                    'changes' => $log->changes_formatted,
+                                    'type' => $log->request_type,
+                                    'date' => Carbon::parse($log->created_at)->format('M d, Y h:i A'),
+                                ]),
+                            'academicLogs' => $q->logs
+                                ->where('request_type', 'academic')
                                 ->sortByDesc('created_at')
                                 ->take(50)
                                 ->values()

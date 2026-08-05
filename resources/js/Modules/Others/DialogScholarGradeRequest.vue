@@ -183,7 +183,7 @@
                                 </div>
                                 <table class="min-w-full !border-none text-sm">
                                     <thead>
-                                        <tr class="bg-gray-100">
+                                        <tr class="bg-gray-100 dark:bg-gray-800">
                                             <th
                                                 class="px-3 py-2 text-left rounded-l-xl"
                                             >
@@ -216,7 +216,7 @@
                                             ) in item.subjects"
                                             :key="key"
                                             :class="[
-                                                'border-b hover:bg-gray-50',
+                                                'border-b hover:bg-gray-50 dark:hover:bg-gray-800/80',
                                                 subjectRowClass(subject),
                                             ]"
                                         >
@@ -272,7 +272,7 @@
                                     <tfoot>
                                         <tr
                                             v-if="item.subjects"
-                                            class="border-t border-gray-200 font-medium text-gray-700"
+                                            class="border-t border-gray-200 font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300"
                                         >
                                             <td
                                                 class="px-3 py-2 rounded-l-xl"
@@ -338,7 +338,7 @@
                                             </Button>
                                             <Popover ref="opReject">
                                                 <div
-                                                    class="w-[26rem] p-1 flex flex-col gap-4"
+                                                    class="w-[30rem] p-1 flex flex-col gap-4 dark:bg-gray-900 dark:text-gray-100"
                                                 >
                                                     <!-- Header -->
                                                     <div
@@ -451,6 +451,9 @@
                                             <Popover
                                                 ref="opApprove"
                                                 :dismissable="false"
+                                                :pt="{
+                                                    root: 'grade-approve-popover',
+                                                }"
                                             >
                                                 <div
                                                     class="w-[26rem] p-1 flex flex-col gap-4"
@@ -461,12 +464,12 @@
                                                     >
                                                         <div>
                                                             <h3
-                                                                class="text-sm font-semibold text-gray-800"
+                                                                class="text-sm font-semibold text-gray-800 dark:text-gray-100"
                                                             >
                                                                 Verified Correct
                                                             </h3>
                                                             <p
-                                                                class="text-xs text-gray-500 mt-1"
+                                                                class="text-xs text-gray-500 mt-1 dark:text-gray-400"
                                                             >
                                                                 Select the
                                                                 scholarship
@@ -478,14 +481,14 @@
                                                     </div>
 
                                                     <!-- Divider -->
-                                                    <div class="border-t"></div>
+                                                    <div class="border-t dark:border-gray-700"></div>
 
                                                     <!-- Form -->
                                                     <div
                                                         class="flex flex-col gap-2"
                                                     >
                                                         <label
-                                                            class="text-xs font-semibold text-gray-600 leading-0"
+                                                            class="text-xs font-semibold text-gray-600 leading-0 dark:text-gray-300"
                                                         >
                                                             Scholarship Status
                                                             <span
@@ -504,6 +507,59 @@
                                                                 []
                                                             "
                                                         />
+                                                        <div
+                                                            v-if="submittedTermRecommendation"
+                                                            class="rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-800/70 dark:bg-gray-800 dark:text-gray-100"
+                                                        >
+                                                            <div
+                                                                class="flex items-center justify-between gap-3"
+                                                            >
+                                                                <span
+                                                                    class="font-semibold"
+                                                                >
+                                                                    Recommended:
+                                                                    {{
+                                                                        submittedTermRecommendation.recommended_status
+                                                                    }}
+                                                                </span>
+                                                                <span
+                                                                    class="rounded-full bg-white px-2 py-0.5 font-medium text-blue-700 whitespace-nowrap dark:bg-blue-600 dark:text-white"
+                                                                >
+                                                                    {{
+                                                                        submittedTermRecommendation.policy_group
+                                                                    }}
+                                                                </span>
+                                                            </div>
+                                                            <div
+                                                                v-if="submittedTerm?.scholarshipEvaluationTerm"
+                                                                class="mt-1 text-blue-700 dark:text-gray-300"
+                                                            >
+                                                                Evaluated term:
+                                                                {{
+                                                                    submittedTerm.scholarshipEvaluationTerm.academicYear
+                                                                }}
+                                                                /
+                                                                {{
+                                                                    submittedTerm.scholarshipEvaluationTerm.term
+                                                                }}
+                                                            </div>
+                                                            <ul
+                                                                v-if="submittedTermRecommendation.reasons?.length"
+                                                                class="mt-2 list-disc space-y-1 pl-4 text-blue-800 dark:text-gray-300"
+                                                            >
+                                                                <li
+                                                                    v-for="(
+                                                                        reason,
+                                                                        reasonIndex
+                                                                    ) in submittedTermRecommendation.reasons"
+                                                                    :key="
+                                                                        reasonIndex
+                                                                    "
+                                                                >
+                                                                    {{ reason }}
+                                                                </li>
+                                                            </ul>
+                                                        </div>
                                                     </div>
 
                                                     <!-- Actions -->
@@ -549,7 +605,7 @@
                 <div class="flex-5 flex items-center justify-center">
                     <div
                         v-if="!selectedFile"
-                        class="flex flex-col items-center justify-center text-center p-8 rounded-xl border border-dashed border-gray-300 bg-gray-50 w-full max-w-md"
+                        class="flex flex-col items-center justify-center text-center p-8 rounded-xl border border-dashed border-gray-300 bg-gray-50 w-full max-w-md dark:border-gray-700 dark:bg-gray-900"
                     >
                         <!-- Icon -->
                         <div class="bg-white p-4 rounded-full shadow-sm mb-4 dark:bg-gray-800">
@@ -557,7 +613,7 @@
                         </div>
 
                         <!-- Title -->
-                        <h3 class="text-lg font-semibold text-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-100">
                             No File Selected
                         </h3>
 
@@ -577,11 +633,11 @@
                     </div>
                     <div v-else class="w-full flex flex-col gap-3 p-5">
                         <div
-                            class="flex items-center justify-between px-5 pb-4 border-b border-gray-200"
+                            class="flex items-center justify-between px-5 pb-4 border-b border-gray-200 dark:border-gray-700"
                         >
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"
+                                    class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center dark:bg-red-950/40 dark:text-red-300"
                                 >
                                     <IconFileTypePdf
                                         v-if="
@@ -675,7 +731,7 @@ import {
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
-import { ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import VuePdfEmbed from "vue-pdf-embed";
@@ -694,6 +750,52 @@ const remarks = ref(null);
 const selectedFile = ref(null);
 const selectedScholarshipStatus = ref(null);
 
+const normalizeStatus = (status) =>
+    String(status ?? "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, " ")
+        .trim()
+        .replace(/\s+/g, " ");
+
+const submittedTerm = computed(() =>
+    details.value?.find((item) => item.status === "submitted"),
+);
+
+const submittedTermRecommendation = computed(
+    () => submittedTerm.value?.scholarshipRecommendation ?? null,
+);
+
+const recommendedStandingOption = () => {
+    const recommendation = submittedTermRecommendation.value;
+    const options = page.props?.standingOptions ?? [];
+    const recommended = normalizeStatus(
+        recommendation?.recommended_status_normalized ??
+            recommendation?.recommended_status,
+    );
+
+    if (!recommended) return null;
+
+    return (
+        options.find((option) => {
+            const optionName = normalizeStatus(option?.name ?? option?.id);
+
+            return (
+                optionName === recommended ||
+                (recommended.includes("PROBATION") &&
+                    optionName.includes("PROBATION")) ||
+                (recommended.includes("PARTIAL") &&
+                    optionName.includes("PARTIAL")) ||
+                (recommended.includes("TERMINATED") &&
+                    optionName.includes("TERMINATED")) ||
+                (recommended.includes("SUBMIT GRADES") &&
+                    optionName.includes("SUBMIT GRADES")) ||
+                (recommended.includes("GOOD STANDING") &&
+                    optionName.includes("GOOD STANDING"))
+            );
+        }) ?? null
+    );
+};
+
 const subjectStatus = (subject) => {
     if (subject?.is_drop || subject?.grade?.is_drop) return "dropped";
     if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
@@ -709,8 +811,8 @@ const subjectRowClass = (subject) => {
 
     return {
         dropped: "border-slate-200 bg-slate-100/80 dark:border-gray-600 dark:bg-gray-800",
-        incomplete: "border-amber-200 bg-amber-50",
-        failed: "border-red-200 bg-red-50",
+        incomplete: "border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30",
+        failed: "border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30",
     }[status] ?? "border-slate-100 dark:border-gray-700";
 };
 
@@ -719,8 +821,8 @@ const subjectGradeClass = (subject) => {
 
     return {
         dropped: "bg-slate-200 text-slate-700 dark:bg-gray-700 dark:text-gray-200",
-        incomplete: "bg-amber-100 text-amber-800",
-        failed: "bg-red-100 text-red-700",
+        incomplete: "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-100",
+        failed: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-100",
     }[status] ?? "bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-gray-200";
 };
 
@@ -739,15 +841,15 @@ const subjectRemarks = (subject) => {
 
 const subjectRemarksClass = (subject) => {
     if (subject?.is_drop || subject?.grade?.is_drop) return "text-slate-500";
-    if (subject?.is_failed || subject?.grade?.is_failed) return "text-rose-600";
+    if (subject?.is_failed || subject?.grade?.is_failed) return "text-rose-600 dark:text-rose-300";
     if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
-        return "text-amber-600";
+        return "text-amber-600 dark:text-amber-300";
     }
     if (subject?.grade?.id || subject?.grade?.grade || subject?.grade?.is_active) {
-        return "text-green-600";
+        return "text-green-600 dark:text-green-300";
     }
 
-    return "text-slate-400";
+    return "text-slate-400 dark:text-gray-500";
 };
 
 const selectFile = (file) => {
@@ -757,15 +859,11 @@ const toggleOpReject = (event) => {
     opReject.value.toggle(event);
 };
 const toggleOpAccept = (event) => {
-    selectedScholarshipStatus.value = null;
+    selectedScholarshipStatus.value = recommendedStandingOption();
     opApprove.value.toggle(event);
 };
 
 const approveRequest = (decision) => {
-    const submittedTerm = details.value.find(
-        (item) => item.status === "submitted",
-    );
-
     if (decision === "accept" && !selectedScholarshipStatus.value) {
         toast.add({
             severity: "warn",
@@ -775,7 +873,7 @@ const approveRequest = (decision) => {
         });
         return;
     }
-    if (decision === "reject" && !submittedTerm?.remarks) {
+    if (decision === "reject" && !submittedTerm.value?.remarks) {
         toast.add({
             severity: "warn",
             summary: "Remarks Required",

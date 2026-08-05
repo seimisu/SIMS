@@ -13,6 +13,7 @@ use App\Models\Scholars;
 use App\Models\StudentDocument;
 use App\Models\studentLandbankRequest;
 use App\Models\StudentProfileRequest;
+use App\Services\AcademicPerformanceEvaluationService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -284,7 +285,7 @@ class ScholarSubmissionController extends Controller
 
     private function standingOptions()
     {
-        return ListStatuses::where('type', 'standing')
+        $options = ListStatuses::whereIn('type', ['standing', 'ongoing'])
             ->where('is_active', true)
             ->where('is_delete', false)
             ->orderBy('id')
@@ -293,6 +294,14 @@ class ScholarSubmissionController extends Controller
                 'id' => Str::upper($status->name),
                 'name' => Str::upper($status->name),
             ])
+            ->values();
+
+        return $options
+            ->concat([
+                ['id' => 'TERMINATED WITH SERVICE OBLIGATION', 'name' => 'TERMINATED WITH SERVICE OBLIGATION'],
+                ['id' => 'CONTINUED TO SUBMIT GRADES', 'name' => 'CONTINUED TO SUBMIT GRADES'],
+            ])
+            ->unique(fn ($status) => Str::upper($status['name']))
             ->values();
     }
 
@@ -508,7 +517,33 @@ class ScholarSubmissionController extends Controller
                 $previousTerm && ! $submittedTerms->contains('id', $previousTerm->id),
                 fn ($terms) => $terms->push($previousTerm)
             )
-            ->map(function ($term) {
+            ->map(function ($term) use ($currentTerm, $previousTerm) {
+                $recommendation = null;
+
+                if ($term->id === $currentTerm?->id) {
+                    $recommendation = $previousTerm
+                        ? app(AcademicPerformanceEvaluationService::class)->evaluate($previousTerm)
+                        : [
+                            'recommended_status' => 'GOOD STANDING',
+                            'recommended_status_normalized' => 'GOOD STANDING',
+                            'policy_group' => 'First Submission',
+                            'manual_review' => false,
+                            'reasons' => [
+                                'No previous graded term is available for evaluation yet.',
+                                'First grade submission is recommended as Good Standing by default.',
+                            ],
+                            'metrics' => [
+                                'curriculum_year' => null,
+                                'course_years' => null,
+                                'failed_count' => 0,
+                                'incomplete_count' => 0,
+                                'dropped_units' => 0,
+                                'has_previous_deficiency' => false,
+                                'term' => null,
+                            ],
+                        ];
+                }
+
                 $subjects = $term->subjects->map(function ($subject) {
                     $gradeValue = is_numeric($subject->grade?->grade) ? (float) $subject->grade->grade : null;
                     $unit = is_numeric($subject->subject?->unit) ? (float) $subject->subject->unit : null;
@@ -552,6 +587,12 @@ class ScholarSubmissionController extends Controller
                     'status' => $term->verification_status,
                     'remarks' => null,
                     'scholarshipStatus' => null,
+                    'scholarshipRecommendation' => $recommendation,
+                    'scholarshipEvaluationTerm' => $recommendation && $previousTerm ? [
+                        'id' => $previousTerm->id,
+                        'academicYear' => $previousTerm->academic_year,
+                        'term' => $previousTerm->term?->name,
+                    ] : null,
                     'files' => StudentDocument::where('term', $term->id)->get(),
                 ];
             });

@@ -23,6 +23,7 @@ use App\Models\ScholarTerm;
 use App\Models\User;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +36,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Vinkla\Hashids\Facades\Hashids;
 
 class StipendController extends Controller
@@ -947,6 +950,7 @@ class StipendController extends Controller
         return Inertia::render('Web/stipendPage', [
             'payrollPermissions' => fn() => [
                 'regionLocked' => $permissions->shouldScopeToRegion($user),
+                'canImportHistorical' => $permissions->can($user, 'payroll.update'),
             ],
             'agencyOption' => fn() => ListAgencies::where('is_active', true)
                 ->where('is_delete', false)
@@ -1045,6 +1049,8 @@ class StipendController extends Controller
                         : null,
                     'remarks'       => $q->latestLog?->remarks,
                     'status'        => $this->currentBatchStatus($q),
+                    'source'        => $q->source,
+                    'is_historical' => (bool) $q->is_historical,
                     'permissions'   => $permissions->payrollBatchPermissions($user, $q, $this->currentBatchStatus($q)),
                 ]),
             'details' => fn() => request('id')
@@ -1365,6 +1371,7 @@ class StipendController extends Controller
             'payroll_saved' => 'Payroll saved',
             'payroll_submitted' => 'Payroll submitted',
             'payroll_approved' => 'Payroll approved',
+            'payroll_imported' => 'Historical payroll imported',
             'payroll_returned' => 'Payroll returned',
             'scholar_marked_for_removal' => 'Scholar marked for removal',
             'scholar_moved_from_returned_payroll' => 'Scholar moved from returned payroll',
@@ -1631,6 +1638,423 @@ class StipendController extends Controller
         ])
             ->setPaper('legal', 'landscape')
             ->download($filenameBase . '.pdf');
+    }
+
+    public function importHistorical(Request $request): RedirectResponse
+    {
+        if (! $this->permissions()->can(Auth::user(), 'payroll.update')) {
+            abort(403, 'Unauthorized');
+        }
+
+        [$file, $rows, $scholars] = $this->validatedHistoricalPayrollImport($request);
+
+        $allowanceTypes = AllowanceType::whereIn('code', ['connectivity', 'clothing'])
+            ->get()
+            ->keyBy('code');
+        $storedPath = $file->store('payroll-historical-imports', 'public');
+        $createdBatches = 0;
+        $createdRecipients = 0;
+
+        DB::transaction(function () use (
+            $rows,
+            $scholars,
+            $allowanceTypes,
+            $storedPath,
+            $file,
+            &$createdBatches,
+            &$createdRecipients
+        ) {
+            $this->storeHistoricalPayrollImport(
+                $rows,
+                $scholars,
+                $allowanceTypes,
+                $storedPath,
+                $file->getClientOriginalName(),
+                $createdBatches,
+                $createdRecipients
+            );
+        });
+
+        return redirect()->back()->with('flash', [
+            'status' => 'success',
+            'title' => 'Historical Payroll Imported',
+            'message' => "{$createdRecipients} recipient(s) imported into {$createdBatches} historical payroll batch(es).",
+        ]);
+    }
+
+    public function previewHistorical(Request $request)
+    {
+        if (! $this->permissions()->can(Auth::user(), 'payroll.update')) {
+            abort(403, 'Unauthorized');
+        }
+
+        try {
+            [$file, $rows, $scholars] = $this->validatedHistoricalPayrollImport($request);
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Exception $exception) {
+            Log::error('Historical payroll preview failed.', [
+                'message' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Unable to preview the uploaded payroll file.',
+                'detail' => $exception->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'file_name' => $file->getClientOriginalName(),
+            'row_count' => $rows->count(),
+            'batch_count' => $rows->groupBy(fn($row) => $row['academic_year'] . '|' . $row['term'])->count(),
+            'grand_total' => number_format($rows->sum('grand_total'), 2),
+            'total_stipend' => number_format(
+                $rows->sum(fn($row) => collect(range(1, 5))->sum(fn($month) => (float) $row["month_{$month}"])),
+                2
+            ),
+            'total_withheld' => number_format($rows->sum('total_withheld'), 2),
+            'total_allowances' => number_format(
+                $rows->sum('learning_materials_amount') + $rows->sum('clothing_amount'),
+                2
+            ),
+            'periods' => $rows
+                ->groupBy(fn($row) => $row['academic_year'] . '|' . $row['term'])
+                ->map(fn($group) => [
+                    'period' => $group->first()['period'],
+                    'term' => $group->first()['term'],
+                    'academic_year' => $group->first()['academic_year'],
+                    'recipient_count' => $group->count(),
+                    'grand_total' => number_format($group->sum('grand_total'), 2),
+                ])
+                ->values(),
+            'sample_rows' => $rows
+                ->take(5)
+                ->map(function ($row) use ($scholars) {
+                    $scholar = $scholars->get(Str::upper($row['spas_no']));
+
+                    return [
+                        'spas_no' => $row['spas_no'],
+                        'name' => $row['name'],
+                        'matched_name' => trim(collect([
+                            $scholar?->profile?->lname,
+                            $scholar?->profile?->fname,
+                            $scholar?->profile?->mname,
+                            $scholar?->profile?->suffix,
+                        ])->filter()->join(' ')),
+                        'period' => $row['period'],
+                        'grand_total' => number_format($row['grand_total'], 2),
+                    ];
+                })
+                ->values(),
+            'rows' => $rows
+                ->values()
+                ->map(function ($row, $index) {
+                    return [
+                        'id' => $index + 1,
+                        'account_no' => $row['account_no'],
+                        'name' => $row['name'],
+                        'program' => $row['program'],
+                        'university' => $row['university'],
+                        'scholarship_status' => Str::upper($row['scholarship_status'] ?? ''),
+                        'period' => $row['period'],
+                        'month_1' => (float) $row['month_1'],
+                        'month_2' => (float) $row['month_2'],
+                        'month_3' => (float) $row['month_3'],
+                        'month_4' => (float) $row['month_4'],
+                        'month_5' => (float) $row['month_5'],
+                        'total_withheld' => (float) $row['total_withheld'],
+                        'remarks' => $row['remarks'],
+                        'learning_materials_amount' => (float) $row['learning_materials_amount'],
+                        'clothing_amount' => (float) $row['clothing_amount'],
+                        'grand_total' => (float) $row['grand_total'],
+                    ];
+                }),
+        ]);
+    }
+
+    private function validatedHistoricalPayrollImport(Request $request): array
+    {
+        $data = $request->validate([
+            'payroll_file' => [
+                'required',
+                'file',
+                'mimes:xlsx,xls',
+                'max:10240',
+            ],
+        ]);
+
+        $file = $data['payroll_file'];
+        $rows = $this->parseHistoricalPayrollRows($file->getRealPath());
+
+        if ($rows->isEmpty()) {
+            throw ValidationException::withMessages([
+                'payroll_file' => ['No payroll recipient rows were found in the uploaded Excel file.'],
+            ]);
+        }
+
+        $spasNumbers = $rows->pluck('spas_no')->filter()->unique()->values();
+        $scholars = Scholars::with([
+            'profile:scholar_id,fname,mname,lname,suffix',
+            'program:id,name',
+            'schoolInfo' => fn($query) => $query
+                ->select('id', 'scholar_id', 'campus_id')
+                ->latest('id')
+                ->with('campus:id,name,generated_name,agency_id'),
+            'schoolInfo.campus.agency:id,name,slug,region_code',
+        ])
+            ->whereIn('spas_no', $spasNumbers)
+            ->get()
+            ->keyBy(fn($scholar) => Str::upper(trim($scholar->spas_no)));
+
+        $errors = [];
+        foreach ($rows as $row) {
+            $scholar = $scholars->get(Str::upper($row['spas_no']));
+            if (! $scholar) {
+                $errors[] = "SPAS {$row['spas_no']} was not found.";
+                continue;
+            }
+
+            if ($this->permissions()->shouldScopeToRegion(Auth::user())) {
+                $agencyId = $scholar->schoolInfo->first()?->campus?->agency_id;
+                if ($agencyId !== Auth::user()?->profile?->agency_id) {
+                    $errors[] = "SPAS {$row['spas_no']} is outside your assigned region.";
+                }
+            }
+
+            $duplicate = BatchRecipients::where('scholar_id', $scholar->id)
+                ->whereHas('batch', function ($query) use ($row) {
+                    $query->where('source', 'imported')
+                        ->where('is_historical', true)
+                        ->where('school_year', $row['academic_year'])
+                        ->where(function ($termQuery) use ($row) {
+                            $termQuery->where('academic_term', $row['term'])
+                                ->orWhere('academic_term', $row['period']);
+                        });
+                })
+                ->exists();
+
+            if ($duplicate) {
+                $errors[] = "SPAS {$row['spas_no']} already has a historical payroll for {$row['term']} {$row['academic_year']}.";
+            }
+        }
+
+        if (! empty($errors)) {
+            throw ValidationException::withMessages([
+                'payroll_file' => [collect($errors)->take(5)->implode(' ')],
+            ]);
+        }
+
+        return [$file, $rows, $scholars];
+    }
+
+    private function storeHistoricalPayrollImport(
+        $rows,
+        $scholars,
+        $allowanceTypes,
+        string $storedPath,
+        string $originalFileName,
+        int &$createdBatches,
+        int &$createdRecipients
+    ): void {
+        $periodGroups = $rows->groupBy(fn($row) => $row['academic_year'] . '|' . $row['term']);
+
+        foreach ($periodGroups as $groupRows) {
+                $firstRow = $groupRows->first();
+                $firstScholar = $scholars->get(Str::upper($firstRow['spas_no']));
+                $agency = $firstScholar?->schoolInfo->first()?->campus?->agency;
+                $region = $agency?->name ?? 'Imported Region';
+                $term = $firstRow['term'];
+                $academicYear = $firstRow['academic_year'];
+
+                $batch = Batches::create([
+                    'name' => $this->payrollBatchName($region, $term, $academicYear, 'HIST'),
+                    'region' => $region,
+                    'academic_term' => $term,
+                    'term_id' => $this->termIdFromName($term),
+                    'school_year' => $academicYear,
+                    'is_lock' => true,
+                    'status' => 'approved_payroll',
+                    'source' => 'imported',
+                    'is_historical' => true,
+                    'imported_by' => $this->actorName(),
+                    'imported_at' => now(),
+                    'import_file_path' => $storedPath,
+                    'import_file_name' => $originalFileName,
+                ]);
+
+                $batch->logs()->create([
+                    'status' => 'approved_payroll',
+                    'remarks' => 'Historical payroll imported from Excel.',
+                    'action_by' => $this->actorName(),
+                ]);
+
+                foreach ($groupRows as $row) {
+                    $scholar = $scholars->get(Str::upper($row['spas_no']));
+                    $totalStipend = collect(range(1, 5))
+                        ->sum(fn($month) => (float) $row["month_{$month}"]);
+
+                    $recipient = BatchRecipients::create([
+                        'batch_id' => $batch->id,
+                        'scholar_id' => $scholar->id,
+                        'account_no' => $row['account_no'],
+                        'period' => $row['period'],
+                        'scholarship_status' => Str::upper($row['scholarship_status'] ?? ''),
+                        'total_stipend' => $totalStipend,
+                        'total_withheld' => $row['total_withheld'],
+                        'learning_materials_amount' => $row['learning_materials_amount'],
+                        'clothing_amount' => $row['clothing_amount'],
+                        'grand_total' => $row['grand_total'],
+                        'remarks' => $row['remarks'],
+                        'status' => 'approved',
+                    ]);
+
+                    foreach (range(1, 5) as $month) {
+                        RecipientStipend::create([
+                            'recipient_id' => $recipient->id,
+                            'amount' => $row["month_{$month}"],
+                            'month' => "Month {$month}",
+                            'month_no' => $month,
+                            'status' => 'approved',
+                        ]);
+                    }
+
+                    if ((float) $row['total_withheld'] > 0 || trim((string) $row['remarks']) !== '') {
+                        RecipientWithheld::create([
+                            'recipient_id' => $recipient->id,
+                            'month_no' => null,
+                            'total_amount' => $row['total_withheld'],
+                            'remarks' => $row['remarks'],
+                            'status' => 'approved',
+                        ]);
+                    }
+
+                    foreach ([
+                        'connectivity' => $row['learning_materials_amount'],
+                        'clothing' => $row['clothing_amount'],
+                    ] as $code => $amount) {
+                        RecipientAllowance::create([
+                            'recipient_id' => $recipient->id,
+                            'allowance_type_id' => $allowanceTypes->get($code)?->id,
+                            'classification' => $code,
+                            'amount' => $amount,
+                            'status' => 'approved',
+                        ]);
+                    }
+
+                    $createdRecipients++;
+                }
+
+                $this->logPayrollActivity(
+                    $batch,
+                    'payroll_imported',
+                    remarks: 'Historical payroll imported from Excel.',
+                    metadata: [
+                        'file_name' => $originalFileName,
+                        'recipient_count' => $groupRows->count(),
+                    ]
+                );
+
+                $createdBatches++;
+            }
+    }
+
+    private function parseHistoricalPayrollRows(string $path)
+    {
+        $sheet = IOFactory::load($path)->getActiveSheet();
+        $highestRow = $sheet->getHighestDataRow();
+        $rows = collect();
+
+        for ($row = 6; $row <= $highestRow; $row++) {
+            $spasNo = trim((string) $this->cellValue($sheet, 1, $row));
+            $period = trim((string) $this->cellValue($sheet, 7, $row));
+
+            if ($spasNo === '' && $period === '') {
+                continue;
+            }
+
+            if (in_array(Str::upper($period), ['SUB-TOTAL', 'TOTAL'], true)) {
+                continue;
+            }
+
+            if ($spasNo === '' || Str::startsWith(Str::upper($spasNo), ['PREPARED', 'NOTED', 'CERTIFIED', 'THIS IS'])) {
+                continue;
+            }
+
+            [$term, $academicYear] = $this->parsePayrollPeriod($period);
+            if (! $academicYear) {
+                throw ValidationException::withMessages([
+                    'payroll_file' => ["Unable to read academic year from row {$row} period: {$period}."],
+                ]);
+            }
+
+            $rows->push([
+                'spas_no' => Str::upper($spasNo),
+                'account_no' => trim((string) $this->cellValue($sheet, 2, $row)),
+                'name' => trim((string) $this->cellValue($sheet, 3, $row)),
+                'program' => trim((string) $this->cellValue($sheet, 4, $row)),
+                'university' => trim((string) $this->cellValue($sheet, 5, $row)),
+                'scholarship_status' => trim((string) $this->cellValue($sheet, 6, $row)),
+                'period' => $period,
+                'term' => $term ?: $period,
+                'academic_year' => $academicYear,
+                'month_1' => $this->moneyValue($this->cellValue($sheet, 8, $row)),
+                'month_2' => $this->moneyValue($this->cellValue($sheet, 9, $row)),
+                'month_3' => $this->moneyValue($this->cellValue($sheet, 10, $row)),
+                'month_4' => $this->moneyValue($this->cellValue($sheet, 11, $row)),
+                'month_5' => $this->moneyValue($this->cellValue($sheet, 12, $row)),
+                'total_withheld' => $this->moneyValue($this->cellValue($sheet, 13, $row)),
+                'remarks' => trim((string) $this->cellValue($sheet, 14, $row)),
+                'learning_materials_amount' => $this->moneyValue($this->cellValue($sheet, 15, $row)),
+                'clothing_amount' => $this->moneyValue($this->cellValue($sheet, 16, $row)),
+                'grand_total' => $this->moneyValue($this->cellValue($sheet, 17, $row)),
+            ]);
+        }
+
+        return $rows;
+    }
+
+    private function cellValue($sheet, int $column, int $row): mixed
+    {
+        return $sheet->getCell(Coordinate::stringFromColumnIndex($column) . $row)->getCalculatedValue();
+    }
+
+    private function moneyValue(mixed $value): float
+    {
+        $normalized = trim((string) $value);
+        if ($normalized === '' || $normalized === '-') {
+            return 0.0;
+        }
+
+        return (float) str_replace([',', '₱', 'PHP', 'php'], '', $normalized);
+    }
+
+    private function parsePayrollPeriod(string $period): array
+    {
+        preg_match('/(20\d{2}\s*[-–]\s*20\d{2})/', $period, $yearMatch);
+        $academicYear = isset($yearMatch[1])
+            ? str_replace([' ', '–'], ['', '-'], $yearMatch[1])
+            : null;
+        $term = trim(str_ireplace(['AY', $academicYear], '', $period));
+        $term = trim($term, " \t\n\r\0\x0B/-");
+        $term = trim(preg_replace('/\s+/', ' ', $term));
+
+        return [$term, $academicYear];
+    }
+
+    private function termIdFromName(?string $term): ?int
+    {
+        if (! $term) {
+            return null;
+        }
+
+        $normalized = Str::lower(trim($term));
+
+        return ListReferences::where('is_active', true)
+            ->where('is_delete', false)
+            ->whereRaw("TRIM(type) = 'Term'")
+            ->get()
+            ->first(fn($reference) => Str::contains($normalized, Str::lower($reference->name)))
+            ?->id;
     }
 
     public function update(Request $request, $id, $type)

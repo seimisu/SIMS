@@ -9,6 +9,7 @@ use App\Imports\ScholarImport;
 use App\Models\ListPrograms;
 use App\Models\ListReferences;
 use App\Models\ListStatuses;
+use App\Models\ActivityLogs;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
 use App\Models\ScholarSchoolInfos;
@@ -619,7 +620,16 @@ class ScholarController extends Controller
         DB::beginTransaction();
         try {
             $termRecordId = Hashids::decode($id)[0] ?? (ctype_digit($id) ? (int) $id : 0);
-            $termRecord = ScholarTerm::with('schoolInfo.campus.address', 'scholar')->findOrFail($termRecordId);
+            $termRecord = ScholarTerm::with([
+                'level',
+                'term',
+                'schoolInfo.campus.address',
+                'schoolInfo.course.course',
+                'scholar',
+                'subjects.subject',
+                'subjects.grade',
+            ])->findOrFail($termRecordId);
+            $previousAcademicLog = $this->academicRecordLogSnapshot($termRecord);
 
             if ($permissions->shouldScopeToRegion(Auth::user())) {
                 $regionCode = $termRecord->schoolInfo?->campus?->address?->region_code;
@@ -701,6 +711,33 @@ class ScholarController extends Controller
                     );
             }
 
+            $updatedAcademicLog = $this->academicRecordLogSnapshot(
+                $termRecord->fresh([
+                    'level',
+                    'term',
+                    'schoolInfo.campus.address',
+                    'schoolInfo.course.course',
+                    'scholar',
+                    'subjects.subject',
+                    'subjects.grade',
+                ])
+            );
+
+            $academicLogChanges = $this->academicRecordLogChanges(
+                $previousAcademicLog,
+                $updatedAcademicLog
+            );
+
+            if (! empty($academicLogChanges['changes'])) {
+                ActivityLogs::create([
+                    'previous_data' => $academicLogChanges['previous'],
+                    'changes_data' => $academicLogChanges['changes'],
+                    'request_type' => 'academic',
+                    'created_by' => Auth::user()?->profile?->fullname,
+                    'scholar_id' => $termRecord->scholar_id,
+                ]);
+            }
+
             DB::commit();
 
             return redirect()->back()->with('flash', [
@@ -715,6 +752,118 @@ class ScholarController extends Controller
                 'subjects' => ['There was an error updating the grades: '.$e->getMessage()],
             ]);
         }
+    }
+
+    private function academicRecordLogSnapshot(ScholarTerm $termRecord): array
+    {
+        $scholarshipStatus = DB::connection('scholars')
+            ->table('scholar_processes')
+            ->where('term_record_id', $termRecord->id)
+            ->value('scholarship_status');
+
+        return [
+            'school' => $termRecord->schoolInfo?->campus?->generated_name,
+            'course' => $termRecord->schoolInfo?->course?->course?->name,
+            'year_level' => $termRecord->level?->name,
+            'semester' => $termRecord->term?->name,
+            'academic_year' => $termRecord->academic_year,
+            'scholarship_status' => $scholarshipStatus,
+            'subjects' => $termRecord->subjects
+                ->sortBy(fn ($subject) => $subject->id)
+                ->values()
+                ->map(fn ($subject) => [
+                    'id' => $subject->id,
+                    'subject_id' => $subject->subject_id,
+                    'grade_id' => $subject->grade_id,
+                    'label' => $this->academicRecordSubjectLogLabel($subject),
+                ])
+                ->all(),
+        ];
+    }
+
+    private function academicRecordSubjectLogLabel(ScholarSchoolGrades $subject): string
+    {
+        $code = $subject->subject?->subject_code ?? 'No Code';
+        $name = $subject->subject?->name ?? 'No Subject';
+        $unit = $subject->subject?->unit ?? '-';
+        $grade = $subject->grade?->grade ?? '-';
+
+        return "{$code} - {$name} | {$unit} unit(s) | Grade: {$grade}";
+    }
+
+    private function academicRecordLogChanges(array $previous, array $updated): array
+    {
+        $previousData = [];
+        $changesData = [];
+
+        foreach ([
+            'school',
+            'course',
+            'year_level',
+            'semester',
+            'academic_year',
+            'scholarship_status',
+        ] as $field) {
+            if (($previous[$field] ?? null) !== ($updated[$field] ?? null)) {
+                $previousData[$field] = $previous[$field] ?? 'Not Set';
+                $changesData[$field] = $updated[$field] ?? 'Removed';
+            }
+        }
+
+        $previousSubjects = collect($previous['subjects'] ?? [])->keyBy('id');
+        $updatedSubjects = collect($updated['subjects'] ?? [])->keyBy('id');
+
+        $updatedSubjectChanges = [];
+        foreach ($updatedSubjects as $id => $subject) {
+            $oldSubject = $previousSubjects->get($id);
+            if (! $oldSubject) {
+                continue;
+            }
+
+            if (
+                ($oldSubject['subject_id'] ?? null) !== ($subject['subject_id'] ?? null)
+                || ($oldSubject['grade_id'] ?? null) !== ($subject['grade_id'] ?? null)
+            ) {
+                $updatedSubjectChanges[] = [
+                    'previous' => $oldSubject['label'],
+                    'updated' => $subject['label'],
+                ];
+            }
+        }
+
+        if (! empty($updatedSubjectChanges)) {
+            $previousData['updated_subjects'] = collect($updatedSubjectChanges)
+                ->pluck('previous')
+                ->implode("\n");
+            $changesData['updated_subjects'] = collect($updatedSubjectChanges)
+                ->pluck('updated')
+                ->implode("\n");
+        }
+
+        $addedSubjects = $updatedSubjects
+            ->reject(fn ($subject, $id) => $previousSubjects->has($id))
+            ->pluck('label')
+            ->implode("\n");
+
+        if ($addedSubjects !== '') {
+            $previousData['added_subjects'] = 'Not Set';
+            $changesData['added_subjects'] = $addedSubjects;
+        }
+
+        $removedSubjects = $previousSubjects
+            ->reject(fn ($subject, $id) => $updatedSubjects->has($id))
+            ->pluck('label')
+            ->implode("\n");
+
+        if ($removedSubjects !== '') {
+            $previousData['removed_subjects'] = $removedSubjects;
+            $changesData['removed_subjects'] = 'Removed';
+        }
+
+        return [
+            'previous' => $previousData,
+            'changes' => $changesData,
+        ];
     }
 
     public function gradeDelete(int $id)
