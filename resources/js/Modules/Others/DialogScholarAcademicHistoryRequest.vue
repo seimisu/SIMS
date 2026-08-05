@@ -4,18 +4,19 @@
         modal
         header="Academic History Submission"
         class="w-[min(1120px,96vw)]"
+        :pt="dialogPt"
     >
         <div v-if="history" class="space-y-4">
             <div class="grid gap-2 text-sm sm:grid-cols-2">
                 <div>
-                    <p class="text-xs uppercase text-slate-500">Scholar</p>
-                    <p class="font-semibold text-slate-800">{{ history.fullname }}</p>
-                    <p class="text-xs text-slate-500">{{ history.spas_no }}</p>
+                    <p class="text-xs uppercase text-slate-500 dark:text-gray-400">Scholar</p>
+                    <p class="font-semibold text-slate-800 dark:text-gray-100">{{ history.fullname }}</p>
+                    <p class="text-xs text-slate-500 dark:text-gray-400">{{ history.spas_no }}</p>
                 </div>
                 <div>
-                    <p class="text-xs uppercase text-slate-500">Submitted</p>
-                    <p class="text-slate-700">{{ history.submitted_at || "-" }}</p>
-                    <p class="text-xs uppercase text-slate-500">{{ history.status }}</p>
+                    <p class="text-xs uppercase text-slate-500 dark:text-gray-400">Submitted</p>
+                    <p class="text-slate-700 dark:text-gray-200">{{ history.submitted_at || "-" }}</p>
+                    <p class="text-xs uppercase text-slate-500 dark:text-gray-400">{{ history.status }}</p>
                 </div>
             </div>
 
@@ -23,15 +24,15 @@
                 <section
                     v-for="term in history.terms"
                     :key="term.id"
-                    class="rounded border border-slate-200"
+                    class="rounded border border-slate-200 dark:border-gray-600"
                 >
-                    <div class="border-b border-slate-200 px-3 py-2">
-                        <p class="text-sm font-semibold text-slate-800">
+                    <div class="border-b border-slate-200 px-3 py-2 dark:border-gray-600">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
                             {{ term.academic_year || "Academic Year" }}
-                            <span class="text-slate-400">/</span>
+                            <span class="text-slate-400 dark:text-gray-500">/</span>
                             {{ term.term || "Term" }}
                         </p>
-                        <p class="text-xs text-slate-500">
+                        <p class="text-xs text-slate-500 dark:text-gray-400">
                             {{ [term.school, term.course, term.curriculum].filter(Boolean).join(" • ") }}
                         </p>
                     </div>
@@ -44,7 +45,7 @@
                                 <col class="w-[12%]" />
                                 <col class="w-[20%]" />
                             </colgroup>
-                            <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                            <thead class="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-gray-800 dark:text-gray-300">
                                 <tr>
                                     <th class="px-3 py-2">Subject</th>
                                     <th class="px-3 py-2">Code</th>
@@ -62,17 +63,17 @@
                                         subjectRowClass(subject),
                                     ]"
                                 >
-                                    <td class="px-3 py-2 font-medium uppercase text-slate-700">
+                                    <td class="px-3 py-2 font-medium uppercase text-slate-700 dark:text-gray-200">
                                         <span class="block truncate" :title="subject.name">
                                             {{ subject.name }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2 text-slate-600">
+                                    <td class="px-3 py-2 text-slate-600 dark:text-gray-300">
                                         <span class="block truncate" :title="subject.code || '-'">
                                             {{ subject.code || "-" }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2 text-slate-600">{{ subject.unit || "-" }}</td>
+                                    <td class="px-3 py-2 text-slate-600 dark:text-gray-300">{{ subject.unit || "-" }}</td>
                                     <td class="px-3 py-2">
                                         <span
                                             :class="[
@@ -83,14 +84,14 @@
                                             {{ subject.grade || "-" }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2 text-slate-600">
+                                    <td class="px-3 py-2 text-slate-600 dark:text-gray-300">
                                         <span class="block truncate" :title="subject.remarks || '-'">
                                             {{ subject.remarks || "-" }}
                                         </span>
                                     </td>
                                 </tr>
                                 <tr v-if="!term.subjects?.length">
-                                    <td colspan="5" class="px-3 py-4 text-center text-slate-500">
+                                    <td colspan="5" class="px-3 py-4 text-center text-slate-500 dark:text-gray-400">
                                         No subjects submitted.
                                     </td>
                                 </tr>
@@ -126,30 +127,31 @@
         modal
         header="Approve Academic History"
         class="w-[min(620px,94vw)]"
+        :pt="dialogPt"
     >
         <div class="space-y-2">
-            <p class="text-sm text-slate-700">
+            <p class="text-sm text-slate-700 dark:text-gray-300">
                 Approve this academic history submission?
             </p>
             <div>
-                <p class="text-sm font-semibold text-slate-800">
+                <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
                     {{ history?.fullname || "Scholar" }}
                 </p>
-                <p class="text-xs text-slate-500">{{ history?.spas_no }}</p>
+                <p class="text-xs text-slate-500 dark:text-gray-400">{{ history?.spas_no }}</p>
             </div>
             <div class="space-y-3 pt-2">
                 <div
                     v-for="term in history?.terms ?? []"
                     :key="term.id"
-                    class="rounded border border-slate-200 p-3"
+                    class="rounded border border-slate-200 p-3 dark:border-gray-600"
                 >
                     <div class="mb-2">
-                        <p class="text-sm font-semibold text-slate-800">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
                             {{ term.academic_year || "Academic Year" }}
-                            <span class="text-slate-400">/</span>
+                            <span class="text-slate-400 dark:text-gray-500">/</span>
                             {{ term.term || "Term" }}
                         </p>
-                        <p class="text-xs text-slate-500">
+                        <p class="text-xs text-slate-500 dark:text-gray-400">
                             {{ [term.school, term.course].filter(Boolean).join(" / ") }}
                         </p>
                     </div>
@@ -180,13 +182,14 @@
         modal
         header="Return Academic History"
         class="w-[min(520px,92vw)]"
+        :pt="dialogPt"
     >
         <div class="space-y-3">
             <div>
-                <p class="text-sm font-semibold text-slate-800">
+                <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
                     {{ history?.fullname || "Scholar" }}
                 </p>
-                <p class="text-xs text-slate-500">{{ history?.spas_no }}</p>
+                <p class="text-xs text-slate-500 dark:text-gray-400">{{ history?.spas_no }}</p>
             </div>
             <Textarea
                 v-model="returnReason"
@@ -221,6 +224,12 @@ import { computed, ref } from "vue";
 
 const visible = defineModel({ type: Boolean, default: false });
 const page = usePage();
+const dialogPt = {
+    root: 'dark:!bg-gray-900 dark:!text-gray-100',
+    header: 'dark:!bg-gray-900 dark:!text-gray-100 dark:!border-gray-700',
+    content: 'dark:!bg-gray-900 dark:!text-gray-100',
+    footer: 'dark:!bg-gray-900 dark:!text-gray-100 dark:!border-gray-700',
+};
 const history = computed(() => page.props.academicHistoryRequest);
 const approveDialog = ref(false);
 const returnDialog = ref(false);
@@ -245,20 +254,20 @@ const subjectRowClass = (subject) => {
     const status = subjectStatus(subject);
 
     return {
-        dropped: "border-slate-200 bg-slate-100/80",
+        dropped: "border-slate-200 bg-slate-100/80 dark:border-gray-600 dark:bg-gray-800",
         incomplete: "border-amber-200 bg-amber-50",
         failed: "border-red-200 bg-red-50",
-    }[status] ?? "border-slate-100";
+    }[status] ?? "border-slate-100 dark:border-gray-700";
 };
 
 const subjectGradeClass = (subject) => {
     const status = subjectStatus(subject);
 
     return {
-        dropped: "bg-slate-200 text-slate-700",
+        dropped: "bg-slate-200 text-slate-700 dark:bg-gray-700 dark:text-gray-200",
         incomplete: "bg-amber-100 text-amber-800",
         failed: "bg-red-100 text-red-700",
-    }[status] ?? "bg-slate-100 text-slate-700";
+    }[status] ?? "bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-gray-200";
 };
 
 const approveSubmission = () => {

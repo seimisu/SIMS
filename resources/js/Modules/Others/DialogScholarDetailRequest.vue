@@ -3,14 +3,15 @@
         v-model:visible="modelValue"
         modal
         :pt="{
-            header: 'border-b-1 border-gray-300 border-dashed',
-            root: 'w-[99%] lg:w-[70rem]',
-            content: '!p-0',
+            root: 'w-[99%] lg:w-[70rem] dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!bg-gray-900',
         }"
     >
         <template #header>
             <div
-                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
+                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2 dark:bg-gray-800 dark:text-gray-100"
             >
                 <IconUserEdit :size="18" :stroke-width="2" />
                 <div class="uppercase font-medium text-sm">
@@ -19,12 +20,12 @@
             </div>
         </template>
         <template #default>
-            <div class="">
+            <div class="bg-white dark:bg-gray-900 dark:text-gray-100">
                 <div
                     class="flex flex-col lg:flex-row h-full w-full lg:h-[40rem]"
                 >
                     <div
-                        class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col flex-1 overflow-y-auto p-3 gap-3"
+                        class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col flex-1 overflow-y-auto p-3 gap-3 dark:bg-gray-800"
                     >
                         <div class="flex items-center gap-1">
                             <IconHistory :size="20" />
@@ -39,7 +40,7 @@
                                 class="overflow-x-auto"
                             >
                                 <div
-                                    class="border rounded-xl gap-3 hover:shadow border-gray-200 bg-white flex flex-col text-sm p-2"
+                                    class="border rounded-xl gap-3 hover:shadow border-gray-200 bg-white flex flex-col text-sm p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                                 >
                                     <div
                                         class="flex justify-between items-center"
@@ -52,7 +53,7 @@
                                             </Avatar>
                                             <div class="text-sm">
                                                 <div
-                                                    class="text-xs text-slate-500"
+                                                    class="text-xs text-slate-500 dark:text-gray-400"
                                                 >
                                                     Request ID
                                                 </div>
@@ -88,7 +89,7 @@
                                         >
                                             <div class="flex-1">
                                                 <div
-                                                    class="text-xs text-slate-500"
+                                                    class="text-xs text-slate-500 dark:text-gray-400"
                                                 >
                                                     Requested On
                                                 </div>
@@ -98,7 +99,7 @@
                                             </div>
                                             <div class="flex-1">
                                                 <div
-                                                    class="text-xs text-slate-500"
+                                                    class="text-xs text-slate-500 dark:text-gray-400"
                                                 >
                                                     Reason for Change
                                                 </div>
@@ -259,11 +260,11 @@
                                                     </div>
                                                 </div>
                                                 <div
-                                                    class="flex flex-col gap-3 h-full bg-slate-50 rounded-lg p-1"
+                                                    class="flex flex-col gap-3 h-full bg-slate-50 rounded-lg p-1 dark:bg-gray-800"
                                                 >
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Email
                                                         </div>
@@ -288,7 +289,7 @@
                                                     </div>
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Contact No.
                                                         </div>
@@ -314,7 +315,7 @@
                                                     </div>
                                                     <div class="">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Civil Status
                                                         </div>
@@ -341,7 +342,7 @@
                                                     </div>
                                                     <div class="">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Address
                                                         </div>
@@ -400,11 +401,11 @@
                                                     </div>
                                                 </div>
                                                 <div
-                                                    class="flex flex-col gap-3 h-full bg-slate-50 rounded-lg p-1"
+                                                    class="flex flex-col gap-3 h-full bg-slate-50 rounded-lg p-1 dark:bg-gray-800"
                                                 >
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Email
                                                         </div>
@@ -416,7 +417,7 @@
                                                     </div>
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Contact No.
                                                         </div>
@@ -428,7 +429,7 @@
                                                     </div>
                                                     <div class="">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Civil Status
                                                         </div>
@@ -440,7 +441,7 @@
                                                     </div>
                                                     <div class="">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light"
+                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Address
                                                         </div>

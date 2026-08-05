@@ -3,14 +3,16 @@
         v-model:visible="modelValue"
         position="full"
         :pt="{
-            header: 'border-b-1 border-gray-300 border-dashed',
-            content: '!p-3',
+            root: 'dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-3 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!bg-gray-900',
         }"
     >
         <template #header>
             <div class="flex min-w-0 items-center gap-3">
-                <IconFileSpreadsheet :size="18" class="shrink-0 text-slate-500" />
-                <div class="min-w-0 truncate text-sm font-semibold uppercase text-slate-700">
+                <IconFileSpreadsheet :size="18" class="shrink-0 text-slate-500 dark:text-gray-400" />
+                <div class="min-w-0 truncate text-sm font-semibold uppercase text-slate-700 dark:text-gray-100">
                     {{ details?.name ?? "Financial Assistance Batch" }}
                 </div>
                 <div
@@ -27,7 +29,7 @@
         <template #default>
             <div class="flex flex-col w-full h-full gap-3">
                 <Tabs v-model:value="activeTab" class="flex-1 flex flex-col min-h-0 compact-payroll-tabs">
-                    <TabList class="!mb-2">
+                    <TabList class="!mb-2 dark:!bg-gray-800">
                         <Tab value="payroll">
                             <span class="inline-flex items-center gap-1.5">
                                 <IconFileSpreadsheet :size="15" />
@@ -42,11 +44,11 @@
                         </Tab>
                     </TabList>
 
-                    <TabPanels class="flex-1 min-h-0 !px-0">
+                    <TabPanels class="flex-1 min-h-0 !px-0 dark:!bg-gray-900">
                         <TabPanel value="payroll" class="h-full">
                             <div class="flex flex-col h-full gap-2">
                                 <div class="flex items-center justify-between gap-2">
-                                    <div class="min-w-0 text-sm font-semibold text-slate-700">
+                                    <div class="min-w-0 text-sm font-semibold text-slate-700 dark:text-gray-100">
                                         Payroll Recipients
                                     </div>
 
@@ -96,7 +98,7 @@
                                             severity="secondary"
                                             outlined
                                             :icon="IconFileSpreadsheet"
-                                            class-name="!border-slate-300 !bg-slate-100 !text-slate-700 hover:!bg-slate-200"
+                                            class-name="!border-slate-300 !bg-slate-100 !text-slate-700 hover:!bg-slate-200 dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-200 dark:hover:!bg-gray-700"
                                             :loading="exportingPayroll"
                                             :disabled="exportingPayroll || payrollForm.processing || !payrollRows.length || !canExportPayroll"
                                             @click="openExportDialog"
@@ -113,14 +115,14 @@
 
                                 <div
                                     v-if="details?.showing_submitted_snapshot"
-                                    class="rounded border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600"
+                                    class="rounded border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                                 >
                                     Showing the last submitted payroll. Regional edits will appear after resubmission.
                                 </div>
 
-                                <div class="flex-1 overflow-auto border rounded-lg">
-                                    <table class="min-w-[1600px] w-full text-xs">
-                                        <thead class="bg-slate-50 sticky top-0 z-10">
+                                <div class="flex-1 overflow-auto rounded-lg border bg-white dark:border-gray-600 dark:bg-gray-900">
+                                    <table class="min-w-[1600px] w-full text-xs dark:text-gray-200">
+                                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-gray-800 dark:text-gray-300">
                                             <tr>
                                                 <th class="border px-2 py-2 text-left">Account No</th>
                                                 <th class="border px-2 py-2 text-left">Name</th>
@@ -157,8 +159,8 @@
                                                     v-for="row in group.rows"
                                                     :key="row.id"
                                                     :class="[
-                                                        row.is_for_removal ? 'bg-amber-50/50 text-slate-500' : '',
-                                                        row.is_moved_from_returned_payroll ? 'bg-amber-50/60' : '',
+                                                        row.is_for_removal ? 'bg-amber-50/50 text-slate-500 dark:bg-amber-900/20 dark:text-gray-300' : '',
+                                                        row.is_moved_from_returned_payroll ? 'bg-amber-50/60 dark:bg-amber-900/20' : '',
                                                     ]"
                                                 >
                                                     <td class="border px-2 py-1 min-w-36">
@@ -276,7 +278,7 @@
                                                             rounded
                                                             :icon="row.is_for_removal ? IconX : IconUserMinus"
                                                             :icon-size="18"
-                                                            class-name="!text-slate-500 hover:!bg-slate-100 hover:!text-slate-700"
+                                                            class-name="!text-slate-500 hover:!bg-slate-100 hover:!text-slate-700 dark:!text-gray-300 dark:hover:!bg-gray-700 dark:hover:!text-white"
                                                             :tooltip="row.is_for_removal ? 'Cancel for removal' : 'Mark for removal'"
                                                             :loading="
                                                                 row.is_for_removal
@@ -288,7 +290,7 @@
                                                         </div>
                                                     </td>
                                                 </tr>
-                                                <tr class="bg-slate-50 font-semibold">
+                                                <tr class="bg-slate-50 font-semibold dark:bg-gray-800">
                                                     <td colspan="6" class="border px-2 py-1 text-right">
                                                         Sub-Total
                                                     </td>
@@ -317,7 +319,7 @@
                                             </template>
                                             <tr
                                                 v-if="filteredPayrollRows.length"
-                                                class="bg-slate-100 font-bold"
+                                                class="bg-slate-100 font-bold dark:bg-gray-900"
                                             >
                                                 <td colspan="6" class="border px-2 py-1 text-right">
                                                     TOTAL
@@ -358,20 +360,20 @@
 
                                 <div
                                     v-if="hasPayrollFooter"
-                                    class="grid gap-2 border-t border-slate-100 pt-2 xl:grid-cols-[minmax(18rem,1fr)_auto] xl:items-end"
+                                    class="grid gap-2 border-t border-slate-100 pt-2 dark:border-gray-600 xl:grid-cols-[minmax(18rem,1fr)_auto] xl:items-end"
                                 >
                                     <div class="grid min-w-0 gap-2 lg:max-w-5xl xl:grid-cols-2">
                                         <div
                                             v-if="hasSubmittedPayrollFile"
-                                            class="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                                            class="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
                                         >
                                             <div class="flex min-w-0 items-center gap-2">
-                                                <IconFileTypePdf :size="17" class="shrink-0 text-slate-500" />
+                                                <IconFileTypePdf :size="17" class="shrink-0 text-slate-500 dark:text-gray-400" />
                                                 <div class="min-w-0">
                                                     <div class="truncate font-semibold">
                                                         {{ details.payroll_file.name || "Submitted payroll PDF" }}
                                                     </div>
-                                                    <div class="text-[11px] text-slate-500">
+                                                    <div class="text-[11px] text-slate-500 dark:text-gray-400">
                                                         Uploaded by {{ details.payroll_file.uploaded_by || "Regional office" }}
                                                         <span v-if="details.payroll_file.uploaded_at">
                                                             | {{ details.payroll_file.uploaded_at }}
@@ -391,7 +393,7 @@
 
                                         <div
                                             v-if="hasGeneratedExcelFile"
-                                            class="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                                            class="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
                                         >
                                             <div class="flex min-w-0 items-center gap-2">
                                                 <IconFileSpreadsheet :size="17" class="shrink-0 text-emerald-600" />
@@ -399,7 +401,7 @@
                                                     <div class="truncate font-semibold">
                                                         {{ details.generated_excel_file.name || "Generated payroll Excel" }}
                                                     </div>
-                                                    <div class="text-[11px] text-slate-500">
+                                                    <div class="text-[11px] text-slate-500 dark:text-gray-400">
                                                         Generated payroll Excel
                                                         <span v-if="details.generated_excel_file.generated_at">
                                                             | {{ details.generated_excel_file.generated_at }}
@@ -419,21 +421,21 @@
 
                                         <div
                                             v-if="hasReturnRemarks"
-                                            class="min-w-0 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                                            class="min-w-0 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
                                         >
                                             <div class="flex min-w-0 items-start gap-2">
                                                 <IconMessageReport
                                                     :size="17"
-                                                    class="mt-0.5 shrink-0 text-slate-500"
+                                                    class="mt-0.5 shrink-0 text-slate-500 dark:text-gray-400"
                                                 />
                                                 <div class="min-w-0">
                                                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                        <span class="shrink-0 font-semibold text-slate-700">
+                                                        <span class="shrink-0 font-semibold text-slate-700 dark:text-gray-100">
                                                             Return remarks
                                                         </span>
                                                         <span
                                                             v-if="details?.remarks_by || details?.remarks_at"
-                                                            class="text-[11px] text-slate-500"
+                                                            class="text-[11px] text-slate-500 dark:text-gray-400"
                                                         >
                                                             {{ details.remarks_by || "Scholarship staff" }}
                                                             <span v-if="details?.remarks_at">
@@ -441,7 +443,7 @@
                                                             </span>
                                                         </span>
                                                     </div>
-                                                    <div class="mt-0.5 line-clamp-2 whitespace-pre-line text-xs leading-5 text-slate-600">
+                                                    <div class="mt-0.5 line-clamp-2 whitespace-pre-line text-xs leading-5 text-slate-600 dark:text-gray-300">
                                                         {{ details.remarks }}
                                                     </div>
                                                 </div>
@@ -481,12 +483,12 @@
                         <TabPanel value="activity" class="h-full">
                             <div class="flex h-full flex-col gap-2">
                                 <div class="flex items-center justify-between gap-2">
-                                    <div class="text-sm font-semibold text-slate-700">Activity Log</div>
-                                    <div class="text-xs text-slate-500">{{ activityLogs.length }} event(s)</div>
+                                    <div class="text-sm font-semibold text-slate-700 dark:text-gray-100">Activity Log</div>
+                                    <div class="text-xs text-slate-500 dark:text-gray-400">{{ activityLogs.length }} event(s)</div>
                                 </div>
-                                <div class="flex-1 overflow-auto rounded border border-slate-200 bg-white">
-                                    <table class="w-full min-w-[900px] text-xs">
-                                        <thead class="sticky top-0 bg-slate-50 text-left text-[11px] uppercase text-slate-500">
+                                <div class="flex-1 overflow-auto rounded border border-slate-200 bg-white dark:border-gray-600 dark:bg-gray-800">
+                                    <table class="w-full min-w-[900px] text-xs dark:text-gray-200">
+                                        <thead class="sticky top-0 bg-slate-50 text-left text-[11px] uppercase text-slate-500 dark:bg-gray-900 dark:text-gray-300">
                                             <tr>
                                                 <th class="border-b px-3 py-2 font-semibold">Date</th>
                                                 <th class="border-b px-3 py-2 font-semibold">Activity</th>
@@ -498,30 +500,30 @@
                                             <tr
                                                 v-for="log in activityLogs"
                                                 :key="log.id"
-                                                class="border-b border-slate-100 last:border-b-0"
+                                                class="border-b border-slate-100 last:border-b-0 dark:border-gray-700"
                                             >
-                                                <td class="whitespace-nowrap px-3 py-2 text-slate-500">
+                                                <td class="whitespace-nowrap px-3 py-2 text-slate-500 dark:text-gray-400">
                                                     {{ log.created_at || "-" }}
                                                 </td>
                                                 <td class="px-3 py-2">
-                                                    <div class="font-medium text-slate-700">{{ log.label }}</div>
+                                                    <div class="font-medium text-slate-700 dark:text-gray-200">{{ log.label }}</div>
                                                     <div
                                                         v-if="log.remarks"
-                                                        class="mt-0.5 max-w-xl truncate text-[11px] text-slate-500"
+                                                        class="mt-0.5 max-w-xl truncate text-[11px] text-slate-500 dark:text-gray-400"
                                                         :title="log.remarks"
                                                     >
                                                         {{ log.remarks }}
                                                     </div>
                                                 </td>
-                                                <td class="px-3 py-2 uppercase text-slate-600">
+                                                <td class="px-3 py-2 uppercase text-slate-600 dark:text-gray-300">
                                                     {{ log.scholar_name || "-" }}
                                                 </td>
-                                                <td class="whitespace-nowrap px-3 py-2 text-slate-500">
+                                                <td class="whitespace-nowrap px-3 py-2 text-slate-500 dark:text-gray-400">
                                                     {{ log.created_by || "System" }}
                                                 </td>
                                             </tr>
                                             <tr v-if="!activityLogs.length">
-                                                <td colspan="5" class="py-8 text-center text-sm text-gray-500">
+                                                <td colspan="5" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                                     No payroll activity recorded yet.
                                                 </td>
                                             </tr>
@@ -587,8 +589,8 @@
             footer: '!px-5 !pt-2 !pb-4',
         }"
     >
-        <div v-if="removalReasonTarget" class="space-y-3 text-sm text-slate-700">
-            <div class="flex items-center gap-2 text-base font-bold uppercase text-slate-800">
+        <div v-if="removalReasonTarget" class="space-y-3 text-sm text-slate-700 dark:text-gray-200">
+            <div class="flex items-center gap-2 text-base font-bold uppercase text-slate-800 dark:text-gray-100">
                 <IconUserMinus
                     :size="18"
                     :class="[
@@ -612,7 +614,7 @@
                     "No reason provided."
                 }}
             </div>
-            <div class="grid gap-1 text-xs text-slate-500">
+            <div class="grid gap-1 text-xs text-slate-500 dark:text-gray-400">
                 <div v-if="removalReasonTarget.moved_from_batch">
                     From {{ removalReasonTarget.moved_from_batch }}
                 </div>
@@ -648,12 +650,12 @@
         }"
     >
         <div class="flex flex-col gap-3">
-            <div v-if="forRemovalTarget" class="flex items-center gap-2 text-base font-bold uppercase text-slate-800">
+            <div v-if="forRemovalTarget" class="flex items-center gap-2 text-base font-bold uppercase text-slate-800 dark:text-gray-100">
                 <IconUserMinus :size="18" class="shrink-0 text-amber-600" />
                 <span>{{ forRemovalTarget.name }}</span>
             </div>
             <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-slate-700" for="for-removal-remarks">Reason</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-gray-200" for="for-removal-remarks">Reason</label>
                 <Textarea
                     id="for-removal-remarks"
                     v-model="forRemovalRemarks"
@@ -711,7 +713,7 @@
                     <template #option="slotProps">
                         <div class="flex flex-col">
                             <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
-                            <span class="text-xs text-gray-500">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
                         </div>
@@ -731,7 +733,7 @@
                     <template #option="slotProps">
                         <div class="flex flex-col">
                             <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
-                            <span class="text-xs text-gray-500">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
                         </div>
@@ -751,7 +753,7 @@
                     <template #option="slotProps">
                         <div class="flex flex-col">
                             <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
-                            <span class="text-xs text-gray-500">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
                         </div>
@@ -893,23 +895,23 @@ const statusMeta = computed(() => {
     return {
         draft: {
             label: "Draft",
-            class: "bg-slate-50 text-slate-600",
+            class: "bg-slate-50 text-slate-600 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
         },
         submitted_payroll: {
             label: "Submitted Payroll",
-            class: "bg-blue-50 text-blue-600",
+            class: "bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800",
         },
         rejected_payroll: {
             label: "Returned Payroll",
-            class: "bg-red-50 text-red-600",
+            class: "bg-red-50 text-red-600 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800",
         },
         approved_payroll: {
             label: "Approved Payroll",
-            class: "bg-green-50 text-green-600",
+            class: "bg-green-50 text-green-600 dark:bg-green-900/40 dark:text-green-300 dark:border-green-800",
         },
     }[status] ?? {
         label: status,
-        class: "bg-slate-50 text-slate-600",
+        class: "bg-slate-50 text-slate-600 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
     };
 });
 
@@ -1312,6 +1314,50 @@ watch(
 <style scoped>
 :deep(.compact-payroll-tabs .p-tablist-tab-list) {
     gap: 0.25rem;
+}
+
+:global(.dark) :deep(.compact-payroll-tabs .p-tablist),
+:global(.dark) :deep(.compact-payroll-tabs .p-tablist-tab-list),
+:global(.dark) :deep(.compact-payroll-tabs .p-tabpanels),
+:global(.dark) :deep(.compact-payroll-tabs .p-tabpanel),
+:global(.dark) :deep(.compact-payroll-tabs .p-tab) {
+    background: #111827 !important;
+    color: #d1d5db !important;
+    border-color: #374151 !important;
+}
+
+:global(.dark) :deep(.compact-payroll-tabs .p-tab-active) {
+    color: #60a5fa !important;
+}
+
+:global(.dark) :deep(.p-drawer),
+:global(.dark) :deep(.p-drawer-content),
+:global(.dark) :deep(.p-drawer-header) {
+    background: #111827 !important;
+    color: #f3f4f6 !important;
+}
+
+:global(.dark) :deep(.p-dialog),
+:global(.dark) :deep(.p-dialog-header),
+:global(.dark) :deep(.p-dialog-content),
+:global(.dark) :deep(.p-dialog-footer) {
+    background: #1f2937 !important;
+    color: #f3f4f6 !important;
+}
+
+:global(.dark) :deep(.p-inputtext),
+:global(.dark) :deep(.p-select),
+:global(.dark) :deep(.p-multiselect),
+:global(.dark) :deep(.p-inputnumber-input),
+:global(.dark) :deep(.p-textarea) {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f3f4f6 !important;
+}
+
+:global(.dark) :deep(table th),
+:global(.dark) :deep(table td) {
+    border-color: #4b5563 !important;
 }
 
 :deep(.compact-payroll-tabs .p-tab) {

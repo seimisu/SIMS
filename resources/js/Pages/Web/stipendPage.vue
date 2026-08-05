@@ -75,8 +75,8 @@
                     <Column header="File Name">
                         <template #body="props">
                             <div class="flex min-w-64 items-center gap-2">
-                                <IconFileInvoice size="23" stroke-width="1.5" class="shrink-0 text-slate-500" />
-                                <div class="truncate text-sm font-medium text-slate-700">
+                                <IconFileInvoice size="23" stroke-width="1.5" class="shrink-0 text-slate-500 dark:text-gray-400" />
+                                <div class="truncate text-sm font-medium text-slate-700 dark:text-gray-200">
                                     {{ props.data.name }}
                                 </div>
                             </div>
@@ -87,14 +87,14 @@
                         <template #body="props">
                             <div class="min-w-44 text-sm">
                                 <span class="font-medium">{{ props.data.term }}</span>
-                                <span class="text-slate-400"> / </span>
+                                <span class="text-slate-400 dark:text-gray-500"> / </span>
                                 <span>{{ props.data.sy }}</span>
                             </div>
                         </template>
                     </Column>
                     <Column header="No. of Scholars">
                         <template #body="props">
-                            <div class="text-left font-semibold text-slate-700">
+                            <div class="text-left font-semibold text-slate-700 dark:text-gray-200">
                                 {{ props.data.scholars_count ?? 0 }}/{{ props.data.scholars_limit ?? 300 }}
                             </div>
                         </template>
@@ -159,15 +159,15 @@
 
     <Dialog v-model:visible="submitDialog" modal header="Submit Payroll" :style="{ width: '30rem' }">
         <div class="flex flex-col gap-3">
-            <p class="text-sm text-slate-600">
+            <p class="text-sm text-slate-600 dark:text-gray-300">
                 Upload the signed payroll PDF before submitting this batch for review.
             </p>
             <label
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100"
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
-                <IconFileTypePdf :size="28" class="text-slate-500" />
+                <IconFileTypePdf :size="28" class="text-slate-500 dark:text-gray-400" />
                 <span class="font-medium">{{ submitPdf?.name ?? "Choose PDF file" }}</span>
-                <span class="text-xs text-slate-500">PDF only</span>
+                <span class="text-xs text-slate-500 dark:text-gray-400">PDF only</span>
                 <input
                     ref="submitPdfInput"
                     type="file"
@@ -202,10 +202,10 @@
 
     <Dialog v-model:visible="remarksDialog" modal header="Payroll Remarks" :style="{ width: '28rem' }">
         <div class="flex flex-col gap-2">
-            <div class="text-sm font-semibold text-slate-700">
+            <div class="text-sm font-semibold text-slate-700 dark:text-gray-200">
                 {{ selectedActionBatch?.name ?? "Payroll batch" }}
             </div>
-            <div class="min-h-24 rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">
+            <div class="min-h-24 rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
                 {{ selectedActionBatch?.remarks || "No remarks available." }}
             </div>
         </div>
@@ -309,23 +309,23 @@ const batchStatusMeta = (status) =>
     ({
         draft: {
             label: "Draft",
-            class: "bg-slate-50 text-slate-500",
+            class: "bg-slate-50 text-slate-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
         },
         submitted_payroll: {
             label: "Submitted Payroll",
-            class: "bg-blue-50 text-blue-500",
+            class: "bg-blue-50 text-blue-500 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800",
         },
         rejected_payroll: {
             label: "Returned Payroll",
-            class: "bg-red-50 text-red-500",
+            class: "bg-red-50 text-red-500 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800",
         },
         approved_payroll: {
             label: "Approved Payroll",
-            class: "bg-green-50 text-green-600",
+            class: "bg-green-50 text-green-600 dark:bg-green-900/40 dark:text-green-300 dark:border-green-800",
         },
     })[status] ?? {
         label: status ?? "Draft",
-        class: "bg-slate-50 text-slate-500",
+        class: "bg-slate-50 text-slate-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
     };
 
 const openReview = (batch) => {

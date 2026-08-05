@@ -721,9 +721,9 @@
             />
         </template>
         <template #forms>
-            <div class="mt-5">
-                <Tabs :value="0">
-                    <TabList>
+            <div class="mt-5 dark:bg-gray-900 dark:text-gray-100">
+                <Tabs :value="0" class="school-curriculum-tabs">
+                    <TabList class="dark:!bg-gray-900">
                         <Tab
                             v-for="(curItem, curKey) in curriculumForm.multi"
                             :key="curKey"
@@ -814,7 +814,7 @@
                             ></DefaultButton>
                         </div>
                     </TabList>
-                    <TabPanels class="!p-0 flex flex-col gap-3 mt-3">
+                    <TabPanels class="!p-0 flex flex-col gap-3 mt-3 dark:!bg-gray-900">
                         <TabPanel
                             v-for="(curItem, curKey) in curriculumForm.multi"
                             :key="curKey"
@@ -872,6 +872,11 @@
                                 <Panel
                                     toggleable
                                     :collapsed="year != 1 ? true : false"
+                                    :pt="{
+                                        root: 'dark:!border-gray-700 dark:!bg-gray-800',
+                                        header: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                                        content: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                                    }"
                                 >
                                     <template #header>
                                         <div
@@ -950,7 +955,7 @@
                                                         '!rounded-t-lg',
                                                     ],
                                                     content: [
-                                                        '!border-x-1 !rounded-bl-lg !rounded-br-lg !border-b-1  !border-gray-200',
+                                                        '!border-x-1 !rounded-bl-lg !rounded-br-lg !border-b-1 !border-gray-200 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
                                                     ],
                                                 }"
                                             >
@@ -1062,7 +1067,7 @@
                                                             class="flex items-center gap-2 pb-5"
                                                         >
                                                             <div
-                                                                class="bg-slate-100 text-slate-500 p-1 rounded-lg border-1 border-slate-500 shadow-slate-500"
+                                                                class="bg-slate-100 text-slate-500 p-1 rounded-lg border-1 border-slate-500 shadow-slate-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                                                             >
                                                                 <IconBooks
                                                                     stroke-width="2"
@@ -1079,7 +1084,7 @@
                                                                     semester
                                                                 </div>
                                                                 <div
-                                                                    class="text-xs text-gray-400 font-light"
+                                                                    class="text-xs text-gray-400 font-light dark:text-gray-400"
                                                                 >
                                                                     This section
                                                                     displays all

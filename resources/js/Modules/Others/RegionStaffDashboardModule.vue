@@ -1,16 +1,16 @@
 <template>
-    <div class="min-h-full bg-slate-50 px-3 py-3 text-slate-800">
+    <div class="min-h-full bg-slate-50 px-3 py-3 text-slate-800 dark:bg-gray-800 dark:text-gray-100">
         <div class="mx-auto flex max-w-[1500px] flex-col gap-4">
             <div class="flex flex-wrap items-end justify-between gap-2">
                 <div>
-                    <div class="text-[11px] font-semibold uppercase text-slate-500">
+                    <div class="text-[11px] font-semibold uppercase text-slate-500 dark:text-gray-400">
                         {{ regionName }} regional office
                     </div>
-                    <h1 class="text-lg font-semibold text-slate-900">
+                    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
                         Regional Operations Dashboard
                     </h1>
                 </div>
-                <div class="text-xs text-slate-500">
+                <div class="text-xs text-slate-500 dark:text-gray-400">
                     {{ formatNumber(card.total) }} scholars across
                     {{ formatNumber(insights.activeCampuses) }} campuses
                 </div>
@@ -20,14 +20,14 @@
                 <section
                     v-for="metric in metrics"
                     :key="metric.label"
-                    class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                    class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-700"
                 >
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <div class="text-[11px] font-medium text-slate-500">
+                            <div class="text-[11px] font-medium text-slate-500 dark:text-gray-400">
                                 {{ metric.label }}
                             </div>
-                            <div class="mt-2 text-2xl font-semibold text-slate-900">
+                            <div class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
                                 {{ formatNumber(metric.value) }}
                             </div>
                         </div>
@@ -35,60 +35,68 @@
                             <component :is="metric.icon" :size="20" />
                         </div>
                     </div>
-                    <div class="mt-2 text-xs text-slate-500">
+                    <div class="mt-2 text-xs text-slate-500 dark:text-gray-400">
                         {{ metric.caption }}
                     </div>
                 </section>
             </div>
 
             <div class="grid auto-rows-[minmax(160px,auto)] grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:col-span-2">
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-2">
                     <div class="mb-4 flex items-center justify-between gap-3">
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Payroll Work Queue
                             </h2>
-                            <p class="text-[11px] text-slate-500">
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                 Draft and returned payrolls that regional staff can update or resubmit.
                             </p>
                         </div>
-                        <div class="flex gap-1 text-[11px]">
-                            <span class="rounded bg-slate-100 px-2 py-1 text-slate-700">
+                        <div class="flex flex-wrap justify-end gap-1 text-[11px]">
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-1 font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
+                                @click="goToPayroll"
+                            >
+                                <IconEye :size="13" />
+                                View
+                            </button>
+                            <span class="rounded bg-slate-100 px-2 py-1 text-slate-700 dark:bg-gray-800 dark:text-gray-200">
                                 Draft {{ formatNumber(payrollSummary.draft) }}
                             </span>
-                            <span class="rounded bg-red-50 px-2 py-1 text-red-700">
+                            <span class="rounded bg-red-50 px-2 py-1 text-red-700 dark:bg-red-900/40 dark:text-red-300">
                                 Returned {{ formatNumber(payrollSummary.rejected_payroll) }}
                             </span>
                         </div>
                     </div>
 
-                    <div class="max-h-[210px] overflow-auto rounded border border-slate-200">
+                    <div class="max-h-[210px] overflow-auto rounded border border-slate-200 dark:border-gray-600">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 text-xs text-slate-600">
+                            <thead class="bg-slate-100 text-xs text-slate-600 dark:bg-gray-800 dark:text-gray-300">
                                 <tr>
-                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold">Payroll</th>
-                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold">Term</th>
-                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold">Recipients</th>
-                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold">Status</th>
-                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold">Updated</th>
+                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold dark:bg-gray-800">Payroll</th>
+                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold dark:bg-gray-800">Term</th>
+                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold dark:bg-gray-800">Recipients</th>
+                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold dark:bg-gray-800">Status</th>
+                                    <th class="sticky top-0 bg-slate-100 px-2 py-1.5 font-semibold dark:bg-gray-800">Updated</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr
                                     v-for="batch in payrollQueue"
                                     :key="batch.id"
-                                    class="border-t border-slate-100"
+                                    class="border-t border-slate-100 dark:border-gray-600"
                                 >
                                     <td class="px-2 py-1.5">
-                                        <div class="font-medium text-slate-800">{{ batch.name }}</div>
-                                        <div v-if="batch.remarks" class="truncate text-xs text-slate-500">
+                                        <div class="font-medium text-slate-800 dark:text-gray-100">{{ batch.name }}</div>
+                                        <div v-if="batch.remarks" class="truncate text-xs text-slate-500 dark:text-gray-400">
                                             {{ batch.remarks }}
                                         </div>
                                     </td>
-                                    <td class="px-2 py-1.5 text-slate-600">
+                                    <td class="px-2 py-1.5 text-slate-600 dark:text-gray-300">
                                         {{ batch.term }} {{ batch.school_year }}
                                     </td>
-                                    <td class="px-2 py-1.5 text-slate-600">
+                                    <td class="px-2 py-1.5 text-slate-600 dark:text-gray-300">
                                         {{ formatNumber(batch.recipients) }}
                                     </td>
                                     <td class="px-2 py-1.5">
@@ -96,12 +104,12 @@
                                             {{ batch.status_label }}
                                         </span>
                                     </td>
-                                    <td class="px-2 py-1.5 text-slate-600">
+                                    <td class="px-2 py-1.5 text-slate-600 dark:text-gray-300">
                                         {{ batch.updated_at || "-" }}
                                     </td>
                                 </tr>
                                 <tr v-if="!payrollQueue.length">
-                                    <td colspan="5" class="px-3 py-6 text-center text-xs text-slate-500">
+                                    <td colspan="5" class="px-3 py-6 text-center text-xs text-slate-500 dark:text-gray-400">
                                         No draft or returned payrolls need attention.
                                     </td>
                                 </tr>
@@ -110,43 +118,65 @@
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 class="text-sm font-semibold text-slate-900">
-                        Pending Submissions
-                    </h2>
-                    <p class="mb-4 text-[11px] text-slate-500">
-                        Requests waiting for regional review.
-                    </p>
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700">
+                    <div class="mb-4 flex items-start justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                Pending Submissions
+                            </h2>
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
+                                Requests waiting for regional review.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="inline-flex shrink-0 items-center gap-1 rounded bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
+                            @click="goToSubmissions()"
+                        >
+                            <IconEye :size="13" />
+                            View
+                        </button>
+                    </div>
                     <div class="grid gap-3 text-xs">
                         <div
                             v-for="item in pendingSubmissionCards"
                             :key="item.label"
-                            class="rounded-lg border border-slate-100 px-4 py-3"
+                            class="rounded-lg border border-slate-100 px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40 dark:border-gray-600 dark:hover:border-blue-800 dark:hover:bg-blue-900/20"
                         >
                             <div class="flex items-center justify-between gap-3">
-                                <div class="text-slate-500">{{ item.label }}</div>
-                                <div class="text-lg font-semibold text-slate-900">
+                                <div>
+                                    <div class="text-slate-500 dark:text-gray-400">{{ item.label }}</div>
+                                    <button
+                                        type="button"
+                                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+                                        @click="goToSubmissions(item.tab)"
+                                    >
+                                        View
+                                        <IconArrowRight :size="12" />
+                                    </button>
+                                </div>
+                                <div class="text-right text-lg font-semibold text-slate-900 dark:text-white">
                                     {{ formatNumber(item.value) }}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
-                <section class="flex flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 xl:row-span-2">
+                <section class="flex flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-2 xl:row-span-2">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="rounded bg-blue-50 p-2 text-blue-600">
                             <IconDeviceDesktopAnalytics :size="20" />
                         </div>
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Awarded Scholars By Year
                             </h2>
-                            <p class="text-[11px] text-slate-500">
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                 Program distribution in {{ regionName }}.
                             </p>
                         </div>
                     </div>
-                    <div class="min-h-0 flex-1 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
+                    <div class="min-h-0 flex-1 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800">
                         <ApexChart
                             type="bar"
                             height="520"
@@ -156,16 +186,16 @@
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="rounded bg-emerald-50 p-2 text-emerald-600">
                             <IconChartDonut :size="20" />
                         </div>
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Scholarship Type Distribution
                             </h2>
-                            <p class="text-[11px] text-slate-500">
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                 Scholars grouped by scholarship type.
                             </p>
                         </div>
@@ -183,13 +213,13 @@
                             <div
                                 v-for="program in scholarshipTypeDistribution"
                                 :key="program.name"
-                                class="flex items-center justify-between gap-3 rounded border border-slate-100 px-3 py-2"
+                                class="flex items-center justify-between gap-3 rounded border border-slate-100 px-3 py-2 dark:border-gray-600"
                             >
                                 <div class="flex min-w-0 items-center gap-2">
                                     <span :class="['h-2.5 w-2.5 shrink-0 rounded-full', program.dot]" />
-                                    <span class="truncate font-medium text-slate-700">{{ program.name }}</span>
+                                    <span class="truncate font-medium text-slate-700 dark:text-gray-200">{{ program.name }}</span>
                                 </div>
-                                <div class="shrink-0 font-semibold text-slate-900">
+                                <div class="shrink-0 font-semibold text-slate-900 dark:text-white">
                                     {{ formatNumber(program.count) }}
                                 </div>
                             </div>
@@ -197,28 +227,28 @@
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="rounded bg-violet-50 p-2 text-violet-600">
                             <IconUsersGroup :size="20" />
                         </div>
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Sex Distribution
                             </h2>
-                            <p class="text-[11px] text-slate-500">
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                 Profile composition across regional scholars.
                             </p>
                         </div>
                     </div>
-                    <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                    <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-800">
                         <div class="mb-3 flex items-end justify-between">
-                            <span class="text-xs text-slate-500">Total with profile sex</span>
-                            <span class="text-2xl font-semibold text-slate-900">
+                            <span class="text-xs text-slate-500 dark:text-gray-400">Total with profile sex</span>
+                            <span class="text-2xl font-semibold text-slate-900 dark:text-white">
                                 {{ formatNumber(genderTotal) }}
                             </span>
                         </div>
-                        <div class="flex h-8 overflow-hidden rounded bg-slate-200">
+                        <div class="flex h-8 overflow-hidden rounded bg-slate-200 dark:bg-gray-700">
                             <div
                                 v-for="segment in sexSegments"
                                 :key="segment.label"
@@ -233,11 +263,11 @@
                                 :key="item.label"
                                 class="flex items-center justify-between gap-3"
                             >
-                                <div class="flex items-center gap-2 text-slate-600">
+                                <div class="flex items-center gap-2 text-slate-600 dark:text-gray-300">
                                     <span :class="['h-2.5 w-2.5 rounded-full', item.dot]" />
                                     {{ item.label }}
                                 </div>
-                                <div class="font-semibold text-slate-900">
+                                <div class="font-semibold text-slate-900 dark:text-white">
                                     {{ formatNumber(item.value) }}
                                     <span class="font-medium text-slate-400">
                                         {{ item.percent }}%
@@ -248,16 +278,16 @@
                     </div>
                 </section>
                 <section
-                    class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 xl:col-span-2"
+                    class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-2 xl:col-span-2"
                     style="height: 340px"
                 >
                     <div class="mb-4 flex items-center gap-3">
                         <IconBuildingEstate :size="18" class="text-rose-600" />
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Scholar Count by School
                             </h2>
-                            <p class="hidden text-[11px] text-slate-500 sm:block">
+                            <p class="hidden text-[11px] text-slate-500 dark:text-gray-400 sm:block">
                                 Schools with the highest scholar count in the region.
                             </p>
                         </div>
@@ -270,17 +300,17 @@
                                 class="grid grid-cols-[1fr_auto] items-center gap-3"
                             >
                                 <div class="min-w-0">
-                                    <div class="truncate text-xs font-medium text-slate-700">
+                                    <div class="truncate text-xs font-medium text-slate-700 dark:text-gray-200">
                                         {{ school.name }}
                                     </div>
-                                    <div class="mt-1 h-2 rounded bg-slate-100">
+                                    <div class="mt-1 h-2 rounded bg-slate-100 dark:bg-gray-800">
                                         <div
                                             class="h-2 rounded bg-rose-500"
                                             :style="{ width: `${school.percent}%` }"
                                         />
                                     </div>
                                 </div>
-                                <div class="text-xs font-semibold text-slate-900">
+                                <div class="text-xs font-semibold text-slate-900 dark:text-white">
                                     {{ formatNumber(school.count) }}
                                 </div>
                             </div>
@@ -293,21 +323,25 @@
 </template>
 
 <script setup>
-import { usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import {
+    IconArrowRight,
     IconBuildingEstate,
     IconChartDonut,
     IconClipboardList,
     IconDeviceDesktopAnalytics,
+    IconEye,
     IconFileCheck,
     IconSchool,
     IconUsersGroup,
 } from "@tabler/icons-vue";
-import { computed } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import ApexChart from "vue3-apexcharts";
+import { route } from "ziggy-js";
 
 const page = usePage();
 const { card, timeline, user, gender } = page.props;
+const isDark = ref(false);
 const insights = computed(() => page.props.regionalInsights ?? {});
 const regionName = computed(() => user.profile.agency.slug?.toUpperCase() ?? "Regional");
 const payrollSummary = computed(() => insights.value.payrollSummary ?? {});
@@ -395,11 +429,15 @@ const schoolDistribution = computed(() => {
     }));
 });
 const pendingSubmissionCards = computed(() => [
-    { label: "Grade Submissions", value: insights.value.pendingSubmissions?.grades ?? 0 },
-    { label: "Academic History", value: insights.value.pendingSubmissions?.history ?? 0 },
-    { label: "Profile Updates", value: insights.value.pendingSubmissions?.profile ?? 0 },
-    { label: "Landbank Requests", value: insights.value.pendingSubmissions?.landbank ?? 0 },
+    { label: "Grade Submissions", value: insights.value.pendingSubmissions?.grades ?? 0, tab: "grades" },
+    { label: "Academic History", value: insights.value.pendingSubmissions?.history ?? 0, tab: "history" },
+    { label: "Profile Updates", value: insights.value.pendingSubmissions?.profile ?? 0, tab: "profile" },
+    { label: "Landbank Requests", value: insights.value.pendingSubmissions?.landbank ?? 0, tab: "landbank" },
 ]);
+const chartTextColor = computed(() => (isDark.value ? "#d1d5db" : "#64748b"));
+const chartGridColor = computed(() => (isDark.value ? "rgba(75,85,99,0.9)" : "rgba(148,163,184,0.35)"));
+const chartStrokeColor = computed(() => (isDark.value ? "#374151" : "#fff"));
+const chartTooltipTheme = computed(() => (isDark.value ? "dark" : "light"));
 
 const apexOptionsTimeline = computed(() => ({
     chart: {
@@ -407,7 +445,7 @@ const apexOptionsTimeline = computed(() => ({
         stacked: true,
         toolbar: { show: false },
         fontFamily: "inherit",
-        foreColor: "#64748b",
+        foreColor: chartTextColor.value,
     },
     plotOptions: {
         bar: {
@@ -418,10 +456,10 @@ const apexOptionsTimeline = computed(() => ({
     },
     colors: ["#2563EB", "#16A34A", "#E11D48"],
     dataLabels: { enabled: false },
-    stroke: { show: true, width: 1, colors: ["#fff"] },
+    stroke: { show: true, width: 1, colors: [chartStrokeColor.value] },
     legend: { show: true, position: "bottom" },
     grid: {
-        borderColor: "rgba(148,163,184,0.35)",
+        borderColor: chartGridColor.value,
         strokeDashArray: 3,
         padding: {
             top: 8,
@@ -435,7 +473,7 @@ const apexOptionsTimeline = computed(() => ({
         axisBorder: { show: false },
         axisTicks: { show: false },
     },
-    tooltip: { theme: "dark" },
+    tooltip: { theme: chartTooltipTheme.value },
 }));
 
 const apexOptionsScholarshipTypes = computed(() => ({
@@ -443,7 +481,7 @@ const apexOptionsScholarshipTypes = computed(() => ({
         type: "donut",
         toolbar: { show: false },
         fontFamily: "inherit",
-        foreColor: "#64748b",
+        foreColor: chartTextColor.value,
     },
     labels: scholarshipTypeDistribution.value.map((item) => item.name),
     colors: scholarshipTypeColors,
@@ -465,21 +503,48 @@ const apexOptionsScholarshipTypes = computed(() => ({
             },
         },
     },
-    tooltip: { theme: "dark" },
+    tooltip: { theme: chartTooltipTheme.value },
 }));
 
 function statusClass(status) {
     const classes = {
-        draft: "rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700",
-        submitted_payroll: "rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700",
-        rejected_payroll: "rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700",
-        approved_payroll: "rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700",
+        draft: "rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-gray-800 dark:text-gray-200",
+        submitted_payroll: "rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+        rejected_payroll: "rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300",
+        approved_payroll: "rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
     };
 
-    return classes[status] ?? "rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700";
+    return classes[status] ?? "rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-gray-800 dark:text-gray-200";
 }
 
 function formatNumber(num) {
     return Number(num ?? 0).toLocaleString("en-US");
 }
+
+function goToPayroll() {
+    router.visit(route("stipends"));
+}
+
+function goToSubmissions(tab = null) {
+    router.visit(route("scholar-submissions", tab ? { tab } : undefined));
+}
+
+let themeObserver;
+
+function syncTheme() {
+    isDark.value = document.documentElement.classList.contains("dark");
+}
+
+onMounted(() => {
+    syncTheme();
+    themeObserver = new MutationObserver(syncTheme);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+    });
+});
+
+onUnmounted(() => {
+    themeObserver?.disconnect();
+});
 </script>

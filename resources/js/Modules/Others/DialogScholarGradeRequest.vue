@@ -3,14 +3,15 @@
         v-model:visible="modelValue"
         modal
         :pt="{
-            header: 'border-b-1 border-gray-300 border-dashed',
-            root: 'w-[99%] lg:w-[110rem]',
-            content: '!p-0',
+            root: 'w-[99%] lg:w-[110rem] dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!bg-gray-900',
         }"
     >
         <template #header>
             <div
-                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
+                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2 dark:bg-gray-800 dark:text-gray-100"
             >
                 <IconId :size="18" :stroke-width="2" />
                 <div class="uppercase font-medium text-sm">
@@ -19,7 +20,7 @@
             </div>
         </template>
         <template #default>
-            <div class="w-full flex">
+            <div class="w-full flex bg-white dark:bg-gray-900 dark:text-gray-100">
                 <div
                     class="flex-6 flex flex-col gap-3 overflow-auto max-h-190 p-5"
                 >
@@ -35,13 +36,13 @@
 
                             <div>
                                 <div
-                                    class="text-xl font-bold text-gray-900 leading-5"
+                                    class="text-xl font-bold text-gray-900 leading-5 dark:text-gray-100"
                                 >
                                     {{ page.props?.details?.fullname }}
                                 </div>
 
                                 <div
-                                    class="mt-1 flex items-center gap-1 text-sm text-gray-500"
+                                    class="mt-1 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"
                                 >
                                     <IconHash :size="14" />
                                     {{ page.props?.details?.spas_no }}
@@ -53,12 +54,12 @@
                         <div class="flex items-center gap-8">
                             <div class="text-right">
                                 <div
-                                    class="text-xs uppercase tracking-wider text-gray-400"
+                                    class="text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                 >
                                     Scholarship
                                 </div>
 
-                                <div class="font-semibold text-gray-800">
+                                <div class="font-semibold text-gray-800 dark:text-gray-100">
                                     {{ page.props?.details?.type?.name }}
                                 </div>
                             </div>
@@ -67,12 +68,12 @@
 
                             <div class="text-right">
                                 <div
-                                    class="text-xs uppercase tracking-wider text-gray-400"
+                                    class="text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                 >
                                     Program
                                 </div>
 
-                                <div class="font-semibold text-gray-800">
+                                <div class="font-semibold text-gray-800 dark:text-gray-100">
                                     {{ page.props?.details?.program?.name }}
                                 </div>
                             </div>
@@ -90,7 +91,7 @@
                             <div class="flex flex-col gap-3">
                                 <div class="flex-1 flex justify-between">
                                     <div>
-                                        <div class="text-xs text-slate-500">
+                                        <div class="text-xs text-slate-500 dark:text-gray-400">
                                             School/Course
                                         </div>
                                         <div class="text-sm">
@@ -103,7 +104,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-xs text-slate-500">
+                                        <div class="text-xs text-slate-500 dark:text-gray-400">
                                             Select Document to view
                                         </div>
                                         <div
@@ -551,7 +552,7 @@
                         class="flex flex-col items-center justify-center text-center p-8 rounded-xl border border-dashed border-gray-300 bg-gray-50 w-full max-w-md"
                     >
                         <!-- Icon -->
-                        <div class="bg-white p-4 rounded-full shadow-sm mb-4">
+                        <div class="bg-white p-4 rounded-full shadow-sm mb-4 dark:bg-gray-800">
                             <IconFileSearch class="w-10 h-10 text-gray-500" />
                         </div>
 
@@ -707,20 +708,20 @@ const subjectRowClass = (subject) => {
     const status = subjectStatus(subject);
 
     return {
-        dropped: "border-slate-200 bg-slate-100/80",
+        dropped: "border-slate-200 bg-slate-100/80 dark:border-gray-600 dark:bg-gray-800",
         incomplete: "border-amber-200 bg-amber-50",
         failed: "border-red-200 bg-red-50",
-    }[status] ?? "border-slate-100";
+    }[status] ?? "border-slate-100 dark:border-gray-700";
 };
 
 const subjectGradeClass = (subject) => {
     const status = subjectStatus(subject);
 
     return {
-        dropped: "bg-slate-200 text-slate-700",
+        dropped: "bg-slate-200 text-slate-700 dark:bg-gray-700 dark:text-gray-200",
         incomplete: "bg-amber-100 text-amber-800",
         failed: "bg-red-100 text-red-700",
-    }[status] ?? "bg-slate-100 text-slate-700";
+    }[status] ?? "bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-gray-200";
 };
 
 const subjectRemarks = (subject) => {

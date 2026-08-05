@@ -14,7 +14,7 @@
                     class="w-fit max-w-full compact-submission-tabs"
                     @update:value="switchTab"
                 >
-                    <TabList>
+                    <TabList class="dark:!bg-gray-800">
                         <Tab
                             v-for="tab in tabs"
                             :key="tab.id"
@@ -61,10 +61,10 @@
                 <Column header="Scholar">
                     <template #body="props">
                         <div class="min-w-56">
-                            <div class="text-sm font-semibold uppercase text-slate-700">
+                            <div class="text-sm font-semibold uppercase text-slate-700 dark:text-gray-200">
                                 {{ props.data.fullname || "Unnamed Scholar" }}
                             </div>
-                            <div class="text-xs text-slate-500">{{ props.data.spas_no }}</div>
+                            <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.spas_no }}</div>
                         </div>
                     </template>
                 </Column>
@@ -73,8 +73,8 @@
                 <Column v-if="activeTab === 'grades'" header="School">
                     <template #body="props">
                         <div class="min-w-64">
-                            <div class="text-sm text-slate-700">{{ props.data.school }}</div>
-                            <div class="text-xs text-slate-500">{{ props.data.course }}</div>
+                            <div class="text-sm text-slate-700 dark:text-gray-200">{{ props.data.school }}</div>
+                            <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.course }}</div>
                         </div>
                     </template>
                 </Column>
@@ -82,23 +82,23 @@
                     <template #body="props">
                         <div class="text-sm">
                             {{ props.data.academic_year }}
-                            <span class="text-slate-400">/</span>
+                            <span class="text-slate-400 dark:text-gray-500">/</span>
                             {{ props.data.term }}
                         </div>
                     </template>
                 </Column>
                 <Column v-if="activeTab === 'history'" header="Records">
                     <template #body="props">
-                        <div class="text-sm text-slate-700">
+                        <div class="text-sm text-slate-700 dark:text-gray-200">
                             {{ props.data.terms_count ?? 0 }} term records
-                            <span class="text-slate-400">/</span>
+                            <span class="text-slate-400 dark:text-gray-500">/</span>
                             {{ props.data.files_count ?? 0 }} files
                         </div>
                     </template>
                 </Column>
                 <Column header="Status">
                     <template #body="props">
-                        <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs uppercase text-slate-600">
+                        <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs uppercase text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
                             {{ props.data.status }}
                         </span>
                     </template>
@@ -224,6 +224,14 @@ watch(
     border-width: 0;
 }
 
+:global(.dark) :deep(.compact-submission-tabs .p-tablist),
+:global(.dark) :deep(.compact-submission-tabs .p-tablist-tab-list),
+:global(.dark) :deep(.compact-submission-tabs .p-tab) {
+    background: #1f2937 !important;
+    color: #d1d5db !important;
+    border-color: #374151 !important;
+}
+
 :deep(.compact-submission-tabs .p-tab) {
     padding: 0.45rem 0.8rem;
     font-size: 0.8125rem;
@@ -233,6 +241,11 @@ watch(
 :deep(.compact-submission-tabs .p-tab-active) {
     border-bottom-color: #1a2551;
     color: #1a2551;
+}
+
+:global(.dark) :deep(.compact-submission-tabs .p-tab-active) {
+    border-bottom-color: #60a5fa !important;
+    color: #ffffff !important;
 }
 
 :deep(.compact-submission-tabs .p-tablist-active-bar) {

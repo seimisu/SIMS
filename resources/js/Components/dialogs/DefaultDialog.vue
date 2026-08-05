@@ -9,6 +9,12 @@
                 widthSet,
             ]"
             :maximizable="maximizable"
+            :pt="{
+                root: 'dark:!bg-gray-800 dark:!text-gray-300 dark:!border-gray-600',
+                header: 'dark:!bg-gray-800 dark:!text-gray-100 dark:!border-gray-600',
+                content: 'dark:!bg-gray-800 dark:!text-gray-100',
+                footer: 'dark:!bg-gray-800 dark:!text-gray-100 dark:!border-gray-600',
+            }"
         >
             <template #header>
                 <div class="flex items-center justify-center gap-2 px-2">
@@ -21,9 +27,9 @@
                     </div>
                 </div>
             </template>
-            <div class="mt-3 px-1">
+            <div class="mt-3 px-1 dark:text-gray-100">
                 <div class="font-semibold text-sm">General Information</div>
-                <span class="block text-gray-400 font-light indent-5 text-xs">
+                <span class="block text-gray-400 font-light indent-5 text-xs dark:text-gray-400">
                     {{ description }}
                 </span>
             </div>
