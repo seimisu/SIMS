@@ -16,67 +16,6 @@
                                 <h1 class="text-xl font-semibold">
                                     {{ campus?.name }}
                                 </h1>
-                                <div class="flex justify-between">
-                                    <Button
-                                        class="rounded-full! w-7 h-7"
-                                        text
-                                        severity="secondary"
-                                    >
-                                        <div>
-                                            <IconPencilCog :size="18" />
-                                        </div>
-                                    </Button>
-                                    <!-- <Popover ref="editOp">
-                                        <div class="max-w-72 w-full">
-                                            <div
-                                                class="flex items-center justify-between"
-                                            >
-                                                <span class="font-semibold"
-                                                    >Create a New
-                                                    Workspace</span
-                                                >
-                                            </div>
-                                            <p
-                                                class="text-sm text-muted-color mt-2 mb-0!"
-                                            >
-                                                Name your workspace to get
-                                                started. You can always change
-                                                this later.
-                                            </p>
-                                            <InputText
-                                                placeholder="Workspace Name"
-                                                class="mt-3 w-full"
-                                            />
-                                            <div
-                                                class="flex items-center justify-between mt-4"
-                                            >
-                                                <span
-                                                    class="text-xs text-surface-500 dark:text-surface-400"
-                                                    >Lowercase letters and
-                                                    dashes only</span
-                                                >
-                                                <div
-                                                    class="flex items-center gap-2"
-                                                >
-                                                    <Button
-                                                        type="button"
-                                                        severity="secondary"
-                                                        variant="outlined"
-                                                        size="small"
-                                                        @click="hide"
-                                                        >Cancel</Button
-                                                    >
-                                                    <Button
-                                                        type="button"
-                                                        size="small"
-                                                        @click="hide"
-                                                        >Create</Button
-                                                    >
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Popover> -->
-                                </div>
                             </div>
 
                             <div
@@ -85,6 +24,40 @@
                                 <IconMapPin size="16" />
                                 <span>
                                     {{ campus?.address }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-sm">
+                        <div
+                            class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-950"
+                        >
+                            <IconCalendar size="16" class="text-emerald-600" />
+                            <div class="flex flex-col">
+                                <span class="text-xs text-emerald-600"
+                                    >Active Semester Period</span
+                                >
+                                <span
+                                    class="font-medium text-emerald-900 dark:text-emerald-100"
+                                >
+                                    {{ semesterDate?.startDate }} –
+                                    {{ semesterDate?.endDate }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div
+                            class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950"
+                        >
+                            <IconClock size="16" class="text-amber-600" />
+                            <div class="flex flex-col">
+                                <span class="text-xs text-surface-500"
+                                    >Submission Deadline</span
+                                >
+                                <span
+                                    class="font-medium text-amber-700 dark:text-amber-300"
+                                >
+                                    {{ semesterDate?.submissionDate }}
                                 </span>
                             </div>
                         </div>
@@ -1435,44 +1408,107 @@
         description="Manage the academic semesters offered by the institution, including start and end dates."
     >
         <template #forms>
-            <div class="pt-5 px-3 gap-5 flex flex-col">
+            <div class="space-y-6">
                 <div v-for="(semester, index) in semesterOption" :key="index">
-                    <div
-                        :class="[
-                            'text-xs flex items-center rounded-2xl font-semibold px-2 gap-1 py-1 ',
-                            randomColor(index),
-                        ]"
-                    >
-                        <IconGridDots size="15" />
-                        <div>
-                            {{ semester.name }}
+                    <!-- Header -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div
+                                :class="[
+                                    'flex h-8 w-8 items-center justify-center rounded-lg',
+                                    randomColor(index),
+                                ]"
+                            >
+                                <IconGridDots size="16" />
+                            </div>
+
+                            <div>
+                                <div class="font-semibold">
+                                    {{ semester.name }}
+                                </div>
+
+                                <div class="text-xs text-surface-500">
+                                    Configure semester schedule
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="activeDate?.[index]"
+                            class="rounded-lg bg-surface-50 dark:bg-surface-800/40 p-3"
+                        >
+                            <div
+                                class="flex flex-wrap gap-6 text-sm border border-green-200 px-2 py-1.5 rounded-lg"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <IconCalendar
+                                        size="18"
+                                        class="text-primary"
+                                    />
+
+                                    <div>
+                                        <div class="text-xs text-surface-500">
+                                            Semester Period
+                                        </div>
+
+                                        <div class="font-medium">
+                                            {{ activeDate[index]?.startDate }}
+                                            —
+                                            {{ activeDate[index]?.endDate }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <IconClock
+                                        size="18"
+                                        class="text-amber-500"
+                                    />
+
+                                    <div>
+                                        <div class="text-xs text-surface-500">
+                                            Submission Deadline
+                                        </div>
+
+                                        <div class="font-medium">
+                                            {{
+                                                activeDate[index]
+                                                    ?.submissionDate
+                                            }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 my-3">
+                    <div class="grid md:grid-cols-3 gap-4 mt-4">
                         <DatePickerInput
                             label="Start Date"
                             v-model="semesterForm.semester[index].startDate"
                             view="month"
                             format-date="M yy"
-                        >
-                        </DatePickerInput>
+                        />
 
                         <DatePickerInput
                             label="End Date"
                             v-model="semesterForm.semester[index].endDate"
                             view="month"
                             format-date="M yy"
-                        >
-                        </DatePickerInput>
+                        />
+
                         <DatePickerInput
                             label="Submission Date"
                             v-model="
                                 semesterForm.semester[index].submissionDate
                             "
-                        >
-                        </DatePickerInput>
+                        />
                     </div>
+
+                    <Divider
+                        v-if="index !== semesterOption.length - 1"
+                        class="mt-6"
+                    />
                 </div>
             </div>
         </template>
@@ -1520,6 +1556,7 @@ import {
     IconWood,
     IconDotsCircleHorizontal,
     IconArrowRight,
+    IconClock,
     IconDeviceMobile,
     IconList,
     IconCalendar,
@@ -1549,6 +1586,8 @@ const props = defineProps({
     grades: Object,
     subjectDetail: Object,
     semesterOption: Object,
+    semesterDate: Object,
+    activeDate: Object,
 });
 const dialog = ref({
     createProgram: false,
@@ -1837,7 +1876,7 @@ const openGradeSystem = () => {
 
 const openSemester = () => {
     router.reload({
-        only: ["semesterOption", "semesterDate"],
+        only: ["semesterOption", "activeDate"],
         preserveState: true,
         preserveScroll: true,
         onFinish: () => {
@@ -1946,7 +1985,7 @@ watch(
     (val) => {
         if (val) {
             semesterForm.semester = val.map((sem) => ({
-                name: sem.name,
+                semester_id: sem.id,
                 startDate: null,
                 endDate: null,
                 submissionDate: null,

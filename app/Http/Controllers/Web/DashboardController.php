@@ -217,7 +217,6 @@ class DashboardController extends Controller
                         ]);
                     }
                 )
-
                 ->orderByDesc('program_id')
                 ->get();
 
@@ -337,15 +336,70 @@ class DashboardController extends Controller
                             ],
                         ],
                     ],
+
+                    'pFemale' => round($scholars->where('profile.sex', 'F')->count() / $scholars->whereIn('profile.sex', ['F', 'M'])->count() * 100, 1),
+                    'pMale' => round($scholars->where('profile.sex', 'M')->count() / $scholars->whereIn('profile.sex', ['F', 'M'])->count() * 100, 1),
+                    'majority' => $scholars->where('profile.sex', 'F')->count() > $scholars->where('profile.sex', 'M')->count() ? 'Female' : 'Male',
+                    'total' => $scholars->count(),
                 ],
                 'options' => [
                     'dateRange' => $ranges,
                 ],
                 'card' => [
-                    'active' => Scholars::whereNotIn('academic_status', [
+                    'active' => Scholars::whereIn('academic_status', [
+                        'NEW',
+                        'ONGOING',
+                    ])
+                        ->whereHas('schoolInfo', function ($schoolInfo) {
+                            $schoolInfo->where('campus_id', Auth::user()->school_id);
+                        })
+                        ->when($request->filled('filter'), function ($query) use ($request) {
+                            switch ($request->input('filter')) {
+                                case 'year':
+                                    $query->whereYear('activated_at', now()->year);
+                                    break;
+
+                                case 'month':
+                                    $query->whereMonth('activated_at', now()->month)
+                                        ->whereYear('activated_at', now()->year);
+                                    break;
+                                    // case 'week':
+                                    //     $query->whereBetween('activated_at', [
+                                    //         now()->startOfWeek(),
+                                    //         now()->endOfWeek(),
+                                    //     ]);
+                                    //     break;
+                            }
+                        })->count(),
+                    'graduated' => Scholars::where('academic_status', 'GRADUATED')
+                        ->whereHas('schoolInfo', function ($schoolInfo) {
+                            $schoolInfo->where('campus_id', Auth::user()->school_id);
+                        })
+                        ->when($request->filled('filter'), function ($query) use ($request) {
+                            switch ($request->input('filter')) {
+                                case 'year':
+                                    $query->whereYear('activated_at', now()->year);
+                                    break;
+
+                                case 'month':
+                                    $query->whereMonth('activated_at', now()->month)
+                                        ->whereYear('activated_at', now()->year);
+                                    break;
+
+                                    // case 'week':
+                                    //     $query->whereBetween('activated_at', [
+                                    //         now()->startOfWeek(),
+                                    //         now()->endOfWeek(),
+                                    //     ]);
+                                    //     break;
+                            }
+                        })->count(),
+                    'issue' => Scholars::whereNotIn('academic_status', [
                         'GRADUATED',
+                        'NEW',
+                        'ONGOING',
                         'TERMINATED',
-                        'WITHDRAWN',
+
                     ])
                         ->whereHas('schoolInfo', function ($schoolInfo) {
                             $schoolInfo->where('campus_id', Auth::user()->school_id);
@@ -369,68 +423,29 @@ class DashboardController extends Controller
                                     //     break;
                             }
                         })->count(),
-                    'graduated' => Scholars::where('academic_status', 'GRADUATED')->when($request->filled('filter'), function ($query) use ($request) {
-                        switch ($request->input('filter')) {
-                            case 'year':
-                                $query->whereYear('activated_at', now()->year);
-                                break;
+                    'terminated' => Scholars::where('academic_status', 'TERMINATED')
+                        ->whereHas('schoolInfo', function ($schoolInfo) {
+                            $schoolInfo->where('campus_id', Auth::user()->school_id);
+                        })
+                        ->when($request->filled('filter'), function ($query) use ($request) {
+                            switch ($request->input('filter')) {
+                                case 'year':
+                                    $query->whereYear('activated_at', now()->year);
+                                    break;
 
-                            case 'month':
-                                $query->whereMonth('activated_at', now()->month)
-                                    ->whereYear('activated_at', now()->year);
-                                break;
+                                case 'month':
+                                    $query->whereMonth('activated_at', now()->month)
+                                        ->whereYear('activated_at', now()->year);
+                                    break;
 
-                                // case 'week':
-                                //     $query->whereBetween('activated_at', [
-                                //         now()->startOfWeek(),
-                                //         now()->endOfWeek(),
-                                //     ]);
-                                //     break;
-                        }
-                    })->count(),
-                    'issue' => Scholars::whereNotIn('academic_status', [
-                        'GRADUATED',
-                        'NEW',
-                        'ONGOING',
-
-                    ])->when($request->filled('filter'), function ($query) use ($request) {
-                        switch ($request->input('filter')) {
-                            case 'year':
-                                $query->whereYear('activated_at', now()->year);
-                                break;
-
-                            case 'month':
-                                $query->whereMonth('activated_at', now()->month)
-                                    ->whereYear('activated_at', now()->year);
-                                break;
-
-                                // case 'week':
-                                //     $query->whereBetween('activated_at', [
-                                //         now()->startOfWeek(),
-                                //         now()->endOfWeek(),
-                                //     ]);
-                                //     break;
-                        }
-                    })->count(),
-                    'terminated' => Scholars::where('academic_status', 'TERMINATED')->when($request->filled('filter'), function ($query) use ($request) {
-                        switch ($request->input('filter')) {
-                            case 'year':
-                                $query->whereYear('activated_at', now()->year);
-                                break;
-
-                            case 'month':
-                                $query->whereMonth('activated_at', now()->month)
-                                    ->whereYear('activated_at', now()->year);
-                                break;
-
-                                // case 'week':
-                                //     $query->whereBetween('activated_at', [
-                                //         now()->startOfWeek(),
-                                //         now()->endOfWeek(),
-                                //     ]);
-                                //     break;
-                        }
-                    })->count(),
+                                    // case 'week':
+                                    //     $query->whereBetween('activated_at', [
+                                    //         now()->startOfWeek(),
+                                    //         now()->endOfWeek(),
+                                    //     ]);
+                                    //     break;
+                            }
+                        })->count(),
                 ],
             ]);
         } else {

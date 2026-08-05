@@ -158,7 +158,7 @@
                             <div class="text-4xl font-semibold">
                                 <CountTo
                                     :start-val="0"
-                                    :end-val="page.props.card?.issue ?? 0"
+                                    :end-val="page.props.card?.terminated ?? 0"
                                     v-if="!loading.count"
                                     :duration="1000"
                                     class="text-4xl font-semibold"
@@ -323,7 +323,7 @@
                 </template>
             </Card>
             <Card
-                class="col-span-2"
+                class="col-span-2 lg:col-span-1"
                 :pt="{
                     body: '!p-0',
                     content: 'border-t border-gray-200 ',
@@ -339,11 +339,12 @@
                             </Avatar>
                             <div>
                                 <div class="text-sm font-semibold">
-                                    Gender Breakdown of Scholars by Region
+                                    Sex Chart
                                 </div>
-                                <div class="text-xs text-surface-300">
-                                    Comparison of male and female scholars
-                                    across all Philippine regions.
+
+                                <div class="text-xs text-surface-500">
+                                    Displays the distribution of scholars by
+                                    sex.
                                 </div>
                             </div>
                         </div>
@@ -351,29 +352,142 @@
                     </div>
                 </template>
                 <template #content>
-                    <div class="flex flex-col w-full">
-                        <div class="flex gap-3">
-                            <div class="flex-4">
-                                <ApexChart
-                                    type="line"
-                                    height="350"
-                                    :options="chartOptionsSex"
-                                    :series="page.props?.gender?.series"
-                                />
+                    <div class="flex w-full gap-3">
+                        <div class="lg:w-40">
+                            <ApexChart
+                                type="bar"
+                                height="350"
+                                :options="chartOptionsSexBar"
+                                :series="page.props?.gender?.bar.series"
+                            />
+                        </div>
+                        <div class="lg:w-60 flex flex-col justify-evenly">
+                            <div class="flex flex-col items-center gap-5">
+                                <div class="flex gap-5">
+                                    <div class="flex items-center gap-2">
+                                        <IconManFilled
+                                            size="30"
+                                            class="text-blue-400"
+                                        />
+                                        <div class="flex flex-col">
+                                            <div
+                                                class="text-xs text-gray-500 font-medium leading-3.5"
+                                            >
+                                                Male
+                                            </div>
+                                            <div
+                                                class="text-lg font-semibold leading-3.5"
+                                            >
+                                                {{
+                                                    page.props?.gender?.pMale ??
+                                                    0
+                                                }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <IconWomanFilled
+                                            size="30"
+                                            class="text-pink-400"
+                                        />
+                                        <div class="flex flex-col">
+                                            <div
+                                                class="text-xs text-gray-500 font-medium leading-3.5"
+                                            >
+                                                Female
+                                            </div>
+                                            <div
+                                                class="text-lg font-semibold leading-3.5"
+                                            >
+                                                {{
+                                                    page.props?.gender
+                                                        ?.pFemale ?? 0
+                                                }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <IconFriends
+                                        size="30"
+                                        class="text-indigo-400"
+                                    />
+                                    <div class="flex flex-col">
+                                        <div
+                                            class="text-xs text-gray-500 font-medium leading-3.5"
+                                        >
+                                            Total Scholars
+                                        </div>
+                                        <div
+                                            class="text-lg font-semibold leading-3.5"
+                                        >
+                                            {{ page.props?.gender?.total ?? 0 }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex-1 w-10">
-                                <ApexChart
-                                    type="bar"
-                                    height="350"
-                                    :options="chartOptionsSexBar"
-                                    :series="page.props?.gender?.bar.series"
+
+                            <div
+                                class="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm"
+                            >
+                                <IconBulb
+                                    size="18"
+                                    class="mt-0.5 text-amber-600 shrink-0"
                                 />
+
+                                <p class="text-amber-800 leading-5">
+                                    <span class="font-medium">Insight:</span>
+                                    The current scholar population is
+                                    predominantly
+
+                                    <span
+                                        :class="[
+                                            page.props?.gender?.majority ===
+                                            'Male'
+                                                ? 'text-blue-600'
+                                                : 'text-pink-600',
+                                            'font-semibold',
+                                        ]"
+                                    >
+                                        {{ page.props?.gender?.majority }}
+                                    </span>
+
+                                    scholars.
+                                </p>
                             </div>
                         </div>
                     </div>
                 </template>
             </Card>
-
+            <Card
+                class="col-span-2 lg:col-span-1"
+                :pt="{
+                    body: '!p-0',
+                    content: 'border-t border-gray-200 ',
+                }"
+            >
+                <template #title>
+                    <VCalendar
+                        transparent
+                        borderless
+                        class="py-1"
+                        expanded
+                        view="weekly"
+                        :attributes="attrs"
+                        title-position="left"
+                    ></VCalendar>
+                </template>
+                <template #content>
+                    <div class="p-2">
+                        <div class="flex items-center justify-between">
+                            <div class="text-[16px] font-semibold">Events</div>
+                            <Avatar size="normal">
+                                <IconBellFilled size="16" />
+                            </Avatar>
+                        </div>
+                    </div>
+                </template>
+            </Card>
             <Card
                 class="col-span-2"
                 :pt="{
@@ -541,9 +655,15 @@ import {
     IconSchool,
     IconTable,
     IconUser,
+    IconBulb,
     IconUserExclamation,
     IconMapPin,
     IconUserX,
+    IconManFilled,
+    IconWomanFilled,
+    IconFriends,
+    IconCalendarWeek,
+    IconBellFilled,
 } from "@tabler/icons-vue";
 import { computed, onMounted, ref, watch } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
@@ -577,6 +697,14 @@ const loading = ref({
     count: false,
 });
 
+const attrs = ref([
+    {
+        key: "today",
+        highlight: true,
+        dates: new Date(),
+    },
+]);
+
 const chartOptionsSexBar = ref({
     chart: {
         type: "bar",
@@ -597,7 +725,7 @@ const chartOptionsSexBar = ref({
             distributed: true,
             borderRadius: 10,
             borderRadiusApplication: "end",
-            columnWidth: "42%",
+            columnWidth: "50%",
             dataLabels: {
                 position: "center",
             },

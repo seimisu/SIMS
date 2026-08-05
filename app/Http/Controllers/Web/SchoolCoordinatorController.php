@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLogs;
 use App\Models\ListCourse;
+use App\Models\ListReferences;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\CoordinatorUpdateInfoNotification;
@@ -40,17 +41,30 @@ class SchoolCoordinatorController extends Controller
             ],
             'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
             'semesterOption' => Inertia::optional(fn () => $ref->getRefs('option', null, null, $campus->term->name)),
-            'semesterDate' => Inertia::optional(fn () => $campus->semesters()
+            'semesterDate' => $campus->semesters()
                 ->where('is_delete', false)
                 ->where('is_active', true)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
                 ->get()
                 ->map(fn ($semester) => [
-                    'id' => Hashids::encode($semester->id),
-                    'name' => $semester->name,
-                    'startDate' => $semester->start_date,
-                    'endDate' => $semester->end_date,
-                    'submissionDate' => $semester->submission_date,
-                ])),
+                    'name' => $semester->semester->name,
+                    'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
+                    'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                    'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
+                ])->first(),
+            'activeDate' => Inertia::optional(fn () => $campus->semesters()
+                ->where('is_delete', false)
+                ->where('is_active', true)
+
+                ->get()
+                ->map(fn ($semester) => [
+                    'name' => $semester->semester->name,
+                    'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
+                    'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                    'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
+                ])
+            ),
             'programs' => $campus
                 ->courses()
                 ->with('course:id,name,abbreviation', 'campus')
@@ -145,36 +159,69 @@ class SchoolCoordinatorController extends Controller
         $campus_id = Auth::user()->school_id;
         $campus = SchoolCampuses::findOrFail($campus_id);
 
-        $validatedData = $request->validate([
-            'semester' => ['required', 'array'],
-            'semester.*.id' => ['required', 'string'],
-            'semester.*.startDate' => ['required', 'date'],
-            'semester.*.endDate' => ['required', 'date', 'after:semester.*.startDate'],
-            'semester.*.submissionDate' => ['required', 'date', 'after:semester.*.endDate'],
+        $semester = $request->input('semester', []);
+
+        foreach ($semester as &$semesterData) {
+            $semesterData['startDate'] = Carbon::parse($semesterData['startDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
+            $semesterData['endDate'] = Carbon::parse($semesterData['endDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
+            $semesterData['submissionDate'] = Carbon::parse($semesterData['submissionDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
+        }
+
+        $request->merge([
+            'semester' => $semester,
         ]);
 
-        foreach ($validatedData['semester'] as $semesterData) {
-            $semesterId = Hashids::decode($semesterData['id'])[0] ?? null;
+        $validatedData = $request->validate([
+            'semester' => ['required', 'array'],
+            'semester.*.semester_id' => ['required'],
+            'semester.*.startDate' => ['required', 'date'],
+            'semester.*.endDate' => ['required', 'date', 'after:semester.*.startDate'],
+            'semester.*.submissionDate' => ['required', 'date'],
+        ]);
 
-            if ($semesterId) {
-                $semester = $campus->semesters()->findOrFail($semesterId);
-                $oldData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
+        // foreach ($validatedData['semester'] as $semesterData) {
 
-                $semester->update([
-                    'start_date' => Carbon::parse($semesterData['startDate'])->format('Y-m-d'),
-                    'end_date' => Carbon::parse($semesterData['endDate'])->format('Y-m-d'),
-                    'submission_date' => Carbon::parse($semesterData['submissionDate'])->format('Y-m-d'),
-                ]);
+        //     $semester = $campus->semesters()->findOrFail($semesterData['semester_id']);
+        //     $oldData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
 
-                $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
+        //     $semester->update([
+        //         'start_date' => Carbon::parse($semesterData['startDate'])->format('Y-m-d'),
+        //         'end_date' => Carbon::parse($semesterData['endDate'])->format('Y-m-d'),
+        //         'submission_date' => Carbon::parse($semesterData['submissionDate'])->format('Y-m-d'),
+        //     ]);
 
-                AuditLogs::create([
-                    'user_id' => Auth::id(),
-                    'old_data' => $oldData,
-                    'new_data' => $newData,
-                    'action' => "Updated semester {$semester->name}",
-                ]);
-            }
+        //     $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
+
+        //     AuditLogs::create([
+        //         'user_id' => Auth::id(),
+        //         'old_data' => $oldData,
+        //         'new_data' => $newData,
+        //         'action' => "Updated semester {$semester->name}",
+        //     ]);
+
+        // }
+        $semester = $campus->semesters()->update([
+            'is_active' => false,
+        ]);
+
+        foreach ($validatedData['semester'] as $key => $value) {
+
+            $semester = $campus->semesters()->create([
+                'semester_id' => $value['semester_id'],
+                'start_date' => $value['startDate'],
+                'end_date' => $value['endDate'],
+                'submission_date' => $value['submissionDate'],
+            ]);
+
+            $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date', ListReferences::find($value['semester_id'])->name]);
+
+            AuditLogs::create([
+                'user_id' => Auth::id(),
+
+                'old_data' => null,
+                'new_data' => $newData,
+                'action' => 'Updated semester '.ListReferences::find($value['semester_id'])->name,
+            ]);
         }
 
         return redirect()->back()->with([
