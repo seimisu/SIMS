@@ -58,7 +58,7 @@
             </div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -88,7 +88,7 @@
                     </div>
                 </template>
             </Card>
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -118,7 +118,7 @@
                     </div>
                 </template>
             </Card>
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -150,7 +150,7 @@
                     </div>
                 </template>
             </Card>
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -181,7 +181,7 @@
                 </template>
             </Card>
             <Card
-                class="col-span-2"
+                class="col-span-2 dark:bg-slate-700! dark:text-white!"
                 :pt="{
                     body: '!p-0',
                     content: 'border-t border-gray-200 ',
@@ -323,7 +323,7 @@
                 </template>
             </Card>
             <Card
-                class="col-span-2 lg:col-span-1"
+                class="col-span-2 lg:col-span-1 dark:bg-slate-700! dark:text-white!"
                 :pt="{
                     body: '!p-0',
                     content: 'border-t border-gray-200 ',
@@ -352,8 +352,8 @@
                     </div>
                 </template>
                 <template #content>
-                    <div class="flex w-full gap-3">
-                        <div class="lg:w-40">
+                    <div class="flex  justify-center h-full w-full gap-3 p-2">
+                        <div class="flex-1 lg:w-40 ">
                             <ApexChart
                                 type="bar"
                                 height="350"
@@ -361,7 +361,7 @@
                                 :series="page.props?.gender?.bar.series"
                             />
                         </div>
-                        <div class="lg:w-60 flex flex-col justify-evenly">
+                        <div class="flex-1 lg:w-60 flex flex-col justify-evenly">
                             <div class="flex flex-col items-center gap-5">
                                 <div class="flex gap-5">
                                     <div class="flex items-center gap-2">
@@ -460,7 +460,7 @@
                 </template>
             </Card>
             <Card
-                class="col-span-2 lg:col-span-1"
+                class="col-span-2 lg:col-span-1 dark:bg-slate-700! dark:text-white"
                 :pt="{
                     body: '!p-0',
                     content: 'border-t border-gray-200 ',
@@ -489,7 +489,7 @@
                 </template>
             </Card>
             <Card
-                class="col-span-2"
+                class="col-span-2 dark:bg-slate-700! dark:text-white"
                 :pt="{
                     body: '!p-0',
                     content: 'border-t border-gray-200 ',
