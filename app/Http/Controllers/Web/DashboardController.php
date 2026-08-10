@@ -21,29 +21,9 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $permissions = app(SystemPermissions::class);
-
         $regionCode = $user->profile->agency->region_code;
         $currentYear = Carbon::now()->year;
 
-        // $campuses = SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')
-        //     ->where('is_delete', false)
-        //     ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-        //         $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
-        //     })
-        //     ->with([
-        //         'school' => fn ($q) => $q
-        //             ->select('id', 'shortcut')
-        //             ->where('is_delete', false),
-        //         'address',
-        //         'semesters' => fn ($q) => $q
-        //             ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
-        //             ->whereDate('start_date', '<=', now())
-        //             ->whereDate('end_date', '>=', now()),
-        //     ])
-        //     ->get();
-
-        // // Duplicate for testing
-        // $campuses = $campuses->merge($campuses);
         if ($permissions->isRegionalRole($user)) {
             $scholars = Scholars::with([
                 'program:id,name',
@@ -51,7 +31,7 @@ class DashboardController extends Controller
             ])
                 ->whereHas(
                     'schoolInfo.campus.address',
-                    fn ($q) => $q->where('region_code', $regionCode)
+                    fn($q) => $q->where('region_code', $regionCode)
                 )
                 ->get();
 
@@ -64,11 +44,11 @@ class DashboardController extends Controller
                 ->values();
 
             $series = $scholars
-                ->groupBy(fn ($s) => $s->program->name)
+                ->groupBy(fn($s) => $s->program->name)
                 ->map(function ($rows, $program) use ($categories) {
                     $data = collect($categories)->map(function ($year) use ($rows) {
                         return $rows->filter(
-                            fn ($s) => $s->award_year == $year
+                            fn($s) => $s->award_year == $year
                         )->count();
                     })->toArray();
 
@@ -81,7 +61,7 @@ class DashboardController extends Controller
                 ->toArray();
 
             $timelineTotal = $scholars
-                ->groupBy(fn ($s) => $s->program->name)
+                ->groupBy(fn($s) => $s->program->name)
                 ->map(function ($rows, $program) {
 
                     return [
@@ -96,21 +76,21 @@ class DashboardController extends Controller
                 'dashboardType' => $permissions->dashboardType($user),
                 'campus_cnt' => SchoolCampuses::where('is_delete', false)
                     ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                        $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                        $q->whereHas('address', fn($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
                     })->count(),
                 'campuses_details' => SchoolCampuses::where('is_delete', false)
                     ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                        $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                        $q->whereHas('address', fn($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
                     })->exists() ? SchoolCampuses::select('id', 'generated_name', 'school_id', 'name')->where('is_delete', false)
                     ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                        $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                        $q->whereHas('address', fn($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
                     })
                     ->with([
-                        'school' => fn ($q) => $q
+                        'school' => fn($q) => $q
                             ->select('id', 'shortcut')
                             ->where('is_delete', false),
                         'address',
-                        'semesters' => fn ($q) => $q
+                        'semesters' => fn($q) => $q
                             ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
                             ->whereDate('start_date', '<=', now())
                             ->whereDate('end_date', '>=', now()),
@@ -124,8 +104,8 @@ class DashboardController extends Controller
                             'school_shortcut' => $campus->school
                                 ? (
                                     $campus->name
-                                    ? $campus->school->shortcut.'-'.$campus->name
-                                    : $campus->school->shortcut.'-'.$campus->address?->municipality_array['name']
+                                    ? $campus->school->shortcut . '-' . $campus->name
+                                    : $campus->school->shortcut . '-' . $campus->address?->municipality_array['name']
                                 )
                                 : null,
                             'program_cnt' => $campus->courses_count,
@@ -165,11 +145,11 @@ class DashboardController extends Controller
 
                 'gender' => [
                     'series' => $scholars
-                        ->groupBy(fn ($s) => $s->profile?->sex)
-                        ->map(fn ($rows) => $rows->count())
+                        ->groupBy(fn($s) => $s->profile?->sex)
+                        ->map(fn($rows) => $rows->count())
                         ->values()
                         ->toArray(),
-                    'result' => $scholars->groupBy(fn ($s) => $s->profile?->sex)->map(function ($rows, $gender) {
+                    'result' => $scholars->groupBy(fn($s) => $s->profile?->sex)->map(function ($rows, $gender) {
                         return ['sex' => $gender, 'total' => $rows->count()];
                     })->values()->toArray(),
                 ],
@@ -191,7 +171,7 @@ class DashboardController extends Controller
 
                 $start = $end + 1;
             }
-
+            $campus = SchoolCampuses::select('id', 'school_id', 'generated_name', 'grading_id', 'term_id')->find(Auth::user()->school_id);
             $scholars = Scholars::with([
                 'program:id,name',
                 'profile:sex,scholar_id',
@@ -229,7 +209,7 @@ class DashboardController extends Controller
                 ->values();
 
             $series = $scholars
-                ->groupBy(fn ($s) => $s->program->name)
+                ->groupBy(fn($s) => $s->program->name)
                 ->sortKeys()
                 ->map(function ($rows, $program) use ($categories) {
                     $data = collect($categories)->map(function ($year) use ($rows) {
@@ -245,7 +225,7 @@ class DashboardController extends Controller
                 ->toArray();
 
             $timelineTotal = $scholars
-                ->groupBy(fn ($s) => $s->program->name)
+                ->groupBy(fn($s) => $s->program->name)
                 ->map(function ($rows, $program) {
                     return [
                         'name' => $program,
@@ -265,7 +245,7 @@ class DashboardController extends Controller
                         return [
                             'x' => $region->region,
                             'y' => $region->scholars
-                                ->filter(fn ($scholar) => optional($scholar->profile)->sex === $sex)
+                                ->filter(fn($scholar) => optional($scholar->profile)->sex === $sex)
                                 ->count(),
                         ];
                     })->values(),
@@ -278,7 +258,7 @@ class DashboardController extends Controller
             $totalSchool = $schoolTreemap->map(function ($campus) {
 
                 return [
-                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut.'-'.$campus->address->municipality_array['name'] : $campus->school->shortcut.'-'.$campus->name),
+                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut . '-' . $campus->address->municipality_array['name'] : $campus->school->shortcut . '-' . $campus->name),
                     'y' => $campus->scholar_campus_count,
                 ];
             })->sum('y');
@@ -300,6 +280,7 @@ class DashboardController extends Controller
                     'programs' => $timelineTotal,
                     'programSeries' => $timelineTotal->pluck('data')->toArray(),
                 ],
+                'events' => [],
                 'course' => [
                     'series' => [
                         [
@@ -324,24 +305,27 @@ class DashboardController extends Controller
                     'total' => $totalCourse,
                 ],
                 'gender' => [
-                    'series' => $regionWithSex,
-                    'bar' => [
-                        'series' => [
-                            [
-                                'name' => 'Scholars',
-                                'data' => [
-                                    ScholarProfiles::where('sex', 'F')->count(),
-                                    ScholarProfiles::where('sex', 'M')->count(),
-                                ],
-                            ],
-                        ],
+                    'donut' => [
+                        $scholars->where('profile.sex', 'M')->count(),
+                        $scholars->where('profile.sex', 'F')->count(),
                     ],
-
                     'pFemale' => round($scholars->where('profile.sex', 'F')->count() / $scholars->whereIn('profile.sex', ['F', 'M'])->count() * 100, 1),
                     'pMale' => round($scholars->where('profile.sex', 'M')->count() / $scholars->whereIn('profile.sex', ['F', 'M'])->count() * 100, 1),
                     'majority' => $scholars->where('profile.sex', 'F')->count() > $scholars->where('profile.sex', 'M')->count() ? 'Female' : 'Male',
                     'total' => $scholars->count(),
                 ],
+                'semesterDate' => $campus->semesters()
+                    ->where('is_delete', false)
+                    ->where('is_active', true)
+                    ->where('start_date', '<=', now())
+                    ->where('end_date', '>=', now())
+                    ->get()
+                    ->map(fn($semester) => [
+                        'name' => $semester->semester->name,
+                        'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
+                        'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                        'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
+                    ])->first(),
                 'options' => [
                     'dateRange' => $ranges,
                 ],
@@ -500,7 +484,7 @@ class DashboardController extends Controller
                 ->values();
 
             $series = $scholars
-                ->groupBy(fn ($s) => $s->program->name)
+                ->groupBy(fn($s) => $s->program->name)
                 ->sortKeys()
                 ->map(function ($rows, $program) use ($categories) {
                     $data = collect($categories)->map(function ($year) use ($rows) {
@@ -516,7 +500,7 @@ class DashboardController extends Controller
                 ->toArray();
 
             $timelineTotal = $scholars
-                ->groupBy(fn ($s) => $s->program->name)
+                ->groupBy(fn($s) => $s->program->name)
                 ->map(function ($rows, $program) {
                     return [
                         'name' => $program,
@@ -536,7 +520,7 @@ class DashboardController extends Controller
                         return [
                             'x' => $region->region,
                             'y' => $region->scholars
-                                ->filter(fn ($scholar) => optional($scholar->profile)->sex === $sex)
+                                ->filter(fn($scholar) => optional($scholar->profile)->sex === $sex)
                                 ->count(),
                         ];
                     })->values(),
@@ -549,7 +533,7 @@ class DashboardController extends Controller
             $totalSchool = $schoolTreemap->map(function ($campus) {
 
                 return [
-                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut.'-'.$campus->address->municipality_array['name'] : $campus->school->shortcut.'-'.$campus->name),
+                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut . '-' . $campus->address->municipality_array['name'] : $campus->school->shortcut . '-' . $campus->name),
                     'y' => $campus->scholar_campus_count,
                 ];
             })->sum('y');
@@ -573,7 +557,7 @@ class DashboardController extends Controller
                             'data' => $schoolTreemap->map(function ($campus) {
 
                                 return [
-                                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut.'-'.$campus->address->municipality_array['name'] : $campus->school->shortcut.'-'.$campus->name),
+                                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut . '-' . $campus->address->municipality_array['name'] : $campus->school->shortcut . '-' . $campus->name),
                                     'y' => $campus->scholar_campus_count,
                                 ];
                             }),

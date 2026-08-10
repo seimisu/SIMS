@@ -40,31 +40,32 @@ class SchoolCoordinatorController extends Controller
                 'email' => $campus->info?->email ?? 'N/A',
             ],
             'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
-            'semesterOption' => Inertia::optional(fn () => $ref->getRefs('option', null, null, $campus->term->name)),
+            'semesterOption' => Inertia::optional(fn() => $ref->getRefs('option', null, null, $campus->term->name)),
             'semesterDate' => $campus->semesters()
                 ->where('is_delete', false)
                 ->where('is_active', true)
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
                 ->get()
-                ->map(fn ($semester) => [
+                ->map(fn($semester) => [
                     'name' => $semester->semester->name,
                     'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
                     'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
                     'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
                 ])->first(),
-            'activeDate' => Inertia::optional(fn () => $campus->semesters()
-                ->where('is_delete', false)
-                ->where('is_active', true)
-
-                ->get()
-                ->map(fn ($semester) => [
-                    'name' => $semester->semester->name,
-                    'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
-                    'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
-                    'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
-                ])
+            'activeDate' => Inertia::optional(
+                fn() => $campus->semesters()
+                    ->where('is_delete', false)
+                    ->where('is_active', true)
+                    ->get()
+                    ->map(fn($semester) => [
+                        'name' => $semester->semester->name,
+                        'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
+                        'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                        'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
+                    ])
             ),
+
             'programs' => $campus
                 ->courses()
                 ->with('course:id,name,abbreviation', 'campus')
@@ -76,13 +77,13 @@ class SchoolCoordinatorController extends Controller
                         })
                         ->orWhereHas('course', function ($q) use ($search) {
                             $q->whereRaw('UPPER(abbreviation) LIKE ?', [
-                                '%'.strtoupper($search).'%',
+                                '%' . strtoupper($search) . '%',
                             ]);
                         });
                 })
                 ->latest()
                 ->paginate(15)
-                ->through(fn ($course) => [
+                ->through(fn($course) => [
                     'id' => Hashids::encode($course->id),
                     'course' => $course->course->name,
                     'abbreviation' => $course->course->abbreviation,
@@ -104,52 +105,55 @@ class SchoolCoordinatorController extends Controller
                         'date' => Carbon::parse($log->created_at)->format('F j, Y g:i A'),
                     ];
                 }),
-            'grades' => Inertia::optional(fn () => $campus->grades()
-                ->where('is_delete', false)
-                ->orderBy('grade', 'asc')
-                ->get()
-                ->map(fn ($grade) => [
-                    'id' => Hashids::encode($grade->id),
-                    'grade' => $grade->grade,
-                    'lower' => $grade->lower,
-                    'upper' => $grade->upper,
-                    'is_failed' => $grade->is_failed,
-                    'is_incomplete' => $grade->is_incomplete,
-                    'is_drop' => $grade->is_drop,
-                    'is_active' => $grade->is_active,
-                ])
+            'grades' => Inertia::optional(
+                fn() => $campus->grades()
+                    ->where('is_delete', false)
+                    ->orderBy('grade', 'asc')
+                    ->get()
+                    ->map(fn($grade) => [
+                        'id' => Hashids::encode($grade->id),
+                        'grade' => $grade->grade,
+                        'lower' => $grade->lower,
+                        'upper' => $grade->upper,
+                        'is_failed' => $grade->is_failed,
+                        'is_incomplete' => $grade->is_incomplete,
+                        'is_drop' => $grade->is_drop,
+                        'is_active' => $grade->is_active,
+                    ])
             ),
-            'programOptions' => Inertia::optional(fn () => ListCourse::where('is_delete', false)
-                ->whereDoesntHave('schoolCampuses', fn ($q) => $q->where('campus_id', $campus_id))
-                ->get()
-                ->map(fn ($course) => [
-                    'id' => Hashids::encode($course->id),
-                    'name' => $course->name,
-                    'abbreviation' => $course->abbreviation,
-                ])
+            'programOptions' => Inertia::optional(
+                fn() => ListCourse::where('is_delete', false)
+                    ->whereDoesntHave('schoolCampuses', fn($q) => $q->where('campus_id', $campus_id))
+                    ->get()
+                    ->map(fn($course) => [
+                        'id' => Hashids::encode($course->id),
+                        'name' => $course->name,
+                        'abbreviation' => $course->abbreviation,
+                    ])
             ),
-            'subjectDetail' => Inertia::optional(fn () => $campus->courses()
-                ->with('course:id,name,abbreviation', 'curriculum')
-                ->where('id', Hashids::decode($request->input('campusCourseId'))[0] ?? null)
-                ->where('is_delete', false)
-                ->get()
-                ->map(fn ($course) => [
-                    'id' => Hashids::encode($course->id),
-                    'course' => $course->course->name,
-                    'abbreviation' => $course->course->abbreviation,
-                    'yearLevel' => $course->years,
-                    'curriculum' => $course->curriculum
-                        ->where('is_delete', false)
-                        ->map(fn ($curriculum) => [
-                            'id' => Hashids::encode($curriculum->id),
-                            'campus_course_id' => Hashids::encode($curriculum->campus_course_id),
-                            'years' => $curriculum->years,
-                            'semester_type_id' => $curriculum->semester_type_id,
-                            'is_duplicated' => $curriculum->is_duplicated,
-                            'subjects' => $curriculum->subjects()->where('is_delete', false)->get(),
-                        ]),
-                ])
-                ->first()
+            'subjectDetail' => Inertia::optional(
+                fn() => $campus->courses()
+                    ->with('course:id,name,abbreviation', 'curriculum')
+                    ->where('id', Hashids::decode($request->input('campusCourseId'))[0] ?? null)
+                    ->where('is_delete', false)
+                    ->get()
+                    ->map(fn($course) => [
+                        'id' => Hashids::encode($course->id),
+                        'course' => $course->course->name,
+                        'abbreviation' => $course->course->abbreviation,
+                        'yearLevel' => $course->years,
+                        'curriculum' => $course->curriculum
+                            ->where('is_delete', false)
+                            ->map(fn($curriculum) => [
+                                'id' => Hashids::encode($curriculum->id),
+                                'campus_course_id' => Hashids::encode($curriculum->campus_course_id),
+                                'years' => $curriculum->years,
+                                'semester_type_id' => $curriculum->semester_type_id,
+                                'is_duplicated' => $curriculum->is_duplicated,
+                                'subjects' => $curriculum->subjects()->where('is_delete', false)->get(),
+                            ]),
+                    ])
+                    ->first()
             ),
         ]);
     }
@@ -163,7 +167,7 @@ class SchoolCoordinatorController extends Controller
 
         foreach ($semester as &$semesterData) {
             $semesterData['startDate'] = Carbon::parse($semesterData['startDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
-            $semesterData['endDate'] = Carbon::parse($semesterData['endDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
+            $semesterData['endDate'] = Carbon::parse($semesterData['endDate'])->setTimezone('Asia/Manila')->endOfMonth()->format('Y-m-d');
             $semesterData['submissionDate'] = Carbon::parse($semesterData['submissionDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
         }
 
@@ -220,7 +224,7 @@ class SchoolCoordinatorController extends Controller
 
                 'old_data' => null,
                 'new_data' => $newData,
-                'action' => 'Updated semester '.ListReferences::find($value['semester_id'])->name,
+                'action' => 'Updated semester ' . ListReferences::find($value['semester_id'])->name,
             ]);
         }
 
@@ -263,7 +267,7 @@ class SchoolCoordinatorController extends Controller
             'old_data' => null,
             'new_data' => [
                 'grade' => $grade->grade,
-                'range' => $grade->upper || $grade->lower ? $grade->lower.'-'.$grade->upper : 'Not Set',
+                'range' => $grade->upper || $grade->lower ? $grade->lower . '-' . $grade->upper : 'Not Set',
                 'drop' => $grade->drop ? 'Set true' : 'Set false',
                 'fail' => $grade->fail ? 'Set true' : 'Set false',
                 'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
@@ -278,7 +282,6 @@ class SchoolCoordinatorController extends Controller
                 'message' => 'The grade has been successfully created.',
             ],
         ]);
-
     }
 
     public function deleteGrade(Request $request, string $id)
@@ -295,7 +298,7 @@ class SchoolCoordinatorController extends Controller
             'user_id' => Auth::id(),
             'old_data' => [
                 'grade' => $grade->grade,
-                'range' => $grade->upper || $grade->lower ? $grade->lower.'-'.$grade->upper : 'Not Set',
+                'range' => $grade->upper || $grade->lower ? $grade->lower . '-' . $grade->upper : 'Not Set',
                 'drop' => $grade->drop ? 'Set true' : 'Set false',
                 'fail' => $grade->fail ? 'Set true' : 'Set false',
                 'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
@@ -410,7 +413,7 @@ class SchoolCoordinatorController extends Controller
                 'action' => 'Updated school information',
             ]);
 
-            Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new CoordinatorUpdateInfoNotification(Auth::user()->profile->fullname, 'updateInfoSchool'));
+            Notification::send(User::whereHas('role', fn($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn($q) => $q->where('agency_id', $campus->agency_id))->get(), new CoordinatorUpdateInfoNotification(Auth::user()->profile->fullname, 'updateInfoSchool'));
 
             return redirect()->back()->with([
                 'flash' => [
