@@ -21,6 +21,7 @@ use App\Models\RecipientWithheld;
 use App\Models\Scholars;
 use App\Models\ScholarTerm;
 use App\Models\User;
+use App\Services\RoleBellNotificationService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Exception;
@@ -135,8 +136,9 @@ class StipendController extends Controller
                 ->updateOrInsert(
                     ['term_record_id' => $term->id],
                     [
-                        'spas_no' => $term->spas_no,
+                        'scholar_id' => $term->scholar_id,
                         'payroll' => $payrollStatus,
+                        'is_end' => false,
                         'updated_at' => now(),
                         'updated_by' => $this->actorName(),
                     ]
@@ -148,7 +150,7 @@ class StipendController extends Controller
     {
         $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
             ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
-            ->select('scholar_term_records.id', 'scholars.spas_no')
+            ->select('scholar_term_records.id', 'scholars.id as scholar_id')
             ->get();
 
         if ($terms->isEmpty()) {
@@ -162,7 +164,7 @@ class StipendController extends Controller
     {
         $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
             ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
-            ->select('scholar_term_records.id', 'scholars.spas_no')
+            ->select('scholar_term_records.id', 'scholars.id as scholar_id')
             ->get();
 
         if ($terms->isEmpty()) {
@@ -176,7 +178,7 @@ class StipendController extends Controller
     {
         $terms = $this->scholarTermPayrollQuery($batch, $scholarId)
             ->join('scholars', 'scholars.id', '=', 'scholar_term_records.scholar_id')
-            ->select('scholar_term_records.id', 'scholars.spas_no')
+            ->select('scholar_term_records.id', 'scholars.id as scholar_id')
             ->get();
 
         if ($terms->isEmpty()) {
@@ -2174,6 +2176,8 @@ class StipendController extends Controller
             $this->syncBatchFinancialStatuses($batch, $data['status']);
         });
 
+        $this->sendPayrollBellNotification($batch, $data['status']);
+
         $successFlash = match ($data['status']) {
             'submitted_payroll' => [
                 'title' => 'Payroll submitted',
@@ -2195,6 +2199,47 @@ class StipendController extends Controller
             'status' => 'success',
             ...$successFlash,
         ]);
+    }
+
+    private function sendPayrollBellNotification(Batches $batch, string $status): void
+    {
+        $service = app(RoleBellNotificationService::class);
+        $batchName = $batch->name ?: 'Payroll batch #'.$batch->id;
+
+        if ($status === 'submitted_payroll') {
+            $service->notifyScholarshipStaff(
+                'payroll_submitted',
+                'Payroll submitted',
+                "{$batchName} was submitted for review.",
+                '/stipends',
+                'batches',
+                $batch->id
+            );
+        }
+
+        if ($status === 'approved_payroll') {
+            $service->notifyRegionalPayrollResult(
+                (string) $batch->region,
+                'payroll_approved',
+                'Payroll approved',
+                "{$batchName} was approved.",
+                '/stipends',
+                'batches',
+                $batch->id
+            );
+        }
+
+        if ($status === 'rejected_payroll') {
+            $service->notifyRegionalPayrollResult(
+                (string) $batch->region,
+                'payroll_returned',
+                'Payroll returned',
+                "{$batchName} was returned for revision.",
+                '/stipends',
+                'batches',
+                $batch->id
+            );
+        }
     }
 
     private function attachScholarsToBatch(Batches $batch, iterable $scholarIds, array $ignoredDuplicateBatchIds = []): array

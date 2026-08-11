@@ -206,10 +206,11 @@ class ScholarSubmissionController extends Controller
                 ->updateOrInsert(
                     ['term_record_id' => $termRecord->id],
                     [
-                        'spas_no' => $submission->scholar?->spas_no ?? $submission->spas_no,
+                        'scholar_id' => $submission->scholar_id,
                         'scholarship_status' => $termStatuses->get($historyTerm->id),
                         'submission' => 'APPROVED',
                         'payroll' => 'NOT SUBMITTED',
+                        'is_end' => false,
                         'updated_at' => now(),
                         'updated_by' => Auth::user()?->profile?->fullname,
                     ]
@@ -307,15 +308,20 @@ class ScholarSubmissionController extends Controller
 
     private function profileRequests(Request $request, SystemPermissions $permissions, $user)
     {
-        $regionalSpas = $this->regionalScholarSpas($permissions, $user);
+        $regionalScholarIds = $this->regionalScholarIds($permissions, $user);
 
         return StudentProfileRequest::with('scholar.profile', 'scholar.program:id,name', 'scholar.type:id,name')
             ->where('status', 'pending')
-            ->when($regionalSpas !== null, fn ($query) => $query->whereIn('spas_no', $regionalSpas))
+            ->when($regionalScholarIds !== null, fn ($query) => $query->whereIn('scholar_id', $regionalScholarIds))
             ->when($request->input('search'), function ($query, $search) {
-                $query->where('spas_no', 'ILIKE', '%'.$search.'%');
+                $query->whereHas('scholar', function ($scholar) use ($search) {
+                    $scholar->where('spas_no', 'ILIKE', '%'.$search.'%')
+                        ->orWhereHas('profile', function ($profile) use ($search) {
+                            $profile->whereRaw("CONCAT(lname, ' ', fname, ' ', COALESCE(mname, '')) ILIKE ?", ['%'.$search.'%']);
+                        });
+                });
             })
-            ->orderBy('requested_at')
+            ->orderBy('created_at')
             ->paginate(10)
             ->withQueryString()
             ->through(fn ($item) => [
@@ -444,13 +450,20 @@ class ScholarSubmissionController extends Controller
 
     private function landbankRequests(Request $request, SystemPermissions $permissions, $user)
     {
-        $regionalSpas = $this->regionalScholarSpas($permissions, $user);
+        $regionalScholarIds = $this->regionalScholarIds($permissions, $user);
 
         return studentLandbankRequest::with('scholar.profile', 'scholar.program:id,name', 'scholar.type:id,name')
             ->where('status', 'pending')
-            ->when($regionalSpas !== null, fn ($query) => $query->whereIn('spas_no', $regionalSpas))
-            ->when($request->input('search'), fn ($query, $search) => $query->where('spas_no', 'ILIKE', '%'.$search.'%'))
-            ->orderBy('requested_at')
+            ->when($regionalScholarIds !== null, fn ($query) => $query->whereIn('scholar_id', $regionalScholarIds))
+            ->when($request->input('search'), function ($query, $search) {
+                $query->whereHas('scholar', function ($scholar) use ($search) {
+                    $scholar->where('spas_no', 'ILIKE', '%'.$search.'%')
+                        ->orWhereHas('profile', function ($profile) use ($search) {
+                            $profile->whereRaw("CONCAT(lname, ' ', fname, ' ', COALESCE(mname, '')) ILIKE ?", ['%'.$search.'%']);
+                        });
+                });
+            })
+            ->orderBy('created_at')
             ->paginate(10)
             ->withQueryString()
             ->through(fn ($item) => [
@@ -593,7 +606,7 @@ class ScholarSubmissionController extends Controller
                         'academicYear' => $previousTerm->academic_year,
                         'term' => $previousTerm->term?->name,
                     ] : null,
-                    'files' => StudentDocument::where('term', $term->id)->get(),
+                    'files' => StudentDocument::where('term_record_id', $term->id)->get(),
                 ];
             });
     }
@@ -696,14 +709,14 @@ class ScholarSubmissionController extends Controller
             ->first();
     }
 
-    private function regionalScholarSpas(SystemPermissions $permissions, $user)
+    private function regionalScholarIds(SystemPermissions $permissions, $user)
     {
         if (! $permissions->shouldScopeToRegion($user)) {
             return null;
         }
 
         return Scholars::whereHas('schoolInfo.campus.address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)))
-            ->pluck('spas_no')
+            ->pluck('id')
             ->filter()
             ->values();
     }

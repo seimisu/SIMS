@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
+use App\Services\RoleBellNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -91,6 +92,14 @@ class DocumentController extends Controller
         ]);
 
         $this->syncTargets($document, $data['targets'] ?? []);
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'downloadable_added',
+            'New downloadable added',
+            "{$document->title} was added to the document library.",
+            '/documents',
+            'documents',
+            $document->id
+        );
 
         return back()->with('flash', [
             'status' => 'success',
@@ -127,6 +136,14 @@ class DocumentController extends Controller
 
         $document->update($payload);
         $this->syncTargets($document, $data['targets'] ?? []);
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'downloadable_updated',
+            'Downloadable updated',
+            "{$document->title} was updated in the document library.",
+            '/documents',
+            'documents',
+            $document->id
+        );
 
         return back()->with('flash', [
             'status' => 'success',

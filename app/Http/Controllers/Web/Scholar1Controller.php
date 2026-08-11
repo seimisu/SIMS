@@ -788,7 +788,7 @@ class Scholar1Controller extends Controller
                                         'name' => $term->schoolInfo?->course?->course?->name,
                                         'campus' => $term->schoolInfo?->campus?->generated_name,
                                     ],
-                                    'files' => StudentDocument::where('term', $term->id)->get(),
+                                    'files' => StudentDocument::where('term_record_id', $term->id)->get(),
                                     'academic_year' => $term->academic_year,
                                     'gradeRequest' => false,
                                     'subjects' => $subjects,
@@ -1448,10 +1448,11 @@ class Scholar1Controller extends Controller
                     ->updateOrInsert(
                         ['term_record_id' => $term->id],
                         [
-                            'spas_no' => $term->scholar?->spas_no,
+                            'scholar_id' => $term->scholar_id,
                             'scholarship_status' => $scholarshipStatus,
                             'submission' => 'APPROVED',
                             'payroll' => 'NOT SUBMITTED',
+                            'is_end' => false,
                             'updated_at' => now(),
                             'updated_by' => Auth::user()->profile->fullname,
                         ]
@@ -1500,9 +1501,10 @@ class Scholar1Controller extends Controller
                     ->updateOrInsert(
                         ['term_record_id' => $term->id],
                         [
-                            'spas_no' => $term->scholar?->spas_no,
+                            'scholar_id' => $term->scholar_id,
                             'submission' => 'REJECTED',
                             'payroll' => 'NOT SUBMITTED',
+                            'is_end' => false,
                             'updated_at' => now(),
                             'updated_by' => Auth::user()->profile->fullname,
                         ]

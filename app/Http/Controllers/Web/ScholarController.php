@@ -701,10 +701,11 @@ class ScholarController extends Controller
                     ->updateOrInsert(
                         ['term_record_id' => $termRecord->id],
                         [
-                            'spas_no' => $termRecord->scholar?->spas_no,
+                            'scholar_id' => $termRecord->scholar_id,
                             'scholarship_status' => $status ? Str::upper($status) : null,
                             'submission' => 'APPROVED',
                             'payroll' => 'NOT SUBMITTED',
+                            'is_end' => false,
                             'updated_at' => now(),
                             'updated_by' => Auth::user()?->profile?->fullname,
                         ]

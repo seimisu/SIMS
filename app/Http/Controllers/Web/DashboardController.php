@@ -12,7 +12,6 @@ use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Models\studentLandbankRequest;
 use App\Models\StudentProfileRequest;
-use App\Models\StudentSubject;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -129,19 +128,20 @@ class DashboardController extends Controller
                     'count' => $scholarCountsBySchool->get($campus->generated_name, 0),
                 ])
                 ->values();
+            $regionalScholarIds = $scholars->pluck('id')->filter()->values();
             $regionalSpas = $scholars->pluck('spas_no')->filter()->values();
             $pendingSubmissions = [
-                'grades' => StudentSubject::where('status', 'submitted')
-                    ->whereIn('spas_no', $regionalSpas)
+                'grades' => ScholarTerm::where('verification_status', 'submitted')
+                    ->whereIn('scholar_id', $regionalScholarIds)
                     ->count(),
                 'history' => ScholarAcademicHistorySubmission::where('status', 'submitted')
                     ->whereIn('spas_no', $regionalSpas)
                     ->count(),
                 'profile' => StudentProfileRequest::where('status', 'pending')
-                    ->whereIn('spas_no', $regionalSpas)
+                    ->whereIn('scholar_id', $regionalScholarIds)
                     ->count(),
                 'landbank' => studentLandbankRequest::where('status', 'pending')
-                    ->whereIn('spas_no', $regionalSpas)
+                    ->whereIn('scholar_id', $regionalScholarIds)
                     ->count(),
             ];
 

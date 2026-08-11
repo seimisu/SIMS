@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
 use App\Models\VideoResource;
+use App\Services\RoleBellNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -84,6 +85,14 @@ class VideoResourceController extends Controller
         ]);
 
         $this->syncTargets($resource, $data['targets'] ?? []);
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'video_added',
+            'New video added',
+            "{$resource->title} was added to the video library.",
+            '/video-resources',
+            'video_resources',
+            $resource->id
+        );
 
         return back()->with('flash', [
             'status' => 'success',
@@ -115,6 +124,14 @@ class VideoResourceController extends Controller
         $videoResource->update($payload);
 
         $this->syncTargets($videoResource, $data['targets'] ?? []);
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'video_updated',
+            'Video updated',
+            "{$videoResource->title} was updated in the video library.",
+            '/video-resources',
+            'video_resources',
+            $videoResource->id
+        );
 
         return back()->with('flash', [
             'status' => 'success',
