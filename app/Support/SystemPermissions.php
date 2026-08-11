@@ -400,13 +400,21 @@ class SystemPermissions
 
     public function payrollBatchPermissions(User $user, object $batch, string $status): array
     {
+        $canView = $this->can($user, 'payroll.view') && $this->canAccessPayrollRegion($user, $batch);
+        $canViewGeneratedExcel = $canView && (
+            $this->can($user, 'payroll.approve')
+            || $this->can($user, 'payroll.return')
+            || $this->can($user, 'payroll.recipients.manage-removal')
+        );
+
         return [
-            'canView' => $this->can($user, 'payroll.view') && $this->canAccessPayrollRegion($user, $batch),
+            'canView' => $canView,
             'canEdit' => $this->canEditPayroll($user, $batch, $status),
             'canSubmit' => $this->canSubmitPayroll($user, $batch, $status),
             'canReview' => $this->canReviewPayroll($user, $status),
             'canApprove' => $this->can($user, 'payroll.approve') && $this->canReviewPayroll($user, $status),
             'canReject' => $this->can($user, 'payroll.return') && $this->canReviewPayroll($user, $status),
+            'canViewGeneratedExcel' => $canViewGeneratedExcel,
             'canDelete' => false,
         ];
     }

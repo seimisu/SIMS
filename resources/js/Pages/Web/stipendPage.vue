@@ -69,16 +69,32 @@
                                 :disabled="!hasBatchFilters"
                                 @click="clearBatchFilters"
                             />
+                            <DefaultButton
+                                v-if="canImportHistoricalPayroll"
+                                size="small"
+                                label="Import Historical"
+                                severity="secondary"
+                                outlined
+                                :icon="IconFileImport"
+                                class-name="!border-slate-300 !bg-slate-100 !text-slate-700 hover:!bg-slate-200 dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-200 dark:hover:!bg-gray-700"
+                                @click="openHistoricalImportDialog"
+                            />
                         </div>
                     </template>
 
                     <Column header="File Name">
                         <template #body="props">
                             <div class="flex min-w-64 items-center gap-2">
-                                <IconFileInvoice size="23" stroke-width="1.5" class="shrink-0 text-slate-500" />
-                                <div class="truncate text-sm font-medium text-slate-700">
+                                <IconFileInvoice size="23" stroke-width="1.5" class="shrink-0 text-slate-500 dark:text-gray-400" />
+                                <div class="truncate text-sm font-medium text-slate-700 dark:text-gray-200">
                                     {{ props.data.name }}
                                 </div>
+                                <span
+                                    v-if="props.data.is_historical"
+                                    class="shrink-0 rounded border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-600 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
+                                >
+                                    Historical
+                                </span>
                             </div>
                         </template>
                     </Column>
@@ -87,14 +103,14 @@
                         <template #body="props">
                             <div class="min-w-44 text-sm">
                                 <span class="font-medium">{{ props.data.term }}</span>
-                                <span class="text-slate-400"> / </span>
+                                <span class="text-slate-400 dark:text-gray-500"> / </span>
                                 <span>{{ props.data.sy }}</span>
                             </div>
                         </template>
                     </Column>
                     <Column header="No. of Scholars">
                         <template #body="props">
-                            <div class="text-left font-semibold text-slate-700">
+                            <div class="text-left font-semibold text-slate-700 dark:text-gray-200">
                                 {{ props.data.scholars_count ?? 0 }}/{{ props.data.scholars_limit ?? 300 }}
                             </div>
                         </template>
@@ -157,17 +173,185 @@
 
     <DrawerStipendModule v-model:visible="stipendDrawer" />
 
+    <Drawer
+        v-model:visible="historicalPreviewDrawer"
+        position="full"
+        :pt="{
+            root: 'dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-3 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!bg-gray-900',
+        }"
+    >
+        <template #header>
+            <div class="flex min-w-0 items-center gap-3">
+                <IconFileSpreadsheet :size="18" class="shrink-0 text-slate-500 dark:text-gray-400" />
+                <div class="min-w-0 truncate text-sm font-semibold uppercase text-slate-700 dark:text-gray-100">
+                    {{ historicalImportPreview?.file_name ?? "Historical Payroll Preview" }}
+                </div>
+                <div class="shrink-0 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                    Preview Only
+                </div>
+            </div>
+        </template>
+
+        <template #default>
+            <div class="flex h-full w-full flex-col gap-3">
+                <Tabs value="payroll" class="compact-payroll-tabs flex min-h-0 flex-1 flex-col">
+                    <TabList class="!mb-2 dark:!bg-gray-800">
+                        <Tab value="payroll">
+                            <span class="inline-flex items-center gap-1.5">
+                                <IconFileSpreadsheet :size="15" />
+                                Payroll
+                            </span>
+                        </Tab>
+                    </TabList>
+
+                    <TabPanels class="min-h-0 flex-1 !px-0 dark:!bg-gray-900">
+                        <TabPanel value="payroll" class="h-full">
+                            <div class="flex h-full flex-col gap-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <div class="min-w-0 text-sm font-semibold text-slate-700 dark:text-gray-100">
+                                        Payroll Recipients
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-gray-400">
+                                        <span>{{ historicalImportPreview?.row_count ?? 0 }} recipient(s)</span>
+                                        <span>{{ historicalImportPreview?.batch_count ?? 0 }} batch(es)</span>
+                                        <span>Grand Total: ₱{{ historicalImportPreview?.grand_total ?? "0.00" }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex-1 overflow-auto rounded-lg border bg-white dark:border-gray-600 dark:bg-gray-900">
+                                    <table class="min-w-[1600px] w-full text-xs dark:text-gray-200">
+                                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-gray-800 dark:text-gray-300">
+                                            <tr>
+                                                <th class="border px-2 py-2 text-left">Account No</th>
+                                                <th class="border px-2 py-2 text-left">Name</th>
+                                                <th class="border px-2 py-2 text-left">Program</th>
+                                                <th class="border px-2 py-2 text-left">University</th>
+                                                <th class="border px-2 py-2 text-left">Status</th>
+                                                <th class="border px-2 py-2 text-left">Period</th>
+                                                <th
+                                                    v-for="month in 5"
+                                                    :key="`preview-head-${month}`"
+                                                    class="border px-2 py-2 text-right"
+                                                >
+                                                    Month {{ month }}
+                                                </th>
+                                                <th class="border px-2 py-2 text-right">Withheld</th>
+                                                <th class="border px-2 py-2 text-left">Remarks</th>
+                                                <th class="border px-2 py-2 text-right">LMA/Connectivity</th>
+                                                <th class="border px-2 py-2 text-right">Clothing</th>
+                                                <th class="border px-2 py-2 text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template
+                                                v-for="group in historicalPreviewGroups"
+                                                :key="group.program"
+                                            >
+                                                <tr
+                                                    v-for="row in group.rows"
+                                                    :key="`preview-row-${row.id}`"
+                                                >
+                                                    <td class="border px-2 py-1 min-w-36">{{ row.account_no }}</td>
+                                                    <td class="border px-2 py-1 uppercase min-w-56">{{ row.name }}</td>
+                                                    <td class="border px-2 py-1">{{ row.program }}</td>
+                                                    <td class="border px-2 py-1 min-w-56">{{ row.university }}</td>
+                                                    <td class="border px-2 py-1 min-w-44">{{ row.scholarship_status }}</td>
+                                                    <td class="border px-2 py-1 min-w-44">{{ row.period }}</td>
+                                                    <td
+                                                        v-for="month in 5"
+                                                        :key="`preview-row-${row.id}-${month}`"
+                                                        class="border px-2 py-1 text-right"
+                                                    >
+                                                        {{ formatMoney(row[`month_${month}`]) }}
+                                                    </td>
+                                                    <td class="border px-2 py-1 text-right">{{ formatMoney(row.total_withheld) }}</td>
+                                                    <td class="border px-2 py-1 min-w-56">{{ row.remarks }}</td>
+                                                    <td class="border px-2 py-1 text-right">{{ formatMoney(row.learning_materials_amount) }}</td>
+                                                    <td class="border px-2 py-1 text-right">{{ formatMoney(row.clothing_amount) }}</td>
+                                                    <td class="border px-2 py-1 text-right font-semibold">{{ formatMoney(historicalPreviewRowTotal(row)) }}</td>
+                                                </tr>
+                                                <tr class="bg-slate-50 font-semibold dark:bg-gray-800">
+                                                    <td colspan="6" class="border px-2 py-1 text-right">Sub-Total</td>
+                                                    <td
+                                                        v-for="month in 5"
+                                                        :key="`preview-subtotal-${group.program}-${month}`"
+                                                        class="border px-2 py-1 text-right"
+                                                    >
+                                                        {{ formatMoney(group.totals[`month_${month}`]) }}
+                                                    </td>
+                                                    <td class="border px-2 py-1 text-right">{{ formatMoney(group.totals.total_withheld) }}</td>
+                                                    <td class="border px-2 py-1"></td>
+                                                    <td class="border px-2 py-1 text-right">{{ formatMoney(group.totals.learning_materials_amount) }}</td>
+                                                    <td class="border px-2 py-1 text-right">{{ formatMoney(group.totals.clothing_amount) }}</td>
+                                                    <td class="border px-2 py-1 text-right">{{ formatMoney(group.totals.grand_total) }}</td>
+                                                </tr>
+                                            </template>
+                                            <tr
+                                                v-if="historicalPreviewRows.length"
+                                                class="bg-slate-100 font-bold dark:bg-gray-900"
+                                            >
+                                                <td colspan="6" class="border px-2 py-1 text-right">TOTAL</td>
+                                                <td
+                                                    v-for="month in 5"
+                                                    :key="`preview-grand-${month}`"
+                                                    class="border px-2 py-1 text-right"
+                                                >
+                                                    {{ formatMoney(historicalPreviewTotals[`month_${month}`]) }}
+                                                </td>
+                                                <td class="border px-2 py-1 text-right">{{ formatMoney(historicalPreviewTotals.total_withheld) }}</td>
+                                                <td class="border px-2 py-1"></td>
+                                                <td class="border px-2 py-1 text-right">{{ formatMoney(historicalPreviewTotals.learning_materials_amount) }}</td>
+                                                <td class="border px-2 py-1 text-right">{{ formatMoney(historicalPreviewTotals.clothing_amount) }}</td>
+                                                <td class="border px-2 py-1 text-right">{{ formatMoney(historicalPreviewTotals.grand_total) }}</td>
+                                            </tr>
+                                            <tr v-if="!historicalPreviewRows.length">
+                                                <td colspan="17" class="py-8 text-center text-gray-500">
+                                                    No payroll recipients found.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="flex justify-end gap-2 border-t border-slate-100 pt-2 dark:border-gray-700">
+                                    <DefaultButton
+                                        size="small"
+                                        label="Back"
+                                        severity="secondary"
+                                        outlined
+                                        @click="historicalPreviewDrawer = false; historicalImportDialog = true"
+                                    />
+                                    <DefaultButton
+                                        size="small"
+                                        label="Import Historical Payroll"
+                                        severity="info"
+                                        :icon="IconFileImport"
+                                        :loading="historicalImportForm.processing"
+                                        @click="submitHistoricalImport"
+                                    />
+                                </div>
+                            </div>
+                        </TabPanel>
+                    </TabPanels>
+                </Tabs>
+            </div>
+        </template>
+    </Drawer>
+
     <Dialog v-model:visible="submitDialog" modal header="Submit Payroll" :style="{ width: '30rem' }">
         <div class="flex flex-col gap-3">
-            <p class="text-sm text-slate-600">
+            <p class="text-sm text-slate-600 dark:text-gray-300">
                 Upload the signed payroll PDF before submitting this batch for review.
             </p>
             <label
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100"
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
-                <IconFileTypePdf :size="28" class="text-slate-500" />
+                <IconFileTypePdf :size="28" class="text-slate-500 dark:text-gray-400" />
                 <span class="font-medium">{{ submitPdf?.name ?? "Choose PDF file" }}</span>
-                <span class="text-xs text-slate-500">PDF only</span>
+                <span class="text-xs text-slate-500 dark:text-gray-400">PDF only</span>
                 <input
                     ref="submitPdfInput"
                     type="file"
@@ -202,10 +386,10 @@
 
     <Dialog v-model:visible="remarksDialog" modal header="Payroll Remarks" :style="{ width: '28rem' }">
         <div class="flex flex-col gap-2">
-            <div class="text-sm font-semibold text-slate-700">
+            <div class="text-sm font-semibold text-slate-700 dark:text-gray-200">
                 {{ selectedActionBatch?.name ?? "Payroll batch" }}
             </div>
-            <div class="min-h-24 rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600">
+            <div class="min-h-24 rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
                 {{ selectedActionBatch?.remarks || "No remarks available." }}
             </div>
         </div>
@@ -217,6 +401,57 @@
                 severity="secondary"
                 outlined
                 @click="remarksDialog = false"
+            />
+        </template>
+    </Dialog>
+
+    <Dialog
+        v-model:visible="historicalImportDialog"
+        modal
+        header="Import Historical Payroll"
+        :style="{ width: '32rem' }"
+    >
+        <div class="flex flex-col gap-3">
+            <p class="text-sm text-slate-600 dark:text-gray-300">
+                Upload an Excel file that uses the same layout as the exported payroll file. Imported records are saved as approved historical payrolls and will reflect in scholar financial assistance records.
+            </p>
+            <label
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+                <IconFileSpreadsheet :size="30" class="text-slate-500 dark:text-gray-400" />
+                <span class="font-medium">{{ historicalImportFile?.name ?? "Choose Excel file" }}</span>
+                <span class="text-xs text-slate-500 dark:text-gray-400">XLSX or XLS, exported payroll layout</span>
+                <input
+                    ref="historicalImportInput"
+                    type="file"
+                    accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                    class="hidden"
+                    @change="selectHistoricalImportFile"
+                />
+            </label>
+            <small
+                v-if="historicalImportError || historicalImportForm.errors.payroll_file"
+                class="text-red-600"
+            >
+                {{ historicalImportError || historicalImportForm.errors.payroll_file }}
+            </small>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="Cancel"
+                severity="secondary"
+                outlined
+                @click="closeHistoricalImportDialog"
+            />
+            <DefaultButton
+                size="small"
+                label="Import Historical"
+                severity="info"
+                :icon="IconFileImport"
+                :loading="historicalImportForm.processing || previewingHistoricalImport"
+                @click="previewHistoricalImport"
             />
         </template>
     </Dialog>
@@ -233,11 +468,14 @@ import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DrawerStipendModule from "../../Modules/Others/DrawerStipendModule.vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
+import axios from "axios";
 import {
     IconDotsCircleHorizontal,
     IconDotsVertical,
     IconEye,
+    IconFileImport,
     IconFileInvoice,
+    IconFileSpreadsheet,
     IconFileTypePdf,
     IconFilterOff,
     IconMessageCircle,
@@ -260,6 +498,13 @@ const submitPdfError = ref("");
 const actionMenu = ref(null);
 const selectedActionBatch = ref(null);
 const remarksDialog = ref(false);
+const historicalImportDialog = ref(false);
+const historicalImportFile = ref(null);
+const historicalImportInput = ref(null);
+const historicalImportError = ref("");
+const historicalImportPreview = ref(null);
+const historicalPreviewDrawer = ref(false);
+const previewingHistoricalImport = ref(false);
 
 const statusForm = useForm({
     status: null,
@@ -267,7 +512,81 @@ const statusForm = useForm({
     payroll_file: null,
 });
 
+const historicalImportForm = useForm({
+    payroll_file: null,
+});
+
+const emptyPreviewTotals = () => ({
+    month_1: 0,
+    month_2: 0,
+    month_3: 0,
+    month_4: 0,
+    month_5: 0,
+    total_withheld: 0,
+    learning_materials_amount: 0,
+    clothing_amount: 0,
+    grand_total: 0,
+});
+
+const addPreviewTotals = (totals, row) => {
+    for (let month = 1; month <= 5; month++) {
+        totals[`month_${month}`] += Number(row[`month_${month}`] ?? 0);
+    }
+
+    totals.total_withheld += Number(row.total_withheld ?? 0);
+    totals.learning_materials_amount += Number(row.learning_materials_amount ?? 0);
+    totals.clothing_amount += Number(row.clothing_amount ?? 0);
+    totals.grand_total += historicalPreviewRowTotal(row);
+
+    return totals;
+};
+
+const historicalPreviewRowTotal = (row) =>
+    [1, 2, 3, 4, 5].reduce(
+        (total, month) => total + Number(row[`month_${month}`] ?? 0),
+        0,
+    ) +
+    Number(row.total_withheld ?? 0) +
+    Number(row.learning_materials_amount ?? 0) +
+    Number(row.clothing_amount ?? 0);
+
+const historicalPreviewRows = computed(() => historicalImportPreview.value?.rows ?? []);
+const historicalPreviewGroups = computed(() => {
+    const groups = new Map();
+
+    historicalPreviewRows.value.forEach((row) => {
+        const key = row.program || "Imported Payroll";
+        if (!groups.has(key)) {
+            groups.set(key, {
+                program: key,
+                rows: [],
+                totals: emptyPreviewTotals(),
+            });
+        }
+
+        const group = groups.get(key);
+        group.rows.push(row);
+        addPreviewTotals(group.totals, row);
+    });
+
+    return Array.from(groups.values());
+});
+const historicalPreviewTotals = computed(() =>
+    historicalPreviewRows.value.reduce(
+        (totals, row) => addPreviewTotals(totals, row),
+        emptyPreviewTotals(),
+    ),
+);
+const formatMoney = (value) =>
+    Number(value ?? 0).toLocaleString("en-PH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+
 const isRegionLocked = computed(() => Boolean(page.props.payrollPermissions.regionLocked));
+const canImportHistoricalPayroll = computed(() =>
+    Boolean(page.props.payrollPermissions.canImportHistorical),
+);
 
 const findOption = (options, value, keys = ["id", "name"]) => {
     if (!value) return null;
@@ -309,23 +628,23 @@ const batchStatusMeta = (status) =>
     ({
         draft: {
             label: "Draft",
-            class: "bg-slate-50 text-slate-500",
+            class: "bg-slate-50 text-slate-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
         },
         submitted_payroll: {
             label: "Submitted Payroll",
-            class: "bg-blue-50 text-blue-500",
+            class: "bg-blue-50 text-blue-500 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800",
         },
         rejected_payroll: {
             label: "Returned Payroll",
-            class: "bg-red-50 text-red-500",
+            class: "bg-red-50 text-red-500 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800",
         },
         approved_payroll: {
             label: "Approved Payroll",
-            class: "bg-green-50 text-green-600",
+            class: "bg-green-50 text-green-600 dark:bg-green-900/40 dark:text-green-300 dark:border-green-800",
         },
     })[status] ?? {
         label: status ?? "Draft",
-        class: "bg-slate-50 text-slate-500",
+        class: "bg-slate-50 text-slate-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
     };
 
 const openReview = (batch) => {
@@ -350,16 +669,142 @@ const openRemarksDialog = (batch) => {
     remarksDialog.value = true;
 };
 
+const openHistoricalImportDialog = () => {
+    historicalImportFile.value = null;
+    historicalImportError.value = "";
+    historicalImportPreview.value = null;
+    historicalPreviewDrawer.value = false;
+    historicalImportForm.clearErrors();
+    historicalImportDialog.value = true;
+};
+
+const closeHistoricalImportDialog = () => {
+    historicalImportDialog.value = false;
+    historicalImportFile.value = null;
+    historicalImportError.value = "";
+    historicalImportPreview.value = null;
+    historicalImportForm.reset();
+
+    if (historicalImportInput.value) {
+        historicalImportInput.value.value = "";
+    }
+};
+
+const resetHistoricalImport = () => {
+    historicalPreviewDrawer.value = false;
+    closeHistoricalImportDialog();
+};
+
+const selectHistoricalImportFile = (event) => {
+    const file = event.target.files?.[0] ?? null;
+    historicalImportFile.value = null;
+    historicalImportError.value = "";
+    historicalImportPreview.value = null;
+    historicalImportForm.clearErrors();
+
+    if (!file) return;
+
+    const isExcel =
+        file.name.toLowerCase().endsWith(".xlsx") ||
+        file.name.toLowerCase().endsWith(".xls");
+
+    if (!isExcel) {
+        historicalImportError.value = "Only Excel files are allowed.";
+        event.target.value = "";
+        return;
+    }
+
+    historicalImportFile.value = file;
+};
+
+const historicalImportFormData = () => {
+    if (!historicalImportFile.value) {
+        historicalImportError.value = "Upload an Excel file before importing.";
+        return null;
+    }
+
+    const formData = new FormData();
+    formData.append("payroll_file", historicalImportFile.value);
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    if (csrfToken) {
+        formData.append("_token", csrfToken);
+    }
+
+    return formData;
+};
+
+const historicalImportUrl = computed(() => route("stipends.import-historical"));
+const historicalImportPreviewUrl = computed(() => `${historicalImportUrl.value}/preview`);
+
+const previewHistoricalImport = async () => {
+    const formData = historicalImportFormData();
+    if (!formData) return;
+
+    historicalImportError.value = "";
+    historicalImportForm.clearErrors();
+    previewingHistoricalImport.value = true;
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+        const response = await axios.post(
+            historicalImportPreviewUrl.value,
+            formData,
+            {
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "multipart/form-data",
+                    ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
+                },
+            },
+        );
+
+        historicalImportPreview.value = response.data;
+        historicalImportDialog.value = false;
+        historicalPreviewDrawer.value = true;
+    } catch (error) {
+        historicalImportPreview.value = null;
+        historicalImportError.value =
+            error.response?.data?.errors?.payroll_file?.[0] ??
+            error.response?.data?.detail ??
+            error.response?.data?.message ??
+            (error.response?.status
+                ? `Unable to preview the uploaded payroll file. HTTP ${error.response.status}.`
+                : `Unable to preview the uploaded payroll file.${error.message ? ` ${error.message}` : ""}`);
+    } finally {
+        previewingHistoricalImport.value = false;
+    }
+};
+
+const submitHistoricalImport = () => {
+    if (!historicalImportPreview.value) {
+        previewHistoricalImport();
+        return;
+    }
+
+    if (!historicalImportFile.value) {
+        historicalImportError.value = "Upload an Excel file before importing.";
+        return;
+    }
+
+    historicalImportForm.payroll_file = historicalImportFile.value;
+    historicalImportForm.post(historicalImportUrl.value, {
+        preserveScroll: true,
+        forceFormData: true,
+        onSuccess: () => {
+            resetHistoricalImport();
+            loadPage(1);
+        },
+        onError: (errors) => {
+            historicalImportError.value = errors.payroll_file ?? "";
+        },
+    });
+};
+
 const actionMenuItems = computed(() => {
     const batch = selectedActionBatch.value;
 
     return [
-        {
-            label: "Review",
-            icon: IconEye,
-            class: "text-blue-500",
-            command: () => openReview(batch),
-        },
         canSubmitBatch(batch)
             ? {
                   label: "Submit",
@@ -368,6 +813,12 @@ const actionMenuItems = computed(() => {
                   command: () => openSubmitDialog(batch),
               }
             : null,
+        {
+            label: "Review",
+            icon: IconEye,
+            class: "text-blue-500",
+            command: () => openReview(batch),
+        },
         {
             label: "Remarks",
             icon: IconMessageCircle,

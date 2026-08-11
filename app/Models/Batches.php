@@ -16,6 +16,15 @@ class Batches extends Model
         'school_year',
         'is_lock',
         'status',
+        'generated_excel_path',
+        'generated_excel_name',
+        'generated_excel_at',
+        'source',
+        'is_historical',
+        'imported_by',
+        'imported_at',
+        'import_file_path',
+        'import_file_name',
     ];
 
     public function logs()

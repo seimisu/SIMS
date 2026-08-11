@@ -49,7 +49,8 @@ class ScholarTerm extends Model
 
     public function subjects()
     {
-        return $this->hasMany(ScholarSchoolGrades::class, 'term_record_id');
+        return $this->hasMany(ScholarSchoolGrades::class, 'term_record_id')
+            ->where('is_deleted', false);
     }
 
     public function studentSubjects()

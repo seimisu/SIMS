@@ -13,6 +13,7 @@ use App\Models\Scholars;
 use App\Models\StudentDocument;
 use App\Models\studentLandbankRequest;
 use App\Models\StudentProfileRequest;
+use App\Services\AcademicPerformanceEvaluationService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -284,7 +285,7 @@ class ScholarSubmissionController extends Controller
 
     private function standingOptions()
     {
-        return ListStatuses::where('type', 'standing')
+        $options = ListStatuses::whereIn('type', ['standing', 'ongoing'])
             ->where('is_active', true)
             ->where('is_delete', false)
             ->orderBy('id')
@@ -293,6 +294,14 @@ class ScholarSubmissionController extends Controller
                 'id' => Str::upper($status->name),
                 'name' => Str::upper($status->name),
             ])
+            ->values();
+
+        return $options
+            ->concat([
+                ['id' => 'TERMINATED WITH SERVICE OBLIGATION', 'name' => 'TERMINATED WITH SERVICE OBLIGATION'],
+                ['id' => 'CONTINUED TO SUBMIT GRADES', 'name' => 'CONTINUED TO SUBMIT GRADES'],
+            ])
+            ->unique(fn ($status) => Str::upper($status['name']))
             ->values();
     }
 
@@ -419,6 +428,9 @@ class ScholarSubmissionController extends Controller
                     'class' => $subject->matchedSubject?->subject_class ?? $subject->subject_class,
                     'unit' => $subject->unit,
                     'grade' => $gradeLabels->get($subject->grade, $subject->grade),
+                    'is_failed' => $subject->is_failed,
+                    'is_incomplete' => $subject->is_incomplete,
+                    'is_dropped' => $subject->is_dropped,
                     'remarks' => $subject->remarks,
                 ]),
             ]),
@@ -505,26 +517,85 @@ class ScholarSubmissionController extends Controller
                 $previousTerm && ! $submittedTerms->contains('id', $previousTerm->id),
                 fn ($terms) => $terms->push($previousTerm)
             )
-            ->map(fn ($term) => [
-                'id' => $term->id,
-                'term' => $term->term?->name,
-                'termType' => $term->termType?->name,
-                'subjects' => $term->subjects->map(fn ($subject) => [
-                    'subject' => $subject->subject?->name,
-                    'class' => $subject->subject?->subject_class,
-                    'code' => $subject->subject?->subject_code,
-                    'unit' => $subject->subject?->unit,
-                    'grade' => $subject->grade,
-                ]),
-                'totalUnit' => $term->subjects->sum(fn ($subject) => (int) ($subject->subject?->unit ?? 0)),
-                'school' => $term->schoolInfo?->campus?->generated_name,
-                'course' => $term->schoolInfo?->course?->course?->name,
-                'academicYear' => $term->academic_year,
-                'status' => $term->verification_status,
-                'remarks' => null,
-                'scholarshipStatus' => null,
-                'files' => StudentDocument::where('term', $term->id)->get(),
-            ]);
+            ->map(function ($term) use ($currentTerm, $previousTerm) {
+                $recommendation = null;
+
+                if ($term->id === $currentTerm?->id) {
+                    $recommendation = $previousTerm
+                        ? app(AcademicPerformanceEvaluationService::class)->evaluate($previousTerm)
+                        : [
+                            'recommended_status' => 'GOOD STANDING',
+                            'recommended_status_normalized' => 'GOOD STANDING',
+                            'policy_group' => 'First Submission',
+                            'manual_review' => false,
+                            'reasons' => [
+                                'No previous graded term is available for evaluation yet.',
+                                'First grade submission is recommended as Good Standing by default.',
+                            ],
+                            'metrics' => [
+                                'curriculum_year' => null,
+                                'course_years' => null,
+                                'failed_count' => 0,
+                                'incomplete_count' => 0,
+                                'dropped_units' => 0,
+                                'has_previous_deficiency' => false,
+                                'term' => null,
+                            ],
+                        ];
+                }
+
+                $subjects = $term->subjects->map(function ($subject) {
+                    $gradeValue = is_numeric($subject->grade?->grade) ? (float) $subject->grade->grade : null;
+                    $unit = is_numeric($subject->subject?->unit) ? (float) $subject->subject->unit : null;
+                    $isAcademic = Str::lower($subject->subject?->subject_class ?? '') === 'academic';
+                    $isCounted = $isAcademic
+                        && $gradeValue !== null
+                        && $unit !== null
+                        && ! ($subject->grade?->is_drop || $subject->grade?->is_incomplete);
+
+                    return [
+                        'subject' => $subject->subject?->name,
+                        'class' => $subject->subject?->subject_class,
+                        'code' => $subject->subject?->subject_code,
+                        'unit' => $subject->subject?->unit,
+                        'grade' => $subject->grade,
+                        'is_drop' => (bool) $subject->grade?->is_drop,
+                        'is_failed' => (bool) $subject->grade?->is_failed,
+                        'is_incomplete' => (bool) $subject->grade?->is_incomplete,
+                        'total' => $isCounted ? round($gradeValue * $unit, 2) : null,
+                        'is_counted' => $isCounted,
+                    ];
+                });
+                $countedSubjects = $subjects->where('is_counted', true);
+                $totalUnits = $countedSubjects->sum(fn ($subject) => (float) ($subject['unit'] ?? 0));
+                $totalGradePoints = $countedSubjects->sum(fn ($subject) => (float) ($subject['total'] ?? 0));
+
+                return [
+                    'id' => $term->id,
+                    'term' => $term->term?->name,
+                    'termType' => $term->termType?->name,
+                    'subjects' => $subjects,
+                    'summary' => [
+                        'units' => $totalUnits,
+                        'total' => round($totalGradePoints, 2),
+                        'average' => $totalUnits > 0 ? number_format($totalGradePoints / $totalUnits, 2, '.', '') : null,
+                    ],
+                    'totalUnit' => $totalUnits,
+                    'school' => $term->schoolInfo?->campus?->generated_name,
+                    'course' => $term->schoolInfo?->course?->course?->name,
+                    'academicYear' => $term->academic_year,
+                    'status' => $term->verification_status,
+                    'remarks' => null,
+                    'scholarshipStatus' => null,
+                    'scholarshipRecommendation' => $recommendation,
+                    'scholarshipEvaluationTerm' => $recommendation && $previousTerm ? [
+                        'id' => $previousTerm->id,
+                        'academicYear' => $previousTerm->academic_year,
+                        'term' => $previousTerm->term?->name,
+                    ] : null,
+                    'files' => StudentDocument::where('term', $term->id)->get(),
+                ];
+            });
     }
 
     private function personalRequest(Request $request, SystemPermissions $permissions, $user)

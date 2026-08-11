@@ -3,14 +3,15 @@
         v-model:visible="modelValue"
         modal
         :pt="{
-            header: 'border-b-1 border-gray-300 border-dashed',
-            root: 'w-[99%] lg:w-[70rem]',
-            content: '!p-0',
+            root: 'w-[99%] lg:w-[70rem] dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!bg-gray-900',
         }"
     >
         <template #header>
             <div
-                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
+                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2 dark:bg-gray-800 dark:text-gray-100"
             >
                 <IconCreditCard :size="18" :stroke-width="2" />
                 <div class="uppercase font-medium text-sm">
@@ -24,7 +25,7 @@
                     class="flex flex-col lg:flex-row h-full w-full lg:h-[33rem]"
                 >
                     <div
-                        class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col flex-1 overflow-y-auto p-3 gap-3"
+                        class="w-full lg:w-4/12 bg-slate-100 lg:rounded-bl-xl flex flex-col flex-1 overflow-y-auto p-3 gap-3 dark:bg-gray-800"
                     >
                         <div class="flex items-center gap-1">
                             <IconHistory :size="20" />
@@ -38,7 +39,7 @@
                                 :key="index"
                             >
                                 <div
-                                    class="border rounded-xl gap-3 hover:shadow border-gray-200 bg-white flex flex-col text-sm p-2"
+                                    class="border rounded-xl gap-3 hover:shadow border-gray-200 bg-white flex flex-col text-sm p-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                                 >
                                     <div
                                         class="flex justify-between items-start"
@@ -51,7 +52,7 @@
                                             </Avatar>
                                             <div class="text-sm">
                                                 <div
-                                                    class="text-xs text-slate-500"
+                                                    class="text-xs text-slate-500 dark:text-gray-400"
                                                 >
                                                     Request ID
                                                 </div>
@@ -86,7 +87,7 @@
                                         class="flex-1 flex flex-col p-1 gap-2 text-sm"
                                     >
                                         <div class="flex-1">
-                                            <div class="text-xs text-slate-500">
+                                            <div class="text-xs text-slate-500 dark:text-gray-400">
                                                 Requested On
                                             </div>
                                             <p class="font-medium">
@@ -94,7 +95,7 @@
                                             </p>
                                         </div>
                                         <div class="flex-1">
-                                            <div class="text-xs text-slate-500">
+                                            <div class="text-xs text-slate-500 dark:text-gray-400">
                                                 Reason for Change
                                             </div>
                                             <p class="font-medium">
@@ -154,10 +155,10 @@
                         </div>
                     </div>
                     <div
-                        class="flex flex-col gap-2 p-3 h-full w-full lg:w-8/12"
+                        class="flex flex-col gap-2 p-3 h-full w-full bg-white dark:bg-gray-900 dark:text-gray-100 lg:w-8/12"
                     >
                         <div
-                            class="flex flex-col gap-4 border-b border-gray-200 pb-4 lg:flex-row lg:items-center lg:justify-between"
+                            class="flex flex-col gap-4 border-b border-gray-200 pb-4 dark:border-gray-700 lg:flex-row lg:items-center lg:justify-between"
                         >
                             <div class="flex items-center gap-3">
                                 <Avatar
@@ -169,16 +170,16 @@
 
                                 <div>
                                     <div
-                                        class="text-lg font-bold text-gray-900 leading-5"
+                                        class="text-lg font-bold text-gray-900 leading-5 dark:text-gray-100"
                                     >
-                                        {{ props.user?.fullname }}
+                                        {{ scholar.fullname }}
                                     </div>
 
                                     <div
-                                        class="mt-1 flex items-center gap-1 text-sm text-gray-500"
+                                        class="mt-1 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"
                                     >
                                         <IconHash :size="14" />
-                                        {{ props.user?.spas_no }}
+                                        {{ scholar.spas_no }}
                                     </div>
                                 </div>
                             </div>
@@ -186,13 +187,13 @@
                             <div class="flex items-center gap-8">
                                 <div class="text-right">
                                     <div
-                                        class="text-xs uppercase tracking-wider text-gray-400"
+                                        class="text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                     >
                                         Scholarship
                                     </div>
 
-                                    <div class="font-semibold text-gray-800">
-                                        {{ props.user?.type }}
+                                    <div class="font-semibold text-gray-800 dark:text-gray-100">
+                                        {{ scholar.type?.name ?? scholar.type }}
                                     </div>
                                 </div>
 
@@ -200,13 +201,13 @@
 
                                 <div class="text-right">
                                     <div
-                                        class="text-xs uppercase tracking-wider text-gray-400"
+                                        class="text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                     >
                                         Program
                                     </div>
 
-                                    <div class="font-semibold text-gray-800">
-                                        {{ props.user.subProgram }}
+                                    <div class="font-semibold text-gray-800 dark:text-gray-100">
+                                        {{ scholar.subProgram?.name ?? scholar.subProgram ?? "-" }}
                                     </div>
                                 </div>
                             </div>
@@ -218,8 +219,9 @@
                         >
                             <Fieldset
                                 :pt="{
-                                    root: '!p-2 w-full ',
-                                    content: '!h-full',
+                                    root: '!p-2 w-full dark:!bg-gray-800 dark:!border-gray-700',
+                                    legend: 'dark:!bg-gray-800 dark:!text-gray-100 dark:!border-gray-700',
+                                    content: '!h-full dark:!bg-gray-800 dark:!text-gray-100',
                                 }"
                             >
                                 <template #legend>
@@ -238,7 +240,7 @@
                                                 class="flex-2 flex flex-col gap-2"
                                             >
                                                 <div
-                                                    class="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2"
+                                                    class="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2 dark:border-amber-800 dark:bg-amber-900/30"
                                                 >
                                                     <IconDatabase
                                                         class="text-amber-500"
@@ -252,16 +254,17 @@
                                                     </div>
                                                 </div>
                                                 <div
-                                                    class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1 flex-1"
+                                                    class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1 flex-1 dark:bg-gray-900 dark:text-gray-100"
                                                 >
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-xs text-gray-500 font-light"
+                                                            class="text-xs text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Account Name
                                                         </div>
 
                                                         <p
+                                                            class="text-sm font-medium text-slate-800 dark:text-gray-100"
                                                             v-if="
                                                                 selectedRow.reviewed_at
                                                             "
@@ -274,7 +277,7 @@
                                                                 "No record"
                                                             }}
                                                         </p>
-                                                        <p v-else>
+                                                        <p v-else class="text-sm font-medium text-slate-800 dark:text-gray-100">
                                                             {{
                                                                 selectedRow.nameStored ??
                                                                 "No record"
@@ -283,11 +286,12 @@
                                                     </div>
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-xs text-gray-500 font-light"
+                                                            class="text-xs text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Account No.
                                                         </div>
                                                         <p
+                                                            class="text-sm font-medium text-slate-800 dark:text-gray-100"
                                                             v-if="
                                                                 selectedRow.reviewed_at
                                                             "
@@ -300,7 +304,7 @@
                                                                 "No record"
                                                             }}
                                                         </p>
-                                                        <p v-else>
+                                                        <p v-else class="text-sm font-medium text-slate-800 dark:text-gray-100">
                                                             {{
                                                                 selectedRow.noStored ??
                                                                 "No record"
@@ -313,7 +317,7 @@
                                                 class="flex-1 flex items-center justify-center"
                                             >
                                                 <div
-                                                    class="flex flex-col items-center text-gray-500"
+                                                    class="flex flex-col items-center text-gray-500 dark:text-gray-400"
                                                 >
                                                     <IconArrowNarrowRight
                                                         :size="35"
@@ -329,7 +333,7 @@
                                                 class="flex-2 flex flex-col gap-2"
                                             >
                                                 <div
-                                                    class="bg-green-50 border-b border-green-200 px-4 py-2 flex items-center gap-2"
+                                                    class="bg-green-50 border-b border-green-200 px-4 py-2 flex items-center gap-2 dark:border-green-800 dark:bg-green-900/30"
                                                 >
                                                     <IconDatabaseEdit
                                                         class="text-green-500"
@@ -343,15 +347,15 @@
                                                     </div>
                                                 </div>
                                                 <div
-                                                    class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1 flex-1"
+                                                    class="flex flex-col gap-3 bg-slate-50 rounded-lg p-1 flex-1 dark:bg-gray-900 dark:text-gray-100"
                                                 >
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-xs text-gray-500 font-light"
+                                                            class="text-xs text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Account Name
                                                         </div>
-                                                        <p>
+                                                        <p class="text-sm font-medium text-slate-800 dark:text-gray-100">
                                                             {{
                                                                 selectedRow.name ??
                                                                 "No record"
@@ -360,11 +364,11 @@
                                                     </div>
                                                     <div class="leading-none">
                                                         <div
-                                                            class="text-xs text-gray-500 font-light"
+                                                            class="text-xs text-gray-500 font-light dark:text-gray-400"
                                                         >
                                                             Account No.
                                                         </div>
-                                                        <p>
+                                                        <p class="text-sm font-medium text-slate-800 dark:text-gray-100">
                                                             {{
                                                                 selectedRow.no ??
                                                                 "No record"
@@ -377,7 +381,7 @@
                                         <Divider type="dashed" />
                                         <div class="flex flex-col w-full gap-2">
                                             <div
-                                                class="flex items-center gap-1 text-slate-500"
+                                                class="flex items-center gap-1 text-slate-500 dark:text-gray-400"
                                             >
                                                 <IconPaperclip :size="15" />
                                                 <div class="text-xs">
@@ -385,14 +389,14 @@
                                                 </div>
                                             </div>
                                             <div
-                                                class="flex-1 gap-3 flex justify-between"
+                                                class="flex-1 gap-3 flex justify-between dark:text-gray-100"
                                             >
                                                 <div class="flex items-center">
                                                     <div
                                                         class="flex items-center gap-1"
                                                     >
                                                         <Avatar
-                                                            class="!w-[35px] !h-[35px] border !text-slate-500 border-slate-400 !rounded-xl"
+                                                            class="!w-[35px] !h-[35px] border !text-slate-500 border-slate-400 !rounded-xl dark:!border-gray-600 dark:!text-gray-300"
                                                         >
                                                             <IconFileTypePdf
                                                                 :size="20"
@@ -777,17 +781,18 @@ import {
     IconLoader,
     IconFile,
     IconLoader2,
+    IconHash,
 } from "@tabler/icons-vue";
 
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
-import { ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
 
 const props = defineProps({
-    user: Array,
+    user: Object,
 });
 
 const modelValue = defineModel("modelValue");
@@ -802,10 +807,19 @@ const loading = ref({
 });
 
 const landbankRequest = ref(null);
+const scholar = computed(() => page.props?.details ?? props.user ?? {});
 
 const selectedRequest = (item, index) => {
     selectedRow.value = item;
     selectedRow.value.index = index;
+};
+
+const syncLandbankRequests = (requests) => {
+    landbankRequest.value = requests ?? [];
+
+    if (!selectedRow.value && landbankRequest.value.length) {
+        selectedRequest(landbankRequest.value[0], 0);
+    }
 };
 
 const toggleOpFileViewer = (event) => {
@@ -861,6 +875,11 @@ const validationRequest = (decision) => {
 };
 
 onMounted(() => {
-    landbankRequest.value = page.props?.landbankRequest;
+    syncLandbankRequests(page.props?.landbankRequest);
 });
+
+watch(
+    () => page.props?.landbankRequest,
+    (requests) => syncLandbankRequests(requests),
+);
 </script>

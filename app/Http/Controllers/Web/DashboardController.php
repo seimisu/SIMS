@@ -3,11 +3,16 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Batches;
 use App\Models\LocationRegions;
+use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarProfiles;
 use App\Models\Scholars;
 use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
+use App\Models\studentLandbankRequest;
+use App\Models\StudentProfileRequest;
+use App\Models\StudentSubject;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -28,12 +33,97 @@ class DashboardController extends Controller
             $scholars = Scholars::with([
                 'program:id,name',
                 'profile:sex,scholar_id',
+                'status:id,name',
+                'schoolInfo.campus:id,generated_name',
             ])
                 ->whereHas(
                     'schoolInfo.campus.address',
                     fn ($q) => $q->where('region_code', $regionCode)
                 )
                 ->get();
+            $payrollRegion = $permissions->agencyNameFor($user) ?? '';
+            $payrollBatches = Batches::with(['latestLog', 'term:id,name'])
+                ->whereNull('deleted_at')
+                ->where('region', $payrollRegion)
+                ->withCount('recipients')
+                ->latest('updated_at')
+                ->get();
+            $payrollStatus = fn ($batch) => $batch->status ?: ($batch->latestLog?->status ?: 'draft');
+            $payrollLabels = [
+                'draft' => 'Draft',
+                'submitted_payroll' => 'Submitted',
+                'rejected_payroll' => 'Returned',
+                'approved_payroll' => 'Approved',
+            ];
+            $payrollSummary = collect(['draft', 'submitted_payroll', 'rejected_payroll', 'approved_payroll'])
+                ->mapWithKeys(fn ($status) => [$status => $payrollBatches->filter(fn ($batch) => $payrollStatus($batch) === $status)->count()]);
+            $payrollQueue = $payrollBatches
+                ->filter(fn ($batch) => in_array($payrollStatus($batch), ['draft', 'rejected_payroll'], true))
+                ->take(6)
+                ->map(fn ($batch) => [
+                    'id' => $batch->id,
+                    'name' => $batch->name,
+                    'term' => $batch->academic_term,
+                    'school_year' => $batch->school_year,
+                    'status' => $payrollStatus($batch),
+                    'status_label' => $payrollLabels[$payrollStatus($batch)] ?? Str::headline($payrollStatus($batch)),
+                    'recipients' => $batch->recipients_count,
+                    'remarks' => $batch->latestLog?->remarks,
+                    'updated_at' => $batch->updated_at ? Carbon::parse($batch->updated_at)->format('M d, Y') : null,
+                ])
+                ->values();
+            $recentPayrollActivity = $payrollBatches
+                ->filter(fn ($batch) => $batch->latestLog)
+                ->sortByDesc(fn ($batch) => $batch->latestLog->created_at)
+                ->take(5)
+                ->map(fn ($batch) => [
+                    'name' => $batch->name,
+                    'status' => $payrollStatus($batch),
+                    'status_label' => $payrollLabels[$payrollStatus($batch)] ?? Str::headline($payrollStatus($batch)),
+                    'actor' => $batch->latestLog?->action_by,
+                    'date' => $batch->latestLog?->created_at ? Carbon::parse($batch->latestLog->created_at)->format('M d, Y') : null,
+                ])
+                ->values();
+            $statusSummary = $scholars
+                ->groupBy(fn ($scholar) => $scholar->status?->name ?? 'No status')
+                ->map(fn ($rows, $name) => [
+                    'name' => $name,
+                    'count' => $rows->count(),
+                ])
+                ->sortByDesc('count')
+                ->values();
+            $scholarCountsBySchool = $scholars
+                ->flatMap(fn ($scholar) => $scholar->schoolInfo)
+                ->filter(fn ($schoolInfo) => $schoolInfo->campus)
+                ->groupBy(fn ($schoolInfo) => $schoolInfo->campus->generated_name)
+                ->map(fn ($rows) => $rows->pluck('scholar_id')->unique()->count());
+            $schoolDistribution = SchoolCampuses::select('id', 'generated_name')
+                ->where('is_delete', false)
+                ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                    $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                })
+                ->orderBy('generated_name')
+                ->get()
+                ->map(fn ($campus) => [
+                    'name' => $campus->generated_name,
+                    'count' => $scholarCountsBySchool->get($campus->generated_name, 0),
+                ])
+                ->values();
+            $regionalSpas = $scholars->pluck('spas_no')->filter()->values();
+            $pendingSubmissions = [
+                'grades' => StudentSubject::where('status', 'submitted')
+                    ->whereIn('spas_no', $regionalSpas)
+                    ->count(),
+                'history' => ScholarAcademicHistorySubmission::where('status', 'submitted')
+                    ->whereIn('spas_no', $regionalSpas)
+                    ->count(),
+                'profile' => StudentProfileRequest::where('status', 'pending')
+                    ->whereIn('spas_no', $regionalSpas)
+                    ->count(),
+                'landbank' => studentLandbankRequest::where('status', 'pending')
+                    ->whereIn('spas_no', $regionalSpas)
+                    ->count(),
+            ];
 
             $categories = $scholars
                 ->pluck('award_year')
@@ -136,6 +226,24 @@ class DashboardController extends Controller
                         ->where('award_year', $currentYear)
                         ->count(),
                     'total' => $scholars->count(),
+                ],
+                'regionalInsights' => [
+                    'payrollSummary' => $payrollSummary,
+                    'payrollQueue' => $payrollQueue,
+                    'recentPayrollActivity' => $recentPayrollActivity,
+                    'statusSummary' => $statusSummary,
+                    'schoolDistribution' => $schoolDistribution,
+                    'pendingSubmissions' => $pendingSubmissions,
+                    'activeCampuses' => SchoolCampuses::where('is_delete', false)
+                        ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                            $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                        })->count(),
+                    'campusesWithActiveTerm' => SchoolCampuses::where('is_delete', false)
+                        ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                            $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                        })
+                        ->whereHas('semesters', fn ($q) => $q->whereDate('start_date', '<=', now())->whereDate('end_date', '>=', now()))
+                        ->count(),
                 ],
                 'timeline' => [
                     'categories' => $categories,
@@ -289,7 +397,7 @@ class DashboardController extends Controller
                             'data' => $courseTreemap->map(function ($course) {
 
                                 return [
-                                    'x' => Str::upper($course->course->abbreviation),
+                                    'x' => Str::upper($course->course->name ?? $course->course->abbreviation ?? $course->name),
                                     'y' => $course->scholar_course_count,
                                 ];
                             })->values(),
@@ -582,7 +690,7 @@ class DashboardController extends Controller
                             'data' => $courseTreemap->map(function ($course) {
 
                                 return [
-                                    'x' => Str::upper($course->course->abbreviation),
+                                    'x' => Str::upper($course->course->name ?? $course->course->abbreviation ?? $course->name),
                                     'y' => $course->scholar_course_count,
                                 ];
                             })->values(),
@@ -642,6 +750,8 @@ class DashboardController extends Controller
                                 //     break;
                         }
                     })->count(),
+                    'undergraduate' => Scholars::where('type_id', 28)->count(),
+                    'jlss' => Scholars::where('type_id', 29)->count(),
                     'graduated' => Scholars::where('academic_status', 'GRADUATED')->when($request->filled('filter'), function ($query) use ($request) {
                         switch ($request->input('filter')) {
                             case 'year':
