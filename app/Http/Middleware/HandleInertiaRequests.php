@@ -8,7 +8,7 @@ use App\Models\ScholarTerm;
 use App\Models\studentLandbankRequest;
 use App\Models\StudentProfileRequest;
 use App\References\ListClass;
-use App\Services\RoleBellNotificationService;
+use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;

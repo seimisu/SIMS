@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
 use App\Models\VideoResource;
-use App\Services\RoleBellNotificationService;
+use App\Services\Notifications\RoleBellNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;

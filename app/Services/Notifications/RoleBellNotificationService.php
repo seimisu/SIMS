@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Notifications;
 
 use App\Models\ListAgencies;
 use App\Models\ScholarAcademicHistorySubmission;

@@ -10,7 +10,7 @@ use App\Models\SchoolCampuses;
 use App\Models\Schools;
 use App\References\ListClass;
 use App\References\LocationClass;
-use App\Services\RoleBellNotificationService;
+use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

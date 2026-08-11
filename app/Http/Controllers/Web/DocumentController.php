@@ -7,7 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
-use App\Services\RoleBellNotificationService;
+use App\Services\Notifications\RoleBellNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;

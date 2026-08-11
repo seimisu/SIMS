@@ -342,6 +342,10 @@ class SystemPermissions
             return 'admin';
         }
 
+        if ($this->isScholarshipReviewer($user)) {
+            return 'scholarship';
+        }
+
         return 'default';
     }
 

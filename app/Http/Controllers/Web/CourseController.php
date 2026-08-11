@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\CourseRequest;
 use App\Models\ListCourse;
 use App\References\ListClass;
-use App\Services\RoleBellNotificationService;
+use App\Services\Notifications\RoleBellNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;

@@ -21,8 +21,8 @@ use App\Http\Controllers\Web\programController;
 use App\Http\Controllers\Web\ReferenceController;
 use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\RouteController;
-use App\Http\Controllers\Web\Scholar1Controller;
-use App\Http\Controllers\Web\ScholarController;
+use App\Http\Controllers\Web\ScholarManagementController;
+use App\Http\Controllers\Web\ScholarReviewController;
 use App\Http\Controllers\Web\ScholarSubmissionController;
 use App\Http\Controllers\Web\SchoolCampusCurriculumController;
 use App\Http\Controllers\Web\SchoolCampusInfoController;
@@ -30,7 +30,7 @@ use App\Http\Controllers\Web\SchoolCampusSemesterController;
 use App\Http\Controllers\Web\SchoolController;
 use App\Http\Controllers\Web\SchoolCoordinatorController;
 use App\Http\Controllers\Web\StatusController;
-use App\Http\Controllers\Web\StipendController;
+use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\Web\UserController;
 use App\Http\Controllers\Web\VideoResourceController;
 use Illuminate\Support\Facades\Route;
@@ -133,34 +133,33 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::patch('campus/curriculum/{id}/copy', [SchoolCampusCurriculumController::class, 'copy'])->name('campus.curriculum.copy');
     Route::patch('campus/curriculum/{id}/paste', [SchoolCampusCurriculumController::class, 'paste'])->name('campus.curriculum.paste');
 
-    Route::post('scholar', [ScholarController::class, 'store'])->name('scholar.store');
-    Route::post('scholar/{id}/validated', [ScholarController::class, 'insert'])->name('scholar.insert');
-    Route::delete('scholar/{id}/{type}', [ScholarController::class, 'destroy'])->name('scholar.destroy');
-    Route::post('scholar/{id}/grade-update', [ScholarController::class, 'gradeUpdate'])->name('scholar.grade-update');
-    Route::post('scholar/{id}/grade-delete', [ScholarController::class, 'gradeDelete'])->name('scholar.grade-delete');
+    Route::post('scholar', [ScholarReviewController::class, 'store'])->name('scholar.store');
+    Route::post('scholar/{id}/validated', [ScholarReviewController::class, 'insert'])->name('scholar.insert');
+    Route::delete('scholar/{id}/{type}', [ScholarReviewController::class, 'destroy'])->name('scholar.destroy');
+    Route::post('scholar/{id}/grade-update', [ScholarReviewController::class, 'gradeUpdate'])->name('scholar.grade-update');
+    Route::post('scholar/{id}/grade-delete', [ScholarReviewController::class, 'gradeDelete'])->name('scholar.grade-delete');
     Route::post('geolocation', [GeolocationController::class, 'store'])->name('geolocation.store');
 
-    Route::put('stipends/recipients/{id}/mark-for-removal', [StipendController::class, 'markRecipientForRemoval'])->name('stipends.recipients.mark-for-removal');
-    Route::put('stipends/recipients/{id}/cancel-removal', [StipendController::class, 'cancelRecipientForRemoval'])->name('stipends.recipients.cancel-removal');
-    Route::post('stipends/import-historical/preview', [StipendController::class, 'previewHistorical'])->name('stipends.import-historical.preview');
-    Route::post('stipends/import-historical', [StipendController::class, 'importHistorical'])->name('stipends.import-historical');
-    Route::put('stipends/{id}/payroll', [StipendController::class, 'savePayroll'])->name('stipends.payroll.update');
-    Route::get('stipends/{id}/export', [StipendController::class, 'export'])->name('stipends.export');
-    Route::put('stipends/{id}/{type}', [StipendController::class, 'update'])->name('stipends.update');
-    Route::delete('stipends/{id}/{type}', [StipendController::class, 'destroy'])->name('stipends.destroy');
+    Route::put('stipends/recipients/{id}/mark-for-removal', [PayrollController::class, 'markRecipientForRemoval'])->name('stipends.recipients.mark-for-removal');
+    Route::put('stipends/recipients/{id}/cancel-removal', [PayrollController::class, 'cancelRecipientForRemoval'])->name('stipends.recipients.cancel-removal');
+    Route::post('stipends/import-historical/preview', [PayrollController::class, 'previewHistorical'])->name('stipends.import-historical.preview');
+    Route::post('stipends/import-historical', [PayrollController::class, 'importHistorical'])->name('stipends.import-historical');
+    Route::put('stipends/{id}/payroll', [PayrollController::class, 'savePayroll'])->name('stipends.payroll.update');
+    Route::get('stipends/{id}/export', [PayrollController::class, 'export'])->name('stipends.export');
+    Route::put('stipends/{id}/{type}', [PayrollController::class, 'update'])->name('stipends.update');
+    Route::delete('stipends/{id}/{type}', [PayrollController::class, 'destroy'])->name('stipends.destroy');
 
-    // Scholar 1.0 Routes
-    Route::post('scholars/{id}/{type}', [Scholar1Controller::class, 'update'])->name('scholars.update');
-    Route::post('scholarsActivation/{id}', [Scholar1Controller::class, 'activation'])->name('scholars.activation');
-    Route::post('scholars/{id}/{type}/transfer', [Scholar1Controller::class, 'transfer'])->name('scholars.transfer');
+    Route::post('scholars/{id}/{type}', [ScholarManagementController::class, 'update'])->name('scholars.update');
+    Route::post('scholarsActivation/{id}', [ScholarManagementController::class, 'activation'])->name('scholars.activation');
+    Route::post('scholars/{id}/{type}/transfer', [ScholarManagementController::class, 'transfer'])->name('scholars.transfer');
     // scholar preview
-    Route::post('scholar-review/{id}/validate', [ScholarController::class, 'validate'])->name('review.validate');
-    Route::post('scholar-review/{id}/publish', [ScholarController::class, 'publish'])->name('review.publish');
+    Route::post('scholar-review/{id}/validate', [ScholarReviewController::class, 'validate'])->name('review.validate');
+    Route::post('scholar-review/{id}/publish', [ScholarReviewController::class, 'publish'])->name('review.publish');
 
-    Route::post('scholar-grade-request/{type}', [Scholar1Controller::class, 'gradeRequest'])->name('scholar.grade-request');
+    Route::post('scholar-grade-request/{type}', [ScholarManagementController::class, 'gradeRequest'])->name('scholar.grade-request');
     Route::post('scholar-academic-history/{id}/{type}', [ScholarSubmissionController::class, 'academicHistoryDecision'])->name('scholar-academic-history.decision');
-    Route::post('profileRequest/{type}', [Scholar1Controller::class, 'profileRequest'])->name('profile.request');
-    Route::post('landbankRequest/{type}', [Scholar1Controller::class, 'landbankRequest'])->name('landbank.request');
+    Route::post('profileRequest/{type}', [ScholarManagementController::class, 'profileRequest'])->name('profile.request');
+    Route::post('landbankRequest/{type}', [ScholarManagementController::class, 'landbankRequest'])->name('landbank.request');
 
     Route::post('documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::put('documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
@@ -189,15 +188,15 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('academic/references', [ReferenceController::class, 'index'])->name('academic.references');
     Route::get('academic/schools', [SchoolController::class, 'index'])->name('academic.universities');
     Route::get('scholar/statuses', [StatusController::class, 'index'])->name('statuses');
-    // Route::get('scholarsV1/oldVersion', [ScholarController::class, 'index'])->name('scholarsOldVersion');
-    Route::get('scholars', [Scholar1Controller::class, 'index'])->name('scholars');
+    // Route::get('scholarsV1/oldVersion', [ScholarReviewController::class, 'index'])->name('scholarsOldVersion');
+    Route::get('scholars', [ScholarManagementController::class, 'index'])->name('scholars');
     Route::get('scholar-submissions', [ScholarSubmissionController::class, 'index'])->name('scholar-submissions');
     Route::get('programs', [programController::class, 'index'])->name('programs');
     Route::get('events', [eventController::class, 'index'])->name('events');
-    Route::get('stipends', [StipendController::class, 'index'])->name('stipends');
+    Route::get('stipends', [PayrollController::class, 'index'])->name('stipends');
     Route::get('documents', [DocumentController::class, 'index'])->name('documents');
     Route::get('schoolCoordinator', [SchoolCoordinatorController::class, 'index'])->name('schoolCoordinator');
     Route::get('video-resources', [VideoResourceController::class, 'index'])->name('video-resources');
     Route::get('geolocation', [GeolocationController::class, 'index']);
-    Route::get('scholar-review', [ScholarController::class, 'index'])->name('review');
+    Route::get('scholar-review', [ScholarReviewController::class, 'index'])->name('review');
 });
