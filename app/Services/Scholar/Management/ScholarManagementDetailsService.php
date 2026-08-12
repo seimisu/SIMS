@@ -74,8 +74,8 @@ class ScholarManagementDetailsService
                 'name' => $schoolInfo?->campus?->generated_name,
             ],
             'landbank' => [
-                'account_name' => $scholar?->landbank?->account_name,
-                'account_number' => $scholar?->landbank?->account_number,
+                'has_account_name' => filled($scholar?->landbank?->account_name),
+                'has_account_number' => filled($scholar?->landbank?->account_number),
             ],
             'courseInput' => [
                 'id' => $schoolInfo?->course?->id,
@@ -101,6 +101,31 @@ class ScholarManagementDetailsService
                 'totalAllowances' => number_format($allowances->sum('amount'), 2),
                 'monthly' => $this->monthlyPayrolls($payrolls),
             ],
+        ];
+    }
+
+    public function revealLandbank(string $hashId, SystemPermissions $permissions, $user): ?array
+    {
+        $id = Hashids::decode($hashId)[0] ?? 0;
+        $scholar = $this->query($id, $permissions, $user);
+
+        if (! $scholar) {
+            return null;
+        }
+
+        return [
+            'account_name' => $scholar->landbank?->account_name,
+            'account_number' => $scholar->landbank?->account_number,
+            'activity_logs' => $scholar->logs
+                ->where('request_type', 'landbank')
+                ->values()
+                ->mapWithKeys(fn ($log) => [
+                    $log->id => [
+                        'previous' => $log->previous_formatted,
+                        'changes' => $log->changes_formatted,
+                    ],
+                ])
+                ->all(),
         ];
     }
 
@@ -182,12 +207,44 @@ class ScholarManagementDetailsService
             ->take(50)
             ->values()
             ->map(fn ($log) => [
+                'id' => $log->id,
                 'created_by' => $log->created_by,
-                'previous' => $log->previous_formatted,
-                'changes' => $log->changes_formatted,
+                'previous' => $this->maskSensitiveLogData($log->request_type, $log->previous_formatted),
+                'changes' => $this->maskSensitiveLogData($log->request_type, $log->changes_formatted),
                 'type' => $log->request_type,
+                'has_sensitive_landbank' => $log->request_type === 'landbank' && $this->hasSensitiveLandbankLogData($log->previous_formatted, $log->changes_formatted),
                 'date' => Carbon::parse($log->created_at)->format('M d, Y h:i A'),
             ]);
+    }
+
+    private function maskSensitiveLogData(?string $type, ?array $data): array
+    {
+        $data ??= [];
+
+        if ($type !== 'landbank') {
+            return $data;
+        }
+
+        foreach (['account_name', 'account_number'] as $field) {
+            if (array_key_exists($field, $data) && filled($data[$field])) {
+                $data[$field] = '**********************';
+            }
+        }
+
+        return $data;
+    }
+
+    private function hasSensitiveLandbankLogData(?array $previous, ?array $changes): bool
+    {
+        foreach ([$previous ?? [], $changes ?? []] as $data) {
+            foreach (['account_name', 'account_number'] as $field) {
+                if (array_key_exists($field, $data) && filled($data[$field])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function termGrades(Scholars $scholar)

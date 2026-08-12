@@ -18,6 +18,7 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.update',
+            'scholars.landbank.view-sensitive',
             'payroll.view',
             'payroll.update',
             'payroll.export',
@@ -39,6 +40,7 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.update',
+            'scholars.landbank.view-sensitive',
             'payroll.view',
             'payroll.update',
             'payroll.export',
@@ -60,6 +62,7 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.review',
+            'scholars.landbank.view-sensitive',
             'profile-requests.view',
             'profile-requests.approve',
             'profile-requests.reject',
@@ -83,6 +86,7 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.review',
+            'scholars.landbank.view-sensitive',
             'profile-requests.view',
             'profile-requests.approve',
             'profile-requests.reject',
@@ -174,6 +178,7 @@ class SystemPermissions
         'scholar.grade-update' => 'scholars.update',
         'scholar.grade-delete' => 'scholars.update',
         'scholars.update' => 'scholars.update',
+        'scholars.landbank.reveal' => 'scholars.landbank.view-sensitive',
         'scholars.activation' => 'scholars.activate',
         'scholars.transfer' => 'scholars.transfer',
         'review.validate' => 'scholars.review',
@@ -262,6 +267,18 @@ class SystemPermissions
         }
 
         if ($this->isAdministrator($user)) {
+            return true;
+        }
+
+        if (
+            $permission === 'scholars.landbank.view-sensitive'
+            && in_array($this->roleName($user), [
+                'regional staff',
+                'regional supervisor',
+                'scholarship staff',
+                'scholarship coordinator',
+            ], true)
+        ) {
             return true;
         }
 

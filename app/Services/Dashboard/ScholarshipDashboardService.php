@@ -22,45 +22,27 @@ class ScholarshipDashboardService
 {
     public function render(Request $request, $user, SystemPermissions $permissions)
     {
-            $ranges = collect();
-            $firstYear = Scholars::min('award_year');
-            $lastYear = Carbon::now()->year;
-            $start = $firstYear;
-
-            while ($start <= $lastYear) {
-                $end = min($start + 10, $lastYear);
-
-                $ranges->push([
-                    'name' => "{$start}-{$end}",
-                    'start' => $start,
-                    'end' => $end,
-                ]);
-
-                $start = $end + 1;
+            $asOfMonth = $request->input('as_of_month');
+            if (! is_string($asOfMonth) || ! preg_match('/^\d{4}-\d{2}$/', $asOfMonth)) {
+                $asOfMonth = now()->format('Y-m');
             }
+
+            $asOfDate = Carbon::createFromFormat('Y-m', $asOfMonth)->endOfMonth();
+            $asOfYear = (int) $asOfDate->year;
+
+            $asOfScholars = Scholars::with([
+                'program:id,name',
+                'profile:sex,scholar_id',
+            ])
+                ->whereNotNull('activated_at')
+                ->whereNotNull('award_year')
+                ->where('award_year', '<=', $asOfYear)
+                ->get();
 
             $scholars = Scholars::with([
                 'program:id,name',
                 'profile:sex,scholar_id',
             ])
-                ->when(
-                    $request->input('range'),
-                    function ($query) use ($request) {
-
-                        $query->whereBetween('award_year', [
-                            $request->input('range')['start'],
-                            $request->input('range')['end'],
-                        ]);
-                    },
-                    function ($query) use ($ranges) {
-
-                        $query->whereBetween('award_year', [
-                            $ranges->last()['start'],
-                            $ranges->last()['end'],
-                        ]);
-                    }
-                )
-
                 ->orderByDesc('program_id')
                 ->get();
 
@@ -88,7 +70,7 @@ class ScholarshipDashboardService
                 ->values()
                 ->toArray();
 
-            $timelineTotal = $scholars
+            $timelineTotal = $asOfScholars
                 ->groupBy(fn ($s) => $s->program->name)
                 ->map(function ($rows, $program) {
                     return [
@@ -195,61 +177,55 @@ class ScholarshipDashboardService
                             [
                                 'name' => 'Scholars',
                                 'data' => [
-                                    ScholarProfiles::where('sex', 'F')->count(),
-                                    ScholarProfiles::where('sex', 'M')->count(),
+                                    $asOfScholars
+                                        ->filter(fn ($scholar) => optional($scholar->profile)->sex === 'F')
+                                        ->count(),
+                                    $asOfScholars
+                                        ->filter(fn ($scholar) => optional($scholar->profile)->sex === 'M')
+                                        ->count(),
                                 ],
                             ],
                         ],
                     ],
                 ],
-                'options' => [
-                    'dateRange' => $ranges,
+                'asOf' => [
+                    'month' => $asOfMonth,
+                    'label' => $asOfDate->format('F Y'),
+                    'year' => $asOfYear,
+                    'active' => Scholars::whereNotIn('academic_status', [
+                            'GRADUATED',
+                            'TERMINATED',
+                            'WITHDRAWN',
+                        ])
+                        ->whereNotNull('activated_at')
+                        ->whereNotNull('award_year')
+                        ->where('award_year', '<=', $asOfYear)
+                        ->count(),
+                    'undergraduate' => Scholars::where('type_id', 28)
+                        ->whereNotNull('activated_at')
+                        ->whereNotNull('award_year')
+                        ->where('award_year', '<=', $asOfYear)
+                        ->count(),
+                    'jlss' => Scholars::where('type_id', 29)
+                        ->whereNotNull('activated_at')
+                        ->whereNotNull('award_year')
+                        ->where('award_year', '<=', $asOfYear)
+                        ->count(),
+                    'graduated' => Scholars::where('academic_status', 'GRADUATED')
+                        ->whereNotNull('activated_at')
+                        ->whereNotNull('award_year')
+                        ->where('award_year', '<=', $asOfYear)
+                        ->count(),
                 ],
                 'card' => [
                     'active' => Scholars::whereNotIn('academic_status', [
                         'GRADUATED',
                         'TERMINATED',
                         'WITHDRAWN',
-                    ])->when($request->filled('filter'), function ($query) use ($request) {
-                        switch ($request->input('filter')) {
-                            case 'year':
-                                $query->whereYear('activated_at', now()->year);
-                                break;
-
-                            case 'month':
-                                $query->whereMonth('activated_at', now()->month)
-                                    ->whereYear('activated_at', now()->year);
-                                break;
-
-                                // case 'week':
-                                //     $query->whereBetween('activated_at', [
-                                //         now()->startOfWeek(),
-                                //         now()->endOfWeek(),
-                                //     ]);
-                                //     break;
-                        }
-                    })->count(),
+                    ])->count(),
                     'undergraduate' => Scholars::where('type_id', 28)->count(),
                     'jlss' => Scholars::where('type_id', 29)->count(),
-                    'graduated' => Scholars::where('academic_status', 'GRADUATED')->when($request->filled('filter'), function ($query) use ($request) {
-                        switch ($request->input('filter')) {
-                            case 'year':
-                                $query->whereYear('activated_at', now()->year);
-                                break;
-
-                            case 'month':
-                                $query->whereMonth('activated_at', now()->month)
-                                    ->whereYear('activated_at', now()->year);
-                                break;
-
-                                // case 'week':
-                                //     $query->whereBetween('activated_at', [
-                                //         now()->startOfWeek(),
-                                //         now()->endOfWeek(),
-                                //     ]);
-                                //     break;
-                        }
-                    })->count(),
+                    'graduated' => Scholars::where('academic_status', 'GRADUATED')->count(),
                     'issue' => Scholars::whereNotIn('academic_status', [
                         'GRADUATED',
                         'NEW',
@@ -297,4 +273,3 @@ class ScholarshipDashboardService
             ]);
     }
 }
-

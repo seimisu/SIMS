@@ -24,6 +24,13 @@ class RegionalDashboardService
     {
         $regionCode = $user->profile->agency->region_code;
         $currentYear = Carbon::now()->year;
+        $asOfMonth = $request->input('as_of_month');
+        if (! is_string($asOfMonth) || ! preg_match('/^\d{4}-\d{2}$/', $asOfMonth)) {
+            $asOfMonth = now()->format('Y-m');
+        }
+
+        $asOfDate = Carbon::createFromFormat('Y-m', $asOfMonth)->endOfMonth();
+        $asOfYear = (int) $asOfDate->year;
             $scholars = Scholars::with([
                 'program:id,name',
                 'profile:sex,scholar_id',
@@ -35,13 +42,20 @@ class RegionalDashboardService
                     fn ($q) => $q->where('region_code', $regionCode)
                 )
                 ->get();
+            $asOfScholars = $scholars
+                ->whereNotNull('activated_at')
+                ->whereNotNull('award_year')
+                ->where('award_year', '<=', $asOfYear)
+                ->values();
             $payrollRegion = $permissions->agencyNameFor($user) ?? '';
             $payrollBatches = Batches::with(['latestLog', 'term:id,name'])
                 ->whereNull('deleted_at')
                 ->where('region', $payrollRegion)
                 ->withCount('recipients')
                 ->latest('updated_at')
-                ->get();
+                ->get()
+                ->filter(fn ($batch) => $batch->updated_at && Carbon::parse($batch->updated_at)->lessThanOrEqualTo($asOfDate))
+                ->values();
             $payrollStatus = fn ($batch) => $batch->status ?: ($batch->latestLog?->status ?: 'draft');
             $payrollLabels = [
                 'draft' => 'Draft',
@@ -53,7 +67,6 @@ class RegionalDashboardService
                 ->mapWithKeys(fn ($status) => [$status => $payrollBatches->filter(fn ($batch) => $payrollStatus($batch) === $status)->count()]);
             $payrollQueue = $payrollBatches
                 ->filter(fn ($batch) => in_array($payrollStatus($batch), ['draft', 'rejected_payroll'], true))
-                ->take(6)
                 ->map(fn ($batch) => [
                     'id' => $batch->id,
                     'name' => $batch->name,
@@ -145,7 +158,7 @@ class RegionalDashboardService
                 ->values()
                 ->toArray();
 
-            $timelineTotal = $scholars
+            $timelineTotal = $asOfScholars
                 ->groupBy(fn ($s) => $s->program->name)
                 ->map(function ($rows, $program) {
 
@@ -207,7 +220,7 @@ class RegionalDashboardService
                         ];
                     }) : null,
                 'card' => [
-                    'Ucnt' => $scholars->where('type_id', 28)->count(),
+                    'Ucnt' => $asOfScholars->where('type_id', 28)->count(),
                     'UTotalcnt' => $scholars
                         ->where('type_id', 28)
                         ->where('award_year', $currentYear)
@@ -216,11 +229,16 @@ class RegionalDashboardService
                         ->where('award_year', $currentYear)
                         ->count(),
 
-                    'Jcnt' => $scholars->where('type_id', 29)->count(),
+                    'Jcnt' => $asOfScholars->where('type_id', 29)->count(),
                     'totalyear' => $scholars
                         ->where('award_year', $currentYear)
                         ->count(),
-                    'total' => $scholars->count(),
+                    'total' => $asOfScholars->count(),
+                ],
+                'asOf' => [
+                    'month' => $asOfMonth,
+                    'label' => $asOfDate->format('F Y'),
+                    'year' => $asOfYear,
                 ],
                 'regionalInsights' => [
                     'payrollSummary' => $payrollSummary,
@@ -247,16 +265,16 @@ class RegionalDashboardService
                 ],
 
                 'gender' => [
-                    'series' => $scholars
+                    'series' => $asOfScholars
                         ->groupBy(fn ($s) => $s->profile?->sex)
                         ->map(fn ($rows) => $rows->count())
                         ->values()
                         ->toArray(),
-                    'result' => $scholars->groupBy(fn ($s) => $s->profile?->sex)->map(function ($rows, $gender) {
+                    'result' => $asOfScholars->groupBy(fn ($s) => $s->profile?->sex)->map(function ($rows, $gender) {
                         return ['sex' => $gender, 'total' => $rows->count()];
                     })->values()->toArray(),
                 ],
             ]);
     }
-}
 
+}

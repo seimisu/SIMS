@@ -16,6 +16,7 @@ use App\Services\Scholar\Management\ScholarTransferService;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -167,6 +168,35 @@ class ScholarManagementController extends Controller
         $flash = app(ScholarActivationService::class)->sendActivationLink($decodedId);
 
         return redirect()->back()->with('flash', $flash);
+    }
+
+    public function revealLandbank(string $id, Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = Auth::user();
+        $permissions = app(SystemPermissions::class);
+
+        if (! $permissions->can($user, 'scholars.landbank.view-sensitive')) {
+            abort(403, 'Unauthorized');
+        }
+
+        if (! Hash::check($request->input('password'), $user->password)) {
+            return response()->json([
+                'message' => 'Incorrect password.',
+            ], 422);
+        }
+
+        $landbank = app(ScholarManagementDetailsService::class)
+            ->revealLandbank($id, $permissions, $user);
+
+        if (! $landbank) {
+            abort(404);
+        }
+
+        return response()->json($landbank);
     }
 
     public function profileRequest(string $type, Request $request)

@@ -309,7 +309,7 @@
                                             severity="secondary"
                                             label="Transfer School/Course"
                                             size="small"
-                                            class-name="!rounded-xl !px-5"
+                                            class-name="!rounded-xl !px-3"
                                             rounded
                                         />
                                         <Popover ref="opTransfer">
@@ -695,11 +695,28 @@
                                 <section
                                     class="flex flex-col gap-2 border-t border-slate-200 pt-3"
                                 >
-                                    <h3
-                                        class="text-xs font-semibold uppercase text-slate-500"
-                                    >
-                                        Other Information
-                                    </h3>
+                                    <div class="flex items-center justify-between gap-3">
+                                        <h3
+                                            class="text-xs font-semibold uppercase text-slate-500"
+                                        >
+                                            Other Information
+                                        </h3>
+                                        <DefaultButton
+                                            v-if="!editBtn.info && canRevealLandbank && landbankHasValues"
+                                            :icon="landbankRevealed ? TablerIcons.IconEyeOff : TablerIcons.IconEye"
+                                            :label="landbankRevealed ? 'Hide Landbank Details' : 'View Landbank Details'"
+                                            size="small"
+                                            severity="secondary"
+                                            outlined
+                                            rounded
+                                            class-name="!rounded-xl !px-5"
+                                            @click="
+                                                landbankRevealed
+                                                    ? hideLandbank()
+                                                    : (landbankPasswordDialog = true)
+                                            "
+                                        />
+                                    </div>
                                     <div
                                         class="grid grid-cols-1 lg:grid-cols-2 gap-2"
                                     >
@@ -707,13 +724,13 @@
                                             v-model="personalInfo.acc_name"
                                             label="Landbank Account Name"
                                             capitalize
-                                            :disabled="!editBtn.info"
+                                            :disabled="!editBtn.info || !landbankRevealed"
                                         />
                                         <TextInput
                                             v-model="personalInfo.acc_no"
                                             capitalize
                                             label="Landbank Account Number"
-                                            :disabled="!editBtn.info"
+                                            :disabled="!editBtn.info || !landbankRevealed"
                                         />
                                     </div>
                                 </section>
@@ -761,19 +778,19 @@
                                             <Badge
                                                 size="small"
                                                 severity="info"
-                                                :value="`${page.props.details.logs.length} record(s)`"
+                                                :value="`${activityLogs.length} record(s)`"
                                             />
                                         </div>
                                     </template>
                                     <template #default>
                                         <div
                                             v-if="
-                                                page.props.details.logs.length
+                                                activityLogs.length
                                             "
                                             class="max-h-[22rem] overflow-y-auto p-4"
                                         >
                                             <Timeline
-                                                :value="page.props.details.logs"
+                                                :value="activityLogs"
                                                 align="left"
                                                 class="p-1"
                                                 :pt="{
@@ -1130,31 +1147,27 @@
                                                     >
                                                         <a
                                                             v-if="
-                                                                file.document_type ==
-                                                                'cor'
+                                                                isCorDocument(file)
                                                             "
                                                             :href="
-                                                                file.file_path
+                                                                scholarPortalFileUrl(file.file_path)
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
                                                         >
-                                                            COR:
-                                                            {{ file.file_name }}
+                                                            COR
                                                         </a>
                                                         <a
                                                             v-if="
-                                                                file.document_type ==
-                                                                'grades_proof'
+                                                                isGradesProofDocument(file)
                                                             "
                                                             :href="
-                                                                file.file_path
+                                                                scholarPortalFileUrl(file.file_path)
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
                                                         >
-                                                            Proof of Grades:
-                                                            {{ file.file_name }}
+                                                            Proof of Grades
                                                         </a>
                                                     </template>
                                                 </div>
@@ -2567,7 +2580,7 @@
                         <template #default>
                             <div class="w-full h-full overflow-auto">
                                 <Timeline
-                                    :value="page.props.details.logs"
+                                    :value="activityLogs"
                                     align="left"
                                     class="p-1"
                                     :pt="{
@@ -2691,14 +2704,8 @@
 
                                                     <span class="text-red-500">
                                                         {{
-                                                            slotProps.item
-                                                                .previous?.[
-                                                                key
-                                                            ] != ""
-                                                                ? slotProps.item
-                                                                      .previous?.[
-                                                                      key
-                                                                  ]
+                                                            logValue(slotProps.item, 'previous', key) != ""
+                                                                ? logValue(slotProps.item, 'previous', key)
                                                                 : "Not Set"
                                                         }}
                                                     </span>
@@ -2712,8 +2719,8 @@
                                                         class="text-emerald-600 font-medium"
                                                     >
                                                         {{
-                                                            value != ""
-                                                                ? value
+                                                            logValue(slotProps.item, 'changes', key) != ""
+                                                                ? logValue(slotProps.item, 'changes', key)
                                                                 : "Removed"
                                                         }}
                                                     </span>
@@ -2729,6 +2736,42 @@
             </div>
         </template>
     </Drawer>
+    <Dialog
+        v-model:visible="landbankPasswordDialog"
+        modal
+        header="View Landbank Details"
+        :style="{ width: '24rem' }"
+    >
+        <div class="flex flex-col gap-3">
+            <p class="text-sm text-slate-500">
+                Enter your login password to reveal this scholar's Landbank
+                details.
+            </p>
+            <TextInput
+                v-model="landbankPassword"
+                label="Password"
+                type="password"
+                @keyup.enter="revealLandbank"
+            />
+            <div class="flex justify-end gap-2">
+                <DefaultButton
+                    label="Cancel"
+                    size="small"
+                    severity="secondary"
+                    outlined
+                    rounded
+                    @click="closeLandbankPasswordDialog"
+                />
+                <DefaultButton
+                    label="View"
+                    size="small"
+                    rounded
+                    :loading="loading.revealLandbank"
+                    @click="revealLandbank"
+                />
+            </div>
+        </div>
+    </Dialog>
 </template>
 <script setup>
 import {
@@ -2776,6 +2819,18 @@ const page = usePage();
 const canUpdateScholars = computed(() =>
     (page.props?.permissions ?? []).includes("scholars.update"),
 );
+const canRevealLandbank = computed(() =>
+    (page.props?.permissions ?? []).includes("scholars.landbank.view-sensitive") ||
+    [
+        "administrator",
+        "regional staff",
+        "regional supervisor",
+        "scholarship staff",
+        "scholarship coordinator",
+    ].includes(
+        String(page.props?.user?.role_array?.name ?? "").toLowerCase(),
+    ),
+);
 const opTransfer = ref(null);
 const opHistory = ref([]);
 const transferTab = ref("school");
@@ -2813,7 +2868,18 @@ const loading = ref({
     course: false,
     transferCourse: false,
     transferSubmit: false,
+    revealLandbank: false,
 });
+const landbankPasswordDialog = ref(false);
+const landbankPassword = ref("");
+const landbankRevealed = ref(false);
+const revealedLandbankActivityLogs = ref({});
+const activityLogs = ref([]);
+const landbankHasValues = computed(
+    () =>
+        Boolean(page.props?.details?.landbank?.has_account_name) ||
+        Boolean(page.props?.details?.landbank?.has_account_number),
+);
 
 const personalInfo = useForm({
     schoolId: null,
@@ -3130,6 +3196,140 @@ const storePersonalInfo = async () => {
     );
 };
 
+const maskedLandbankValue = (hasValue) =>
+    hasValue ? "**********************" : null;
+
+const hideLandbank = () => {
+    landbankRevealed.value = false;
+    revealedLandbankActivityLogs.value = {};
+    resetActivityLogs();
+    personalInfo.acc_name = maskedLandbankValue(
+        page.props?.details?.landbank?.has_account_name,
+    );
+    personalInfo.acc_no = maskedLandbankValue(
+        page.props?.details?.landbank?.has_account_number,
+    );
+};
+
+const closeLandbankPasswordDialog = () => {
+    landbankPasswordDialog.value = false;
+    landbankPassword.value = "";
+};
+
+const revealLandbank = async () => {
+    if (!landbankPassword.value || loading.value.revealLandbank) return;
+
+    loading.value.revealLandbank = true;
+
+    try {
+        const token = document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content");
+        const response = await fetch(
+            `/scholars/${page.props?.details?.id}/landbank/reveal`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN": token ?? "",
+                },
+                body: JSON.stringify({
+                    password: landbankPassword.value,
+                }),
+            },
+        );
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(payload.message || "Unable to reveal Landbank details.");
+        }
+
+        personalInfo.acc_name = payload.account_name ?? null;
+        personalInfo.acc_no = payload.account_number ?? null;
+        revealedLandbankActivityLogs.value = payload.activity_logs ?? {};
+        applyRevealedLandbankActivityLogs();
+        landbankRevealed.value = true;
+        closeLandbankPasswordDialog();
+    } catch (error) {
+        toast.add({
+            severity: "error",
+            summary: "Unable to reveal Landbank details",
+            detail: error.message,
+            life: 3000,
+        });
+    } finally {
+        loading.value.revealLandbank = false;
+    }
+};
+
+const resetActivityLogs = () => {
+    activityLogs.value = (page.props?.details?.logs ?? []).map((log) => ({
+        ...log,
+        previous: { ...(log.previous ?? {}) },
+        changes: { ...(log.changes ?? {}) },
+    }));
+};
+
+const scholarPortalFileUrl = (path) => {
+    if (!path) return null;
+
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+
+    return `${page.props?.filePreview?.scholarPortalBaseUrl ?? ""}/${String(path).replace(/^\/+/, "")}`;
+};
+
+const normalizedDocumentType = (file) =>
+    String(file?.document_type ?? file?.type ?? "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+
+const isCorDocument = (file) => normalizedDocumentType(file) === "cor";
+
+const isGradesProofDocument = (file) =>
+    ["cog", "grades_proof", "proof_of_grades"].includes(
+        normalizedDocumentType(file),
+    );
+
+const applyRevealedLandbankActivityLogs = () => {
+    activityLogs.value = activityLogs.value.map((log) => {
+        const revealedLog =
+            revealedLandbankActivityLogs.value[String(log.id)] ??
+            revealedLandbankActivityLogs.value[log.id];
+
+        if (!revealedLog) {
+            return log;
+        }
+
+        return {
+            ...log,
+            previous: {
+                ...(log.previous ?? {}),
+                ...(revealedLog.previous ?? {}),
+            },
+            changes: {
+                ...(log.changes ?? {}),
+                ...(revealedLog.changes ?? {}),
+            },
+        };
+    });
+};
+
+const logValue = (log, group, key) => {
+    if (!landbankRevealed.value) {
+        return log?.[group]?.[key];
+    }
+
+    const revealedLog =
+        revealedLandbankActivityLogs.value[String(log.id)] ??
+        revealedLandbankActivityLogs.value[log.id];
+
+    return revealedLog?.[group]?.[key] ?? log?.[group]?.[key];
+};
+
 const editingAcademicRecord = (termRecord) =>
     editBtn.value.academicRecord &&
     academicRecordForm.termRecordId === termRecord?.id;
@@ -3303,8 +3503,16 @@ watch(
             );
         }) ??
             newVal.status ?? { id: "NEW", name: "NEW" };
-        personalInfo.acc_name = newVal.landbank.account_name ?? null;
-        personalInfo.acc_no = newVal.landbank.account_number ?? null;
+        landbankRevealed.value = false;
+        closeLandbankPasswordDialog();
+        revealedLandbankActivityLogs.value = {};
+        resetActivityLogs();
+        personalInfo.acc_name = maskedLandbankValue(
+            newVal.landbank?.has_account_name,
+        );
+        personalInfo.acc_no = maskedLandbankValue(
+            newVal.landbank?.has_account_number,
+        );
         personalInfo.school = newVal.schoolInput ?? null;
         personalInfo.course = newVal.courseInput ?? null;
         ((personalInfo.schoolId = newVal.schoolInfoId ?? null),

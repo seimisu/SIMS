@@ -4,6 +4,10 @@ namespace App\Services\Scholar\Submission;
 
 use App\Models\requestHistory;
 use App\Models\ListStatuses;
+use App\Models\LocationBarangays;
+use App\Models\LocationCity;
+use App\Models\LocationProvinces;
+use App\Models\LocationRegions;
 use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarTerm;
 use App\Models\SchoolCampusGrades;
@@ -459,20 +463,28 @@ class ScholarSubmissionPageService
         return $requests->values()->map(function ($item, $index) use ($requests, $scholar) {
             $requestedAt = Carbon::parse($item->requested_at);
             $requestNo = $requestedAt->format('Ymd').'-'.str_pad($requests->count() - $index, 3, '0', STR_PAD_LEFT);
+            $barangay = $this->locationName(LocationBarangays::class, $item->barangay);
+            $municipality = $this->locationName(LocationCity::class, $item->municipality);
+            $province = $this->locationName(LocationProvinces::class, $item->province);
+            $region = $this->locationName(LocationRegions::class, $item->region, 'region');
 
             return [
                 'count' => $requestNo,
                 'request_id' => $item->id,
                 'purpose' => $item->purpose,
+                'first_name' => $item->first_name,
+                'middle_name' => $item->middle_name,
+                'last_name' => $item->last_name,
+                'suffix' => $item->suffix,
                 'address' => $item->address,
-                'barangay' => $item->barangay,
-                'municipality' => $item->municipality,
-                'province' => $item->province,
-                'region' => $item->region,
+                'barangay' => $barangay,
+                'municipality' => $municipality,
+                'province' => $province,
+                'region' => $region,
                 'civil_status' => $item->civil_status,
                 'contact_no' => $item->contact_no,
                 'email' => $item->email,
-                'fullAddress' => implode(', ', array_filter([$item->address, $item->barangay, $item->municipality, $item->province, $item->region])),
+                'fullAddress' => implode(', ', array_filter([$item->address, $barangay, $municipality, $province, $region])),
                 'fullAddressStored' => $scholar->address?->full_address_with_street,
                 'file_type' => $item->proof_type,
                 'remarks' => $item->remarks,
@@ -483,6 +495,10 @@ class ScholarSubmissionPageService
                 'status' => $item->status,
                 'file' => $item->proof,
                 'emailStored' => $scholar->profile?->email,
+                'firstNameStored' => $scholar->profile?->fname,
+                'middleNameStored' => $scholar->profile?->mname,
+                'lastNameStored' => $scholar->profile?->lname,
+                'suffixStored' => $scholar->profile?->suffix,
                 'contactStored' => $scholar->profile?->contact_no,
                 'civilStored' => $scholar->profile?->civil_status,
                 'spas_no' => $scholar->spas_no,
@@ -492,6 +508,15 @@ class ScholarSubmissionPageService
                 'records' => requestHistory::where('request_type', 'profile')->where('request_no', $requestNo)->first(),
             ];
         });
+    }
+
+    private function locationName(string $model, ?string $value, string $displayColumn = 'name'): ?string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        return $model::where('code', $value)->value($displayColumn) ?? $value;
     }
 
     private function landbankRequest(Request $request, SystemPermissions $permissions, $user)
@@ -518,8 +543,8 @@ class ScholarSubmissionPageService
                 'reviewed_at' => $item->reviewed_at ? Carbon::parse($item->reviewed_at)->diffForHumans() : null,
                 'request_date' => Carbon::parse($item->requested_at)->format('F d, Y h:i A'),
                 'reviewed_by' => $item->reviewed_by,
-                'nameStored' => $scholar->landbank?->account_name,
-                'noStored' => $scholar->landbank?->account_number,
+                'hasNameStored' => filled($scholar->landbank?->account_name),
+                'hasNoStored' => filled($scholar->landbank?->account_number),
                 'status' => $item->status,
                 'name' => $item->acc_name,
                 'reject' => $item->rejection_reason,

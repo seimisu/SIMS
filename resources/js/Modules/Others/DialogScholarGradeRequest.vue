@@ -121,8 +121,7 @@
                                                     v-if="
                                                         item.status ==
                                                             'approved' &&
-                                                        file.document_type ==
-                                                            'grades_proof'
+                                                        isGradesProofDocument(file)
                                                     "
                                                 >
                                                     <Button
@@ -151,8 +150,7 @@
                                                     v-if="
                                                         item.status ==
                                                             'submitted' &&
-                                                        file.document_type ==
-                                                            'cor'
+                                                        isCorDocument(file)
                                                     "
                                                 >
                                                     <Button
@@ -641,7 +639,9 @@
                                 >
                                     <IconFileTypePdf
                                         v-if="
-                                            selectedRow?.file?.endsWith('.pdf')
+                                            selectedFilePath
+                                                ?.toLowerCase()
+                                                .endsWith('.pdf')
                                         "
                                         :size="22"
                                     />
@@ -658,7 +658,7 @@
                                         class="text-sm text-gray-500 truncate max-w-[500px]"
                                     >
                                         {{
-                                            selectedFile?.file_path
+                                            selectedFilePath
                                                 ?.split("/")
                                                 .pop()
                                         }}
@@ -675,8 +675,7 @@
                                     as="a"
                                     target="_blank"
                                     :href="
-                                        'http://172.16.8.98:85/' +
-                                        selectedFile.file_path
+                                        scholarPortalFileUrl(selectedFilePath)
                                     "
                                     v-tooltip.top="'Open in new tab'"
                                 />
@@ -694,7 +693,7 @@
 
                         <iframe
                             :src="
-                                'http://172.16.8.98:85/' + selectedFile.file_path
+                                scholarPortalFileUrl(selectedFilePath)
                             "
                             class="w-full h-[700px] rounded-xl border"
                         >
@@ -720,6 +719,7 @@ import {
     IconDatabaseEdit,
     IconPaperclip,
     IconFile,
+    IconFileTypePdf,
     IconFileOff,
     IconFileSearch,
     IconCircleCheckFilled,
@@ -749,6 +749,31 @@ const details = ref(null);
 const remarks = ref(null);
 const selectedFile = ref(null);
 const selectedScholarshipStatus = ref(null);
+const selectedFilePath = computed(
+    () => selectedFile.value?.file_path ?? selectedFile.value?.path ?? null,
+);
+const scholarPortalFileUrl = (path) => {
+    if (!path) return null;
+
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+
+    return `${page.props?.filePreview?.scholarPortalBaseUrl ?? ""}/${String(path).replace(/^\/+/, "")}`;
+};
+
+const normalizedDocumentType = (file) =>
+    String(file?.document_type ?? file?.type ?? "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+
+const isCorDocument = (file) => normalizedDocumentType(file) === "cor";
+
+const isGradesProofDocument = (file) =>
+    ["cog", "grades_proof", "proof_of_grades"].includes(
+        normalizedDocumentType(file),
+    );
 
 const normalizeStatus = (status) =>
     String(status ?? "")

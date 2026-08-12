@@ -100,6 +100,13 @@ class ScholarManagementUpdateService
 
     private function updateLandbank(Scholars $scholar, int $scholarId, array $data): void
     {
+        $isMaskedName = ($data['acc_name'] ?? null) === '**********************';
+        $isMaskedNo = ($data['acc_no'] ?? null) === '**********************';
+
+        if ($isMaskedName || $isMaskedNo) {
+            return;
+        }
+
         $landbank = $scholar->landbank()->updateOrCreate(
             ['scholar_id' => $scholar->id],
             [

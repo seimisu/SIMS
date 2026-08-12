@@ -77,7 +77,7 @@ class studentLandbankRequest extends Model
     {
         return Attribute::make(
             get: fn () => $this->decryptValue($this->reviewer_remarks_encrypted),
-            set: fn ($value) => ['reviewer_remarks_encrypted' => $this->encryptValue($value)],
+            set: fn ($value) => ['reviewer_remarks_encrypted' => $value],
         );
     }
 
@@ -102,6 +102,12 @@ class studentLandbankRequest extends Model
             return $value;
         }
 
+        $gcmDecrypted = $this->decryptGcmValue($value);
+
+        if ($gcmDecrypted !== null) {
+            return $gcmDecrypted;
+        }
+
         $data = base64_decode($value, true);
         $ivLength = openssl_cipher_iv_length('AES-256-CBC');
 
@@ -114,6 +120,54 @@ class studentLandbankRequest extends Model
         $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', env('ENCRYPTION_KEY'), false, $iv);
 
         return $decrypted === false ? $value : $decrypted;
+    }
+
+    private function decryptGcmValue(string $value): ?string
+    {
+        $parts = explode('.', $value);
+
+        if (count($parts) === 3) {
+            [$iv, $tag, $encrypted] = array_map(
+                fn ($part) => base64_decode($part, true),
+                $parts
+            );
+        } else {
+            $data = base64_decode($value, true);
+
+            if ($data === false || strlen($data) <= 28) {
+                return null;
+            }
+
+            $iv = substr($data, 0, 12);
+            $tag = substr($data, 12, 16);
+            $encrypted = substr($data, 28);
+        }
+
+        if ($iv === false || $tag === false || $encrypted === false) {
+            return null;
+        }
+
+        $key = $this->encryptionKey();
+
+        if ($key === null) {
+            return null;
+        }
+
+        $decrypted = openssl_decrypt($encrypted, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+
+        return $decrypted === false ? null : $decrypted;
+    }
+
+    private function encryptionKey(): ?string
+    {
+        $secret = base64_decode(config('app.external_encryption_secret', ''), true);
+        $salt = base64_decode(config('app.external_encryption_salt', ''), true);
+
+        if ($secret === false || strlen($secret) < 32 || $salt === false || strlen($salt) < 16) {
+            return null;
+        }
+
+        return hash_pbkdf2('sha256', $secret, $salt, 100000, 32, true);
     }
 
     private function encryptValue($value)

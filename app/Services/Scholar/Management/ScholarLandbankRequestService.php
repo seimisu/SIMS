@@ -2,6 +2,7 @@
 
 namespace App\Services\Scholar\Management;
 
+use App\Models\ActivityLogs;
 use App\Models\Scholars;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -78,6 +79,16 @@ class ScholarLandbankRequestService
             'request_no' => $data['count'],
         ]);
 
+        if ($changes !== []) {
+            ActivityLogs::create([
+                'scholar_id' => $scholar->id,
+                'previous_data' => array_intersect_key($previous, $changes),
+                'changes_data' => $changes,
+                'created_by' => Auth::user()->profile->fullname,
+                'request_type' => 'landbank',
+            ]);
+        }
+
         $scholar->landbankRequest()->where('id', $data['request_id'])->update([
             'status' => 'approved',
             'reviewed_at' => now(),
@@ -87,11 +98,13 @@ class ScholarLandbankRequestService
 
     private function reject(Scholars $scholar, array $data): void
     {
-        $scholar->landbankRequest()->where('id', $data['request_id'])->update([
-            'status' => 'rejected',
-            'reviewed_at' => now(),
-            'reviewed_by' => Auth::user()->profile->fullname,
-            'rejection_reason' => $data['reject'],
-        ]);
+        $scholar->landbankRequest()
+            ->where('id', $data['request_id'])
+            ->update([
+                'status' => 'rejected',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::user()->profile->fullname,
+                'reviewer_remarks_encrypted' => $data['reject'],
+            ]);
     }
 }

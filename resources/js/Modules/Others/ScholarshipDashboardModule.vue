@@ -13,6 +13,14 @@
                         Monitor scholar status, distributions, and review workload signals.
                     </p>
                 </div>
+                <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300">
+                    <span>As of</span>
+                    <input
+                        v-model="filterAsOfMonth"
+                        type="month"
+                        class="h-8 cursor-pointer rounded border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                    />
+                </label>
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -56,19 +64,6 @@
                                 </p>
                             </div>
                         </div>
-                        <select
-                            v-if="rangeOptions.length"
-                            v-model="filterRangeDate.value"
-                            class="h-8 rounded border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
-                        >
-                            <option
-                                v-for="range in rangeOptions"
-                                :key="rangeKey(range)"
-                                :value="rangeKey(range)"
-                            >
-                                {{ rangeLabel(range) }}
-                            </option>
-                        </select>
                     </div>
                     <div class="min-h-0 flex-1 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800">
                         <ApexChart
@@ -90,7 +85,7 @@
                                 Program Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Current scholarship program mix.
+                                Activated scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
@@ -131,7 +126,7 @@
                                 Sex Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                National scholar profile composition.
+                                Activated scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
@@ -236,6 +231,7 @@
                             label="Details"
                             size="small"
                             severity="secondary"
+                            class="cursor-pointer"
                             @click="toggleDialogs('courseTable')"
                         />
                     </div>
@@ -332,7 +328,7 @@
 </template>
 
 <script setup>
-import { usePage, router } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import {
     IconAward,
     IconBook2,
@@ -349,44 +345,42 @@ import ApexChart from "vue3-apexcharts";
 
 const page = usePage();
 const card = computed(() => page.props.card ?? {});
+const asOf = computed(() => page.props.asOf ?? {});
 const timeline = computed(() => page.props.timeline ?? {});
-const rangeOptions = computed(() => page.props.options?.dateRange ?? []);
 
 const dialogDetails = ref({
     dialog: false,
     data: "schoolTable",
 });
 const isDark = ref(false);
-const filterRangeDate = ref({
-    value: rangeKey(rangeOptions.value.at(-1) ?? null),
-});
+const filterAsOfMonth = ref(page.props.asOf?.month ?? currentMonth());
 
 const metrics = computed(() => [
     {
         label: "Active Scholars",
-        value: card.value.active,
-        caption: "Currently active scholars",
+        value: asOf.value.active,
+        caption: `Active as of ${asOf.value.label ?? "selected month"}`,
         icon: IconUser,
         color: "bg-blue-50 text-blue-600",
     },
     {
         label: "Undergraduate",
-        value: card.value.undergraduate,
-        caption: "Undergraduate scholarship records",
+        value: asOf.value.undergraduate,
+        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconSchool,
         color: "bg-emerald-50 text-emerald-600",
     },
     {
         label: "JLSS",
-        value: card.value.jlss,
-        caption: "JLSS scholarship records",
+        value: asOf.value.jlss,
+        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconFileCheck,
         color: "bg-cyan-50 text-cyan-600",
     },
     {
         label: "Graduated",
-        value: card.value.graduated,
-        caption: "Completed scholarship records",
+        value: asOf.value.graduated,
+        caption: `Graduated through ${asOf.value.year ?? "selected year"}`,
         icon: IconAward,
         color: "bg-violet-50 text-violet-600",
     },
@@ -601,32 +595,18 @@ function toggleDialogs(tab) {
     dialogDetails.value.data = tab;
 }
 
-function rangeKey(range) {
-    return range && typeof range === "object" ? JSON.stringify(range) : range;
-}
-
-function rangeLabel(range) {
-    return typeof range === "object" ? range.name ?? `${range.start}-${range.end}` : range;
-}
-
-function selectedRange(value) {
-    if (!value) return null;
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return value;
-    }
-}
-
 function formatNumber(num) {
     return Number(num ?? 0).toLocaleString("en-US");
 }
 
+function currentMonth() {
+    return new Date().toISOString().slice(0, 7);
+}
+
 watch(
-    () => filterRangeDate.value.value,
+    filterAsOfMonth,
     (value) => {
-        router.get(route("dashboard"), { range: selectedRange(value) }, {
+        router.get(route("dashboard"), { as_of_month: value }, {
             preserveState: true,
             preserveScroll: true,
             replace: true,

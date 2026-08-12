@@ -150,6 +150,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::delete('stipends/{id}/{type}', [PayrollController::class, 'destroy'])->name('stipends.destroy');
 
     Route::post('scholars/{id}/{type}', [ScholarManagementController::class, 'update'])->name('scholars.update');
+    Route::post('scholars/{id}/landbank/reveal', [ScholarManagementController::class, 'revealLandbank'])->name('scholars.landbank.reveal');
     Route::post('scholarsActivation/{id}', [ScholarManagementController::class, 'activation'])->name('scholars.activation');
     Route::post('scholars/{id}/{type}/transfer', [ScholarManagementController::class, 'transfer'])->name('scholars.transfer');
     // scholar preview
