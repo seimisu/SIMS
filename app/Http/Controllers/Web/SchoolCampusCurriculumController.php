@@ -6,19 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\SchoolCampusCurriculumRequest;
 use App\Models\SchoolCampusCourseCurriculums;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
+use App\Models\SchoolCampuses;
+use App\Models\User;
+use App\Notifications\UpdateCurriculumNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Vinkla\Hashids\Facades\Hashids;
 
 class SchoolCampusCurriculumController extends Controller
 {
-
-
-
     public function store(SchoolCampusCurriculumRequest $request)
     {
+
+        $user = Auth::user();
+
         $data = $request->validated();
 
         foreach ($data['multi'] as $curKey => $curriculum) {
@@ -26,9 +30,9 @@ class SchoolCampusCurriculumController extends Controller
                 ['id' => $curriculum['id']],
                 [
                     'campus_course_id' => $curriculum['campus_course_id'],
-                    'years'            => $curriculum['yearLevel'],
-                    'created_by'       => Auth::user()->profile->fullname,
-                    'semester_type_id' => $curriculum['semesterTypeId']
+                    'years' => $curriculum['yearLevel'],
+                    'created_by' => Auth::user()->profile->fullname,
+                    'semester_type_id' => $curriculum['semesterTypeId'],
                 ]
             );
 
@@ -37,13 +41,13 @@ class SchoolCampusCurriculumController extends Controller
                     ['id' => $subject['id']],
                     [
                         'curriculum_id' => $curriculumGet->id,
-                        'semester_id'   => $subject['semester_array']['id'],
-                        'year'          => $subject['year'],
-                        'name'          => Str::lower($subject['name']),
-                        'subject_code'  => $subject['subjectCode'],
+                        'semester_id' => $subject['semester_array']['id'],
+                        'year' => $subject['year'],
+                        'name' => Str::lower($subject['name']),
+                        'subject_code' => $subject['subjectCode'],
                         'subject_class' => $subject['class_array']['name'],
-                        'unit'          => $subject['unit'],
-                        'updated_by'    => Auth::user()->profile->fullname
+                        'unit' => $subject['unit'],
+                        'updated_by' => Auth::user()->profile->fullname,
                     ]
                 );
 
@@ -54,13 +58,17 @@ class SchoolCampusCurriculumController extends Controller
             }
         }
 
+        if ($user->role->name == 'School Coordinator') {
+            $campus = SchoolCampuses::find($user->school_id);
+            Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new UpdateCurriculumNotification($user->profile->fullname, $request->program['abbreviation'], $campus->generated_name));
+        }
+
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Curriculum Created',
+            'title' => 'Curriculum Created',
             'message' => 'Curriculum successfully created.',
-        ]);;
+        ]);
     }
-
 
     public function copy(int $id)
     {
@@ -73,14 +81,14 @@ class SchoolCampusCurriculumController extends Controller
 
             return redirect()->back()->with('flash', [
                 'status' => 'success',
-                'title'  => 'Curriculum Copied',
+                'title' => 'Curriculum Copied',
                 'message' => 'Curriculum successfully copied.',
             ]);
         } catch (\Exception $e) {
 
             return redirect()->back()->with('flash', [
                 'status' => 'error',
-                'title'  => 'Copy Failed',
+                'title' => 'Copy Failed',
                 'message' => 'An error occurred while copying the curriculum.',
             ]);
         }
@@ -98,10 +106,10 @@ class SchoolCampusCurriculumController extends Controller
 
             $decoded = Hashids::decode($data['select']['curriculum_id'])[0] ?? null;
 
-            abort_if(!$decoded, 404);
+            abort_if(! $decoded, 404);
 
             $curriculumGet = SchoolCampusCourseCurriculums::with([
-                'subjects' => fn($q) => $q->select(
+                'subjects' => fn ($q) => $q->select(
                     'semester_id',
                     'year',
                     'name',
@@ -109,7 +117,7 @@ class SchoolCampusCurriculumController extends Controller
                     'subject_class',
                     'unit',
                     'curriculum_id'
-                )->where('is_delete', false)
+                )->where('is_delete', false),
             ])
                 ->where('id', $decoded)
                 ->firstOrFail();
@@ -119,30 +127,30 @@ class SchoolCampusCurriculumController extends Controller
 
             $curriculum = SchoolCampusCourseCurriculums::create([
                 'campus_course_id' => $id,
-                'years'            => $curriculumGet->years,
-                'created_by'       => Auth::user()->profile->fullname,
+                'years' => $curriculumGet->years,
+                'created_by' => Auth::user()->profile->fullname,
                 'semester_type_id' => $curriculumGet->semester_type_id,
 
-                'is_duplicated'    => true
+                'is_duplicated' => true,
             ]);
 
             foreach ($curriculumGet->subjects as $subject) {
                 $curriculum->subjects()->create([
-                    'semester_id'   => $subject->semester_id,
-                    'year'          => $subject->year,
-                    'name'          => $subject->name,
-                    'subject_code'  => $subject->subject_code,
+                    'semester_id' => $subject->semester_id,
+                    'year' => $subject->year,
+                    'name' => $subject->name,
+                    'subject_code' => $subject->subject_code,
                     'subject_class' => $subject->subject_class,
-                    'unit'          => $subject->unit,
-                    'updated_by'    => Auth::user()->profile->fullname,
+                    'unit' => $subject->unit,
+                    'updated_by' => Auth::user()->profile->fullname,
                 ]);
             }
 
             DB::commit();
 
             return redirect()->back()->with('flash', [
-                'status'  => 'success',
-                'title'   => 'Curriculum Pasted',
+                'status' => 'success',
+                'title' => 'Curriculum Pasted',
                 'message' => 'The curriculum has been successfully pasted.',
             ]);
         } catch (\Exception $e) {
@@ -150,14 +158,12 @@ class SchoolCampusCurriculumController extends Controller
             DB::rollBack();
 
             return redirect()->back()->with('flash', [
-                'status'  => 'error',
-                'title'   => 'Paste Failed',
+                'status' => 'error',
+                'title' => 'Paste Failed',
                 'message' => $e->getMessage(),
             ]);
         }
     }
-
-
 
     public function destroySubject(int $id)
     {
@@ -168,7 +174,7 @@ class SchoolCampusCurriculumController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Subject Deleted',
+            'title' => 'Subject Deleted',
             'message' => 'Subject successfully deleted.',
         ]);
     }
@@ -182,7 +188,7 @@ class SchoolCampusCurriculumController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Curriculum Deleted',
+            'title' => 'Curriculum Deleted',
             'message' => 'Curriculum successfully deleted.',
         ]);
     }

@@ -17,6 +17,7 @@ use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -371,12 +372,16 @@ class DashboardController extends Controller
             //     ];
             // })->sum('y');
 
-            $courseTreemap = SchoolCampusCourses::where('is_delete', false)
+            $courseTreemap = SchoolCampusCourses::query()
+                ->where('is_delete', false)
                 ->where('campus_id', Auth::user()->school_id)
-                ->withCount('scholarCourse')
+                ->withCount([
+                    'scholarCourse as scholar_count' => function ($query) {
+                        $query->select(DB::raw('COUNT(DISTINCT scholar_id)'))->where('is_transfer', false);
+                    },
+                ])
                 ->get();
-
-            $totalCourse = $courseTreemap->sum('scholar_course_count');
+            $totalCourse = $courseTreemap->sum('scholar_count');
 
             return Inertia::render('Web/dashboardPage', [
                 'dashboardType' => $permissions->dashboardType($user),
@@ -397,19 +402,19 @@ class DashboardController extends Controller
                             'data' => $courseTreemap->map(function ($course) {
 
                                 return [
-                                    'x' => Str::upper($course->course->name ?? $course->course->abbreviation ?? $course->name),
-                                    'y' => $course->scholar_course_count,
+                                    'x' => Str::upper($course->course->abbreviation),
+                                    'y' => $course->scholar_count,
                                 ];
                             })->values(),
                         ],
                     ],
-                    'table' => $courseTreemap->sortByDesc('scholar_course_count')->map(function ($course) use ($totalCourse) {
+                    'table' => $courseTreemap->sortByDesc('scholar_count')->map(function ($course) use ($totalCourse) {
                         return [
                             'name' => Str::upper($course->course->name ?? $course->name),
                             'percent' => $totalCourse > 0
-                                ? ($course->scholar_course_count / $totalCourse) * 100
+                                ? ($course->scholar_count / $totalCourse) * 100
                                 : 0,
-                            'total' => $course->scholar_course_count,
+                            'total' => $course->scholar_count,
                         ];
                     })->values(),
                     'total' => $totalCourse,

@@ -9,6 +9,7 @@ use App\Models\ListReferences;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\CoordinatorUpdateInfoNotification;
+use App\Notifications\UpdateSemesterCoordinatorNotification;
 use App\References\ListClass;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -40,25 +41,25 @@ class SchoolCoordinatorController extends Controller
                 'email' => $campus->info?->email ?? 'N/A',
             ],
             'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
-            'semesterOption' => Inertia::optional(fn() => $ref->getRefs('option', null, null, $campus->term->name)),
+            'semesterOption' => Inertia::optional(fn () => $ref->getRefs('option', null, null, $campus->term->name)),
             'semesterDate' => $campus->semesters()
                 ->where('is_delete', false)
                 ->where('is_active', true)
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
                 ->get()
-                ->map(fn($semester) => [
+                ->map(fn ($semester) => [
                     'name' => $semester->semester->name,
                     'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
                     'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
                     'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
                 ])->first(),
             'activeDate' => Inertia::optional(
-                fn() => $campus->semesters()
+                fn () => $campus->semesters()
                     ->where('is_delete', false)
                     ->where('is_active', true)
                     ->get()
-                    ->map(fn($semester) => [
+                    ->map(fn ($semester) => [
                         'name' => $semester->semester->name,
                         'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
                         'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
@@ -77,13 +78,13 @@ class SchoolCoordinatorController extends Controller
                         })
                         ->orWhereHas('course', function ($q) use ($search) {
                             $q->whereRaw('UPPER(abbreviation) LIKE ?', [
-                                '%' . strtoupper($search) . '%',
+                                '%'.strtoupper($search).'%',
                             ]);
                         });
                 })
                 ->latest()
                 ->paginate(15)
-                ->through(fn($course) => [
+                ->through(fn ($course) => [
                     'id' => Hashids::encode($course->id),
                     'course' => $course->course->name,
                     'abbreviation' => $course->course->abbreviation,
@@ -106,11 +107,11 @@ class SchoolCoordinatorController extends Controller
                     ];
                 }),
             'grades' => Inertia::optional(
-                fn() => $campus->grades()
+                fn () => $campus->grades()
                     ->where('is_delete', false)
                     ->orderBy('grade', 'asc')
                     ->get()
-                    ->map(fn($grade) => [
+                    ->map(fn ($grade) => [
                         'id' => Hashids::encode($grade->id),
                         'grade' => $grade->grade,
                         'lower' => $grade->lower,
@@ -122,35 +123,48 @@ class SchoolCoordinatorController extends Controller
                     ])
             ),
             'programOptions' => Inertia::optional(
-                fn() => ListCourse::where('is_delete', false)
-                    ->whereDoesntHave('schoolCampuses', fn($q) => $q->where('campus_id', $campus_id))
+                fn () => ListCourse::where('is_delete', false)
+                    ->whereDoesntHave('schoolCampuses', fn ($q) => $q->where('campus_id', $campus_id))
                     ->get()
-                    ->map(fn($course) => [
+                    ->map(fn ($course) => [
                         'id' => Hashids::encode($course->id),
                         'name' => $course->name,
                         'abbreviation' => $course->abbreviation,
                     ])
             ),
             'subjectDetail' => Inertia::optional(
-                fn() => $campus->courses()
+                fn () => $campus->courses()
                     ->with('course:id,name,abbreviation', 'curriculum')
                     ->where('id', Hashids::decode($request->input('campusCourseId'))[0] ?? null)
                     ->where('is_delete', false)
                     ->get()
-                    ->map(fn($course) => [
-                        'id' => Hashids::encode($course->id),
+                    ->map(fn ($course) => [
+                        'id' => $course->id,
                         'course' => $course->course->name,
                         'abbreviation' => $course->course->abbreviation,
-                        'yearLevel' => $course->years,
+                        'years' => $course->years,
                         'curriculum' => $course->curriculum
                             ->where('is_delete', false)
-                            ->map(fn($curriculum) => [
-                                'id' => Hashids::encode($curriculum->id),
-                                'campus_course_id' => Hashids::encode($curriculum->campus_course_id),
-                                'years' => $curriculum->years,
-                                'semester_type_id' => $curriculum->semester_type_id,
+                            ->map(fn ($curriculum) => [
+                                'id' => $curriculum->id,
+                                'campus_course_id' => $curriculum->campus_course_id,
+                                'yearLevel' => $curriculum->years,
+                                'semesterTypeId' => $curriculum->semester_type_id,
                                 'is_duplicated' => $curriculum->is_duplicated,
-                                'subjects' => $curriculum->subjects()->where('is_delete', false)->get(),
+                                'subjects' => $curriculum->subjects()->select(
+                                    'id',
+                                    'curriculum_id',
+                                    'semester_id',
+                                    'curriculum_id as curriculumId',
+                                    'name',
+                                    'subject_code as subjectCode',
+                                    'year',
+                                    'unit',
+                                    'subject_class',
+                                    'updated_at',
+                                    'updated_by',
+                                    'created_by',
+                                )->where('is_delete', false)->get(),
                             ]),
                     ])
                     ->first()
@@ -160,6 +174,7 @@ class SchoolCoordinatorController extends Controller
 
     public function updateSemester(Request $request)
     {
+
         $campus_id = Auth::user()->school_id;
         $campus = SchoolCampuses::findOrFail($campus_id);
 
@@ -178,9 +193,9 @@ class SchoolCoordinatorController extends Controller
         $validatedData = $request->validate([
             'semester' => ['required', 'array'],
             'semester.*.semester_id' => ['required'],
-            'semester.*.startDate' => ['required', 'date'],
-            'semester.*.endDate' => ['required', 'date', 'after:semester.*.startDate'],
-            'semester.*.submissionDate' => ['required', 'date'],
+            'semester.*.startDate' => ['nullable', 'date'],
+            'semester.*.endDate' => ['nullable', 'date'],
+            'semester.*.submissionDate' => ['nullable', 'date'],
         ]);
 
         // foreach ($validatedData['semester'] as $semesterData) {
@@ -212,21 +227,22 @@ class SchoolCoordinatorController extends Controller
 
             $semester = $campus->semesters()->create([
                 'semester_id' => $value['semester_id'],
-                'start_date' => $value['startDate'],
-                'end_date' => $value['endDate'],
-                'submission_date' => $value['submissionDate'],
+                'start_date' => $value['startDate'] ?? null,
+                'end_date' => $value['endDate'] ?? null,
+                'submission_date' => $value['submissionDate'] ?? null,
             ]);
 
             $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date', ListReferences::find($value['semester_id'])->name]);
 
             AuditLogs::create([
                 'user_id' => Auth::id(),
-
                 'old_data' => null,
                 'new_data' => $newData,
-                'action' => 'Updated semester ' . ListReferences::find($value['semester_id'])->name,
+                'action' => 'Updated semester '.ListReferences::find($value['semester_id'])->name,
             ]);
         }
+
+        Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new UpdateSemesterCoordinatorNotification(Auth::user()->profile->fullname, $campus->generated_name));
 
         return redirect()->back()->with([
             'flash' => [
@@ -267,7 +283,7 @@ class SchoolCoordinatorController extends Controller
             'old_data' => null,
             'new_data' => [
                 'grade' => $grade->grade,
-                'range' => $grade->upper || $grade->lower ? $grade->lower . '-' . $grade->upper : 'Not Set',
+                'range' => $grade->upper || $grade->lower ? $grade->lower.'-'.$grade->upper : 'Not Set',
                 'drop' => $grade->drop ? 'Set true' : 'Set false',
                 'fail' => $grade->fail ? 'Set true' : 'Set false',
                 'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
@@ -298,7 +314,7 @@ class SchoolCoordinatorController extends Controller
             'user_id' => Auth::id(),
             'old_data' => [
                 'grade' => $grade->grade,
-                'range' => $grade->upper || $grade->lower ? $grade->lower . '-' . $grade->upper : 'Not Set',
+                'range' => $grade->upper || $grade->lower ? $grade->lower.'-'.$grade->upper : 'Not Set',
                 'drop' => $grade->drop ? 'Set true' : 'Set false',
                 'fail' => $grade->fail ? 'Set true' : 'Set false',
                 'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
@@ -413,7 +429,7 @@ class SchoolCoordinatorController extends Controller
                 'action' => 'Updated school information',
             ]);
 
-            Notification::send(User::whereHas('role', fn($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn($q) => $q->where('agency_id', $campus->agency_id))->get(), new CoordinatorUpdateInfoNotification(Auth::user()->profile->fullname, 'updateInfoSchool'));
+            Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new CoordinatorUpdateInfoNotification(Auth::user()->profile->fullname, 'updateInfoSchool'));
 
             return redirect()->back()->with([
                 'flash' => [

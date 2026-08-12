@@ -32,10 +32,10 @@
                         <div
                             class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-950"
                         >
-                            <IconCalendar size="16" class="text-emerald-600" />
+                            <IconCalendar size="25" class="text-emerald-600" />
                             <div class="flex flex-col">
                                 <span class="text-xs text-emerald-600"
-                                    >Active Semester Period</span
+                                    >Active {{ semesterDate.name }}</span
                                 >
                                 <span
                                     class="font-medium text-emerald-900 dark:text-emerald-100"
@@ -45,11 +45,10 @@
                                 </span>
                             </div>
                         </div>
-
                         <div
                             class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950"
                         >
-                            <IconClock size="16" class="text-amber-600" />
+                            <IconClock size="25" class="text-amber-600" />
                             <div class="flex flex-col">
                                 <span class="text-xs text-surface-500"
                                     >Submission Deadline</span
@@ -161,7 +160,7 @@
                         </Column>
                     </DefaultSelectionTable>
                 </div>
-                <Card class="flex-2">
+                <Card class="flex-2 dark:bg-slate-700! dark:text-white!">
                     <template #header>
                         <div class="flex items-center justify-between p-3">
                             <div class="font-semibold">School Information</div>
@@ -233,7 +232,7 @@
                                                 President
                                             </div>
                                             <div
-                                                class="text-gray-600"
+                                                class="text-slate-400"
                                                 v-if="!editSchoolInfo"
                                             >
                                                 {{ infoForm.president }}
@@ -262,7 +261,7 @@
                                                 Registrar
                                             </div>
                                             <div
-                                                class="text-gray-600"
+                                                class="text-slate-400"
                                                 v-if="!editSchoolInfo"
                                             >
                                                 {{ infoForm.registrar }}
@@ -293,7 +292,7 @@
                                                 Contact
                                             </div>
                                             <div
-                                                class="text-gray-600"
+                                                class="text-slate-400"
                                                 v-if="!editSchoolInfo"
                                             >
                                                 {{ infoForm.contact }}
@@ -333,7 +332,7 @@
                                                 >
                                             </div>
                                             <div
-                                                class="text-gray-600"
+                                                class="text-slate-400"
                                                 v-if="!editSchoolInfo"
                                             >
                                                 {{ infoForm.email }}
@@ -946,8 +945,8 @@
                                     class="inline-flex items-center gap-2 font-normal"
                                 >
                                     <TextInput
-                                        placeholder="Select year"
-                                        class="!w-25"
+                                        placeholder="2024-2025 etc"
+                                        class="!w-40"
                                         v-model="curItem.yearLevel"
                                     >
                                     </TextInput>
@@ -985,7 +984,7 @@
                             class="flex flex-col w-full gap-4"
                         >
                             <div
-                                v-for="year in subjectDetail?.yearLevel"
+                                v-for="year in subjectDetail?.years"
                                 :key="year"
                             >
                                 <Panel
@@ -1270,7 +1269,7 @@
                                                                 >
                                                                     <TextInput
                                                                         v-model="
-                                                                            item.subject_code
+                                                                            item.subjectCode
                                                                         "
                                                                         :disabled="
                                                                             item.is_lock
@@ -1545,6 +1544,7 @@ import {
     IconGridDots,
     IconPencilCog,
     IconUserSquareRounded,
+    IconCircleMinus,
     IconSend,
     IconBook2,
     IconPencil,
@@ -1552,6 +1552,7 @@ import {
     IconLoader2,
     IconCheck,
     IconLock,
+    IconCirclePlusFilled,
     IconLockOpen,
     IconWood,
     IconDotsCircleHorizontal,
@@ -1769,57 +1770,77 @@ const selectPrograms = (data) => {
                         page.props?.subjectDetail.curriculum[index],
                     );
                 }
+            } else {
+                addCurriculum();
             }
-            // else {
-            //     addCurriculum();
-            // }
-
             subjectDialog.value = true;
-            // curriculumDialog.value = true;
+        },
+        onFinish: () => {
+            selectedProgram.value = data;
         },
     });
 };
 
-// const addCurriculum = () => {
-//     if (!props.subjectDetail) return [];
-//     curriculumForm.multi.push({
-//         yearNumber: parseInt(selectedRow.value.years),
-//         campus_course_id: selectedRow.value.id,
-//         semesterTypeId: page.props?.schoolDetail.term_array.id,
-//         edit: false,
-//         yearLevel: null,
-//         subjects: [],
-//         id: null,
-//     });
+const addCurriculum = () => {
+    if (!props.subjectDetail) return [];
+    curriculumForm.multi.push({
+        years: parseInt(selectedProgram.value.yearLevel),
+        campus_course_id: selectedProgram.value.id,
+        semesterTypeId: selectedProgram.value.term_id,
+        edit: false,
+        yearLevel: null,
+        subjects: [],
+        id: null,
+    });
 
-//     curriculumForm.multi[curriculumForm.multi.length - 1].subjects.forEach(
-//         (cur, curKey) => {
-//             for (
-//                 let indexYear = 0;
-//                 indexYear < parseInt(selectedRow.value.years);
-//                 indexYear++
-//             ) {
-//                 page.props?.semesterOption.forEach((sem, semKey) => {
-//                     curriculumForm.multi[curKey].subjects.push({
-//                         id: null,
-//                         curriculumId: null,
-//                         year: indexYear + 1,
-//                         semester: sem.name,
-//                         semester_array: sem,
-//                         name: null,
-//                         class_array: null,
-//                         subjectClass: null,
-//                         unit: null,
-//                     });
-//                 });
-//             }
-//         },
-//     );
-// };
+    curriculumForm.multi[curriculumForm.multi.length - 1].subjects.forEach(
+        (cur, curKey) => {
+            for (
+                let indexYear = 0;
+                indexYear < parseInt(selectedProgram.value.yearLevel);
+                indexYear++
+            ) {
+                page.props?.semesterOption.forEach((sem, semKey) => {
+                    curriculumForm.multi[curKey].subjects.push({
+                        id: null,
+                        curriculumId: null,
+                        year: indexYear + 1,
+                        semester: sem.name,
+                        semester_array: sem,
+                        name: null,
+                        class_array: null,
+                        subjectClass: null,
+                        unit: null,
+                    });
+                });
+            }
+        },
+    );
+};
+
+const addSubject = (curriculumKey, year, semester) => {
+    const newSubject = JSON.parse(
+        JSON.stringify({
+            id: null,
+            curriculumId: null,
+            semester_id: null,
+            name: null,
+            semester_array: semester,
+            class_array: null,
+            subject_class: null,
+            subjectCode: null,
+            unit: null,
+            year: year,
+        }),
+    );
+
+    curriculumForm.multi[curriculumKey].subjects.push(newSubject);
+};
 
 const submitSemester = () => {
     semesterForm.post(route("schoolCoordinator.updateSemester"), {
-        only: ["semesterOption"],
+        preserveState: true,
+        only: ["semesterOption", "activeDate", "flash", "logs"],
         onSuccess: () => {
             // dialog.value.semester = false;
             toast.add({
@@ -1840,27 +1861,101 @@ const submitSemester = () => {
     });
 };
 
+const deleteCurriculumAndSubject = (res) => {
+    if (!canManageSchools.value) return;
+
+    if (res.button == "subject") {
+        if (res.type) {
+            curriculumForm.multi[res.curriculum].subjects.splice(
+                res.subject,
+                1,
+            );
+        } else {
+            props.confirmRef.popupDialog(() => {
+                curriculumForm.delete(
+                    route("campus.curriculum.destroysubject", {
+                        id: curriculumForm.multi[res.curriculum].subjects[
+                            res.subject
+                        ].id,
+                        type: "delete",
+                    }),
+                    {
+                        onSuccess: () => {
+                            curriculumForm.clearErrors();
+                            curriculumForm.multi[
+                                res.curriculum
+                            ].subjects.splice(res.subject, 1);
+
+                            toast.add({
+                                severity: page.props?.flash.status,
+                                summary: page.props?.flash.title,
+                                detail: page.props?.flash.message,
+                                life: 3000,
+                            });
+                        },
+                    },
+                );
+            });
+        }
+    } else {
+        if (res.type) {
+            curriculumForm.multi.splice(res.curriculum, 1);
+        } else {
+            props.confirmRef.popupDialog(() => {
+                curriculumForm.delete(
+                    route("campus.curriculum.destroyCurriculum", {
+                        id: curriculumForm.multi[res.curriculum].id,
+                        type: "delete",
+                    }),
+                    {
+                        onSuccess: () => {
+                            curriculumForm.clearErrors();
+                            curriculumForm.multi.splice(res.curriculum, 1);
+                            toast.add({
+                                severity: page.props?.flash.status,
+                                summary: page.props?.flash.title,
+                                detail: page.props?.flash.message,
+                                life: 3000,
+                            });
+                        },
+                    },
+                );
+            });
+        }
+    }
+};
+
 const submitCurriculum = () => {
     if (!canManageSchools.value) return;
 
-    curriculumForm.post(route("campus.curriculum.store"), {
-        onSuccess: () => {
-            curriculumForm.resetAndClearErrors();
-            curriculumForm.multi.length = 0;
-            if (page.props?.subjectDetail.length != 0) {
-                for (
-                    let index = 0;
-                    index < page.props?.subjectDetail.length;
-                    index++
-                ) {
-                    curriculumForm.multi.unshift(
-                        page.props?.subjectDetail[index],
-                    );
+    curriculumForm
+        .transform((data) => ({
+            ...data,
+            program: selectedProgram.value,
+        }))
+        .post(route("campus.curriculum.store"), {
+            only: ["flash", "semesterOption", "subjectDetail"],
+            onSuccess: () => {
+                curriculumForm.multi = [];
+                if (props.subjectDetail?.curriculum.length != 0) {
+                    for (
+                        let index = 0;
+                        index < page.props?.subjectDetail.curriculum.length;
+                        index++
+                    ) {
+                        curriculumForm.multi.unshift(
+                            page.props?.subjectDetail.curriculum[index],
+                        );
+                    }
                 }
-            }
-            toastRef.value.show(page.props.flash);
-        },
-    });
+                toast.add({
+                    severity: page.props?.flash.status,
+                    summary: page.props?.flash.title,
+                    detail: page.props?.flash.message,
+                    life: 3000,
+                });
+            },
+        });
 };
 
 const openGradeSystem = () => {
