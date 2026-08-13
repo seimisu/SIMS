@@ -321,7 +321,7 @@
                                                         <IconPencilCheck />
                                                     </Avatar>
                                                 </div>
-                                                <div class="p-1" v-else>
+                                                <!-- <div class="p-1" v-else>
                                                     <OverlayBadge
                                                         severity="danger"
                                                         v-if="!item.read_at"
@@ -338,7 +338,7 @@
                                                     >
                                                         <IconDots />
                                                     </Avatar>
-                                                </div>
+                                                </div> -->
                                                 <div class="flex flex-col">
                                                     <div
                                                         class="text-xs font-semibold"
@@ -407,6 +407,7 @@
     </div>
     <Toast />
     <DefaultConfirmDialog group="global" />
+    <ConfirmDialog />
 </template>
 <script setup>
 import SidebarIconMenu from "../Components/menus/SidebarIconMenu.vue";

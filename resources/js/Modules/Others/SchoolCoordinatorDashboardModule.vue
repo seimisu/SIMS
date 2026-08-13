@@ -58,7 +58,7 @@
             </div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -82,13 +82,13 @@
                         </Avatar>
                     </div>
                 </template>
-                <template #footer>
+                <!-- <template #footer>
                     <div class="text-sm text-green-600 font-medium">
                         ↑ 8.2% from last {{ FilterDate.value }}
                     </div>
-                </template>
+                </template> -->
             </Card>
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -112,13 +112,13 @@
                         </Avatar>
                     </div>
                 </template>
-                <template #footer>
+                <!-- <template #footer>
                     <div class="text-sm text-green-600 font-medium">
                         ↑ 8.2% from last {{ FilterDate.value }}
                     </div>
-                </template>
+                </template> -->
             </Card>
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -144,13 +144,13 @@
                         </Avatar>
                     </div>
                 </template>
-                <template #footer>
+                <!-- <template #footer>
                     <div class="text-sm text-green-600 font-medium">
                         ↑ 8.2% from last {{ FilterDate.value }}
                     </div>
-                </template>
+                </template> -->
             </Card>
-            <Card class="">
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #content>
                     <div class="flex justify-between">
                         <div class="flex flex-col">
@@ -158,7 +158,7 @@
                             <div class="text-4xl font-semibold">
                                 <CountTo
                                     :start-val="0"
-                                    :end-val="page.props.card?.issue ?? 0"
+                                    :end-val="page.props.card?.terminated ?? 0"
                                     v-if="!loading.count"
                                     :duration="1000"
                                     class="text-4xl font-semibold"
@@ -174,14 +174,14 @@
                         </Avatar>
                     </div>
                 </template>
-                <template #footer>
+                <!-- <template #footer>
                     <div class="text-sm text-green-600 font-medium">
                         ↑ 8.2% from last {{ FilterDate.value }}
                     </div>
-                </template>
+                </template> -->
             </Card>
             <Card
-                class="col-span-2"
+                class="col-span-2 dark:bg-slate-700! dark:text-white!"
                 :pt="{
                     body: '!p-0',
                     content: 'border-t border-gray-200 ',
@@ -215,7 +215,8 @@
                                 "
                                 v-model="FilterRangeDate.value"
                                 :options="page.props?.options?.dateRange"
-                            ></SelectInput>
+                            >
+                            </SelectInput>
                         </div>
                     </div>
                 </template>
@@ -310,7 +311,7 @@
                                         :series="
                                             page.props?.timeline?.programSeries
                                         "
-                                        class="w-70"
+                                        class="w-50"
                                     />
                                 </div>
                             </div>
@@ -323,10 +324,10 @@
                 </template>
             </Card>
             <Card
-                class="col-span-2"
+                class="col-span-2 lg:col-span-1 dark:bg-slate-700! dark:text-white!"
                 :pt="{
-                    body: '!p-0',
-                    content: 'border-t border-gray-200 ',
+                    body: '!p-0 ',
+                    content: 'border-t border-gray-200  ',
                 }"
             >
                 <template #title>
@@ -339,11 +340,11 @@
                             </Avatar>
                             <div>
                                 <div class="text-sm font-semibold">
-                                    Gender Breakdown of Scholars by Region
+                                    Sex Distribution
                                 </div>
-                                <div class="text-xs text-surface-300">
-                                    Comparison of male and female scholars
-                                    across all Philippine regions.
+
+                                <div class="text-xs text-surface-500">
+                                    Scholar distribution by sex
                                 </div>
                             </div>
                         </div>
@@ -351,31 +352,174 @@
                     </div>
                 </template>
                 <template #content>
-                    <div class="flex flex-col w-full">
-                        <div class="flex gap-3">
-                            <div class="flex-4">
+                    <div
+                        class="flex items-center justify-evenly w-full h-full p-4"
+                    >
+                        <div class="flex justify-evenly h-full w-full gap-5">
+                            <div class="flex-1 lg:w-40">
                                 <ApexChart
-                                    type="line"
-                                    height="350"
-                                    :options="chartOptionsSex"
-                                    :series="page.props?.gender?.series"
+                                    type="donut"
+                                    :options="chartSexOptions"
+                                    :series="page.props?.gender?.donut"
+                                    class="w-50"
                                 />
                             </div>
-                            <div class="flex-1 w-10">
-                                <ApexChart
-                                    type="bar"
-                                    height="350"
-                                    :options="chartOptionsSexBar"
-                                    :series="page.props?.gender?.bar.series"
-                                />
+                            <div
+                                class="flex-1 lg:w-60 flex flex-col justify-evenly"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <IconManFilled
+                                        size="30"
+                                        class="text-blue-400"
+                                    />
+                                    <div class="flex flex-col">
+                                        <div
+                                            class="text-xs text-gray-500 font-medium leading-3.5"
+                                        >
+                                            Male
+                                        </div>
+                                        <div
+                                            class="text-lg font-semibold leading-3.5"
+                                        >
+                                            {{ page.props?.gender?.donut[0] }} ~
+                                            {{
+                                                page.props?.gender?.pMale ?? 0
+                                            }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <IconWomanFilled
+                                        size="30"
+                                        class="text-pink-400"
+                                    />
+                                    <div class="flex flex-col">
+                                        <div
+                                            class="text-xs text-gray-500 font-medium leading-3.5"
+                                        >
+                                            Female
+                                        </div>
+                                        <div
+                                            class="text-lg font-semibold leading-3.5"
+                                        >
+                                            {{ page.props?.gender?.donut[1] }} ~
+                                            {{
+                                                page.props?.gender?.pFemale ??
+                                                0
+                                            }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template #footer>
+                    <Divider />
+                    <div
+                        class="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm m-2"
+                    >
+                        <IconBulb
+                            size="18"
+                            class="mt-0.5 text-amber-600 shrink-0"
+                        />
+
+                        <p class="text-amber-800 leading-5">
+                            <span class="font-medium">Insight:</span>
+                            The current scholar population is predominantly
+
+                            <span
+                                :class="[
+                                    page.props?.gender?.majority === 'Male'
+                                        ? 'text-blue-600'
+                                        : 'text-pink-600',
+                                    'font-semibold',
+                                ]"
+                            >
+                                {{ page.props?.gender?.majority }}
+                            </span>
+
+                            scholars.
+                        </p>
+                    </div>
+                </template>
+            </Card>
+            <Card
+                class="col-span-2 lg:col-span-1 dark:bg-slate-700! dark:text-white"
+                :pt="{
+                    body: '!p-0',
+                    content: 'border-t border-gray-200 ',
+                }"
+            >
+                <template #title>
+                    <VCalendar
+                        transparent
+                        borderless
+                        class="py-1"
+                        expanded
+                        view="weekly"
+                        :attributes="attrs"
+                        title-position="left"
+                    ></VCalendar>
+                </template>
+                <template #content>
+                    <div class="p-2 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <div class="text-[16px] font-semibold">Events</div>
+                            <Avatar size="normal">
+                                <IconBellFilled size="16" />
+                            </Avatar>
+                        </div>
+                        <div
+                            class="flex-1 flex flex-col gap-2 overflow-y-auto max-h-72"
+                        >
+                            <div
+                                class="bg-green-50 text-green-600 p-2 border border-green-200 dark:border-green-600 rounded-lg flex flex-col gap-2"
+                            >
+                                <div class="flex gap-2">
+                                    <IconCalendarWeek size="16" />
+                                    <div class="text-xs">
+                                        Active
+                                        {{ page.props.semesterDate?.name }}
+                                    </div>
+                                </div>
+                                <span class="text-sm font-medium text-center">
+                                    {{ page.props.semesterDate?.startDate }} -
+                                    {{ page.props.semesterDate?.endDate }}
+                                </span>
+                            </div>
+                            <div
+                                v-for="(event, index) in page.props?.events"
+                                :key="index"
+                                class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 dark:border-gray-600"
+                            >
+                                <Avatar
+                                    size="small"
+                                    class="bg-blue-100! text-blue-600! rounded-lg! shadow"
+                                >
+                                    <IconCalendarWeek size="16" />
+                                </Avatar>
+                                <div class="flex flex-col">
+                                    <div class="text-sm font-medium">
+                                        {{ event.title }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ event.date }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                v-if="page.props?.events.length === 0"
+                                class="flex items-center justify-center h-full text-gray-500 text-sm"
+                            >
+                                No events found.
                             </div>
                         </div>
                     </div>
                 </template>
             </Card>
-
             <Card
-                class="col-span-2"
+                class="col-span-2 dark:bg-slate-700! dark:text-white"
                 :pt="{
                     body: '!p-0',
                     content: 'border-t border-gray-200 ',
@@ -541,9 +685,15 @@ import {
     IconSchool,
     IconTable,
     IconUser,
+    IconBulb,
     IconUserExclamation,
     IconMapPin,
     IconUserX,
+    IconManFilled,
+    IconWomanFilled,
+    IconFriends,
+    IconCalendarWeek,
+    IconBellFilled,
 } from "@tabler/icons-vue";
 import { computed, onMounted, ref, watch } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
@@ -577,88 +727,22 @@ const loading = ref({
     count: false,
 });
 
-const chartOptionsSexBar = ref({
-    chart: {
-        type: "bar",
-
-        toolbar: {
-            show: false,
-        },
-        animations: {
-            enabled: true,
-            easing: "easeout",
-            speed: 700,
-        },
+const attrs = computed(() => [
+    {
+        key: "today",
+        highlight: true,
+        dates: new Date(),
     },
-    colors: ["#EC4899", "#3B82F6"],
-
-    plotOptions: {
-        bar: {
-            distributed: true,
-            borderRadius: 10,
-            borderRadiusApplication: "end",
-            columnWidth: "42%",
-            dataLabels: {
-                position: "center",
-            },
+    {
+        key: "submission",
+        dot: true,
+        color: "red",
+        dates: new Date(page.props.semesterDate?.submissionDate),
+        popover: {
+            label: "Submission Date",
         },
     },
-    fill: {
-        type: "gradient",
-        gradient: {
-            shade: "light",
-            type: "vertical",
-            shadeIntensity: 0.2,
-            opacityFrom: 1,
-            opacityTo: 0.85,
-            stops: [0, 100],
-        },
-    },
-    dataLabels: {
-        enabled: true,
-        style: {
-            fontSize: "14px",
-            fontWeight: "bold",
-        },
-    },
-
-    legend: {
-        show: false,
-    },
-
-    xaxis: {
-        categories: ["Female", "Male"],
-
-        axisBorder: {
-            show: false, // remove bottom line
-        },
-
-        axisTicks: {
-            show: false,
-        },
-
-        labels: {
-            style: {
-                fontSize: "14px",
-                fontWeight: 600,
-                colors: ["#374151", "#374151"],
-            },
-        },
-    },
-    yaxis: {
-        show: false,
-    },
-
-    grid: {
-        borderColor: "#E5E7EB",
-        show: false,
-        strokeDashArray: 4,
-    },
-
-    tooltip: {
-        show: false,
-    },
-});
+]);
 
 const chartOptionsCourseTreemap = ref({
     chart: {
@@ -824,15 +908,11 @@ const chartOptionsSchoolTreemap = ref({
     },
 });
 
-const chartOptionsSex = ref({
+const chartSexOptions = ref({
     chart: {
-        type: "line",
-        height: 420,
+        type: "donut",
         toolbar: {
             show: false,
-        },
-        zoom: {
-            enabled: false,
         },
         animations: {
             enabled: true,
@@ -840,98 +920,30 @@ const chartOptionsSex = ref({
             speed: 700,
         },
     },
-    colors: [
-        "#EC4899", // Female - Pink
-        "#3B82F6", // Male - Blue
-    ],
-    plotOptions: {
-        line: {
-            isSlopeChart: true,
-        },
-    },
-    stroke: {
-        curve: "smooth",
-        width: [4, 4],
-        dashArray: [0, 0],
-    },
-    markers: {
-        size: 7,
-        strokeWidth: 3,
-        hover: {
-            size: 10,
-        },
-    },
 
-    dataLabels: {
-        enabled: true,
-        offsetY: -8,
-        style: {
-            fontSize: "11px",
-            fontWeight: 600,
-        },
-        background: {
-            enabled: true,
-            borderRadius: 8,
-            opacity: 0.95,
-            padding: 8,
-        },
-        formatter(value, opts) {
-            return value;
-        },
-    },
+    labels: ["Male", "Female"],
 
     legend: {
         show: false,
-        position: "top",
-        horizontalAlign: "left",
-        fontSize: "14px",
-        fontWeight: 600,
-        markers: {
-            radius: 12,
-        },
     },
-
-    xaxis: {
-        position: "bottom",
-        labels: {
-            rotate: -45,
-            trim: false,
-            style: {
-                fontSize: "8px",
-                fontWeight: 500,
+    colors: ["#51A2FF", "#FC64B6"],
+    stroke: {
+        show: true,
+        width: 5,
+        colors: ["#FFFFFF"],
+    },
+    dataLabels: {
+        enabled: false,
+    },
+    plotOptions: {
+        pie: {
+            expandOnClick: false,
+            donut: {
+                size: "50%",
+                labels: {
+                    show: false,
+                },
             },
-        },
-        axisBorder: {
-            show: false,
-        },
-        axisTicks: {
-            show: false,
-        },
-    },
-
-    yaxis: {
-        min: 0,
-        forceNiceScale: true,
-        labels: {
-            formatter: (value) => value.toLocaleString(),
-        },
-    },
-
-    grid: {
-        borderColor: "#E5E7EB",
-        strokeDashArray: 4,
-        padding: {
-            left: 10,
-            right: 10,
-        },
-    },
-
-    tooltip: {
-        shared: true,
-        intersect: false,
-        theme: "light",
-        y: {
-            formatter: (value) => `${value} scholars`,
         },
     },
 });

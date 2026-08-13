@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('list_programs', function (Blueprint $table) {
-            $table->tinyIncrements('id');
+            $table->bigIncrements('id');
             $table->string('name');
             $table->string('others')->default('n/a');
-            $table->tinyInteger('program_id')->unsigned()->index();
+            $table->bigInteger('program_id')->unsigned()->index();
             $table->foreign('program_id')->references('id')->on('list_references')->onDelete('cascade');
-            $table->tinyInteger('type_id')->unsigned()->index();
+            $table->bigInteger('type_id')->unsigned()->index();
             $table->foreign('type_id')->references('id')->on('list_references')->onDelete('cascade');
             $table->boolean('is_sub')->default(false);
             $table->boolean('is_active')->default(true);

@@ -33,7 +33,7 @@
         "v-calendar": "^3.1.2",
         "vue": "^3.5.22",
         "vue-advanced-cropper": "^2.8.9",
-        "vue-pdf-embed": "^2.1.5",
+        "vue-pdf-embed": "^2.1.4",
         "vue3-apexcharts": "^1.10.0",
         "vue3-count-to": "^1.1.2",
         "ziggy-js": "^2.6.0"
