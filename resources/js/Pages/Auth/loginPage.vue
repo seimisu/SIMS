@@ -42,6 +42,7 @@
                             <div class="flex justify-between py-2">
                                 <DefaultCheckbox label="Remember Me" v-model="loginForm.remember" binary>
                                 </DefaultCheckbox>
+                                <Button  variant="link" class="p-0! text-sm!" @click="openResetPasswordDialog">Forgot Password</Button>
                             </div>
                         </div>
 
@@ -53,6 +54,7 @@
             </div>
         </div>
         <OtpDialog v-model:visible="otpModal" :icon="IconPasswordUser" button-label="Send OTP"></OtpDialog>
+         <DialogResetPassword v-model:visible="resetPasswordDialog" v-if="resetPasswordDialog" />
     </GuestLayout>
 </template>
 <script setup>
@@ -66,6 +68,7 @@ import DefaultCheckbox from "../../Components/checkboxs/DefaultCheckbox.vue";
 import OtpDialog from "../../Components/dialogs/OtpDialog.vue";
 import { ref } from "vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
+import DialogResetPassword from "../../Modules/Others/DialogResetPassword.vue";
 
 const loginForm = useForm({
     email: "",
@@ -74,12 +77,17 @@ const loginForm = useForm({
     otpRequest: false,
 });
 const otpModal = ref(false);
+const resetPasswordDialog = ref(false)
 
 const openModal = () => {
     loginForm.reset();
     loginForm.clearErrors();
     otpModal.value = true;
 };
+
+const openResetPasswordDialog = () => {
+    resetPasswordDialog.value = true
+}
 
 const submitForm = () => {
     loginForm.post(route("login.store"), {

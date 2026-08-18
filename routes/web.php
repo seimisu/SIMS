@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\ActivationController;
 use App\Http\Controllers\Auth\ChangePasswordController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OtpRequestController;
 use App\Http\Controllers\Web\CampusCourseController;
@@ -51,6 +52,9 @@ Route::middleware('guest')->group(function () {
     Route::post('otp/login', [OtpRequestController::class, 'store'])->name('otp.store');
     Route::get('/activate/{token}', [ActivationController::class, 'show'])->name('activation.show');
     Route::post('/activate/{id}', [ActivationController::class, 'update'])->name('activation.update');
+     Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('password.store');
+    Route::get('reset-password/{token}', [ForgotPasswordController::class, 'create'])->name('password.reset');
+    Route::post('reset-password', [ForgotPasswordController::class, 'update'])->name('password.update');
 });
 
 Route::middleware(['auth', 'web', 'permission'])->group(function () {
