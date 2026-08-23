@@ -33,6 +33,7 @@ use App\Http\Controllers\Web\SchoolCoordinatorController;
 use App\Http\Controllers\Web\StatusController;
 use App\Http\Controllers\Web\StipendController;
 use App\Http\Controllers\Web\UserController;
+use App\Http\Controllers\Web\UserProfileController;
 use App\Http\Controllers\Web\VideoResourceController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,9 +53,15 @@ Route::middleware('guest')->group(function () {
     Route::post('otp/login', [OtpRequestController::class, 'store'])->name('otp.store');
     Route::get('/activate/{token}', [ActivationController::class, 'show'])->name('activation.show');
     Route::post('/activate/{id}', [ActivationController::class, 'update'])->name('activation.update');
-     Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('password.store');
+    Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('password.store');
     Route::get('reset-password/{token}', [ForgotPasswordController::class, 'create'])->name('password.reset');
     Route::post('reset-password', [ForgotPasswordController::class, 'update'])->name('password.update');
+});
+
+Route::middleware(['auth', 'web'])->group(function () {
+    Route::get('/profile', [UserProfileController::class, 'index'])->name('profile');
+    Route::put('/profile/update', [UserProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo',[UserProfileController::class, 'updatePhoto'])->name('profile.photo.update');
 });
 
 Route::middleware(['auth', 'web', 'permission'])->group(function () {

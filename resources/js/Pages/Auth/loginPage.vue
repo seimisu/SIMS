@@ -53,7 +53,7 @@
                 <!-- <span class="text-center mt-5 text-sm text-gray-400">@SEI - 2025</span> -->
             </div>
         </div>
-        <OtpDialog v-model:visible="otpModal" :icon="IconPasswordUser" button-label="Send OTP"></OtpDialog>
+        <OtpDialog v-model:visible="otpModal" :icon="IconPasswordUser" button-label="Send OTP" />
          <DialogResetPassword v-model:visible="resetPasswordDialog" v-if="resetPasswordDialog" />
     </GuestLayout>
 </template>
