@@ -8,6 +8,7 @@ class ScholarUploadTemp extends Model
 {
     protected $fillable = [
         'file_id',
+        'row_number',
         'spas_no',
         'status',
         'standing',
@@ -40,13 +41,24 @@ class ScholarUploadTemp extends Model
         'change_course',
         'change_fulladdress',
         'publish_by',
-        'publish_at'
+        'publish_at',
+        'row_status',
+        'validation_errors',
+        'matched_school_id',
+        'matched_school_name',
+        'matched_campus_id',
+        'matched_course_id',
+        'matched_course_name',
+        'matched_course_campus',
+        'matched_address',
     ];
 
     protected $casts = [
         'birthdate' => 'date',
         'verified_at' => 'datetime',
         'change_fulladdress' => 'array',
+        'validation_errors' => 'array',
+        'matched_address' => 'array',
     ];
 
     protected $appends = ['fullname', 'fulladdress'];

@@ -145,6 +145,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::patch('campus/curriculum/{id}/paste', [SchoolCampusCurriculumController::class, 'paste'])->name('campus.curriculum.paste');
 
     Route::post('scholar', [ScholarReviewController::class, 'store'])->name('scholar.store');
+    Route::get('scholar/import-template', [ScholarReviewController::class, 'template'])->name('scholar.template');
     Route::post('scholar/{id}/validated', [ScholarReviewController::class, 'insert'])->name('scholar.insert');
     Route::delete('scholar/{id}/{type}', [ScholarReviewController::class, 'destroy'])->name('scholar.destroy');
     Route::post('scholar/{id}/grade-update', [ScholarReviewController::class, 'gradeUpdate'])->name('scholar.grade-update');

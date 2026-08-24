@@ -4,353 +4,192 @@
         position="full"
         :pt="{
             header: 'border-b-1 border-gray-300 border-dashed',
-            content: 'bg-slate-50',
-            footer: 'border-t-1 border-gray-300 border-dashed',
+            content: '!p-3 bg-slate-50',
+            footer: 'border-t-1 border-gray-300 border-dashed bg-white',
         }"
     >
         <template #header>
-            <div
-                class="bg-slate-100 px-4 py-2 shadow rounded-lg flex items-center gap-2"
-            >
-                <IconId :size="20" :stroke-width="2" />
-                <div class="uppercase font-medium">Scholar Validation</div>
-            </div>
-        </template>
-        <template #default>
-            <div class="mt-5 flex flex-col gap-3">
-                <div
-                    class="flex items-start p-3 shadow border border-green-300 text-green-500 rounded-xl bg-green-50 gap-1"
-                >
-                    <div>
-                        <IconExclamationCircleFilled :size="20" />
-                    </div>
-
-                    <p class="text-xs leading-5 text-justify">
-                        Please ensure that the address, school, course, and
-                        email provided are valid and correctly formatted before
-                        submission. Invalid or incomplete information may result
-                        in validation errors or rejection.
-                    </p>
+            <div class="flex min-w-0 items-center gap-3">
+                <IconFileSpreadsheet :size="18" class="shrink-0 text-slate-500" />
+                <div class="min-w-0 truncate text-sm font-semibold uppercase text-slate-700">
+                    Scholar Import Review
                 </div>
-                <template v-for="(item, index) in scholar" :key="index">
-                    <Panel
-                        :pt="{
-                            root: [
-                                '!rounded-xl',
-                                item.verified_by
-                                    ? '!border-green-500 !shadow-green-500 '
-                                    : null,
-                            ],
-                        }"
-                    >
-                        <template #header>
-                            <div class="flex items-center gap-2">
-                                <Avatar
-                                    class="!bg-blue-100 !text-blue-600 border"
-                                >
-                                    <IconUser :size="18" />
-                                </Avatar>
-                                <div class="text-sm">
-                                    <div
-                                        :class="[
-                                            item.sex == 'M'
-                                                ? 'text-blue-500'
-                                                : 'text-red-500',
-                                        ]"
-                                    >
-                                        # {{ item.spas_no }}
-                                    </div>
-                                    <div class="font-semibold">
-                                        {{ item.fullname }}
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                        <template #icons>
-                            <div class="flex items-start gap-3 text-xs">
-                                <div
-                                    class="bg-red-100 px-3 py-1 rounded-2xl shadow"
-                                >
-                                    • {{ item.status }}
-                                </div>
-
-                                <div
-                                    class="bg-slate-100 px-3 py-1 rounded-2xl shadow"
-                                >
-                                    • {{ item.standing }}
-                                </div>
-                            </div>
-                        </template>
-                        <template #default>
-                            <div class="flex flex-col lg:flex-row gap-3 w-full">
-                                <div class="flex flex-col flex-1">
-                                    <div
-                                        class="flex-1 flex flex-col items-center justify-center"
-                                    >
-                                        <div class="text-sm text-gray-500">
-                                            Imported address data:
-                                        </div>
-                                        <div class="font-medium">
-                                            {{
-                                                page.props?.selected[index]
-                                                    .address
-                                            }}
-                                            {{
-                                                page.props?.selected[index]
-                                                    .barangay
-                                            }}
-                                            {{
-                                                page.props?.selected[index]
-                                                    .municipality
-                                            }}
-                                            {{
-                                                page.props?.selected[index]
-                                                    .province
-                                            }}
-                                            <span
-                                                v-if="
-                                                    page.props?.selected[index]
-                                                        .region
-                                                "
-                                            >
-                                                (Region
-                                                {{
-                                                    page.props?.selected[index]
-                                                        .region
-                                                }})
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="flex-1 flex flex-col items-center justify-center"
-                                    >
-                                        <div class="text-sm text-gray-500">
-                                            Imported School data:
-                                        </div>
-                                        <div class="font-medium">
-                                            {{
-                                                page.props?.selected[index]
-                                                    .school
-                                            }}
-                                        </div>
-                                        <div class="font-medium">
-                                            {{
-                                                page.props?.selected[index]
-                                                    .course
-                                            }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex flex-1 flex-col gap-3">
-                                    <div class="flex flex-col gap-2">
-                                        <Divider align="right" class="!m-0">
-                                            <span class="text-xs font-medium"
-                                                >Residential Information
-                                            </span>
-                                        </Divider>
-                                        <TextInput
-                                            label="Street/Village"
-                                            v-model="scholar[index].address"
-                                            disabled
-                                        />
-                                        <AutoCompleteInput
-                                            v-model="
-                                                scholar[index].inputAddress
-                                            "
-                                            :options="page.props?.resultSearch"
-                                            placeholder="Find by Barangay, Municipality, Province, or Region"
-                                            @complete="autoSearch"
-                                            selection
-                                            :disabled="!!item.verified_by"
-                                        ></AutoCompleteInput>
-                                    </div>
-                                    <div class="flex flex-col gap-2">
-                                        <Divider align="right" class="!m-0">
-                                            <span class="text-xs font-medium"
-                                                >Educational Background
-                                                Information
-                                            </span>
-                                        </Divider>
-                                        <SelectInput
-                                            :disable="!!item.verified_by"
-                                            label="School"
-                                            filter
-                                            v-model="scholar[index].inputSchool"
-                                            :options="
-                                                page.props?.schoolOption || []
-                                            "
-                                            :error-mark="item?.error2"
-                                            @update:model-value="
-                                                renderCourse(item, index)
-                                            "
-                                        />
-                                        <SelectInput
-                                            label="Course"
-                                            filter
-                                            :error-mark="item?.error3"
-                                            :disable="
-                                                !scholar[index].inputSchool ||
-                                                !!item.verified_by
-                                            "
-                                            v-model="scholar[index].inputCourse"
-                                            :options="
-                                                scholar[index].courseOption ||
-                                                []
-                                            "
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                        <template #footer>
-                            <div class="flex justify-between">
-                                <div class="flex gap-1 items-center">
-                                    <Avatar
-                                        class="!bg-green-100 !text-green-600 border"
-                                        shape="circle"
-                                        v-if="item.verified_by"
-                                    >
-                                        <IconUser :size="18" />
-                                    </Avatar>
-                                    <div
-                                        class="flex flex-col text-xs"
-                                        v-if="item.verified_by"
-                                    >
-                                        <div>Verified by:</div>
-                                        <div class="font-medium">
-                                            {{ item.verified_by }} •
-                                            {{ item.verified_at }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="">
-                                    <DefaultButton
-                                        size="small"
-                                        raised
-                                        :disabled="
-                                            item.loading || !!item.verified_by
-                                        "
-                                        @click="saveValidate(item, index)"
-                                        :loading="item.loading"
-                                        label="Save and Review Submission"
-                                        class="!rounded-xl !px-10"
-                                    />
-                                </div>
-                            </div>
-                        </template>
-                    </Panel>
-                </template>
+                <div class="shrink-0 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+                    {{ page.props?.validationStatus.completed ?? 0 }} / {{ page.props?.validationStatus.total ?? 0 }} validated
+                </div>
             </div>
         </template>
-        <template #footer>
-            <div class="w-full flex gap-4 justify-between">
-                <div class="min-w-[200px]">
-                    <!-- Progress -->
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="text-xs text-gray-500 font-medium">
-                            Validation Progress
-                        </span>
 
+        <template #default>
+            <div class="flex h-full min-h-0 flex-col gap-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-col">
+                        <div class="text-sm font-semibold text-slate-700">
+                            Imported Scholar Rows
+                        </div>
+                        <div class="text-xs text-slate-500">
+                            This is a validation preview. Fix rows with conflicts in the Excel file, then upload the corrected file again.
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <span>{{ scholar.length }} row(s)</span>
+                        <span>{{ validRows }} valid</span>
+                        <span>{{ needsReviewRows }} need review</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-y bg-white px-2 py-1.5 text-xs text-slate-600">
+                    <span class="font-semibold text-slate-700">Import quality</span>
+                    <span>Valid: <b>{{ qualityCounts.valid }}</b></span>
+                    <span>Needs correction: <b>{{ qualityCounts.needsCorrection }}</b></span>
+                    <span>Duplicate: <b>{{ qualityCounts.duplicate }}</b></span>
+                    <span>Missing required: <b>{{ qualityCounts.missingRequired }}</b></span>
+                </div>
+
+                <div class="flex-1 overflow-auto rounded-lg border bg-white">
+                    <table class="min-w-[2600px] w-full text-xs text-slate-700">
+                        <thead class="sticky top-0 z-10 bg-slate-50">
+                            <tr>
+                                <th class="border px-2 py-2 text-left">Row</th>
+                                <th class="border px-2 py-2 text-left">Review</th>
+                                <th class="border px-2 py-2 text-left">Issue</th>
+                                <th class="border px-2 py-2 text-left">SPAS No</th>
+                                <th class="border px-2 py-2 text-left">Status</th>
+                                <th class="border px-2 py-2 text-left">Type</th>
+                                <th class="border px-2 py-2 text-left">Subprogram</th>
+                                <th class="border px-2 py-2 text-left">First Name</th>
+                                <th class="border px-2 py-2 text-left">Last Name</th>
+                                <th class="border px-2 py-2 text-left">Middle Name</th>
+                                <th class="border px-2 py-2 text-left">Suffix</th>
+                                <th class="border px-2 py-2 text-left">Sex</th>
+                                <th class="border px-2 py-2 text-left">Email</th>
+                                <th class="border px-2 py-2 text-left">Contact</th>
+                                <th class="border px-2 py-2 text-left">Birthdate</th>
+                                <th class="border px-2 py-2 text-left">Birthplace</th>
+                                <th class="border px-2 py-2 text-left">Civil Status</th>
+                                <th class="border px-2 py-2 text-left">Address Line</th>
+                                <th class="border px-2 py-2 text-left">Barangay</th>
+                                <th class="border px-2 py-2 text-left">Municipality</th>
+                                <th class="border px-2 py-2 text-left">Province</th>
+                                <th class="border px-2 py-2 text-left">Region</th>
+                                <th class="border px-2 py-2 text-left">Year Awarded</th>
+                                <th class="border px-2 py-2 text-left">Database Course</th>
+                                <th class="border px-2 py-2 text-left">Database School</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="(item, index) in scholar"
+                                :key="item.id"
+                                :class="item.verified_by ? 'bg-emerald-50/50' : ''"
+                            >
+                                <td class="border px-2 py-1 font-semibold">{{ index + 1 }}</td>
+                                <td class="border px-2 py-1">
+                                    <span :class="rowStatusClass(item.row_status)">
+                                        <span :class="rowStatusDotClass(item.row_status)" />
+                                        {{ rowStatusLabel(item) }}
+                                    </span>
+                                </td>
+                                <td class="border px-2 py-1 min-w-80">
+                                    <div
+                                        v-if="item.row_status !== 'valid'"
+                                        class="whitespace-normal text-[11px] leading-4 text-slate-700"
+                                    >
+                                        {{ conflictDetail(item) }}
+                                    </div>
+                                    <span v-else class="text-slate-500">Ready to import</span>
+                                </td>
+                                <td class="border px-2 py-1 font-medium">{{ item.spas_no }}</td>
+                                <td class="border px-2 py-1">{{ item.status }}</td>
+                                <td class="border px-2 py-1">{{ item.scholarship_type }}</td>
+                                <td class="border px-2 py-1">{{ item.scholarship_subprogram }}</td>
+                                <td class="border px-2 py-1">{{ item.fname }}</td>
+                                <td class="border px-2 py-1">{{ item.lname }}</td>
+                                <td class="border px-2 py-1">{{ item.mname }}</td>
+                                <td class="border px-2 py-1">{{ item.suffix }}</td>
+                                <td class="border px-2 py-1">{{ item.sex }}</td>
+                                <td class="border px-2 py-1">{{ item.email }}</td>
+                                <td class="border px-2 py-1">{{ item.contact_no }}</td>
+                                <td class="border px-2 py-1">{{ item.birthdate }}</td>
+                                <td class="border px-2 py-1">{{ item.birthplace }}</td>
+                                <td class="border px-2 py-1">{{ item.civil_status }}</td>
+                                <td class="border px-2 py-1 min-w-44">{{ item.address }}</td>
+                                <td class="border px-2 py-1">{{ item.barangay }}</td>
+                                <td class="border px-2 py-1">{{ item.municipality }}</td>
+                                <td class="border px-2 py-1">{{ item.province }}</td>
+                                <td class="border px-2 py-1">{{ item.region }}</td>
+                                <td class="border px-2 py-1">{{ item.year_awarded }}</td>
+                                <td class="border px-2 py-1 min-w-64">
+                                    <div>{{ item.matchedCourse?.name || "-" }}</div>
+                                    <div v-if="item.matchedCourse?.name && item.matchedCourse?.name !== item.course" class="text-[10px] text-slate-400">
+                                        Excel: {{ item.course }}
+                                    </div>
+                                </td>
+                                <td class="border px-2 py-1 min-w-72">
+                                    <div>{{ item.matchedSchool?.name || item.matchedCourse?.campus || "-" }}</div>
+                                    <div v-if="(item.matchedSchool?.name || item.matchedCourse?.campus) && (item.matchedSchool?.name || item.matchedCourse?.campus) !== item.school" class="text-[10px] text-slate-400">
+                                        Excel: {{ item.school }}
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="!scholar.length">
+                                <td colspan="25" class="border px-2 py-8 text-center text-slate-500">
+                                    No imported rows found.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </template>
+
+        <template #footer>
+            <div class="w-full flex items-center justify-between gap-4">
+                <div class="min-w-[220px]">
+                    <div class="mb-1 flex items-center justify-between">
+                        <span class="text-xs text-gray-500 font-medium">Validation Progress</span>
                         <span class="text-xs font-semibold">
-                            {{ page.props?.validationStatus.completed }} /
-                            {{ page.props?.validationStatus.total }}
+                            {{ page.props?.validationStatus.completed ?? 0 }} /
+                            {{ page.props?.validationStatus.total ?? 0 }}
                         </span>
                     </div>
-
-                    <!-- Progress Bar -->
-                    <div
-                        class="w-full bg-gray-100 rounded-full h-2 overflow-hidden"
-                    >
+                    <div class="h-1.5 overflow-hidden rounded-full bg-gray-100">
                         <div
-                            class="h-full rounded-full transition-all duration-300"
-                            :class="{
-                                'bg-green-500':
-                                    page.props?.validationStatus.completed ===
-                                    page.props?.validationStatus.total,
-                                'bg-yellow-500':
-                                    page.props?.validationStatus.completed >
-                                        0 &&
-                                    page.props?.validationStatus.completed <
-                                        page.props?.validationStatus.total,
-                                'bg-red-500':
-                                    page.props?.validationStatus.completed ===
-                                    0,
-                            }"
-                            :style="{
-                                width: `${
-                                    page.props?.validationStatus.total
-                                        ? (page.props?.validationStatus
-                                              .completed /
-                                              page.props?.validationStatus
-                                                  .total) *
-                                          100
-                                        : 0
-                                }%`,
-                            }"
+                            class="h-full rounded-full bg-slate-700 transition-all duration-300"
+                            :style="{ width: `${validationPercent}%` }"
                         />
                     </div>
                 </div>
                 <DefaultButton
                     size="small"
                     raised
-                    label="Move to Production"
-                    class="!rounded-xl !px-10"
+                    label="Import Batch"
+                    class="!rounded-lg !px-8"
+                    :disabled="!canPublish"
                     @click="moveProd"
                 />
             </div>
         </template>
     </Drawer>
+
     <ConfirmDialog group="templating" class="w-100">
         <template #message="slotProps">
             <div class="flex flex-col items-center w-full gap-4 text-center">
-                <i
-                    :class="slotProps.message.icon"
-                    class="!text-6xl text-red-500"
-                ></i>
+                <i :class="slotProps.message.icon" class="!text-6xl text-red-500"></i>
                 <p class="text-wrap text-sm">{{ slotProps.message.message }}</p>
-                <div
-                    class="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 w-fit"
-                >
-                    <div class="flex flex-col">
-                        <span
-                            class="text-xs text-emerald-700 font-medium uppercase tracking-wide"
-                        >
-                            Validation Progress
-                        </span>
-
-                        <div class="flex items-center gap-1">
-                            <span class="text-lg font-bold text-emerald-600">
-                                {{ page.props?.validationStatus.completed }}
-                            </span>
-
-                            <span class="text-sm text-gray-500"> out of </span>
-
-                            <span class="text-lg font-bold text-gray-600">
-                                {{ page.props?.validationStatus.total }}
-                            </span>
-
-                            <span class="text-sm text-gray-500">
-                                completed
-                            </span>
-                        </div>
-                    </div>
+                <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
+                    {{ page.props?.validationStatus.completed ?? 0 }} out of
+                    {{ page.props?.validationStatus.total ?? 0 }} rows valid
                 </div>
             </div>
         </template>
     </ConfirmDialog>
 </template>
+
 <script setup>
 import { router, usePage } from "@inertiajs/vue3";
-import {
-    IconArrowNarrowRight,
-    IconExclamationCircleFilled,
-    IconId,
-    IconUser,
-} from "@tabler/icons-vue";
-import { computed, onMounted, ref } from "vue";
-import TextInput from "../../Components/inputs/TextInput.vue";
-import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
-import SelectInput from "../../Components/inputs/SelectInput.vue";
+import { IconFileSpreadsheet } from "@tabler/icons-vue";
+import { computed } from "vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import { route } from "ziggy-js";
 import { useConfirm } from "primevue/useconfirm";
@@ -363,72 +202,107 @@ const props = defineProps({
 });
 const modelValue = defineModel("modelValue");
 const page = usePage();
-const loading = ref({
-    address: false,
-    save: false,
+const scholar = computed(() => page.props?.selected ?? []);
+
+const validRows = computed(() => scholar.value.filter((item) => item.row_status === "valid").length);
+const needsReviewRows = computed(() => scholar.value.length - validRows.value);
+const canPublish = computed(() => scholar.value.length > 0 && needsReviewRows.value === 0);
+const qualityCounts = computed(() => ({
+    valid: scholar.value.filter((item) => item.row_status === "valid").length,
+    needsCorrection: scholar.value.filter((item) => item.row_status === "needs_correction").length,
+    duplicate: scholar.value.filter((item) => item.row_status === "duplicate").length,
+    missingRequired: scholar.value.filter((item) => item.row_status === "missing_required").length,
+}));
+const validationPercent = computed(() => {
+    const total = page.props?.validationStatus.total ?? 0;
+    const completed = page.props?.validationStatus.completed ?? 0;
+    return total ? (completed / total) * 100 : 0;
 });
-const scholar = computed(() => page.props?.selected);
 
-const renderCourse = (item, index) => {
-    router.reload({
-        only: ["courseOption"],
-        data: { campus: item.inputSchool?.name },
-        preserveState: true,
-        preserveScroll: true,
-        showProgress: true,
-        replace: true,
-        onFinish: () => {
-            scholar.value[index].courseOption = page.props?.courseOption || [];
-        },
-    });
+const conflictSummary = (item) => {
+    const firstError = conflictDetail(item);
+
+    if (firstError.includes("School")) return "School not found";
+    if (firstError.includes("Course")) return "Course not found for school";
+    if (firstError.includes("Region")) return "Region not found";
+    if (firstError.includes("Province")) return "Province not found";
+    if (firstError.includes("Municipality")) return "Municipality not found";
+    if (firstError.includes("Barangay")) return "Barangay not found";
+    if (firstError.includes("Location")) return "Location not found";
+    if (firstError.includes("Address")) return "Location not found";
+    if (firstError.includes("SPAS")) return "Duplicate SPAS No";
+    if (firstError.includes("Email")) return "Email conflict";
+    if (firstError.includes("Status")) return "Invalid status";
+    if (firstError.includes("Scholarship type")) return "Invalid scholarship type";
+    if (firstError.includes("Scholarship subprogram")) return "Invalid subprogram";
+    if (firstError.includes("Birthdate")) return "Invalid birthdate";
+    if (firstError.includes("required")) return "Missing required data";
+
+    return firstError || "Conflict found";
 };
 
-const autoSearch = (event) => {
-    loading.value.address = true;
+const conflictDetail = (item) => {
+    const firstError = item.validation_errors?.[0] ?? "";
+    if (firstError) return firstError.replace(/^Row\s+\d+:\s*/i, "");
 
-    router.reload({
-        data: {
-            findAddress: event,
-        },
-        preserveState: true,
-        preserveScroll: true,
-        only: ["resultSearch"],
-        onFinish: () => {
-            loading.value.address = false;
-        },
-    });
+    if (item.row_status === "duplicate") return "Duplicate SPAS No or email found in the database.";
+    if (item.row_status === "missing_required") return "One or more required Excel fields are blank.";
+    if (item.row_status === "valid") return "";
+    if (!item.matchedSchool) return `School '${item.school || "-"}' was not found in the database.`;
+    if (!item.matchedCourse) return `Course '${item.course || "-"}' was not found for school '${item.school || "-"}'.`;
+    if (!item.matchedAddress) {
+        return `Location was not found using barangay '${item.barangay || "-"}', municipality '${item.municipality || "-"}', province '${item.province || "-"}', region '${item.region || "-"}'. Address Line is free text.`;
+    }
+
+    return "The row has a conflict. Fix the Excel value and upload the file again.";
 };
 
-const saveValidate = (item, index) => {
-    scholar.value[index].loading = true;
-    router.post(route("review.validate", { id: item.id }), item, {
-        preserveState: true,
-        preserveScroll: true,
-        onSuccess: () => {},
-        onError: (e) => {
-            console.log(e);
+const rowStatusLabel = (item) =>
+    item.row_status === "needs_correction"
+        ? conflictSummary(item)
+        : ({
+        valid: "Valid",
+        duplicate: "Duplicate",
+        missing_required: "Missing Required",
+    })[item.row_status] || "Conflict found";
 
-            if (e.inputAddress) {
-                scholar.value[index].error1 = e.inputAddress;
-            }
-            if (e.inputSchool) {
-                scholar.value[index].error2 = e.inputSchool;
-            }
-            if (e.inputCourse) {
-                scholar.value[index].error3 = e.inputCourse;
-            }
-        },
-        onFinish: () => {
-            scholar.value[index].loading = false;
-        },
-    });
-};
+const rowStatusClass = (status) =>
+    [
+        "inline-flex items-center gap-1 whitespace-nowrap rounded border px-2 py-0.5 text-[11px] font-semibold",
+        {
+            valid: "border-slate-200 bg-white text-slate-700",
+            needs_correction: "border-slate-200 bg-white text-slate-700",
+            duplicate: "border-slate-200 bg-white text-slate-700",
+            missing_required: "border-slate-200 bg-white text-slate-700",
+        }[status] || "border-slate-200 bg-white text-slate-700",
+    ];
+
+const rowStatusDotClass = (status) =>
+    [
+        "h-1.5 w-1.5 rounded-full",
+        {
+            valid: "bg-emerald-500",
+            needs_correction: "bg-amber-500",
+            duplicate: "bg-rose-500",
+            missing_required: "bg-red-500",
+        }[status] || "bg-amber-500",
+    ];
 
 const moveProd = () => {
+    if (!canPublish.value) {
+        toast.add({
+            severity: "warn",
+            summary: "Import blocked",
+            detail: "Only files with 100% valid rows can be imported.",
+            life: 3000,
+        });
+        return;
+    }
+
     confirm.require({
         group: "templating",
-        message: "Are you sure you want to publish all completed records?",
-        header: "Publish Completed Records",
+        message: "Import this complete batch to scholar records? This will only proceed because every row is valid.",
+        header: "Import Batch",
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             label: "Cancel",
@@ -436,7 +310,7 @@ const moveProd = () => {
             outlined: true,
         },
         acceptProps: {
-            label: "Proceed",
+            label: "Import",
         },
         accept: () => {
             router.post(
@@ -454,14 +328,7 @@ const moveProd = () => {
                 },
             );
         },
-        reject: () => {
-            toast.add({
-                severity: "warn",
-                summary: "Cancelled",
-                detail: "Validation was cancelled.",
-                life: 3000,
-            });
-        },
     });
 };
+
 </script>
