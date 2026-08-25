@@ -617,7 +617,15 @@
                                             v-model="personalInfo.course"
                                             uppercase
                                             :disable="!editBtn.info"
+                                            @update:model-value="renderCurriculum"
                                             :options="page.props?.courseOptions"
+                                        />
+                                        <SelectInput
+                                            label="Curriculum"
+                                            v-model="personalInfo.curriculum"
+                                            :disable="!editBtn.info"
+                                            :options="page.props?.curriculumOptions"
+                                            clearable
                                         />
                                     </div>
                                 </section>
@@ -2904,6 +2912,7 @@ const personalInfo = useForm({
     sub_program: null,
     award_year: null,
     status: null,
+    curriculum: null,
     guardian_name: null,
     guardian_id_no: null,
     guardian_place_issue: null,
@@ -3515,6 +3524,9 @@ watch(
         );
         personalInfo.school = newVal.schoolInput ?? null;
         personalInfo.course = newVal.courseInput ?? null;
+        personalInfo.curriculum = newVal.curriculumInput?.id
+            ? newVal.curriculumInput
+            : null;
         ((personalInfo.schoolId = newVal.schoolInfoId ?? null),
             (personalInfo.guardian_name = newVal.guardian?.name ?? null));
         personalInfo.guardian_id_no = newVal.guardian?.id_no ?? null;
@@ -3527,11 +3539,30 @@ watch(
 
 const renderCourse = (event) => {
     router.reload({
-        only: ["courseOptions"],
+        only: ["courseOptions", "curriculumOptions"],
         data: { campus: event.name },
         preserveState: true,
         preserveScroll: true,
         showProgress: true,
+        onSuccess: () => {
+            personalInfo.curriculum = null;
+        },
+    });
+};
+
+const renderCurriculum = (event) => {
+    router.reload({
+        only: ["curriculumOptions"],
+        data: {
+            id: page.props?.details?.id,
+            course: event?.id,
+        },
+        preserveState: true,
+        preserveScroll: true,
+        showProgress: true,
+        onSuccess: () => {
+            personalInfo.curriculum = null;
+        },
     });
 };
 
@@ -3595,7 +3626,7 @@ const cancelEdit = () => {
     editBtn.value.info = false;
 
     router.reload({
-        only: ["courseOptions"],
+        only: ["courseOptions", "curriculumOptions"],
         data: { campus: page.props?.details.schoolInput.name },
         preserveState: true,
         preserveScroll: true,
@@ -3606,6 +3637,10 @@ const cancelEdit = () => {
             window.history.replaceState({}, "", url);
             personalInfo.school = page.props?.details.schoolInput ?? null;
             personalInfo.course = page.props?.details.courseInput ?? null;
+            personalInfo.curriculum =
+                page.props?.details.curriculumInput?.id
+                    ? page.props.details.curriculumInput
+                    : null;
         },
     });
 };

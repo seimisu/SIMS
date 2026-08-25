@@ -22,6 +22,7 @@ use App\Models\ScholarTerm;
 use App\Models\ScholarUploadedFiles;
 use App\Models\ScholarUploadTemp;
 use App\Models\SchoolCampusCourses;
+use App\Models\SchoolCampusCourseCurriculums;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\ScholarUploadedNotification;
@@ -95,6 +96,10 @@ class ScholarReviewController extends Controller
                             'id' => $scholar->matched_course_id,
                             'name' => $scholar->matched_course_name,
                             'campus' => $scholar->matched_course_campus,
+                        ] : null,
+                        'matchedCurriculum' => $scholar->matched_curriculum_id ? [
+                            'id' => $scholar->matched_curriculum_id,
+                            'name' => $scholar->matched_curriculum_name,
                         ] : null,
                         'matchedAddress' => $scholar->matched_address,
                         'status' => $scholar->status,
@@ -191,6 +196,16 @@ class ScholarReviewController extends Controller
             Excel::import($import, storage_path('app/public/'.$path));
             $this->validateImportHeaders($import->rows);
             $duplicateLookups = $this->duplicateLookupsForImport($import->rows);
+            $lookupCache = [
+                'statuses' => [],
+                'types' => [],
+                'subprograms' => [],
+                'schools' => [],
+                'courses' => [],
+                'curriculums' => [],
+                'locations' => [],
+                'regions' => [],
+            ];
 
             $uploadedfile = ScholarUploadedFiles::create([
                 'filename' => $filename,
@@ -201,7 +216,7 @@ class ScholarReviewController extends Controller
             ]);
             foreach ($import->rows as $key => $value) {
                 $rowNumber = $import->rowNumbers[$key] ?? ($key + 2);
-                $validation = $this->validateImportRow($value, $rowNumber, null, $duplicateLookups);
+                $validation = $this->validateImportRow($value, $rowNumber, null, $duplicateLookups, $lookupCache);
                 $date = $this->parseImportDate($value['birthdate'] ?? null);
                 $uploadedfile->temp()->create(
                     [
@@ -237,6 +252,8 @@ class ScholarReviewController extends Controller
                         'matched_course_id' => $validation['matches']['course_id'],
                         'matched_course_name' => $validation['matches']['course_name'],
                         'matched_course_campus' => $validation['matches']['course_campus'],
+                        'matched_curriculum_id' => $validation['matches']['curriculum_id'],
+                        'matched_curriculum_name' => $validation['matches']['curriculum_name'],
                         'matched_address' => $validation['matches']['address'],
                     ]
                 );
@@ -811,17 +828,19 @@ class ScholarReviewController extends Controller
 
                 $campusId = $data->matched_campus_id;
                 $campusCourseId = $data->matched_course_id;
+                $curriculumId = $data->matched_curriculum_id;
                 $address = $data->matched_address;
 
-                if (! $campusId || ! $campusCourseId || ! $address) {
+                if (! $campusId || ! $campusCourseId || ! $curriculumId || ! $address) {
                     $campus = $this->matchedCourse($data['course'], $data['school']);
                     $address = $this->matchedAddress($data);
                     $campusId = $campus?->campus_id;
                     $campusCourseId = $campus?->id;
+                    $curriculumId = $this->matchedCurriculum($campusCourseId)?->id;
                 }
 
-                if (! $campusId || ! $campusCourseId || ! $address) {
-                    throw new Exception("Row {$data->row_number}: validated row no longer matches current school, course, or address records.");
+                if (! $campusId || ! $campusCourseId || ! $curriculumId || ! $address) {
+                    throw new Exception("Row {$data->row_number}: validated row no longer matches current school, course, curriculum, or address records.");
                 }
 
                 $scholars = Scholars::create([
@@ -870,6 +889,7 @@ class ScholarReviewController extends Controller
                 $scholars->schoolInfo()->create([
                     'campus_id' => $campusId,
                     'campus_course_id' => $campusCourseId,
+                    'curriculum_id' => $curriculumId,
                 ]);
             }
 
@@ -948,8 +968,19 @@ class ScholarReviewController extends Controller
         ]);
     }
 
-    private function validateImportRow($row, int $rowNumber, ?int $ignoreTempId = null, array $duplicateLookups = []): array
+    private function validateImportRow($row, int $rowNumber, ?int $ignoreTempId = null, array $duplicateLookups = [], array &$lookupCache = []): array
     {
+        $lookupCache = array_replace([
+            'statuses' => [],
+            'types' => [],
+            'subprograms' => [],
+            'schools' => [],
+            'courses' => [],
+            'curriculums' => [],
+            'locations' => [],
+            'regions' => [],
+        ], $lookupCache);
+
         $data = collect($row)->map(fn ($value) => is_string($value) ? trim($value) : $value)->all();
         $errors = [];
 
@@ -990,11 +1021,8 @@ class ScholarReviewController extends Controller
         if (filled($data['spas_no'] ?? null)) {
             $normalizedSpas = Str::lower(trim($data['spas_no']));
             $duplicate = ($duplicateLookups['spas_no'][$normalizedSpas] ?? 0) > 1
-                || Scholars::whereRaw('LOWER(spas_no) = ?', [$normalizedSpas])->exists()
-                || ScholarUploadTemp::whereRaw('LOWER(spas_no) = ?', [$normalizedSpas])
-                    ->when($ignoreTempId, fn ($q) => $q->where('id', '!=', $ignoreTempId))
-                    ->whereHas('file', fn ($q) => $q->whereNot('status', 'reject'))
-                    ->exists();
+                || in_array($normalizedSpas, $duplicateLookups['existing_spas_no'] ?? [], true)
+                || in_array($normalizedSpas, $duplicateLookups['active_temp_spas_no'] ?? [], true);
             if ($duplicate) {
                 $errors[] = ($duplicateLookups['spas_no'][$normalizedSpas] ?? 0) > 1
                     ? 'SPAS No is duplicated within this Excel file.'
@@ -1005,11 +1033,8 @@ class ScholarReviewController extends Controller
         if (filled($data['email'] ?? null)) {
             $normalizedEmail = Str::lower(trim($data['email']));
             $emailDuplicate = ($duplicateLookups['email'][$normalizedEmail] ?? 0) > 1
-                || ScholarProfiles::whereRaw('LOWER(email) = ?', [$normalizedEmail])->exists()
-                || ScholarUploadTemp::whereRaw('LOWER(email) = ?', [$normalizedEmail])
-                    ->when($ignoreTempId, fn ($q) => $q->where('id', '!=', $ignoreTempId))
-                    ->whereHas('file', fn ($q) => $q->whereNot('status', 'reject'))
-                    ->exists();
+                || in_array($normalizedEmail, $duplicateLookups['existing_email'] ?? [], true)
+                || in_array($normalizedEmail, $duplicateLookups['active_temp_email'] ?? [], true);
             if ($emailDuplicate) {
                 $duplicate = true;
                 $errors[] = ($duplicateLookups['email'][$normalizedEmail] ?? 0) > 1
@@ -1018,21 +1043,37 @@ class ScholarReviewController extends Controller
             }
         }
 
-        if (filled($data['status'] ?? null) && ! ListStatuses::whereRaw('LOWER(name) = ?', [Str::lower($data['status'])])->exists()) {
+        if (filled($data['status'] ?? null) && ! $this->cachedLookupExists(
+            $lookupCache,
+            'statuses',
+            $data['status'],
+            fn () => ListStatuses::whereRaw('LOWER(name) = ?', [Str::lower($data['status'])])->exists()
+        )) {
             $errors[] = "Status '{$data['status']}' was not found in the database.";
         }
 
-        if (filled($data['scholarship_type'] ?? null) && ! ListReferences::whereRaw('LOWER(name) = ?', [Str::lower($data['scholarship_type'])])->exists()) {
+        if (filled($data['scholarship_type'] ?? null) && ! $this->cachedLookupExists(
+            $lookupCache,
+            'types',
+            $data['scholarship_type'],
+            fn () => ListReferences::whereRaw('LOWER(name) = ?', [Str::lower($data['scholarship_type'])])->exists()
+        )) {
             $errors[] = "Scholarship type '{$data['scholarship_type']}' was not found in the database.";
         }
 
-        if (filled($data['scholarship_subprogram'] ?? null) && ! ListPrograms::whereRaw('LOWER(name) = ?', [Str::lower($data['scholarship_subprogram'])])->exists()) {
+        if (filled($data['scholarship_subprogram'] ?? null) && ! $this->cachedLookupExists(
+            $lookupCache,
+            'subprograms',
+            $data['scholarship_subprogram'],
+            fn () => ListPrograms::whereRaw('LOWER(name) = ?', [Str::lower($data['scholarship_subprogram'])])->exists()
+        )) {
             $errors[] = "Scholarship subprogram '{$data['scholarship_subprogram']}' was not found in the database.";
         }
 
-        $schoolMatch = $this->matchedSchool($data['school'] ?? null);
-        $courseMatch = $this->matchedCourse($data['course'] ?? null, $data['school'] ?? null);
-        $locationValidation = $this->validateLocationMatch($data);
+        $schoolMatch = $this->cachedMatchedSchool($data['school'] ?? null, $lookupCache);
+        $courseMatch = $this->cachedMatchedCourse($data['course'] ?? null, $data['school'] ?? null, $lookupCache);
+        $curriculumMatch = $this->cachedMatchedCurriculum($courseMatch?->id, $lookupCache);
+        $locationValidation = $this->cachedValidateLocationMatch($data, $lookupCache);
 
         if (filled($data['school'] ?? null) && ! $schoolMatch) {
             $errors[] = "School '{$data['school']}' was not found in the database.";
@@ -1040,6 +1081,10 @@ class ScholarReviewController extends Controller
 
         if (filled($data['course'] ?? null) && ! $courseMatch) {
             $errors[] = "Course '{$data['course']}' was not found for school '{$data['school']}'.";
+        }
+
+        if ($courseMatch && ! $curriculumMatch) {
+            $errors[] = "Curriculum was not found for course '{$courseMatch->course?->name}' at school '{$courseMatch->campus?->generated_name}'.";
         }
 
         if (! $locationValidation['matched']) {
@@ -1066,6 +1111,8 @@ class ScholarReviewController extends Controller
                 'course_id' => $courseMatch?->id,
                 'course_name' => $courseMatch?->course ? Str::upper($courseMatch->course->name) : null,
                 'course_campus' => $courseMatch?->campus?->generated_name,
+                'curriculum_id' => $curriculumMatch?->id,
+                'curriculum_name' => $this->curriculumDisplayName($curriculumMatch),
                 'address' => $locationValidation['address'],
             ],
         ];
@@ -1089,9 +1136,42 @@ class ScholarReviewController extends Controller
             }
         }
 
+        $spasKeys = array_keys($spasNumbers);
+        $emailKeys = array_keys($emails);
+
         return [
             'spas_no' => $spasNumbers,
             'email' => $emails,
+            'existing_spas_no' => $spasKeys
+                ? Scholars::query()
+                    ->selectRaw('LOWER(spas_no) as value')
+                    ->whereIn(DB::raw('LOWER(spas_no)'), $spasKeys)
+                    ->pluck('value')
+                    ->all()
+                : [],
+            'existing_email' => $emailKeys
+                ? ScholarProfiles::query()
+                    ->selectRaw('LOWER(email) as value')
+                    ->whereIn(DB::raw('LOWER(email)'), $emailKeys)
+                    ->pluck('value')
+                    ->all()
+                : [],
+            'active_temp_spas_no' => $spasKeys
+                ? ScholarUploadTemp::query()
+                    ->selectRaw('LOWER(spas_no) as value')
+                    ->whereIn(DB::raw('LOWER(spas_no)'), $spasKeys)
+                    ->whereHas('file', fn ($q) => $q->whereNot('status', 'reject'))
+                    ->pluck('value')
+                    ->all()
+                : [],
+            'active_temp_email' => $emailKeys
+                ? ScholarUploadTemp::query()
+                    ->selectRaw('LOWER(email) as value')
+                    ->whereIn(DB::raw('LOWER(email)'), $emailKeys)
+                    ->whereHas('file', fn ($q) => $q->whereNot('status', 'reject'))
+                    ->pluck('value')
+                    ->all()
+                : [],
         ];
     }
 
@@ -1201,6 +1281,21 @@ class ScholarReviewController extends Controller
             ->first();
     }
 
+    private function cachedMatchedSchool(?string $school, array &$lookupCache): ?SchoolCampuses
+    {
+        $key = $this->normalizeImportLookupString($school);
+
+        if (! filled($key)) {
+            return null;
+        }
+
+        if (! array_key_exists($key, $lookupCache['schools'])) {
+            $lookupCache['schools'][$key] = $this->matchedSchool($school);
+        }
+
+        return $lookupCache['schools'][$key];
+    }
+
     private function matchedCourse(?string $course, ?string $school): ?SchoolCampusCourses
     {
         if (! filled($course) || ! filled($school)) {
@@ -1215,6 +1310,57 @@ class ScholarReviewController extends Controller
             ->first();
     }
 
+    private function cachedMatchedCourse(?string $course, ?string $school, array &$lookupCache): ?SchoolCampusCourses
+    {
+        $key = $this->normalizeImportLookupString($school).'|'.$this->normalizeImportLookupString($course);
+
+        if ($key === '|') {
+            return null;
+        }
+
+        if (! array_key_exists($key, $lookupCache['courses'])) {
+            $lookupCache['courses'][$key] = $this->matchedCourse($course, $school);
+        }
+
+        return $lookupCache['courses'][$key];
+    }
+
+    private function matchedCurriculum(?int $campusCourseId): ?SchoolCampusCourseCurriculums
+    {
+        if (! $campusCourseId) {
+            return null;
+        }
+
+        return SchoolCampusCourseCurriculums::query()
+            ->where('campus_course_id', $campusCourseId)
+            ->where('is_delete', false)
+            ->where('is_active', true)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    private function cachedMatchedCurriculum(?int $campusCourseId, array &$lookupCache): ?SchoolCampusCourseCurriculums
+    {
+        if (! $campusCourseId) {
+            return null;
+        }
+
+        if (! array_key_exists($campusCourseId, $lookupCache['curriculums'])) {
+            $lookupCache['curriculums'][$campusCourseId] = $this->matchedCurriculum($campusCourseId);
+        }
+
+        return $lookupCache['curriculums'][$campusCourseId];
+    }
+
+    private function curriculumDisplayName(?SchoolCampusCourseCurriculums $curriculum): ?string
+    {
+        if (! $curriculum) {
+            return null;
+        }
+
+        return 'Curriculum '.$curriculum->years;
+    }
+
     private function whereNormalizedSchoolName($query, ?string $school)
     {
         return $query->whereRaw(
@@ -1226,6 +1372,21 @@ class ScholarReviewController extends Controller
     private function normalizeImportLookupString(?string $value): string
     {
         return preg_replace('/[^a-z0-9]/', '', Str::lower(trim((string) $value))) ?? '';
+    }
+
+    private function cachedLookupExists(array &$lookupCache, string $bucket, ?string $value, callable $resolver): bool
+    {
+        $key = Str::lower(trim((string) $value));
+
+        if ($key === '') {
+            return false;
+        }
+
+        if (! array_key_exists($key, $lookupCache[$bucket])) {
+            $lookupCache[$bucket][$key] = $resolver();
+        }
+
+        return $lookupCache[$bucket][$key];
     }
 
     private function matchedAddress($data): ?array
@@ -1294,6 +1455,22 @@ class ScholarReviewController extends Controller
             'province_code' => $provinceRecord->code,
             'region_code' => $regionRecord->code,
         ]);
+    }
+
+    private function cachedValidateLocationMatch($data, array &$lookupCache): array
+    {
+        $key = implode('|', [
+            Str::lower(trim((string) data_get($data, 'region', ''))),
+            Str::lower(trim((string) data_get($data, 'province', ''))),
+            Str::lower(trim((string) data_get($data, 'municipality', ''))),
+            Str::lower(trim((string) data_get($data, 'barangay', ''))),
+        ]);
+
+        if (! array_key_exists($key, $lookupCache['locations'])) {
+            $lookupCache['locations'][$key] = $this->validateLocationMatch($data);
+        }
+
+        return $lookupCache['locations'][$key];
     }
 
     private function locationValidationResult(?string $message, ?array $address = null): array

@@ -390,7 +390,7 @@
                 </DefaultSelectionTable> -->
             </div>
         </div>
-        <DrawerScholarModule v-if="scholarDrawer" v-model:visible="scholarDrawer" :details="selectedRow" />
+        <DrawerScholar1Module v-if="scholarDrawer" v-model="scholarDrawer" />
         <DefaultToast ref="toastRef" />
         <DefaultConfirmDialog ref="confirmRef" />
         <Dialog v-model:visible="dialog.subject" class="w-[95%]" modal>
@@ -648,7 +648,7 @@ import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
 import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
-import DrawerScholarModule from "../../Modules/Others/DrawerScholarModule.vue";
+import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import * as TablerIcons from "@tabler/icons-vue";
@@ -823,7 +823,15 @@ const toggleScholarDetails = (data) => {
     selectedRow.value = data;
     router.reload({
         data: { id: selectedRow.value.id },
-        only: ["scholarDetails"],
+        only: [
+            "details",
+            "statusOptions",
+            "programOptions",
+            "subProgramOptions",
+            "schoolOptions",
+            "courseOptions",
+            "curriculumOptions",
+        ],
         onSuccess: () => {
             scholarDrawer.value = true;
         },

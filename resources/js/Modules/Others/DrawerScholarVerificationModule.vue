@@ -47,7 +47,7 @@
                 </div>
 
                 <div class="flex-1 overflow-auto rounded-lg border bg-white">
-                    <table class="min-w-[2600px] w-full text-xs text-slate-700">
+                    <table class="min-w-[2700px] w-full text-xs text-slate-700">
                         <thead class="sticky top-0 z-10 bg-slate-50">
                             <tr>
                                 <th class="border px-2 py-2 text-left">Row</th>
@@ -74,6 +74,7 @@
                                 <th class="border px-2 py-2 text-left">Region</th>
                                 <th class="border px-2 py-2 text-left">Year Awarded</th>
                                 <th class="border px-2 py-2 text-left">Database Course</th>
+                                <th class="border px-2 py-2 text-left">Database Curriculum</th>
                                 <th class="border px-2 py-2 text-left">Database School</th>
                             </tr>
                         </thead>
@@ -125,6 +126,9 @@
                                         Excel: {{ item.course }}
                                     </div>
                                 </td>
+                                <td class="border px-2 py-1 min-w-44">
+                                    {{ item.matchedCurriculum?.name || "-" }}
+                                </td>
                                 <td class="border px-2 py-1 min-w-72">
                                     <div>{{ item.matchedSchool?.name || item.matchedCourse?.campus || "-" }}</div>
                                     <div v-if="(item.matchedSchool?.name || item.matchedCourse?.campus) && (item.matchedSchool?.name || item.matchedCourse?.campus) !== item.school" class="text-[10px] text-slate-400">
@@ -133,7 +137,7 @@
                                 </td>
                             </tr>
                             <tr v-if="!scholar.length">
-                                <td colspan="25" class="border px-2 py-8 text-center text-slate-500">
+                                <td colspan="26" class="border px-2 py-8 text-center text-slate-500">
                                     No imported rows found.
                                 </td>
                             </tr>
@@ -172,18 +176,7 @@
         </template>
     </Drawer>
 
-    <ConfirmDialog group="templating" class="w-100">
-        <template #message="slotProps">
-            <div class="flex flex-col items-center w-full gap-4 text-center">
-                <i :class="slotProps.message.icon" class="!text-6xl text-red-500"></i>
-                <p class="text-wrap text-sm">{{ slotProps.message.message }}</p>
-                <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
-                    {{ page.props?.validationStatus.completed ?? 0 }} out of
-                    {{ page.props?.validationStatus.total ?? 0 }} rows valid
-                </div>
-            </div>
-        </template>
-    </ConfirmDialog>
+    <DefaultConfirmDialog group="templating" />
 </template>
 
 <script setup>
@@ -194,6 +187,7 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import { route } from "ziggy-js";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -224,6 +218,7 @@ const conflictSummary = (item) => {
 
     if (firstError.includes("School")) return "School not found";
     if (firstError.includes("Course")) return "Course not found for school";
+    if (firstError.includes("Curriculum")) return "Curriculum not found";
     if (firstError.includes("Region")) return "Region not found";
     if (firstError.includes("Province")) return "Province not found";
     if (firstError.includes("Municipality")) return "Municipality not found";
@@ -250,6 +245,7 @@ const conflictDetail = (item) => {
     if (item.row_status === "valid") return "";
     if (!item.matchedSchool) return `School '${item.school || "-"}' was not found in the database.`;
     if (!item.matchedCourse) return `Course '${item.course || "-"}' was not found for school '${item.school || "-"}'.`;
+    if (!item.matchedCurriculum) return `Curriculum was not found for course '${item.matchedCourse?.name || item.course || "-"}' at school '${item.matchedCourse?.campus || item.matchedSchool?.name || item.school || "-"}'.`;
     if (!item.matchedAddress) {
         return `Location was not found using barangay '${item.barangay || "-"}', municipality '${item.municipality || "-"}', province '${item.province || "-"}', region '${item.region || "-"}'. Address Line is free text.`;
     }
@@ -301,17 +297,14 @@ const moveProd = () => {
 
     confirm.require({
         group: "templating",
-        message: "Import this complete batch to scholar records? This will only proceed because every row is valid.",
+        message: `Import this complete batch to scholar records? ${page.props?.validationStatus.completed ?? 0} out of ${page.props?.validationStatus.total ?? 0} rows are valid.`,
         header: "Import Batch",
         icon: "pi pi-exclamation-triangle",
-        rejectProps: {
-            label: "Cancel",
-            severity: "secondary",
-            outlined: true,
-        },
-        acceptProps: {
-            label: "Import",
-        },
+        severity: "info",
+        rejectLabel: "Cancel",
+        rejectSeverity: "secondary",
+        acceptLabel: "Import",
+        acceptSeverity: "info",
         accept: () => {
             router.post(
                 route("review.publish", { id: props.id }),

@@ -54,6 +54,7 @@ class ScholarManagementController extends Controller
         $gradeOptions = $options['gradeOptions'];
         $schoolOptions = $options['schoolOptions'];
         $courseOptions = $options['courseOptions'];
+        $curriculumOptions = $options['curriculumOptions'];
         $generateSubjects = $options['generateSubjects'];
         $filterSchool = $options['filterSchool'];
 
@@ -98,6 +99,7 @@ class ScholarManagementController extends Controller
                 'gradeOptions' => $gradeOptions,
                 'schoolOptions' => $schoolOptions,
                 'courseOptions' => $courseOptions,
+                'curriculumOptions' => $curriculumOptions,
                 'generateSubjects' => $generateSubjects,
                 'OpenDetail' => $request->input('id') ?? null,
                 'filterSearch' => $request->input('search') ?? null,
@@ -140,6 +142,7 @@ class ScholarManagementController extends Controller
                 'status' => 'nullable',
                 'school' => 'nullable',
                 'course' => 'nullable',
+                'curriculum' => 'nullable',
                 'schoolId' => 'nullable',
                 'guardian_name' => 'nullable|string|max:255',
                 'guardian_id_no' => 'nullable|string|max:255',

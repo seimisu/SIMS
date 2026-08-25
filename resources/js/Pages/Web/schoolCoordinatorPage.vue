@@ -1678,18 +1678,13 @@ const loadPage = (page) => {
 
 const confirmDelete = (item) => {
     confirm.require({
-        message: `Are you sure you want to delete "${item.grade} (${item.lower ?? "Not Set"} - ${item.upper ?? "Not Set"})"?"`,
+        group: "global",
+        message: `Are you sure you want to delete "${item.grade} (${item.lower ?? "Not Set"} - ${item.upper ?? "Not Set"})"?`,
         header: "Delete Confirmation",
-        icon: "pi pi-exclamation-triangle",
+        icon: "pi pi-trash",
+        severity: "danger",
         rejectLabel: "Cancel",
         acceptLabel: "Delete",
-        rejectProps: {
-            severity: "secondary",
-            outlined: true,
-        },
-        acceptProps: {
-            severity: "danger",
-        },
         accept: () => {
             router.post(
                 route("schoolCoordinator.deleteGrade", item.id),

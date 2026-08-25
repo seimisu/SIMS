@@ -50,6 +50,8 @@ class ScholarUploadTemp extends Model
         'matched_course_id',
         'matched_course_name',
         'matched_course_campus',
+        'matched_curriculum_id',
+        'matched_curriculum_name',
         'matched_address',
     ];
 

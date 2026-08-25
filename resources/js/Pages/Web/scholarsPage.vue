@@ -668,6 +668,7 @@ const toggleScholarDetails = (event) => {
             "yearOptions",
             "schoolOptions",
             "courseOptions",
+            "curriculumOptions",
             "subjectOptions",
             "gradeOptions",
         ],

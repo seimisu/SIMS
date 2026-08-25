@@ -8,6 +8,7 @@ use App\Models\ListStatuses;
 use App\Models\Scholars;
 use App\Models\ScholarTerm;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
+use App\Models\SchoolCampusCourseCurriculums;
 use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
@@ -186,6 +187,7 @@ class ScholarManagementOptionsService
                 'gradeOptions' => null,
                 'schoolOptions' => [],
                 'courseOptions' => [],
+                'curriculumOptions' => [],
                 'generateSubjects' => Inertia::optional(fn () => collect()),
                 'standingOptions' => $this->standingOptions(),
             ];
@@ -202,6 +204,7 @@ class ScholarManagementOptionsService
             'gradeOptions' => $this->gradeOptions($selectedScholar),
             'schoolOptions' => $this->schoolOptions($permissions, $user),
             'courseOptions' => $this->courseOptions($request, 'campus'),
+            'curriculumOptions' => $this->curriculumOptions($request, $selectedScholar),
             'generateSubjects' => $this->generateSubjects($request, $selectedScholar),
             'standingOptions' => $this->standingOptions(),
         ];
@@ -354,6 +357,23 @@ class ScholarManagementOptionsService
                 'id' => $course->id,
                 'name' => $course->course?->name,
                 'campus' => $course->campus?->generated_name,
+            ]);
+    }
+
+    private function curriculumOptions(Request $request, Scholars $scholar)
+    {
+        $courseId = $request->input('course') ?? $scholar->schoolInfo->first()?->campus_course_id;
+
+        return SchoolCampusCourseCurriculums::where([
+            'is_delete' => false,
+            'is_active' => true,
+        ])
+            ->where('campus_course_id', $courseId)
+            ->orderByDesc('years')
+            ->get()
+            ->map(fn ($curriculum) => [
+                'id' => $curriculum->id,
+                'name' => 'Curriculum '.$curriculum->years,
             ]);
     }
 

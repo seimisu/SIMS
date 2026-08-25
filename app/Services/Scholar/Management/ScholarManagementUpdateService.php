@@ -14,7 +14,9 @@ class ScholarManagementUpdateService
     public function updatePersonal(int $scholarId, array $data): array
     {
         $scholar = Scholars::findOrFail($scholarId);
-        $slice = explode('-', $data['fulladdress']['id']);
+        $slice = isset($data['fulladdress']['id'])
+            ? explode('-', $data['fulladdress']['id'])
+            : null;
 
         $scholar->update([
             'program_id' => $data['program']['id'],
@@ -60,17 +62,25 @@ class ScholarManagementUpdateService
         }
     }
 
-    private function updateAddress(Scholars $scholar, int $scholarId, array $data, array $slice): void
+    private function updateAddress(Scholars $scholar, int $scholarId, array $data, ?array $slice): void
     {
-        $address = $scholar->address()->updateOrCreate(
-            ['scholar_id' => $scholar->id],
-            [
-                'address' => $data['address'] ?? null,
+        $addressData = [
+            'address' => $data['address'] ?? null,
+        ];
+
+        if ($slice) {
+            $addressData = [
+                ...$addressData,
                 'barangay_code' => $slice[0] ?? null,
                 'municipality_code' => $slice[1] ?? null,
                 'province_code' => $slice[2] ?? null,
                 'region_code' => $slice[3] ?? null,
-            ]
+            ];
+        }
+
+        $address = $scholar->address()->updateOrCreate(
+            ['scholar_id' => $scholar->id],
+            $addressData
         );
 
         if ($address->wasChanged()) {
@@ -88,6 +98,7 @@ class ScholarManagementUpdateService
             [
                 'campus_id' => $data['school']['id'],
                 'campus_course_id' => $data['course']['id'],
+                'curriculum_id' => $data['curriculum']['id'] ?? null,
             ]
         );
 

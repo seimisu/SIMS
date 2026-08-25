@@ -1,6 +1,7 @@
 <template>
     <Head title="Video Library" />
     <AuthLayout>
+        <DefaultConfirmDialog ref="confirmRef" />
         <div class="flex flex-col w-full h-full gap-4">
             <div class="flex">
                 <HeaderModule
@@ -221,11 +222,13 @@ import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
+import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
 
 const page = usePage();
 const searchInput = ref(null);
 const searchTimer = ref(null);
 const toolbarRef = ref(null);
+const confirmRef = ref(null);
 
 const resourceForm = useForm({
     id: null,
@@ -365,10 +368,14 @@ const saveResource = () => {
 };
 
 const deleteResource = (row) => {
-    if (!confirm(`Delete "${row.title}"?`)) return;
-
-    router.delete(route("video-resources.destroy", row.id), {
-        preserveScroll: true,
+    confirmRef.value.popupDialog(() => {
+        router.delete(route("video-resources.destroy", row.id), {
+            preserveScroll: true,
+        });
+    }, {
+        header: "Delete Video",
+        message: `Delete "${row.title}"?`,
+        icon: "pi pi-trash",
     });
 };
 

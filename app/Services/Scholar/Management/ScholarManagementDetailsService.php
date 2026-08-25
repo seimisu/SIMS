@@ -68,6 +68,9 @@ class ScholarManagementDetailsService
             'awardYear' => $scholar?->award_year,
             'schoolInfoId' => $schoolInfo?->id,
             'course' => $schoolInfo?->course?->course?->name,
+            'curriculum' => $schoolInfo?->curriculum
+                ? 'Curriculum '.$schoolInfo->curriculum->years
+                : null,
             'school' => $schoolInfo?->campus?->generated_name,
             'schoolInput' => [
                 'id' => $schoolInfo?->campus?->id,
@@ -81,6 +84,12 @@ class ScholarManagementDetailsService
                 'id' => $schoolInfo?->course?->id,
                 'name' => $schoolInfo?->course?->course?->name,
                 'campus' => $schoolInfo?->campus?->generated_name,
+            ],
+            'curriculumInput' => [
+                'id' => $schoolInfo?->curriculum?->id,
+                'name' => $schoolInfo?->curriculum
+                    ? 'Curriculum '.$schoolInfo->curriculum->years
+                    : null,
             ],
             'region' => $schoolInfo?->campus?->address?->region_array,
             'guardian' => [
@@ -150,11 +159,12 @@ class ScholarManagementDetailsService
                 'type:id,name',
                 'profile:id,scholar_id,photo,sex,fname,lname,mname,suffix,email,contact_no,birthplace,birthdate,religion,civil_status',
                 'schoolInfo' => fn ($q) => $q
-                    ->select('id', 'scholar_id', 'campus_id', 'campus_course_id')
+                    ->select('id', 'scholar_id', 'campus_id', 'campus_course_id', 'curriculum_id')
                     ->with([
                         'campus:id,generated_name,agency_id',
                         'campus.agency:id,name,slug',
                         'campus.address:campus_id,region_code',
+                        'curriculum:id,years',
                         'course' => fn ($q) => $q
                             ->select('id', 'course_id')
                             ->with([
