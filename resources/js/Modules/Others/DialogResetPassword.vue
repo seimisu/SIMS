@@ -20,8 +20,9 @@
                 <StepPanels>
                     <StepPanel :value="1">
                         <form @submit.prevent="submit" v-focustrap>
-                            <div class="flex flex-col gap-5 justify-between h-50">
-
+                            <div
+                                class="flex flex-col gap-5 justify-between h-50"
+                            >
                                 <!-- Description -->
                                 <span
                                     class="text-surface-500 text-justify text-sm indent-10 block text-gray-500"
@@ -29,8 +30,8 @@
                                     Please provide your registered email
                                     address. We will send a
                                     <b>reset link</b>
-                                    to verify your identity and help you
-                                    reset your password.
+                                    to verify your identity and help you reset
+                                    your password.
                                 </span>
 
                                 <!-- Email -->
@@ -43,17 +44,20 @@
                                         <span
                                             v-if="form.errors.email"
                                             class="text-red-500"
+                                            v-tooltip.top="form.errors.email"
                                         >
                                             *
                                         </span>
                                     </div>
 
                                     <IconField>
-                                        <InputIcon>
-                                            <IconMail
-                                                :size="20"
-                                                :stroke-width="1.25"
-                                            />
+                                        <InputIcon class="flex items-center">
+                                            <div>
+                                                <IconMail
+                                                    :size="20"
+                                                    :stroke-width="1.25"
+                                                />
+                                            </div>
                                         </InputIcon>
 
                                         <InputText
@@ -64,24 +68,14 @@
                                             size="small"
                                             autofocus
                                             autocomplete="email"
-                                            :invalid="!!form.errors.email"
                                         />
                                     </IconField>
-
-                                    <small
-                                        v-if="form.errors.email"
-                                        class="text-red-500"
-                                    >
-                                        {{ form.errors.email }}
-                                    </small>
                                 </div>
 
                                 <!-- Submit -->
                                 <Button
                                     :label="
-                                        form.processing
-                                            ? 'Sending...'
-                                            : 'Send'
+                                        form.processing ? 'Sending...' : 'Send'
                                     "
                                     size="small"
                                     raised
@@ -98,47 +92,47 @@
 </template>
 
 <script setup>
-import { useForm } from '@inertiajs/vue3'
-import { IconLockQuestion, IconMail } from '@tabler/icons-vue'
-import { ref } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { useForm } from "@inertiajs/vue3";
+import { IconLockQuestion, IconMail } from "@tabler/icons-vue";
+import { ref } from "vue";
+import { useToast } from "primevue/usetoast";
 
-const visible = defineModel('visible')
+const visible = defineModel("visible");
 
-const stepper = ref(1)
+const stepper = ref(1);
 
-const toast = useToast()
+const toast = useToast();
 
 const form = useForm({
-    email: '',
-})
+    email: "",
+});
 
 const submit = () => {
-    form.post(route('password.store'), {
+    form.post(route("password.store"), {
         preserveScroll: true,
 
         onSuccess: () => {
-            form.reset()
-            form.clearErrors()
+            form.reset();
+            form.clearErrors();
 
-            visible.value = false
+            visible.value = false;
 
             toast.add({
-                severity: 'success',
-                summary: 'Reset Link Sent',
-                detail: 'A password reset link has been sent to your email address.',
+                severity: "success",
+                summary: "Reset Link Sent",
+                detail: "A password reset link has been sent to your email address.",
                 life: 3000,
-            })
+            });
         },
 
         onError: (errors) => {
             toast.add({
-                severity: 'error',
-                summary: 'Failed',
-                detail: errors.email ?? 'Failed to send reset link.',
+                severity: "error",
+                summary: "Failed",
+                detail: errors.email ?? "Failed to send reset link.",
                 life: 3000,
-            })
+            });
         },
-    })
-}
+    });
+};
 </script>

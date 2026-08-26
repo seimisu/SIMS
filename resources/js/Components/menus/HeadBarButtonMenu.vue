@@ -1,13 +1,26 @@
 <template>
-    <Button type="button" @click="toggle" size="small" variant="text"
-        class="text-white py-1 px-2 rounded-[20px] cursor-pointer" unstyled>
+    <Button
+        type="button"
+        @click="toggle"
+        size="small"
+        variant="text"
+        class="text-white py-1 px-2 rounded-[20px] cursor-pointer"
+        unstyled
+    >
         <div class="flex items-center gap-2">
-            <Avatar v-if="page.props.user.profile.avatar === null"
-                :label="page.props.user.email.charAt(0).toUpperCase()" style="background-color: #dee9fc; color: #1a2551"
-                shape="circle" />
+            <Avatar
+                v-if="page.props.user.profile.avatar === null"
+                :label="page.props.user.email.charAt(0).toUpperCase()"
+                style="background-color: #dee9fc; color: #1a2551"
+                shape="circle"
+            />
 
-            <Avatar v-else style="background-color: #dee9fc; color: #1a2551" shape="circle"
-                :image="page.props.user.profile.avatar_url" />
+            <Avatar
+                v-else
+                style="background-color: #dee9fc; color: #1a2551"
+                shape="circle"
+                :image="page.props.user.profile.avatar_url"
+            />
 
             <div class="flex-1 text-left leading-none">
                 <div class="text-[12px] font-semibold leading-none">
@@ -17,8 +30,11 @@
                     }}
                 </div>
                 <span class="text-[10px] leading-none capitalize">
-                    {{ page.props.user.role_array.name }} (<span class="uppercase">{{
-                        page.props.user.profile.agency.slug }}</span>)</span>
+                    {{ page.props.user.role_array.name }} (<span
+                        class="uppercase"
+                        >{{ page.props.user.profile.agency.slug }}</span
+                    >)</span
+                >
             </div>
         </div>
     </Button>
@@ -28,31 +44,70 @@
                 <span class="text-sm">{{ item.label }}</span>
             </template>
             <template #item="{ item, props }">
-                <a v-ripple class="flex items-center p-2 cursor-pointer !text-xs gap-2" type="button"
-                    @click="item.action">
-                    <component :is="item.icons" size="25px" :class="item.label === 'Logout'
-                            ? 'text-red-500'
-                            : 'text-gray-600'
-                        " :stroke-width="1.5" />
-                    <span class="text-gray-500" :class="item.label === 'Logout'
-                            ? 'text-red-500'
-                            : 'text-gray-600'
-                        ">{{ item.label }}</span>
+                <a
+                    v-ripple
+                    class="flex items-center p-2 cursor-pointer !text-xs gap-2"
+                    type="button"
+                    @click="item.action"
+                >
+                    <component
+                        :is="item.icons"
+                        size="25px"
+                        :class="
+                            item.label === 'Logout'
+                                ? 'text-red-500'
+                                : 'text-gray-600'
+                        "
+                        :stroke-width="1.5"
+                    />
+                    <span
+                        class="text-gray-500"
+                        :class="
+                            item.label === 'Logout'
+                                ? 'text-red-500'
+                                : 'text-gray-600'
+                        "
+                        >{{ item.label }}</span
+                    >
                 </a>
             </template>
         </Menu>
     </div>
-    <DefaultDialog v-model:visible="passDialog" :icon="IconPasswordUser" width-set="lg:!w-[35%]"
-        :loading="passwordForm.processing" @submit-form="submitForm" title="Update Your Password"
-        description="To ensure your account remains protected at all times, please choose a password that is strong, unique, and difficult for others to guess.">
+    <DefaultDialog
+        v-model:visible="passDialog"
+        :icon="IconPasswordUser"
+        width-set="lg:!w-[35%]"
+        :loading="passwordForm.processing"
+        @submit-form="submitForm"
+        title="Update Your Password"
+        description="To ensure your account remains protected at all times, please choose a password that is strong, unique, and difficult for others to guess."
+    >
         <template #message>
-            <DefaultMessages v-if="passwordForm.hasErrors" message-type="error" :message="passwordForm.errors" />
+            <DefaultMessages
+                v-if="passwordForm.hasErrors"
+                message-type="error"
+                :message="passwordForm.errors"
+            />
         </template>
         <template #forms>
             <div class="pt-5 flex flex-col gap-5">
-                <PasswordInput label="Current Password" v-model="passwordForm.current" :feedback="false" toggle-icon />
-                <PasswordInput label="New Password" v-model="passwordForm.new" :feedback="true" toggle-icon />
-                <PasswordInput label="Confirm Password" v-model="passwordForm.confirm" :feedback="false" />
+                <PasswordInput
+                    label="Current Password"
+                    v-model="passwordForm.current"
+                    :feedback="false"
+                    toggle-icon
+                />
+                <PasswordInput
+                    label="New Password"
+                    v-model="passwordForm.new"
+                    :feedback="true"
+                    toggle-icon
+                />
+                <PasswordInput
+                    label="Confirm Password"
+                    v-model="passwordForm.confirm"
+                    :feedback="false"
+                />
             </div>
         </template>
     </DefaultDialog>
@@ -91,9 +146,9 @@ const items = ref([
         items: [
             {
                 label: "User Profile",
-                icons : IconUserCircle,
+                icons: IconUserCircle,
                 action: () => {
-                    router.get('/profile');
+                    router.get("/profile");
                 },
             },
             {
