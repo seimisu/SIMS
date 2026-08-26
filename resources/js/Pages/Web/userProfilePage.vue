@@ -230,25 +230,6 @@
                 />
               </div>
             </div>
-
-            <!-- Two Factor -->
-            <div class="border border-surface-200 rounded-xl p-5">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <i class="pi pi-key text-primary"></i>
-
-                    <h4 class="font-semibold">Two-Factor Authentication</h4>
-                  </div>
-
-                  <p class="text-sm text-surface-500 mt-2">
-                    Add an additional layer of security to your account.
-                  </p>
-                </div>
-
-                <ToggleSwitch v-model="twoFactorEnabled" />
-              </div>
-            </div>
           </div>
         </template>
       </Card>
@@ -338,58 +319,7 @@
         </template>
       </Card>
     </div>
-    <Dialog
-      v-model:visible="passwordDialog"
-      modal
-      header="Change Password"
-      :style="{ width: '450px' }"
-    >
-      <div class="flex flex-col gap-5 pt-2">
-        <div class="flex flex-col gap-2">
-          <label class="font-medium"> Current Password </label>
-
-          <Password
-            v-model="passwordForm.current"
-            toggleMask
-            class="w-full"
-            inputClass="w-full"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label class="font-medium"> New Password </label>
-
-          <Password
-            v-model="passwordForm.new"
-            toggleMask
-            class="w-full"
-            inputClass="w-full"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label class="font-medium"> Confirm New Password </label>
-
-          <Password
-            v-model="passwordForm.confirm"
-            toggleMask
-            class="w-full"
-            inputClass="w-full"
-          />
-        </div>
-      </div>
-
-      <template #footer>
-        <Button
-          label="Cancel"
-          severity="secondary"
-          outlined
-          @click="passwordDialog = false"
-        />
-
-        <Button label="Update Password" icon="pi pi-check" @click="changePassword" />
-      </template>
-    </Dialog>
+    <ChangePasswordDialog v-model:visible="passwordDialog" />
 
     <!-- ================================================= -->
     <!-- PROFILE PHOTO DIALOG -->
@@ -455,12 +385,11 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
+import ChangePasswordDialog from "../../Components/dialogs/ChangePasswordDialog.vue";
 import Card from "primevue/card";
 import Avatar from "primevue/avatar";
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import Password from "primevue/password";
-import ToggleSwitch from "primevue/toggleswitch";
 import Tag from "primevue/tag";
 import Divider from "primevue/divider";
 import DataTable from "primevue/datatable";
@@ -588,20 +517,6 @@ const initials = computed(() => {
 
 const passwordDialog = ref(false);
 
-const passwordForm = ref({
-  current: "",
-  new: "",
-  confirm: "",
-});
-
-/*
-|--------------------------------------------------------------------------
-| Two Factor
-|--------------------------------------------------------------------------
-*/
-
-const twoFactorEnabled = ref(false);
-
 /*
 |--------------------------------------------------------------------------
 | Profile Photo
@@ -699,27 +614,4 @@ const resetForm = () => {
   };
 };
 
-const changePassword = () => {
-  if (
-    !passwordForm.value.current ||
-    !passwordForm.value.new ||
-    !passwordForm.value.confirm
-  ) {
-    return;
-  }
-
-  if (passwordForm.value.new !== passwordForm.value.confirm) {
-    return;
-  }
-
-  console.log("Changing password...", passwordForm.value);
-
-  passwordDialog.value = false;
-
-  passwordForm.value = {
-    current: "",
-    new: "",
-    confirm: "",
-  };
-};
 </script>

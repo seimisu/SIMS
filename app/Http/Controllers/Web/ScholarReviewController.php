@@ -102,6 +102,10 @@ class ScholarReviewController extends Controller
                             'name' => $scholar->matched_curriculum_name,
                         ] : null,
                         'matchedAddress' => $scholar->matched_address,
+                        'matchedRegion' => $scholar->matched_address['region'] ?? null,
+                        'matchedProvince' => $scholar->matched_address['province'] ?? null,
+                        'matchedMunicipality' => $scholar->matched_address['municipality'] ?? null,
+                        'matchedBarangay' => $scholar->matched_address['barangay'] ?? null,
                         'status' => $scholar->status,
                         'row_status' => $scholar->row_status,
                         'validation_errors' => $scholar->validation_errors ?? [],
@@ -1430,32 +1434,70 @@ class ScholarReviewController extends Controller
         $regionRecord = $this->matchedRegion($region);
 
         if (! $regionRecord) {
-            return $this->locationValidationResult("Region '{$region}' was not found in the database.");
+            $suggestion = $this->suggestRegionName($region);
+
+            return $this->locationValidationResult("Region '{$region}' was not found in the database.", null, [], [
+                'region' => $suggestion,
+            ]);
         }
+
+        $matches = [
+            'region' => [
+                'code' => $regionRecord->code,
+                'name' => $regionRecord->region ?? $regionRecord->name,
+            ],
+        ];
 
         $provinceRecord = LocationProvinces::where('region_code', $regionRecord->code)
             ->whereRaw('LOWER(name) = ?', [Str::lower($province)])
             ->first();
 
         if (! $provinceRecord) {
-            return $this->locationValidationResult("Province '{$province}' was not found under region '{$region}'.");
+            $suggestion = $this->suggestProvinceName($province, $regionRecord->code);
+
+            return $this->locationValidationResult("Province '{$province}' was not found under region '{$region}'.", null, $matches, [
+                'province' => $suggestion,
+            ]);
         }
+
+        $matches['province'] = [
+            'code' => $provinceRecord->code,
+            'name' => $provinceRecord->name,
+        ];
 
         $cityRecord = LocationCity::where('province_code', $provinceRecord->code)
             ->whereRaw('LOWER(name) = ?', [Str::lower($municipality)])
             ->first();
 
         if (! $cityRecord) {
-            return $this->locationValidationResult("Municipality '{$municipality}' was not found under province '{$province}'.");
+            $suggestion = $this->suggestMunicipalityName($municipality, $provinceRecord->code);
+
+            return $this->locationValidationResult("Municipality '{$municipality}' was not found under province '{$province}'.", null, $matches, [
+                'municipality' => $suggestion,
+            ]);
         }
+
+        $matches['municipality'] = [
+            'code' => $cityRecord->code,
+            'name' => $cityRecord->name,
+        ];
 
         $barangayRecord = LocationBarangays::where('municipality_code', $cityRecord->code)
             ->whereRaw('LOWER(name) = ?', [Str::lower($barangay)])
             ->first();
 
         if (! $barangayRecord) {
-            return $this->locationValidationResult("Barangay '{$barangay}' was not found under municipality '{$municipality}'.");
+            $suggestion = $this->suggestBarangayName($barangay, $cityRecord->code);
+
+            return $this->locationValidationResult("Barangay '{$barangay}' was not found under municipality '{$municipality}'.", null, $matches, [
+                'barangay' => $suggestion,
+            ]);
         }
+
+        $matches['barangay'] = [
+            'code' => $barangayRecord->code,
+            'name' => $barangayRecord->name,
+        ];
 
         return $this->locationValidationResult(null, [
             'id' => "{$barangayRecord->code}-{$cityRecord->code}-{$provinceRecord->code}-{$regionRecord->code}",
@@ -1464,7 +1506,7 @@ class ScholarReviewController extends Controller
             'municipality_code' => $cityRecord->code,
             'province_code' => $provinceRecord->code,
             'region_code' => $regionRecord->code,
-        ]);
+        ], $matches);
     }
 
     private function cachedValidateLocationMatch($data, array &$lookupCache): array
@@ -1483,10 +1525,20 @@ class ScholarReviewController extends Controller
         return $lookupCache['locations'][$key];
     }
 
-    private function locationValidationResult(?string $message, ?array $address = null): array
+    private function locationValidationResult(?string $message, ?array $address = null, array $matches = [], array $suggestions = []): array
     {
+        $address = $address ? [...$address, ...$matches] : ($matches ?: null);
+        $suggestions = array_filter($suggestions);
+
+        if (! empty($suggestions)) {
+            $address = [
+                ...($address ?? []),
+                'suggestions' => $suggestions,
+            ];
+        }
+
         return [
-            'matched' => $address !== null,
+            'matched' => $message === null && isset($address['barangay_code'], $address['municipality_code'], $address['province_code'], $address['region_code']),
             'message' => $message,
             'address' => $address,
         ];
@@ -1504,6 +1556,96 @@ class ScholarReviewController extends Controller
                 $query->orWhere('code', 'LIKE', str_pad($region, 2, '0', STR_PAD_LEFT).'%');
             })
             ->first();
+    }
+
+    private function suggestRegionName(string $region): ?string
+    {
+        $terms = $this->locationSuggestionTerms($region);
+        if (empty($terms)) {
+            return null;
+        }
+
+        $match = LocationRegions::query()
+            ->where(function ($query) use ($terms) {
+                foreach ($terms as $term) {
+                    $query->orWhereRaw("LOWER(regexp_replace(COALESCE(region, name), '[^[:alnum:]]', '', 'g')) LIKE ?", ['%'.$term.'%'])
+                        ->orWhereRaw("? LIKE '%' || LOWER(regexp_replace(COALESCE(region, name), '[^[:alnum:]]', '', 'g')) || '%'", [$term]);
+                }
+            })
+            ->orderByRaw('LENGTH(COALESCE(region, name)) ASC')
+            ->first();
+
+        return $match?->region ?? $match?->name;
+    }
+
+    private function suggestProvinceName(string $province, string $regionCode): ?string
+    {
+        $terms = $this->locationSuggestionTerms($province);
+        if (empty($terms)) {
+            return null;
+        }
+
+        return LocationProvinces::query()
+            ->where('region_code', $regionCode)
+            ->where(function ($query) use ($terms) {
+                foreach ($terms as $term) {
+                    $query->orWhereRaw("LOWER(regexp_replace(name, '[^[:alnum:]]', '', 'g')) LIKE ?", ['%'.$term.'%'])
+                        ->orWhereRaw("? LIKE '%' || LOWER(regexp_replace(name, '[^[:alnum:]]', '', 'g')) || '%'", [$term]);
+                }
+            })
+            ->orderByRaw('LENGTH(name) ASC')
+            ->value('name');
+    }
+
+    private function suggestMunicipalityName(string $municipality, string $provinceCode): ?string
+    {
+        $terms = $this->locationSuggestionTerms($municipality);
+        if (empty($terms)) {
+            return null;
+        }
+
+        return LocationCity::query()
+            ->where('province_code', $provinceCode)
+            ->where(function ($query) use ($terms) {
+                foreach ($terms as $term) {
+                    $query->orWhereRaw("LOWER(regexp_replace(name, '[^[:alnum:]]', '', 'g')) LIKE ?", ['%'.$term.'%'])
+                        ->orWhereRaw("? LIKE '%' || LOWER(regexp_replace(name, '[^[:alnum:]]', '', 'g')) || '%'", [$term]);
+                }
+            })
+            ->orderByRaw('LENGTH(name) ASC')
+            ->value('name');
+    }
+
+    private function suggestBarangayName(string $barangay, string $municipalityCode): ?string
+    {
+        $terms = $this->locationSuggestionTerms($barangay);
+        if (empty($terms)) {
+            return null;
+        }
+
+        return LocationBarangays::query()
+            ->where('municipality_code', $municipalityCode)
+            ->where(function ($query) use ($terms) {
+                foreach ($terms as $term) {
+                    $query->orWhereRaw("LOWER(regexp_replace(name, '[^[:alnum:]]', '', 'g')) LIKE ?", ['%'.$term.'%'])
+                        ->orWhereRaw("? LIKE '%' || LOWER(regexp_replace(name, '[^[:alnum:]]', '', 'g')) || '%'", [$term]);
+                }
+            })
+            ->orderByRaw('LENGTH(name) ASC')
+            ->value('name');
+    }
+
+    private function locationSuggestionTerms(string $value): array
+    {
+        $normalized = $this->normalizeImportLookupString($value);
+        $withoutCommonWords = preg_replace('/\b(city|municipality|municipal|of|the|province|provincial|barangay|brgy)\b/i', '', trim($value));
+        $normalizedWithoutCommonWords = $this->normalizeImportLookupString($withoutCommonWords);
+
+        return collect([$normalized, $normalizedWithoutCommonWords])
+            ->filter(fn ($term) => strlen($term) >= 3)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function syncImportBatchCounts(ScholarUploadedFiles $file): void

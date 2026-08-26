@@ -32,19 +32,59 @@
                             This is a validation preview. Fix rows with conflicts in the Excel file, then upload the corrected file again.
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-gray-400">
-                        <span>{{ scholar.length }} row(s)</span>
-                        <span>{{ validRows }} valid</span>
-                        <span>{{ needsReviewRows }} need review</span>
-                    </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-y border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    <span class="font-semibold text-slate-700 dark:text-gray-100">Import quality</span>
-                    <span>Valid: <b>{{ qualityCounts.valid }}</b></span>
-                    <span>Needs correction: <b>{{ qualityCounts.needsCorrection }}</b></span>
-                    <span>Duplicate: <b>{{ qualityCounts.duplicate }}</b></span>
-                    <span>Missing required: <b>{{ qualityCounts.missingRequired }}</b></span>
+                <div class="flex flex-wrap items-center justify-between gap-2 border-y border-slate-200 bg-white px-2 py-2 text-xs text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <IconField class="w-full sm:w-72">
+                            <InputIcon>
+                                <IconSearch :size="14" />
+                            </InputIcon>
+                            <InputText
+                                v-model="searchQuery"
+                                size="small"
+                                placeholder="Search scholar rows"
+                                class="!w-full !text-xs dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100 dark:placeholder:!text-gray-500"
+                            />
+                        </IconField>
+                        <Select
+                            v-model="statusFilter"
+                            :options="statusFilterOptions"
+                            option-label="label"
+                            option-value="value"
+                            size="small"
+                            placeholder="Status"
+                            class="w-full sm:w-48 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100"
+                            :pt="selectPt"
+                        />
+                        <Select
+                            v-model="issueFilter"
+                            :options="issueFilterOptions"
+                            option-label="label"
+                            option-value="value"
+                            size="small"
+                            placeholder="Issue"
+                            class="w-full sm:w-64 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100"
+                            :pt="selectPt"
+                        />
+                        <DefaultButton
+                            v-if="hasActiveFilters"
+                            size="small"
+                            label="Clear"
+                            severity="secondary"
+                            outlined
+                            class="!rounded-lg"
+                            @click="clearFilters"
+                        />
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-500 dark:text-gray-400">
+                        <span>Showing <b class="text-slate-700 dark:text-gray-100">{{ filteredScholar.length }}</b> of {{ scholar.length }}</span>
+                        <span class="hidden h-4 w-px bg-slate-200 dark:bg-gray-700 sm:inline-block" aria-hidden="true" />
+                        <span>Valid <b class="text-slate-700 dark:text-gray-100">{{ qualityCounts.valid }}</b></span>
+                        <span>Needs correction <b class="text-slate-700 dark:text-gray-100">{{ qualityCounts.needsCorrection }}</b></span>
+                        <span>Duplicate <b class="text-slate-700 dark:text-gray-100">{{ qualityCounts.duplicate }}</b></span>
+                        <span>Missing <b class="text-slate-700 dark:text-gray-100">{{ qualityCounts.missingRequired }}</b></span>
+                    </div>
                 </div>
 
                 <div class="flex-1 overflow-auto rounded-lg border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-900">
@@ -58,7 +98,7 @@
                         </thead>
                         <tbody>
                             <tr
-                                v-for="(item, index) in scholar"
+                                v-for="(item, index) in filteredScholar"
                                 :key="item.id"
                                 :class="item.verified_by ? 'bg-emerald-50/50 dark:bg-emerald-950/20' : 'dark:bg-gray-900'"
                             >
@@ -96,9 +136,9 @@
                                     </div>
                                 </td>
                             </tr>
-                            <tr v-if="!scholar.length">
+                            <tr v-if="!filteredScholar.length">
                                 <td colspan="26" class="border border-slate-300 px-2 py-8 text-center text-slate-500 dark:border-gray-700 dark:text-gray-400">
-                                    No imported rows found.
+                                    No imported rows match the current filters.
                                 </td>
                             </tr>
                         </tbody>
@@ -141,13 +181,17 @@
 
 <script setup>
 import { router, usePage } from "@inertiajs/vue3";
-import { IconFileSpreadsheet } from "@tabler/icons-vue";
-import { computed } from "vue";
+import { IconFileSpreadsheet, IconSearch } from "@tabler/icons-vue";
+import { computed, ref } from "vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import { route } from "ziggy-js";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
+import IconField from "primevue/iconfield";
+import InputIcon from "primevue/inputicon";
+import InputText from "primevue/inputtext";
+import Select from "primevue/select";
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -157,6 +201,16 @@ const props = defineProps({
 const modelValue = defineModel("modelValue");
 const page = usePage();
 const scholar = computed(() => page.props?.selected ?? []);
+const searchQuery = ref("");
+const statusFilter = ref("all");
+const issueFilter = ref("all");
+const selectPt = {
+    root: "dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100",
+    label: "dark:!text-gray-100",
+    dropdown: "dark:!text-gray-300",
+    overlay: "dark:!border-gray-700 dark:!bg-gray-900",
+    option: "dark:!text-gray-100 dark:hover:!bg-gray-800",
+};
 const tableHeadings = [
     "Row",
     "Review",
@@ -207,6 +261,46 @@ const rowFields = [
     "year_awarded",
 ];
 
+const statusFilterOptions = [
+    { label: "All statuses", value: "all" },
+    { label: "Valid", value: "valid" },
+    { label: "Needs correction", value: "needs_correction" },
+    { label: "Duplicate", value: "duplicate" },
+    { label: "Missing required", value: "missing_required" },
+];
+
+const issueFilterOptions = computed(() => {
+    const issues = scholar.value
+        .filter((item) => item.row_status !== "valid")
+        .map((item) => conflictSummary(item))
+        .filter(Boolean);
+
+    return [
+        { label: "All issues", value: "all" },
+        ...[...new Set(issues)]
+            .sort((a, b) => a.localeCompare(b))
+            .map((issue) => ({ label: issue, value: issue })),
+    ];
+});
+
+const filteredScholar = computed(() => {
+    const query = searchQuery.value.trim().toLowerCase();
+
+    return scholar.value.filter((item) => {
+        const statusMatches = statusFilter.value === "all" || item.row_status === statusFilter.value;
+        const issueMatches = issueFilter.value === "all" || conflictSummary(item) === issueFilter.value;
+        const queryMatches = !query || searchableRowText(item).includes(query);
+
+        return statusMatches && issueMatches && queryMatches;
+    });
+});
+
+const hasActiveFilters = computed(() =>
+    searchQuery.value.trim() !== "" ||
+    statusFilter.value !== "all" ||
+    issueFilter.value !== "all",
+);
+
 const validRows = computed(() => scholar.value.filter((item) => item.row_status === "valid").length);
 const needsReviewRows = computed(() => scholar.value.length - validRows.value);
 const canPublish = computed(() => scholar.value.length > 0 && needsReviewRows.value === 0);
@@ -247,7 +341,7 @@ const conflictSummary = (item) => {
 
 const conflictDetail = (item) => {
     const firstError = item.validation_errors?.[0] ?? "";
-    if (firstError) return firstError.replace(/^Row\s+\d+:\s*/i, "");
+    if (firstError) return withAddressSuggestion(item, firstError.replace(/^Row\s+\d+:\s*/i, ""));
 
     if (item.row_status === "duplicate") return "Duplicate SPAS No or email found in the database.";
     if (item.row_status === "missing_required") return "One or more required Excel fields are blank.";
@@ -256,11 +350,63 @@ const conflictDetail = (item) => {
     if (!item.matchedCourse) return `Course '${item.course || "-"}' was not found for school '${item.school || "-"}'.`;
     if (!item.matchedCurriculum) return `Curriculum was not found for course '${item.matchedCourse?.name || item.course || "-"}' at school '${item.matchedCourse?.campus || item.matchedSchool?.name || item.school || "-"}'.`;
     if (!item.matchedAddress) {
-        return `Location was not found using barangay '${item.barangay || "-"}', municipality '${item.municipality || "-"}', province '${item.province || "-"}', region '${item.region || "-"}'. Address Line is free text.`;
+        return withAddressSuggestion(item, `Location was not found using barangay '${item.barangay || "-"}', municipality '${item.municipality || "-"}', province '${item.province || "-"}', region '${item.region || "-"}'. Address Line is free text.`);
     }
 
     return "The row has a conflict. Fix the Excel value and upload the file again.";
 };
+
+const withAddressSuggestion = (item, message) => {
+    const suggestions = item.matchedAddress?.suggestions ?? {};
+    const locationSuggestion = [
+        ["Region", suggestions.region],
+        ["Province", suggestions.province],
+        ["Municipality", suggestions.municipality],
+        ["Barangay", suggestions.barangay],
+    ].find(([, value]) => value);
+
+    if (!locationSuggestion) return message;
+
+    return `${message} Suggested ${locationSuggestion[0]}: ${locationSuggestion[1]}.`;
+};
+
+const searchableRowText = (item) =>
+    [
+        item.spas_no,
+        item.status,
+        item.scholarship_type,
+        item.scholarship_subprogram,
+        item.fname,
+        item.lname,
+        item.mname,
+        item.suffix,
+        item.sex,
+        item.email,
+        item.contact_no,
+        item.birthdate,
+        item.birthplace,
+        item.civil_status,
+        item.address,
+        item.barangay,
+        item.municipality,
+        item.province,
+        item.region,
+        item.year_awarded,
+        item.course,
+        item.school,
+        item.matchedCourse?.name,
+        item.matchedCurriculum?.name,
+        item.matchedSchool?.name,
+        item.matchedAddress?.suggestions?.region,
+        item.matchedAddress?.suggestions?.province,
+        item.matchedAddress?.suggestions?.municipality,
+        item.matchedAddress?.suggestions?.barangay,
+        conflictSummary(item),
+        conflictDetail(item),
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
 const rowStatusLabel = (item) =>
     item.row_status === "needs_correction"
@@ -292,6 +438,12 @@ const rowStatusDotClass = (status) =>
             missing_required: "bg-red-500",
         }[status] || "bg-amber-500",
     ];
+
+const clearFilters = () => {
+    searchQuery.value = "";
+    statusFilter.value = "all";
+    issueFilter.value = "all";
+};
 
 const moveProd = () => {
     if (!canPublish.value) {
