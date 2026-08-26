@@ -54,18 +54,18 @@
                         :is="item.icons"
                         size="25px"
                         :class="
-                            item.label === 'Logout'
-                                ? 'text-red-500'
-                                : 'text-gray-600'
+                            (item.label === 'Logout'
+                                ? 'text-red-500 dark:text-red-500'
+                                : 'text-gray-600',
+                            'dark:text-white!')
                         "
                         :stroke-width="1.5"
                     />
                     <span
-                        class="text-gray-500"
                         :class="
                             item.label === 'Logout'
-                                ? 'text-red-500'
-                                : 'text-gray-600'
+                                ? 'text-red-500 '
+                                : 'text-gray-600 dark:text-white'
                         "
                         >{{ item.label }}</span
                     >
@@ -203,5 +203,9 @@ const logout = () => {
 <style>
 .p-menu {
     min-width: 150px !important;
+}
+.dark .p-popover:before,
+.dark .p-popover:after {
+    border-top-color: transparent !important;
 }
 </style>

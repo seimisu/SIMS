@@ -477,16 +477,17 @@
                                         class="flex items-center text-gray-500!"
                                         v-bind="props.action"
                                     >
-                                        <div>
+                                        <div class="text-gray-400">
                                             <component
                                                 :is="item.icon"
                                                 size="20"
                                                 stroke-width="1.5"
                                             ></component>
                                         </div>
-                                        <span class="ml-2 text-xs">{{
-                                            item.label
-                                        }}</span>
+                                        <span
+                                            class="ml-2 text-xs dark:text-white"
+                                            >{{ item.label }}</span
+                                        >
                                         <Badge
                                             v-if="
                                                 selectedRow.activationRequested &&
