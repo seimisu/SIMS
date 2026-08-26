@@ -341,16 +341,29 @@
         </template>
     </Drawer>
 
-    <Dialog v-model:visible="submitDialog" modal header="Submit Payroll" :style="{ width: '30rem' }">
+    <Dialog
+        v-model:visible="submitDialog"
+        modal
+        header="Submit Payroll"
+        :style="{ width: '30rem' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
+    >
         <div class="flex flex-col gap-3">
             <p class="text-sm text-slate-600 dark:text-gray-300">
                 Upload the signed payroll PDF before submitting this batch for review.
             </p>
             <label
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"
             >
                 <IconFileTypePdf :size="28" class="text-slate-500 dark:text-gray-400" />
-                <span class="font-medium">{{ submitPdf?.name ?? "Choose PDF file" }}</span>
+                <span class="font-medium text-slate-700 dark:text-gray-100">{{ submitPdf?.name ?? "Choose PDF file" }}</span>
                 <span class="text-xs text-slate-500 dark:text-gray-400">PDF only</span>
                 <input
                     ref="submitPdfInput"
@@ -360,7 +373,7 @@
                     @change="selectSubmitPdf"
                 />
             </label>
-            <small v-if="submitPdfError || statusForm.errors.payroll_file" class="text-red-600">
+            <small v-if="submitPdfError || statusForm.errors.payroll_file" class="text-red-600 dark:text-red-300">
                 {{ submitPdfError || statusForm.errors.payroll_file }}
             </small>
         </div>
@@ -410,16 +423,24 @@
         modal
         header="Import Historical Payroll"
         :style="{ width: '32rem' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
     >
         <div class="flex flex-col gap-3">
             <p class="text-sm text-slate-600 dark:text-gray-300">
                 Upload an Excel file that uses the same layout as the exported payroll file. Imported records are saved as approved historical payrolls and will reflect in scholar financial assistance records.
             </p>
             <label
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700"
             >
                 <IconFileSpreadsheet :size="30" class="text-slate-500 dark:text-gray-400" />
-                <span class="font-medium">{{ historicalImportFile?.name ?? "Choose Excel file" }}</span>
+                <span class="font-medium text-slate-700 dark:text-gray-100">{{ historicalImportFile?.name ?? "Choose Excel file" }}</span>
                 <span class="text-xs text-slate-500 dark:text-gray-400">XLSX or XLS, exported payroll layout</span>
                 <input
                     ref="historicalImportInput"
@@ -431,7 +452,7 @@
             </label>
             <small
                 v-if="historicalImportError || historicalImportForm.errors.payroll_file"
-                class="text-red-600"
+                class="text-red-600 dark:text-red-300"
             >
                 {{ historicalImportError || historicalImportForm.errors.payroll_file }}
             </small>
@@ -830,6 +851,15 @@ const actionMenuItems = computed(() => {
 
 const openSubmitDialog = (batch) => {
     if (!canSubmitBatch(batch)) return;
+
+    if (batch.requires_export_before_submit) {
+        toastRef.value?.show({
+            status: "warn",
+            title: "Export payroll first",
+            message: "Please export the latest payroll batch before submitting it.",
+        });
+        return;
+    }
 
     submitBatch.value = batch;
     submitPdf.value = null;

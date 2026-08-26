@@ -8,6 +8,7 @@ use App\Models\DocumentCategory;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
 use App\Services\Notifications\RoleBellNotificationService;
+use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +21,11 @@ class DocumentController extends Controller
     {
         $search = $request->input('search');
         $categorySearch = $request->input('categorySearch');
+        $permissions = app(SystemPermissions::class);
+        $user = Auth::user();
+        $regionalRegionCode = $permissions->shouldScopeToRegion($user)
+            ? $permissions->regionCodeFor($user)
+            : null;
 
         return Inertia::render('Web/documentPage', [
             'documents' => Document::with(['category:id,name', 'targets'])
@@ -48,6 +54,7 @@ class DocumentController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name']),
             'regionOptions' => LocationRegions::where('is_active', true)
+                ->when($regionalRegionCode, fn ($query) => $query->where('code', $regionalRegionCode))
                 ->orderBy('region')
                 ->get()
                 ->map(fn ($region) => [
@@ -69,6 +76,18 @@ class DocumentController extends Controller
                 ->whereIn('name', ['Undergraduate', 'JLSS'])
                 ->orderByRaw("CASE name WHEN 'Undergraduate' THEN 1 WHEN 'JLSS' THEN 2 ELSE 3 END")
                 ->get(['id', 'name']),
+            'targetingScope' => [
+                'is_region_locked' => (bool) $regionalRegionCode,
+                'region' => $regionalRegionCode
+                    ? LocationRegions::where('code', $regionalRegionCode)
+                        ->get()
+                        ->map(fn ($region) => [
+                            'id' => $region->code,
+                            'name' => $region->region ?? $region->name,
+                        ])
+                        ->first()
+                    : null,
+            ],
         ]);
     }
 
@@ -91,7 +110,7 @@ class DocumentController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
-        $this->syncTargets($document, $data['targets'] ?? []);
+        $this->syncTargets($document, $this->scopedTargets($data['targets'] ?? []));
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'downloadable_added',
             'New downloadable added',
@@ -135,7 +154,7 @@ class DocumentController extends Controller
         }
 
         $document->update($payload);
-        $this->syncTargets($document, $data['targets'] ?? []);
+        $this->syncTargets($document, $this->scopedTargets($data['targets'] ?? []));
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'downloadable_updated',
             'Downloadable updated',
@@ -309,5 +328,35 @@ class DocumentController extends Controller
                 'target_type' => $target['target_type'],
                 'target_id' => $target['target_type'] === 'all' ? null : (string) $target['target_id'],
             ]));
+    }
+
+    private function scopedTargets(array $targets): array
+    {
+        $permissions = app(SystemPermissions::class);
+        $user = Auth::user();
+
+        if (! $permissions->shouldScopeToRegion($user)) {
+            return $targets;
+        }
+
+        $regionCode = $permissions->regionCodeFor($user);
+
+        return collect($targets)
+            ->reject(fn ($target) => ($target['target_type'] ?? null) === 'all')
+            ->reject(fn ($target) => ($target['target_type'] ?? null) === 'region')
+            ->prepend([
+                'target_type' => 'region',
+                'target_id' => $regionCode,
+            ])
+            ->when(
+                ! collect($targets)->contains(fn ($target) => ($target['target_type'] ?? null) === 'scholarship_program'),
+                fn ($collection) => $collection->push(['target_type' => 'scholarship_program', 'target_id' => 'all'])
+            )
+            ->when(
+                ! collect($targets)->contains(fn ($target) => ($target['target_type'] ?? null) === 'program'),
+                fn ($collection) => $collection->push(['target_type' => 'program', 'target_id' => 'all'])
+            )
+            ->values()
+            ->all();
     }
 }

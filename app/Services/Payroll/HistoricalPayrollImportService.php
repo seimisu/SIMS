@@ -9,9 +9,11 @@ use App\Models\RecipientAllowance;
 use App\Models\RecipientStipend;
 use App\Models\RecipientWithheld;
 use App\Models\Scholars;
+use App\Models\ScholarTerm;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -60,12 +62,20 @@ class HistoricalPayrollImportService
             ->keyBy(fn ($scholar) => Str::upper(trim($scholar->spas_no)));
 
         $errors = [];
+        $seenAcademicTermRows = [];
         foreach ($rows as $row) {
             $scholar = $scholars->get(Str::upper($row['spas_no']));
             if (! $scholar) {
                 $errors[] = "SPAS {$row['spas_no']} was not found.";
                 continue;
             }
+
+            $academicTermKey = Str::upper($row['spas_no']).'|'.Str::upper($row['academic_year']).'|'.Str::upper($row['term']);
+            if (isset($seenAcademicTermRows[$academicTermKey])) {
+                $errors[] = "SPAS {$row['spas_no']} appears more than once for {$row['term']} {$row['academic_year']}.";
+                continue;
+            }
+            $seenAcademicTermRows[$academicTermKey] = true;
 
             if ($this->permissions->shouldScopeToRegion(Auth::user())) {
                 $agencyId = $scholar->schoolInfo->first()?->campus?->agency_id;
@@ -88,6 +98,27 @@ class HistoricalPayrollImportService
 
             if ($duplicate) {
                 $errors[] = "SPAS {$row['spas_no']} already has a historical payroll for {$row['term']} {$row['academic_year']}.";
+            }
+
+            if (blank($row['scholarship_status'] ?? null)) {
+                $errors[] = "SPAS {$row['spas_no']} is missing a scholarship standing for {$row['term']} {$row['academic_year']}.";
+                continue;
+            }
+
+            $termRecord = $this->termRecordForRow($scholar, $row);
+            if (! $termRecord) {
+                $errors[] = "SPAS {$row['spas_no']} has not yet created academic history for {$row['term']} {$row['academic_year']}.";
+                continue;
+            }
+
+            $process = $this->scholarProcessForTerm($termRecord->id);
+            if (! $process) {
+                $errors[] = "SPAS {$row['spas_no']} has not yet created academic history for {$row['term']} {$row['academic_year']}.";
+                continue;
+            }
+
+            if (filled($process->scholarship_status ?? null)) {
+                $errors[] = "SPAS {$row['spas_no']} already has a payroll record for {$row['term']} {$row['academic_year']}.";
             }
         }
 
@@ -261,6 +292,7 @@ class HistoricalPayrollImportService
                     ]);
                 }
 
+                $this->attachStandingToAcademicHistory($scholar, $row, $actorName);
                 $createdRecipients++;
             }
 
@@ -278,5 +310,70 @@ class HistoricalPayrollImportService
         }
 
         return [$createdBatches, $createdRecipients];
+    }
+
+    private function termRecordForRow(Scholars $scholar, array $row): ?ScholarTerm
+    {
+        $termId = $this->parser->termIdFromName($row['term'] ?? null);
+
+        return ScholarTerm::query()
+            ->where('scholar_id', $scholar->id)
+            ->where('academic_year', $row['academic_year'])
+            ->when(
+                $termId,
+                fn ($query) => $query->where('term_id', $termId),
+                fn ($query) => $query->whereHas('term', function ($termQuery) use ($row) {
+                    $termQuery->whereRaw('LOWER(name) = ?', [Str::lower($row['term'])]);
+                })
+            )
+            ->first();
+    }
+
+    private function scholarProcessForTerm(int $termRecordId): ?object
+    {
+        return DB::connection('scholars')
+            ->table('scholar_processes')
+            ->where('term_record_id', $termRecordId)
+            ->first();
+    }
+
+    private function attachStandingToAcademicHistory(Scholars $scholar, array $row, ?string $actorName): void
+    {
+        $termRecord = $this->termRecordForRow($scholar, $row);
+        $process = $termRecord ? $this->scholarProcessForTerm($termRecord->id) : null;
+
+        if (! $termRecord || ! $process) {
+            throw ValidationException::withMessages([
+                'payroll_file' => ["SPAS {$row['spas_no']} has not yet created academic history for {$row['term']} {$row['academic_year']}."],
+            ]);
+        }
+
+        if (filled($process->scholarship_status ?? null)) {
+            throw ValidationException::withMessages([
+                'payroll_file' => ["SPAS {$row['spas_no']} already has a payroll record for {$row['term']} {$row['academic_year']}."],
+            ]);
+        }
+
+        $scholarshipStatus = Str::upper($row['scholarship_status']);
+
+        DB::connection('scholars')
+            ->table('scholar_processes')
+            ->where('term_record_id', $termRecord->id)
+            ->update([
+                'scholar_id' => $scholar->id,
+                'scholarship_status' => $scholarshipStatus,
+                'submission' => 'APPROVED',
+                'payroll' => 'APPROVED',
+                'is_end' => false,
+                'updated_at' => now(),
+                'updated_by' => $actorName,
+            ]);
+
+        if ($scholarshipStatus === 'TERMINATED') {
+            $scholar->update([
+                'academic_status' => 'TERMINATED',
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

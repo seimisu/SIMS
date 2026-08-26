@@ -3,7 +3,6 @@
 namespace App\Services\Notifications;
 
 use App\Models\ListAgencies;
-use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarTerm;
 use App\Models\Scholars;
 use App\Models\studentLandbankRequest;
@@ -33,21 +32,6 @@ class RoleBellNotificationService
                 '/scholar-submissions?tab=grades',
                 'scholar_term_records',
                 $term->id
-            ));
-
-        ScholarAcademicHistorySubmission::with('scholar.schoolInfo.campus.address', 'scholar.profile')
-            ->where('status', 'submitted')
-            ->latest('updated_at')
-            ->limit(50)
-            ->get()
-            ->each(fn ($submission) => $this->notifyRegionalUsersForScholar(
-                $submission->scholar,
-                'academic_history_submission_created',
-                'New academic history submission',
-                $this->scholarName($submission->scholar).' submitted academic history for review.',
-                '/scholar-submissions?tab=history',
-                'scholar_academic_history_submissions',
-                $submission->id
             ));
 
         StudentProfileRequest::with('scholar.schoolInfo.campus.address', 'scholar.profile')

@@ -4,7 +4,6 @@ namespace App\Services\Dashboard;
 
 use App\Models\Batches;
 use App\Models\LocationRegions;
-use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarProfiles;
 use App\Models\Scholars;
 use App\Models\ScholarTerm;
@@ -117,13 +116,9 @@ class RegionalDashboardService
                 ])
                 ->values();
             $regionalScholarIds = $scholars->pluck('id')->filter()->values();
-            $regionalSpas = $scholars->pluck('spas_no')->filter()->values();
             $pendingSubmissions = [
                 'grades' => ScholarTerm::where('verification_status', 'submitted')
                     ->whereIn('scholar_id', $regionalScholarIds)
-                    ->count(),
-                'history' => ScholarAcademicHistorySubmission::where('status', 'submitted')
-                    ->whereIn('spas_no', $regionalSpas)
                     ->count(),
                 'profile' => StudentProfileRequest::where('status', 'pending')
                     ->whereIn('scholar_id', $regionalScholarIds)

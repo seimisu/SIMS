@@ -542,14 +542,14 @@
                                                                 }}
                                                             </div>
                                                             <ul
-                                                                v-if="submittedTermRecommendation.reasons?.length"
+                                                                v-if="visibleRecommendationReasons.length"
                                                                 class="mt-2 list-disc space-y-1 pl-4 text-blue-800 dark:text-gray-300"
                                                             >
                                                                 <li
                                                                     v-for="(
                                                                         reason,
                                                                         reasonIndex
-                                                                    ) in submittedTermRecommendation.reasons"
+                                                                    ) in visibleRecommendationReasons"
                                                                     :key="
                                                                         reasonIndex
                                                                     "
@@ -790,6 +790,15 @@ const submittedTermRecommendation = computed(
     () => submittedTerm.value?.scholarshipRecommendation ?? null,
 );
 
+const visibleRecommendationReasons = computed(() =>
+    (submittedTermRecommendation.value?.reasons ?? []).filter(
+        (reason) =>
+            !String(reason ?? "").startsWith(
+                "Policy group was derived from submitted curriculum subjects:",
+            ),
+    ),
+);
+
 const recommendedStandingOption = () => {
     const recommendation = submittedTermRecommendation.value;
     const options = page.props?.standingOptions ?? [];
@@ -812,8 +821,6 @@ const recommendedStandingOption = () => {
                     optionName.includes("PARTIAL")) ||
                 (recommended.includes("TERMINATED") &&
                     optionName.includes("TERMINATED")) ||
-                (recommended.includes("SUBMIT GRADES") &&
-                    optionName.includes("SUBMIT GRADES")) ||
                 (recommended.includes("GOOD STANDING") &&
                     optionName.includes("GOOD STANDING"))
             );

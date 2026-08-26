@@ -486,8 +486,8 @@ class ScholarReviewController extends Controller
             'deleted_subjects' => ['nullable', 'array'],
             'deleted_subjects.*' => ['integer'],
             'subjects.*.id' => ['nullable', 'integer'],
-            'subjects.*.grade' => ['required', 'array'],
-            'subjects.*.grade.id' => ['required', 'integer'],
+            'subjects.*.grade' => ['nullable', 'array'],
+            'subjects.*.grade.id' => ['nullable', 'integer'],
             'subjects.*.subject' => ['required', 'array'],
             'subjects.*.subject.id' => ['required', 'integer'],
         ]);
@@ -520,6 +520,7 @@ class ScholarReviewController extends Controller
                         'scholar_id' => $termRecord->scholar_id,
                     ],
                     [
+                        'scholar_id' => $termRecord->scholar_id,
                         'campus_id' => $data['school']['id'] ?? $termRecord->schoolInfo?->campus_id,
                         'campus_course_id' => $data['course']['id'] ?? $termRecord->schoolInfo?->campus_course_id,
                     ]
@@ -541,13 +542,14 @@ class ScholarReviewController extends Controller
             }
 
             foreach ($data['subjects'] as $key => $value) {
+                $gradeId = $value['grade']['id'] ?? null;
 
                 if (! empty($value['id'])) {
                     ScholarSchoolGrades::where('term_record_id', $termRecordId)
                         ->whereKey($value['id'])
                         ->update([
                             'subject_id' => $value['subject']['id'],
-                            'grade_id' => $value['grade']['id'],
+                            'grade_id' => $gradeId,
                             'is_deleted' => false,
                         ]);
 
@@ -560,7 +562,7 @@ class ScholarReviewController extends Controller
                         'subject_id' => $value['subject']['id'],
                     ],
                     [
-                        'grade_id' => $value['grade']['id'],
+                        'grade_id' => $gradeId,
                         'is_deleted' => false,
                     ]
                 );
@@ -570,6 +572,7 @@ class ScholarReviewController extends Controller
                 $status = is_array($data['scholarship_status'])
                     ? ($data['scholarship_status']['name'] ?? $data['scholarship_status']['id'] ?? null)
                     : $data['scholarship_status'];
+                $normalizedStatus = $status ? Str::upper($status) : null;
 
                 DB::connection('scholars')
                     ->table('scholar_processes')
@@ -577,7 +580,7 @@ class ScholarReviewController extends Controller
                         ['term_record_id' => $termRecord->id],
                         [
                             'scholar_id' => $termRecord->scholar_id,
-                            'scholarship_status' => $status ? Str::upper($status) : null,
+                            'scholarship_status' => $normalizedStatus,
                             'submission' => 'APPROVED',
                             'payroll' => 'NOT SUBMITTED',
                             'is_end' => false,
@@ -585,6 +588,13 @@ class ScholarReviewController extends Controller
                             'updated_by' => Auth::user()?->profile?->fullname,
                         ]
                     );
+
+                if ($normalizedStatus === 'TERMINATED') {
+                    Scholars::whereKey($termRecord->scholar_id)->update([
+                        'academic_status' => 'TERMINATED',
+                        'updated_at' => now(),
+                    ]);
+                }
             }
 
             $updatedAcademicLog = $this->academicRecordLogSnapshot(

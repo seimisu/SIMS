@@ -4,7 +4,6 @@ namespace App\Services\Dashboard;
 
 use App\Models\Batches;
 use App\Models\LocationRegions;
-use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarProfiles;
 use App\Models\Scholars;
 use App\Models\ScholarTerm;

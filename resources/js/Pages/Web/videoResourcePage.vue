@@ -84,7 +84,7 @@
                                     v-model="resourceForm.regions"
                                     label="Regions"
                                     :options="page.props.regionOptions"
-                                    :disable="resourceForm.available_all"
+                                    :disable="resourceForm.available_all || isRegionLocked"
                                     filter
                                 />
                                 <SelectMultiInput
@@ -229,6 +229,14 @@ const searchInput = ref(null);
 const searchTimer = ref(null);
 const toolbarRef = ref(null);
 const confirmRef = ref(null);
+const isRegionLocked = computed(() => Boolean(page.props.targetingScope?.is_region_locked));
+const lockedRegion = computed(() => page.props.targetingScope?.region ?? page.props.regionOptions?.[0] ?? null);
+
+const applyRegionalTargeting = () => {
+    if (!isRegionLocked.value || !lockedRegion.value) return;
+
+    resourceForm.regions = [lockedRegion.value];
+};
 
 const resourceForm = useForm({
     id: null,
@@ -246,6 +254,24 @@ const resourceForm = useForm({
 });
 
 const targets = computed(() => {
+    if (isRegionLocked.value) {
+        return [
+            { target_type: "region", target_id: lockedRegion.value?.id },
+            ...(resourceForm.scholarships.length
+                ? resourceForm.scholarships.map((item) => ({
+                      target_type: "scholarship_program",
+                      target_id: item.id,
+                  }))
+                : [{ target_type: "scholarship_program", target_id: "all" }]),
+            ...(resourceForm.programs.length
+                ? resourceForm.programs.map((item) => ({
+                      target_type: "program",
+                      target_id: item.id,
+                  }))
+                : [{ target_type: "program", target_id: "all" }]),
+        ];
+    }
+
     if (resourceForm.available_all) {
         return [{ target_type: "all", target_id: null }];
     }
@@ -302,6 +328,7 @@ const openResourceForm = (row = null) => {
     resourceForm.is_active = true;
     resourceForm.publish_now = true;
     resourceForm.available_all = true;
+    applyRegionalTargeting();
 
     if (row) {
         const hasAll = row.targets?.some((target) => target.target_type === "all");
@@ -313,11 +340,15 @@ const openResourceForm = (row = null) => {
         resourceForm.thumbnail = null;
         resourceForm.is_active = row.is_active;
         resourceForm.publish_now = !!row.published_at;
-        resourceForm.available_all = hasAll;
-        resourceForm.regions = mapTargets(row, "region", page.props.regionOptions);
+        resourceForm.available_all = isRegionLocked.value ? true : hasAll;
+        resourceForm.regions = isRegionLocked.value
+            ? [lockedRegion.value].filter(Boolean)
+            : mapTargets(row, "region", page.props.regionOptions);
         resourceForm.scholarships = mapTargets(row, "scholarship_program", page.props.scholarshipOptions);
         resourceForm.programs = mapTargets(row, "program", page.props.programOptions);
     }
+
+    applyRegionalTargeting();
 
     toolbarRef.value.openModal();
 };

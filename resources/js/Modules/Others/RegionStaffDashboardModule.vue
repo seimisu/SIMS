@@ -433,7 +433,6 @@ const schoolDistribution = computed(() => {
 });
 const pendingSubmissionCards = computed(() => [
     { label: "Grade Submissions", value: insights.value.pendingSubmissions?.grades ?? 0, tab: "grades" },
-    { label: "Academic History", value: insights.value.pendingSubmissions?.history ?? 0, tab: "history" },
     { label: "Profile Updates", value: insights.value.pendingSubmissions?.profile ?? 0, tab: "profile" },
     { label: "Landbank Requests", value: insights.value.pendingSubmissions?.landbank ?? 0, tab: "landbank" },
 ]);

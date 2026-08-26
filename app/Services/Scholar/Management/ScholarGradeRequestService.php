@@ -3,6 +3,7 @@
 namespace App\Services\Scholar\Management;
 
 use App\Http\Controllers\Web\PayrollController;
+use App\Models\Scholars;
 use App\Models\ScholarTerm;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -91,6 +92,13 @@ class ScholarGradeRequestService
                         'updated_by' => Auth::user()->profile->fullname,
                     ]
                 );
+
+            if ($scholarshipStatus === 'TERMINATED') {
+                Scholars::whereKey($term->scholar_id)->update([
+                    'academic_status' => 'TERMINATED',
+                    'updated_at' => now(),
+                ]);
+            }
 
             app(PayrollController::class)->autoAttachApprovedTerm($term->fresh());
         }

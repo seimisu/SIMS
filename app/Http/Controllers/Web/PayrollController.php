@@ -361,6 +361,7 @@ class PayrollController extends Controller
                         : null,
                     'remarks'       => $q->latestLog?->remarks,
                     'status'        => $this->payrollStatuses()->currentBatchStatus($q),
+                    'requires_export_before_submit' => $this->requiresExportBeforeSubmit($q),
                     'source'        => $q->source,
                     'is_historical' => (bool) $q->is_historical,
                     'permissions'   => $permissions->payrollBatchPermissions($user, $q, $this->payrollStatuses()->currentBatchStatus($q)),
@@ -501,6 +502,7 @@ class PayrollController extends Controller
                     ? Carbon::parse($batch->generated_excel_at)->format('M d, Y | h:i a')
                     : null,
             ] : null,
+            'requires_export_before_submit' => $this->requiresExportBeforeSubmit($batch),
             'activity_logs' => $activityLogs->map(fn($log) => [
                 'id' => $log->id,
                 'action' => $log->action,
@@ -528,6 +530,29 @@ class PayrollController extends Controller
     private function payrollActivityLabel(string $action): string
     {
         return $this->payrollActivities()->label($action);
+    }
+
+    private function requiresExportBeforeSubmit(Batches $batch): bool
+    {
+        if (! in_array($this->payrollStatuses()->currentBatchStatus($batch), ['draft', 'rejected_payroll'], true)) {
+            return false;
+        }
+
+        $latestStatusChangeAt = $batch->logs()
+            ->whereIn('status', ['draft', 'submitted_payroll', 'rejected_payroll', 'approved_payroll'])
+            ->latest('created_at')
+            ->value('created_at') ?? $batch->created_at;
+
+        $latestExportAt = $batch->logs()
+            ->where('status', 'exported_payroll')
+            ->latest('created_at')
+            ->value('created_at') ?? $batch->generated_excel_at;
+
+        if (! $latestExportAt) {
+            return true;
+        }
+
+        return Carbon::parse($latestExportAt)->lessThan(Carbon::parse($latestStatusChangeAt));
     }
 
     private function payrollRecipients(string $hashId)
@@ -663,6 +688,12 @@ class PayrollController extends Controller
             'generated_excel_at' => now(),
         ])->save();
 
+        $batch->logs()->create([
+            'status' => 'exported_payroll',
+            'remarks' => 'Payroll batch was exported.',
+            'action_by' => $this->actorName(),
+        ]);
+
         return Pdf::loadView('exports.payroll_pdf', [
             'batch' => $batch,
             'rows' => $rows,
@@ -767,6 +798,14 @@ class PayrollController extends Controller
                 'status' => 'error',
                 'title' => 'Batch locked',
                 'message' => 'Verified payroll batches can no longer be changed.',
+            ]);
+        }
+
+        if ($data['status'] === 'submitted_payroll' && $this->requiresExportBeforeSubmit($batch)) {
+            return redirect()->back()->with('flash', [
+                'status' => 'error',
+                'title' => 'Export payroll first',
+                'message' => 'Please export the latest payroll batch before submitting it.',
             ]);
         }
 

@@ -2744,6 +2744,7 @@
             </div>
         </template>
     </Drawer>
+    <DefaultConfirmDialog group="academic-record" />
     <Dialog
         v-model:visible="landbankPasswordDialog"
         modal
@@ -2818,6 +2819,7 @@ import { router, useForm, usePage } from "@inertiajs/vue3";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
+import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
 import DatePickerInput from "../../Components/inputs/DatePickerInput.vue";
 import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
 
@@ -3391,7 +3393,7 @@ const cancelAcademicRecordEdit = () => {
     }
 
     confirm.require({
-        group: "global",
+        group: "academic-record",
         header: "Discard Changes?",
         message: "All unsaved academic record changes will not be saved.",
         icon: "pi pi-exclamation-triangle",
@@ -3444,13 +3446,37 @@ const updateAcademicRecord = () => {
         {
             preserveScroll: true,
             onSuccess: () => {
-                editBtn.value.academicRecord = false;
-                academicRecordForm.reset();
                 toast.add({
                     severity: page.props.flash?.status,
                     summary: page.props.flash?.title,
                     detail: page.props.flash?.message,
                     life: 3000,
+                });
+
+                if (page.props.flash?.status === "success") {
+                    editBtn.value.academicRecord = false;
+                    academicRecordForm.reset();
+                    router.reload({
+                        data: { id: page.props?.details?.id },
+                        only: [
+                            "details",
+                            "courseOptions",
+                            "curriculumOptions",
+                            "subjectOptions",
+                            "gradeOptions",
+                        ],
+                        preserveScroll: true,
+                    });
+                }
+            },
+            onError: (errors) => {
+                toast.add({
+                    severity: "error",
+                    summary: "Academic record was not saved",
+                    detail:
+                        Object.values(errors ?? {})?.[0] ??
+                        "Please check the academic record fields and try again.",
+                    life: 5000,
                 });
             },
         },
@@ -3461,7 +3487,7 @@ const confirmAcademicRecordSave = () => {
     if (!canUpdateScholars.value || !academicRecordForm.termRecordId) return;
 
     confirm.require({
-        group: "global",
+        group: "academic-record",
         header: "Save Academic Records?",
         message: "This will save the changes made to the scholar's academic records.",
         icon: "pi pi-save",

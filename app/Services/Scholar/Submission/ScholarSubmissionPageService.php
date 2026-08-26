@@ -8,9 +8,7 @@ use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
 use App\Models\LocationRegions;
-use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarTerm;
-use App\Models\SchoolCampusGrades;
 use App\Models\Scholars;
 use App\Models\StudentDocument;
 use App\Models\studentLandbankRequest;
@@ -32,7 +30,7 @@ class ScholarSubmissionPageService
         $user = Auth::user();
         $permissions = app(SystemPermissions::class);
         $tab = $request->input('tab', 'grades');
-        $status = in_array($tab, ['grades', 'history'], true) ? 'submitted' : 'pending';
+        $status = $tab === 'grades' ? 'submitted' : 'pending';
         $search = $request->input('search');
 
         return Inertia::render('Web/scholarSubmissionsPage', [
@@ -43,7 +41,6 @@ class ScholarSubmissionPageService
             ],
             'counts' => [
                 'grades' => ScholarTerm::where('verification_status', 'submitted')->count(),
-                'history' => ScholarAcademicHistorySubmission::where('status', 'submitted')->count(),
                 'profile' => StudentProfileRequest::where('status', 'pending')->count(),
                 'landbank' => studentLandbankRequest::where('status', 'pending')->count(),
             ],
@@ -53,9 +50,6 @@ class ScholarSubmissionPageService
                 : null,
             'profileRequests' => fn () => $tab === 'profile'
                 ? $this->profileRequests($request, $permissions, $user)
-                : null,
-            'academicHistorySubmissions' => fn () => $tab === 'history'
-                ? $this->academicHistorySubmissions($request, $permissions, $user)
                 : null,
             'landbankRequests' => fn () => $tab === 'landbank'
                 ? $this->landbankRequests($request, $permissions, $user)
@@ -68,9 +62,6 @@ class ScholarSubmissionPageService
                 : null,
             'personalRequest' => fn () => $request->input('scholar') && $request->input('dialog') === 'profile'
                 ? $this->personalRequest($request, $permissions, $user)
-                : null,
-            'academicHistoryRequest' => fn () => $request->input('submission') && $request->input('dialog') === 'history'
-                ? $this->academicHistoryRequest($request, $permissions, $user)
                 : null,
             'landbankRequest' => fn () => $request->input('scholar') && $request->input('dialog') === 'landbank'
                 ? $this->landbankRequest($request, $permissions, $user)
@@ -138,8 +129,7 @@ class ScholarSubmissionPageService
 
         return $options
             ->concat([
-                ['id' => 'TERMINATED WITH SERVICE OBLIGATION', 'name' => 'TERMINATED WITH SERVICE OBLIGATION'],
-                ['id' => 'CONTINUED TO SUBMIT GRADES', 'name' => 'CONTINUED TO SUBMIT GRADES'],
+                ['id' => 'TERMINATED', 'name' => 'TERMINATED'],
             ])
             ->unique(fn ($status) => Str::upper($status['name']))
             ->values();
@@ -174,117 +164,6 @@ class ScholarSubmissionPageService
                 'status' => $item->status,
                 'submitted_at' => $item->requested_at ? Carbon::parse($item->requested_at)->format('M d, Y h:i A') : null,
             ]);
-    }
-
-    private function academicHistorySubmissions(Request $request, SystemPermissions $permissions, $user)
-    {
-        return ScholarAcademicHistorySubmission::with([
-            'scholar.profile:id,scholar_id,fname,lname,mname,suffix',
-            'scholar.program:id,name',
-            'scholar.type:id,name',
-        ])
-            ->withCount(['terms', 'files'])
-            ->where('status', 'submitted')
-            ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
-                $query->whereHas('scholar.schoolInfo.campus.address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
-            })
-            ->when($request->input('search'), function ($query, $search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('spas_no', 'ILIKE', '%'.$search.'%')
-                    ->orWhereHas('scholar.profile', function ($profile) use ($search) {
-                        $profile->whereRaw("CONCAT(lname, ' ', fname, ' ', COALESCE(mname, '')) ILIKE ?", ['%'.$search.'%']);
-                    });
-                });
-            })
-            ->orderBy('submitted_at')
-            ->paginate(10)
-            ->withQueryString()
-            ->through(fn ($item) => [
-                'id' => Hashids::encode($item->id),
-                'submission_id' => Hashids::encode($item->id),
-                'scholar_id' => Hashids::encode($item->scholar_id),
-                'spas_no' => $item->spas_no,
-                'fullname' => $this->fullname($item->scholar),
-                'program' => $item->scholar?->program?->name,
-                'type' => $item->scholar?->type?->name,
-                'status' => $item->status,
-                'terms_count' => $item->terms_count,
-                'files_count' => $item->files_count,
-                'submitted_at' => $item->submitted_at?->format('M d, Y h:i A'),
-            ]);
-    }
-
-    private function academicHistoryRequest(Request $request, SystemPermissions $permissions, $user): ?array
-    {
-        $id = Hashids::decode($request->input('submission'))[0] ?? 0;
-
-        $submission = ScholarAcademicHistorySubmission::with([
-            'scholar.profile',
-            'scholar.program:id,name',
-            'scholar.type:id,name',
-            'terms.subjects.matchedSubject',
-            'terms.campus:id,generated_name',
-            'terms.course.course:id,name',
-            'terms.curriculum:id,years',
-            'files',
-        ])
-            ->whereKey($id)
-            ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
-                $query->whereHas('scholar.schoolInfo.campus.address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
-            })
-            ->first();
-
-        if (! $submission) {
-            return null;
-        }
-
-        $gradeLabels = SchoolCampusGrades::whereIn(
-            'id',
-            $submission->terms
-                ->flatMap(fn ($term) => $term->subjects)
-                ->pluck('grade')
-                ->filter(fn ($grade) => is_string($grade) && ctype_digit($grade))
-                ->unique()
-                ->values()
-        )->pluck('grade', 'id');
-
-        return [
-            'id' => Hashids::encode($submission->id),
-            'spas_no' => $submission->spas_no,
-            'fullname' => $this->fullname($submission->scholar),
-            'program' => $submission->scholar?->program?->name,
-            'scholarshipProgram' => $submission->scholar?->type?->name,
-            'status' => $submission->status,
-            'submitted_at' => $submission->submitted_at?->format('F d, Y h:i A'),
-            'reviewed_at' => $submission->reviewed_at?->format('F d, Y h:i A'),
-            'return_reason' => $submission->return_reason,
-            'terms' => $submission->terms->map(fn ($term) => [
-                'id' => $term->id,
-                'academic_year' => $term->academic_year,
-                'term' => $term->term?->name ?? $term->term_name,
-                'level' => $term->level?->name ?? $term->level_name,
-                'school' => $term->campus?->generated_name ?? $term->school_name,
-                'course' => $term->course?->course?->name ?? $term->course_name,
-                'curriculum' => $term->curriculum ? 'Curriculum '.$term->curriculum->years : null,
-                'remarks' => $term->remarks,
-                'subjects' => $term->subjects->map(fn ($subject) => [
-                    'name' => $subject->matchedSubject?->name ?? $subject->subject_name,
-                    'code' => $subject->matchedSubject?->subject_code ?? $subject->subject_code,
-                    'class' => $subject->matchedSubject?->subject_class ?? $subject->subject_class,
-                    'unit' => $subject->unit,
-                    'grade' => $gradeLabels->get($subject->grade, $subject->grade),
-                    'is_failed' => $subject->is_failed,
-                    'is_incomplete' => $subject->is_incomplete,
-                    'is_dropped' => $subject->is_dropped,
-                    'remarks' => $subject->remarks,
-                ]),
-            ]),
-            'files' => $submission->files->map(fn ($file) => [
-                'name' => $file->file_name,
-                'path' => $file->file_path,
-                'type' => $file->file_type,
-            ]),
-        ];
     }
 
     private function landbankRequests(Request $request, SystemPermissions $permissions, $user)

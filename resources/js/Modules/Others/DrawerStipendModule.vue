@@ -696,10 +696,18 @@
         modal
         header="Payroll Signatories"
         :style="{ width: '36rem' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
     >
         <div class="flex flex-col gap-3">
             <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Prepared by</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-gray-200">Prepared by</label>
                 <MultiSelect
                     v-model="preparedBy"
                     :options="signatoryOptions"
@@ -709,10 +717,22 @@
                     display="chip"
                     :maxSelectedLabels="3"
                     class="w-full !text-sm"
+                    :pt="{
+                        root: 'dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-100',
+                        labelContainer: 'dark:!text-gray-100',
+                        label: 'dark:!text-gray-100',
+                        token: 'dark:!bg-gray-700 dark:!text-gray-100',
+                        removeTokenIcon: 'dark:!text-gray-300',
+                        dropdown: 'dark:!text-gray-300',
+                        overlay: 'dark:!border-gray-700 dark:!bg-gray-800',
+                        option: 'dark:!text-gray-100 dark:hover:!bg-gray-700',
+                        emptyMessage: 'dark:!text-gray-300',
+                        filterInput: 'dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+                    }"
                 >
                     <template #option="slotProps">
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-gray-100">{{ slotProps.option.name }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
@@ -721,7 +741,7 @@
                 </MultiSelect>
             </div>
             <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Noted by</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-gray-200">Noted by</label>
                 <Select
                     v-model="notedBy"
                     :options="signatoryOptions"
@@ -729,10 +749,19 @@
                     placeholder="Select noted by"
                     filter
                     class="w-full !text-sm"
+                    :pt="{
+                        root: 'dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-100',
+                        label: 'dark:!text-gray-100',
+                        dropdown: 'dark:!text-gray-300',
+                        overlay: 'dark:!border-gray-700 dark:!bg-gray-800',
+                        option: 'dark:!text-gray-100 dark:hover:!bg-gray-700',
+                        emptyMessage: 'dark:!text-gray-300',
+                        filterInput: 'dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+                    }"
                 >
                     <template #option="slotProps">
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-gray-100">{{ slotProps.option.name }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
@@ -741,7 +770,7 @@
                 </Select>
             </div>
             <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Certified correct</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-gray-200">Certified correct</label>
                 <Select
                     v-model="certifiedBy"
                     :options="signatoryOptions"
@@ -749,10 +778,19 @@
                     placeholder="Select certified correct"
                     filter
                     class="w-full !text-sm"
+                    :pt="{
+                        root: 'dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-100',
+                        label: 'dark:!text-gray-100',
+                        dropdown: 'dark:!text-gray-300',
+                        overlay: 'dark:!border-gray-700 dark:!bg-gray-800',
+                        option: 'dark:!text-gray-100 dark:hover:!bg-gray-700',
+                        emptyMessage: 'dark:!text-gray-300',
+                        filterInput: 'dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+                    }"
                 >
                     <template #option="slotProps">
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-gray-100">{{ slotProps.option.name }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
@@ -760,7 +798,7 @@
                     </template>
                 </Select>
             </div>
-            <small v-if="signatoryError" class="text-red-500">
+            <small v-if="signatoryError" class="text-red-500 dark:text-red-300">
                 Select prepared by, noted by, and certified correct before exporting.
             </small>
         </div>
@@ -1050,7 +1088,7 @@ const reloadBatch = (extra = {}) => {
             id: details.value.id,
             ...extra,
         },
-        only: ["details", "payrollRecipients", "allowanceLimits", "signatoryOptions"],
+        only: ["batches", "details", "payrollRecipients", "allowanceLimits", "signatoryOptions"],
         preserveScroll: true,
         onSuccess: () => {
             syncPayrollRows();

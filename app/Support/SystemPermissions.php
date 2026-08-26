@@ -184,7 +184,6 @@ class SystemPermissions
         'review.validate' => 'scholars.review',
         'review.publish' => 'scholars.review',
         'scholar.grade-request' => 'grade-submissions.view',
-        'scholar-academic-history.decision' => 'grade-submissions.view',
         'profile.request' => 'profile-requests.view',
         'landbank.request' => 'landbank-requests.view',
 

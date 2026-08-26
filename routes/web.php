@@ -170,7 +170,6 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::post('scholar-review/{id}/publish', [ScholarReviewController::class, 'publish'])->name('review.publish');
 
     Route::post('scholar-grade-request/{type}', [ScholarManagementController::class, 'gradeRequest'])->name('scholar.grade-request');
-    Route::post('scholar-academic-history/{id}/{type}', [ScholarSubmissionController::class, 'academicHistoryDecision'])->name('scholar-academic-history.decision');
     Route::post('profileRequest/{type}', [ScholarManagementController::class, 'profileRequest'])->name('profile.request');
     Route::post('landbankRequest/{type}', [ScholarManagementController::class, 'landbankRequest'])->name('landbank.request');
 

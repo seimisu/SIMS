@@ -3,18 +3,19 @@
         v-model:visible="modelValue"
         position="full"
         :pt="{
-            header: 'border-b-1 border-gray-300 border-dashed',
-            content: '!p-3 bg-slate-50',
-            footer: 'border-t-1 border-gray-300 border-dashed bg-white',
+            root: 'dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-3 bg-slate-50 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'border-t-1 border-gray-300 border-dashed bg-white dark:!border-gray-700 dark:!bg-gray-900',
         }"
     >
         <template #header>
             <div class="flex min-w-0 items-center gap-3">
-                <IconFileSpreadsheet :size="18" class="shrink-0 text-slate-500" />
-                <div class="min-w-0 truncate text-sm font-semibold uppercase text-slate-700">
+                <IconFileSpreadsheet :size="18" class="shrink-0 text-slate-500 dark:text-gray-400" />
+                <div class="min-w-0 truncate text-sm font-semibold uppercase text-slate-700 dark:text-gray-100">
                     Scholar Import Review
                 </div>
-                <div class="shrink-0 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+                <div class="shrink-0 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                     {{ page.props?.validationStatus.completed ?? 0 }} / {{ page.props?.validationStatus.total ?? 0 }} validated
                 </div>
             </div>
@@ -24,120 +25,79 @@
             <div class="flex h-full min-h-0 flex-col gap-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex flex-col">
-                        <div class="text-sm font-semibold text-slate-700">
+                        <div class="text-sm font-semibold text-slate-700 dark:text-gray-100">
                             Imported Scholar Rows
                         </div>
-                        <div class="text-xs text-slate-500">
+                        <div class="text-xs text-slate-500 dark:text-gray-400">
                             This is a validation preview. Fix rows with conflicts in the Excel file, then upload the corrected file again.
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-gray-400">
                         <span>{{ scholar.length }} row(s)</span>
                         <span>{{ validRows }} valid</span>
                         <span>{{ needsReviewRows }} need review</span>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-y bg-white px-2 py-1.5 text-xs text-slate-600">
-                    <span class="font-semibold text-slate-700">Import quality</span>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-y border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    <span class="font-semibold text-slate-700 dark:text-gray-100">Import quality</span>
                     <span>Valid: <b>{{ qualityCounts.valid }}</b></span>
                     <span>Needs correction: <b>{{ qualityCounts.needsCorrection }}</b></span>
                     <span>Duplicate: <b>{{ qualityCounts.duplicate }}</b></span>
                     <span>Missing required: <b>{{ qualityCounts.missingRequired }}</b></span>
                 </div>
 
-                <div class="flex-1 overflow-auto rounded-lg border bg-white">
-                    <table class="min-w-[2700px] w-full text-xs text-slate-700">
-                        <thead class="sticky top-0 z-10 bg-slate-50">
+                <div class="flex-1 overflow-auto rounded-lg border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+                    <table class="min-w-[2700px] w-full text-xs text-slate-700 dark:text-gray-200">
+                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-gray-800 dark:text-gray-100">
                             <tr>
-                                <th class="border px-2 py-2 text-left">Row</th>
-                                <th class="border px-2 py-2 text-left">Review</th>
-                                <th class="border px-2 py-2 text-left">Issue</th>
-                                <th class="border px-2 py-2 text-left">SPAS No</th>
-                                <th class="border px-2 py-2 text-left">Status</th>
-                                <th class="border px-2 py-2 text-left">Type</th>
-                                <th class="border px-2 py-2 text-left">Subprogram</th>
-                                <th class="border px-2 py-2 text-left">First Name</th>
-                                <th class="border px-2 py-2 text-left">Last Name</th>
-                                <th class="border px-2 py-2 text-left">Middle Name</th>
-                                <th class="border px-2 py-2 text-left">Suffix</th>
-                                <th class="border px-2 py-2 text-left">Sex</th>
-                                <th class="border px-2 py-2 text-left">Email</th>
-                                <th class="border px-2 py-2 text-left">Contact</th>
-                                <th class="border px-2 py-2 text-left">Birthdate</th>
-                                <th class="border px-2 py-2 text-left">Birthplace</th>
-                                <th class="border px-2 py-2 text-left">Civil Status</th>
-                                <th class="border px-2 py-2 text-left">Address Line</th>
-                                <th class="border px-2 py-2 text-left">Barangay</th>
-                                <th class="border px-2 py-2 text-left">Municipality</th>
-                                <th class="border px-2 py-2 text-left">Province</th>
-                                <th class="border px-2 py-2 text-left">Region</th>
-                                <th class="border px-2 py-2 text-left">Year Awarded</th>
-                                <th class="border px-2 py-2 text-left">Database Course</th>
-                                <th class="border px-2 py-2 text-left">Database Curriculum</th>
-                                <th class="border px-2 py-2 text-left">Database School</th>
+                                <th v-for="heading in tableHeadings" :key="heading" class="border border-slate-300 px-2 py-2 text-left dark:border-gray-700">
+                                    {{ heading }}
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr
                                 v-for="(item, index) in scholar"
                                 :key="item.id"
-                                :class="item.verified_by ? 'bg-emerald-50/50' : ''"
+                                :class="item.verified_by ? 'bg-emerald-50/50 dark:bg-emerald-950/20' : 'dark:bg-gray-900'"
                             >
-                                <td class="border px-2 py-1 font-semibold">{{ index + 1 }}</td>
-                                <td class="border px-2 py-1">
+                                <td class="border border-slate-300 px-2 py-1 font-semibold dark:border-gray-700">{{ index + 1 }}</td>
+                                <td class="border border-slate-300 px-2 py-1 dark:border-gray-700">
                                     <span :class="rowStatusClass(item.row_status)">
                                         <span :class="rowStatusDotClass(item.row_status)" />
                                         {{ rowStatusLabel(item) }}
                                     </span>
                                 </td>
-                                <td class="border px-2 py-1 min-w-80">
+                                <td class="border border-slate-300 px-2 py-1 min-w-80 dark:border-gray-700">
                                     <div
                                         v-if="item.row_status !== 'valid'"
-                                        class="whitespace-normal text-[11px] leading-4 text-slate-700"
+                                        class="whitespace-normal text-[11px] leading-4 text-slate-700 dark:text-gray-200"
                                     >
                                         {{ conflictDetail(item) }}
                                     </div>
-                                    <span v-else class="text-slate-500">Ready to import</span>
+                                    <span v-else class="text-slate-500 dark:text-gray-400">Ready to import</span>
                                 </td>
-                                <td class="border px-2 py-1 font-medium">{{ item.spas_no }}</td>
-                                <td class="border px-2 py-1">{{ item.status }}</td>
-                                <td class="border px-2 py-1">{{ item.scholarship_type }}</td>
-                                <td class="border px-2 py-1">{{ item.scholarship_subprogram }}</td>
-                                <td class="border px-2 py-1">{{ item.fname }}</td>
-                                <td class="border px-2 py-1">{{ item.lname }}</td>
-                                <td class="border px-2 py-1">{{ item.mname }}</td>
-                                <td class="border px-2 py-1">{{ item.suffix }}</td>
-                                <td class="border px-2 py-1">{{ item.sex }}</td>
-                                <td class="border px-2 py-1">{{ item.email }}</td>
-                                <td class="border px-2 py-1">{{ item.contact_no }}</td>
-                                <td class="border px-2 py-1">{{ item.birthdate }}</td>
-                                <td class="border px-2 py-1">{{ item.birthplace }}</td>
-                                <td class="border px-2 py-1">{{ item.civil_status }}</td>
-                                <td class="border px-2 py-1 min-w-44">{{ item.address }}</td>
-                                <td class="border px-2 py-1">{{ item.barangay }}</td>
-                                <td class="border px-2 py-1">{{ item.municipality }}</td>
-                                <td class="border px-2 py-1">{{ item.province }}</td>
-                                <td class="border px-2 py-1">{{ item.region }}</td>
-                                <td class="border px-2 py-1">{{ item.year_awarded }}</td>
-                                <td class="border px-2 py-1 min-w-64">
+                                <td class="border border-slate-300 px-2 py-1 font-medium dark:border-gray-700">{{ item.spas_no }}</td>
+                                <td v-for="field in rowFields" :key="field" :class="['border border-slate-300 px-2 py-1 dark:border-gray-700', field === 'address' ? 'min-w-44' : '']">{{ item[field] }}</td>
+                                <td class="border border-slate-300 px-2 py-1 min-w-64 dark:border-gray-700">
                                     <div>{{ item.matchedCourse?.name || "-" }}</div>
-                                    <div v-if="item.matchedCourse?.name && item.matchedCourse?.name !== item.course" class="text-[10px] text-slate-400">
+                                    <div v-if="item.matchedCourse?.name && item.matchedCourse?.name !== item.course" class="text-[10px] text-slate-400 dark:text-gray-500">
                                         Excel: {{ item.course }}
                                     </div>
                                 </td>
-                                <td class="border px-2 py-1 min-w-44">
+                                <td class="border border-slate-300 px-2 py-1 min-w-44 dark:border-gray-700">
                                     {{ item.matchedCurriculum?.name || "-" }}
                                 </td>
-                                <td class="border px-2 py-1 min-w-72">
+                                <td class="border border-slate-300 px-2 py-1 min-w-72 dark:border-gray-700">
                                     <div>{{ item.matchedSchool?.name || item.matchedCourse?.campus || "-" }}</div>
-                                    <div v-if="(item.matchedSchool?.name || item.matchedCourse?.campus) && (item.matchedSchool?.name || item.matchedCourse?.campus) !== item.school" class="text-[10px] text-slate-400">
+                                    <div v-if="(item.matchedSchool?.name || item.matchedCourse?.campus) && (item.matchedSchool?.name || item.matchedCourse?.campus) !== item.school" class="text-[10px] text-slate-400 dark:text-gray-500">
                                         Excel: {{ item.school }}
                                     </div>
                                 </td>
                             </tr>
                             <tr v-if="!scholar.length">
-                                <td colspan="26" class="border px-2 py-8 text-center text-slate-500">
+                                <td colspan="26" class="border border-slate-300 px-2 py-8 text-center text-slate-500 dark:border-gray-700 dark:text-gray-400">
                                     No imported rows found.
                                 </td>
                             </tr>
@@ -151,15 +111,15 @@
             <div class="w-full flex items-center justify-between gap-4">
                 <div class="min-w-[220px]">
                     <div class="mb-1 flex items-center justify-between">
-                        <span class="text-xs text-gray-500 font-medium">Validation Progress</span>
-                        <span class="text-xs font-semibold">
+                        <span class="text-xs text-gray-500 font-medium dark:text-gray-400">Validation Progress</span>
+                        <span class="text-xs font-semibold dark:text-gray-100">
                             {{ page.props?.validationStatus.completed ?? 0 }} /
                             {{ page.props?.validationStatus.total ?? 0 }}
                         </span>
                     </div>
-                    <div class="h-1.5 overflow-hidden rounded-full bg-gray-100">
+                    <div class="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                         <div
-                            class="h-full rounded-full bg-slate-700 transition-all duration-300"
+                            class="h-full rounded-full bg-slate-700 transition-all duration-300 dark:bg-blue-400"
                             :style="{ width: `${validationPercent}%` }"
                         />
                     </div>
@@ -167,7 +127,7 @@
                 <DefaultButton
                     size="small"
                     raised
-                    label="Import Batch"
+                    label="Import Scholars"
                     class="!rounded-lg !px-8"
                     :disabled="!canPublish"
                     @click="moveProd"
@@ -197,6 +157,55 @@ const props = defineProps({
 const modelValue = defineModel("modelValue");
 const page = usePage();
 const scholar = computed(() => page.props?.selected ?? []);
+const tableHeadings = [
+    "Row",
+    "Review",
+    "Issue",
+    "SPAS No",
+    "Status",
+    "Type",
+    "Subprogram",
+    "First Name",
+    "Last Name",
+    "Middle Name",
+    "Suffix",
+    "Sex",
+    "Email",
+    "Contact",
+    "Birthdate",
+    "Birthplace",
+    "Civil Status",
+    "Address Line",
+    "Barangay",
+    "Municipality",
+    "Province",
+    "Region",
+    "Year Awarded",
+    "Database Course",
+    "Database Curriculum",
+    "Database School",
+];
+const rowFields = [
+    "status",
+    "scholarship_type",
+    "scholarship_subprogram",
+    "fname",
+    "lname",
+    "mname",
+    "suffix",
+    "sex",
+    "email",
+    "contact_no",
+    "birthdate",
+    "birthplace",
+    "civil_status",
+    "address",
+    "barangay",
+    "municipality",
+    "province",
+    "region",
+    "year_awarded",
+];
 
 const validRows = computed(() => scholar.value.filter((item) => item.row_status === "valid").length);
 const needsReviewRows = computed(() => scholar.value.length - validRows.value);
@@ -266,11 +275,11 @@ const rowStatusClass = (status) =>
     [
         "inline-flex items-center gap-1 whitespace-nowrap rounded border px-2 py-0.5 text-[11px] font-semibold",
         {
-            valid: "border-slate-200 bg-white text-slate-700",
-            needs_correction: "border-slate-200 bg-white text-slate-700",
-            duplicate: "border-slate-200 bg-white text-slate-700",
-            missing_required: "border-slate-200 bg-white text-slate-700",
-        }[status] || "border-slate-200 bg-white text-slate-700",
+            valid: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200",
+            needs_correction: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200",
+            duplicate: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200",
+            missing_required: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200",
+        }[status] || "border-slate-200 bg-white text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
     ];
 
 const rowStatusDotClass = (status) =>
@@ -298,7 +307,7 @@ const moveProd = () => {
     confirm.require({
         group: "templating",
         message: `Import this complete batch to scholar records? ${page.props?.validationStatus.completed ?? 0} out of ${page.props?.validationStatus.total ?? 0} rows are valid.`,
-        header: "Import Batch",
+        header: "Import Scholars",
         icon: "pi pi-exclamation-triangle",
         severity: "info",
         rejectLabel: "Cancel",
