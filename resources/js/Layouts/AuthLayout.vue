@@ -119,7 +119,8 @@
                         <DefaultToggle
                             v-model="isDark"
                             @update-value="toggleDark"
-                            :un-check-icon="IconSun"
+                            un-check-icon-class="text-yellow-500 "
+                            :un-check-icon="IconSunHighFilled"
                             :check-icon="IconMoon"
                         />
 
@@ -427,7 +428,7 @@ import {
     IconListDetails,
     IconChevronLeft,
     IconChevronRight,
-    IconSun,
+    IconSunHighFilled,
     IconMoon,
     IconBell,
     IconFileDownload,
