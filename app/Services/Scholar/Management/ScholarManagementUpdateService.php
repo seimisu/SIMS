@@ -17,7 +17,9 @@ class ScholarManagementUpdateService
         $slice = isset($data['fulladdress']['id'])
             ? explode('-', $data['fulladdress']['id'])
             : null;
-        $sliceCurrent = explode('-', $data['fulladdressCurrent']['id']);
+        $sliceCurrent = isset($data['fulladdressCurrent']['id'])
+            ? explode('-', $data['fulladdressCurrent']['id'])
+            : null;
 
         $scholar->update([
             'program_id' => $data['program']['id'],
