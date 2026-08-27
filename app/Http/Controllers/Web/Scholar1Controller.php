@@ -560,6 +560,7 @@ class Scholar1Controller extends Controller
                                 'status:id,name,icon,color_id',
                                 'status.color:id,background_color,text_color',
                                 'address:id,scholar_id,region_code,province_code,municipality_code,barangay_code,address',
+                                'addressCurrent:id,scholar_id,region_code,province_code,municipality_code,barangay_code,address',
                                 'program:id,name',
                                 'type:id,name',
                                 'profile:id,scholar_id,photo,sex,fname,lname,mname,suffix,email,contact_no,birthplace,birthdate,religion,civil_status',
@@ -644,6 +645,14 @@ class Scholar1Controller extends Controller
                                 'barangay' => $q?->address?->barangay_array,
                             ],
                             'fullAddress' => $q?->address?->full_address,
+                            'addressCurrent' => [
+                                'address' => $q?->addressCurrent?->address,
+                                'province' => $q?->addressCurrent?->province_array,
+                                'region' => $q?->addressCurrent?->region_array,
+                                'municipality' => $q?->addressCurrent?->municipality_array,
+                                'barangay' => $q?->addressCurrent?->barangay_array,
+                            ],
+                            'fullAddressCurrent' => $q?->addressCurrent?->full_address,
                             'awardYear' => $q?->award_year,
                             'schoolInfoId' => $q?->schoolInfo?->first()?->id,
                             'course' => $q?->schoolInfo?->first()?->course?->course?->name,
@@ -958,6 +967,8 @@ class Scholar1Controller extends Controller
                     'civil_status' => 'nullable|string|max:255',
                     'fulladdress' => 'nullable',
                     'address' => 'nullable',
+                    'fulladdressCurrent' => 'nullable',
+                    'addressCurrent' => 'nullable',
                     // // Scholarship
                     'program' => 'nullable',
                     'sub_program' => 'nullable',
@@ -978,7 +989,7 @@ class Scholar1Controller extends Controller
                 ]);
 
                 $slice = explode('-', $data['fulladdress']['id']);
-
+                $sliceCurrent = explode('-', $data['fulladdressCurrent']['id']);
                 $scholar->update([
                     'program_id' => $data['program']['id'],
                     'type_id' => $data['sub_program']['id'],
@@ -994,7 +1005,6 @@ class Scholar1Controller extends Controller
                         'lname' => Str::upper($data['last_name']),
                         'suffix' => Str::upper($data['suffix']) ?? null,
                         'email' => $data['email'],
-
                         'contact_no' => $data['contact_no'] ?? null,
                         'birthplace' => $data['birth_place'] ?? null,
                         'birthdate' => Carbon::parse($data['birth_date'])->setTimezone('Asia/Manila')
@@ -1035,6 +1045,31 @@ class Scholar1Controller extends Controller
                         'previous_data' => $prev,
                         'changes_data' => $changes,
                         'request_type' => 'address',
+                        'created_by' => Auth::user()->profile->fullname,
+                        'scholar_id' => $decodedId,
+                    ]);
+
+                }
+
+                $addressCurrent = $scholar->addressCurrent()->updateOrCreate(
+                    ['scholar_id' => $scholar->id],
+                    [
+                        'address' => $data['addressCurrent'] ?? null,
+                        'barangay_code' => $sliceCurrent[0] ?? null,
+                        'municipality_code' => $sliceCurrent[1] ?? null,
+                        'province_code' => $sliceCurrent[2] ?? null,
+                        'region_code' => $sliceCurrent[3] ?? null,
+                    ]
+                );
+
+                if ($addressCurrent->wasChanged()) {
+                    $changes = $addressCurrent->getChanges();
+                    $prev = $addressCurrent->getPrevious();
+
+                    ActivityLogs::create([
+                        'previous_data' => $prev,
+                        'changes_data' => $changes,
+                        'request_type' => 'currrent_address',
                         'created_by' => Auth::user()->profile->fullname,
                         'scholar_id' => $decodedId,
                     ]);

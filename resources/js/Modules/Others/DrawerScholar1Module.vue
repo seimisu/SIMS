@@ -17,7 +17,9 @@
         </template>
         <template #default>
             <div class="flex flex-col lg:flex-row w-full my-5 gap-3 h-full">
-                <div class="lg:flex-2 flex flex-col bg-white p-2 rounded-2xl dark:bg-gray-800 dark:text-gray-100">
+                <div
+                    class="lg:flex-2 flex flex-col bg-white p-2 rounded-2xl dark:bg-gray-800 dark:text-gray-100"
+                >
                     <div class="flex-1">
                         <div class="flex gap-2 items-center">
                             <div class="">
@@ -138,7 +140,9 @@
                                     <div>
                                         {{ page.props?.details?.type.name }}
                                     </div>
-                                    <div class="text-xs text-gray-400 dark:text-gray-500">
+                                    <div
+                                        class="text-xs text-gray-400 dark:text-gray-500"
+                                    >
                                         Type
                                     </div>
                                 </div>
@@ -148,7 +152,9 @@
                                     <div>
                                         {{ page.props?.details?.program.name }}
                                     </div>
-                                    <div class="text-xs text-gray-400 dark:text-gray-500">
+                                    <div
+                                        class="text-xs text-gray-400 dark:text-gray-500"
+                                    >
                                         Program
                                     </div>
                                 </div>
@@ -158,7 +164,9 @@
                                     <div>
                                         {{ page.props?.details?.awardYear }}
                                     </div>
-                                    <div class="text-xs text-gray-400 dark:text-gray-500">
+                                    <div
+                                        class="text-xs text-gray-400 dark:text-gray-500"
+                                    >
                                         Award Year
                                     </div>
                                 </div>
@@ -493,14 +501,18 @@
                                         :icon="TablerIcons.IconUserEdit"
                                         label="Edit Details"
                                         size="small"
-                                        v-if="canUpdateScholars && !editBtn.info"
+                                        v-if="
+                                            canUpdateScholars && !editBtn.info
+                                        "
                                         @click="EditMode"
                                         raised
                                         class-name="!rounded-xl !px-5"
                                     />
                                     <div
                                         class="flex items-center gap-2"
-                                        v-else-if="canUpdateScholars && editBtn.info"
+                                        v-else-if="
+                                            canUpdateScholars && editBtn.info
+                                        "
                                     >
                                         <DefaultButton
                                             :icon="TablerIcons.IconUserCancel"
@@ -667,29 +679,60 @@
                                 </section>
 
                                 <section
-                                    class="flex flex-col gap-2 border-t border-slate-200 pt-3"
+                                    class="flex flex-col gap-5 border-t border-slate-200 pt-3"
                                 >
-                                    <h3
-                                        class="text-xs font-semibold uppercase text-slate-500"
-                                    >
-                                        Address
-                                    </h3>
-                                    <TextInput
-                                        v-model="personalInfo.address"
-                                        label="Street Address"
-                                        :disabled="!editBtn.info"
-                                        placeholder="Street, Subdivision, etc."
-                                    />
-                                    <AutoCompleteInput
-                                        v-model="personalInfo.fulladdress"
-                                        label="Barangay / Municipality / Province / Region"
-                                        :options="page.props?.resultSearch"
-                                        :disabled="!editBtn.info"
-                                        :loading="loading.address"
-                                        placeholder="Find by Barangay, Municipality, Province, or Region"
-                                        @complete="autoSearch"
-                                        selection
-                                    />
+                                    <div class="">
+                                        <span
+                                            class="text-xs bg-blue-50 p-1 rounded-lg font-semibold uppercase text-slate-500"
+                                        >
+                                            Permanent Address
+                                        </span>
+
+                                        <TextInput
+                                            v-model="personalInfo.address"
+                                            label="Street Address"
+                                            :disabled="!editBtn.info"
+                                            placeholder="Street, Subdivision, etc."
+                                        />
+                                        <AutoCompleteInput
+                                            v-model="personalInfo.fulladdress"
+                                            label="Barangay / Municipality / Province / Region"
+                                            :options="page.props?.resultSearch"
+                                            :disabled="!editBtn.info"
+                                            :loading="loading.address"
+                                            placeholder="Find by Barangay, Municipality, Province, or Region"
+                                            @complete="autoSearch"
+                                            selection
+                                        />
+                                    </div>
+
+                                    <div class="">
+                                        <h3
+                                            class="text-xs font-semibold uppercase text-slate-500"
+                                        >
+                                            Current Address
+                                        </h3>
+                                        <TextInput
+                                            v-model="
+                                                personalInfo.addressCurrent
+                                            "
+                                            label="Street Address"
+                                            :disabled="!editBtn.info"
+                                            placeholder="Street, Subdivision, etc."
+                                        />
+                                        <AutoCompleteInput
+                                            v-model="
+                                                personalInfo.fulladdressCurrent
+                                            "
+                                            label="Barangay / Municipality / Province / Region"
+                                            :options="page.props?.resultSearch"
+                                            :disabled="!editBtn.info"
+                                            :loading="loading.address"
+                                            placeholder="Find by Barangay, Municipality, Province, or Region"
+                                            @complete="autoSearch"
+                                            selection
+                                        />
+                                    </div>
                                 </section>
 
                                 <section
@@ -725,7 +768,8 @@
                                     :pt="{
                                         root: '!border-slate-200 dark:!border-gray-700 dark:!bg-gray-900',
                                         header: '!border-b !border-slate-200 !border-dashed !p-3 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
-                                        content: '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
+                                        content:
+                                            '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
                                     }"
                                 >
                                     <template #header>
@@ -782,9 +826,7 @@
                                                         '!min-w-[3rem]',
                                                 }"
                                             >
-                                                <template
-                                                    #marker="slotProps"
-                                                >
+                                                <template #marker="slotProps">
                                                     <div
                                                         :class="[
                                                             'w-10 h-10 rounded-2xl border flex items-center justify-center shadow-sm dark:bg-gray-800',
@@ -850,9 +892,7 @@
                                                     </div>
                                                 </template>
 
-                                                <template
-                                                    #content="slotProps"
-                                                >
+                                                <template #content="slotProps">
                                                     <div
                                                         class="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
                                                     >
@@ -906,9 +946,7 @@
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div
-                                                            class="text-sm"
-                                                        >
+                                                        <div class="text-sm">
                                                             <div
                                                                 v-for="(
                                                                     value, key
@@ -1033,7 +1071,9 @@
                                         Academic Records
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                <p
+                                    class="text-xs text-gray-500 dark:text-gray-400"
+                                >
                                     Records are arranged from newest to oldest.
                                     Totals and semester average use academic
                                     subjects only.
@@ -1048,7 +1088,8 @@
                                     class="!rounded-xl"
                                     :pt="{
                                         header: '!border-b-1 !border-gray-300 !border-dashed !p-0 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
-                                        content: 'dark:!bg-gray-900 dark:!text-gray-100',
+                                        content:
+                                            'dark:!bg-gray-900 dark:!text-gray-100',
                                     }"
                                 >
                                     <template #header>
@@ -1082,35 +1123,63 @@
                                                 class="flex flex-wrap items-center gap-2 lg:justify-end"
                                             >
                                                 <DefaultButton
-                                                    v-if="canUpdateScholars && !editingAcademicRecord(termRecord)"
-                                                    :icon="TablerIcons.IconScript"
+                                                    v-if="
+                                                        canUpdateScholars &&
+                                                        !editingAcademicRecord(
+                                                            termRecord,
+                                                        )
+                                                    "
+                                                    :icon="
+                                                        TablerIcons.IconScript
+                                                    "
                                                     label="Edit Records"
                                                     size="small"
                                                     raised
                                                     class-name="!rounded-xl !px-4"
-                                                    @click="editAcademicRecord(termRecord)"
+                                                    @click="
+                                                        editAcademicRecord(
+                                                            termRecord,
+                                                        )
+                                                    "
                                                 />
                                                 <div
-                                                    v-else-if="canUpdateScholars && editingAcademicRecord(termRecord)"
+                                                    v-else-if="
+                                                        canUpdateScholars &&
+                                                        editingAcademicRecord(
+                                                            termRecord,
+                                                        )
+                                                    "
                                                     class="flex items-center gap-2"
                                                 >
                                                     <DefaultButton
-                                                        :icon="TablerIcons.IconScriptX"
+                                                        :icon="
+                                                            TablerIcons.IconScriptX
+                                                        "
                                                         label="Cancel"
                                                         size="small"
                                                         severity="danger"
                                                         class-name="!rounded-xl !px-4"
-                                                        @click="cancelAcademicRecordEdit"
+                                                        @click="
+                                                            cancelAcademicRecordEdit
+                                                        "
                                                     />
                                                     <DefaultButton
-                                                        :icon="TablerIcons.IconDeviceFloppy"
+                                                        :icon="
+                                                            TablerIcons.IconDeviceFloppy
+                                                        "
                                                         label="Save"
                                                         size="small"
                                                         raised
-                                                        :loading="academicRecordForm.processing"
-                                                        :disabled="academicRecordForm.processing"
+                                                        :loading="
+                                                            academicRecordForm.processing
+                                                        "
+                                                        :disabled="
+                                                            academicRecordForm.processing
+                                                        "
                                                         class-name="!rounded-xl !px-4"
-                                                        @click="confirmAcademicRecordSave"
+                                                        @click="
+                                                            confirmAcademicRecordSave
+                                                        "
                                                     />
                                                 </div>
                                                 <span
@@ -1126,7 +1195,10 @@
                                                         v-for="(
                                                             file, index
                                                         ) in termRecord.files"
-                                                        :key="file.id ?? `file-${index}`"
+                                                        :key="
+                                                            file.id ??
+                                                            `file-${index}`
+                                                        "
                                                     >
                                                         <a
                                                             v-if="
@@ -1169,7 +1241,11 @@
                                                 class="flex flex-col gap-3 rounded-xl bg-slate-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between dark:bg-gray-800"
                                             >
                                                 <div
-                                                    v-if="!editingAcademicRecord(termRecord)"
+                                                    v-if="
+                                                        !editingAcademicRecord(
+                                                            termRecord,
+                                                        )
+                                                    "
                                                     class="flex flex-col"
                                                 >
                                                     <div
@@ -1194,43 +1270,81 @@
                                                     class="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
                                                 >
                                                     <SelectInput
-                                                        v-model="academicRecordForm.school"
+                                                        v-model="
+                                                            academicRecordForm.school
+                                                        "
                                                         label="School"
-                                                        :options="page.props?.schoolOptions ?? []"
+                                                        :options="
+                                                            page.props
+                                                                ?.schoolOptions ??
+                                                            []
+                                                        "
                                                         filter
-                                                        @change="renderAcademicCourse"
+                                                        @change="
+                                                            renderAcademicCourse
+                                                        "
                                                     />
                                                     <SelectInput
-                                                        v-model="academicRecordForm.course"
+                                                        v-model="
+                                                            academicRecordForm.course
+                                                        "
                                                         label="Course"
-                                                        :options="page.props?.courseOptions ?? []"
+                                                        :options="
+                                                            page.props
+                                                                ?.courseOptions ??
+                                                            []
+                                                        "
                                                         filter
                                                     />
                                                     <SelectInput
-                                                        v-model="academicRecordForm.level"
+                                                        v-model="
+                                                            academicRecordForm.level
+                                                        "
                                                         label="Year Level"
-                                                        :options="page.props?.yearOptions ?? []"
+                                                        :options="
+                                                            page.props
+                                                                ?.yearOptions ??
+                                                            []
+                                                        "
                                                         filter
                                                     />
                                                     <SelectInput
-                                                        v-model="academicRecordForm.term"
+                                                        v-model="
+                                                            academicRecordForm.term
+                                                        "
                                                         label="Semester"
-                                                        :options="page.props?.termOptions ?? []"
+                                                        :options="
+                                                            page.props
+                                                                ?.termOptions ??
+                                                            []
+                                                        "
                                                         filter
                                                     />
                                                     <TextInput
-                                                        v-model="academicRecordForm.academic_year"
+                                                        v-model="
+                                                            academicRecordForm.academic_year
+                                                        "
                                                         label="Academic Year"
                                                     />
                                                     <SelectInput
-                                                        v-model="academicRecordForm.scholarship_status"
+                                                        v-model="
+                                                            academicRecordForm.scholarship_status
+                                                        "
                                                         label="Scholarship Status"
-                                                        :options="page.props?.standingOptions ?? []"
+                                                        :options="
+                                                            page.props
+                                                                ?.standingOptions ??
+                                                            []
+                                                        "
                                                         filter
                                                     />
                                                 </div>
                                                 <div
-                                                    v-if="!editingAcademicRecord(termRecord)"
+                                                    v-if="
+                                                        !editingAcademicRecord(
+                                                            termRecord,
+                                                        )
+                                                    "
                                                     class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-right dark:border-amber-800/70 dark:bg-amber-950/30"
                                                 >
                                                     <div
@@ -1252,7 +1366,9 @@
                                                 class="min-w-full !border-none text-sm"
                                             >
                                                 <thead>
-                                                    <tr class="bg-gray-100 dark:bg-gray-800">
+                                                    <tr
+                                                        class="bg-gray-100 dark:bg-gray-800"
+                                                    >
                                                         <th
                                                             class="px-3 py-2 text-left rounded-l-xl"
                                                         >
@@ -1266,7 +1382,11 @@
                                                         <th
                                                             :class="[
                                                                 'px-3 py-2',
-                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-right',
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                                    ? 'text-left'
+                                                                    : 'text-right',
                                                             ]"
                                                         >
                                                             Unit
@@ -1274,7 +1394,11 @@
                                                         <th
                                                             :class="[
                                                                 'px-3 py-2',
-                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-right',
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                                    ? 'text-left'
+                                                                    : 'text-right',
                                                             ]"
                                                         >
                                                             Grades
@@ -1282,7 +1406,11 @@
                                                         <th
                                                             :class="[
                                                                 'px-3 py-2',
-                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-right',
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                                    ? 'text-left'
+                                                                    : 'text-right',
                                                             ]"
                                                         >
                                                             Total
@@ -1290,17 +1418,28 @@
                                                         <th
                                                             :class="[
                                                                 'px-3 py-2',
-                                                                editingAcademicRecord(termRecord) ? 'text-left' : 'text-center',
-                                                                editingAcademicRecord(termRecord) ? '' : 'rounded-r-xl',
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                                    ? 'text-left'
+                                                                    : 'text-center',
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                                    ? ''
+                                                                    : 'rounded-r-xl',
                                                             ]"
                                                         >
                                                             Remarks
                                                         </th>
                                                         <th
-                                                            v-if="editingAcademicRecord(termRecord)"
+                                                            v-if="
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                            "
                                                             class="w-12 rounded-r-xl px-3 py-2 text-left"
-                                                        >
-                                                        </th>
+                                                        ></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1311,7 +1450,13 @@
                                                         "
                                                     >
                                                         <td
-                                                            :colspan="editingAcademicRecord(termRecord) ? 7 : 6"
+                                                            :colspan="
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                                    ? 7
+                                                                    : 6
+                                                            "
                                                             class="px-3 py-6 text-center text-gray-500 dark:text-gray-400"
                                                         >
                                                             Approved academic
@@ -1323,35 +1468,52 @@
                                                     <tr
                                                         v-for="(
                                                             item, index
-                                                        ) in academicRecordRows(termRecord)"
+                                                        ) in academicRecordRows(
+                                                            termRecord,
+                                                        )"
                                                         :key="index"
                                                         class="hover:bg-gray-50 dark:hover:bg-gray-800/80"
                                                     >
                                                         <template
-                                                            v-if="editingAcademicRecord(termRecord)"
+                                                            v-if="
+                                                                editingAcademicRecord(
+                                                                    termRecord,
+                                                                )
+                                                            "
                                                         >
                                                             <td
                                                                 class="px-3 py-2 min-w-72"
                                                             >
                                                                 <SelectInput
-                                                                    v-model="item.subject"
-                                                                    :options="academicSubjectOptionsForRow(index)"
+                                                                    v-model="
+                                                                        item.subject
+                                                                    "
+                                                                    :options="
+                                                                        academicSubjectOptionsForRow(
+                                                                            index,
+                                                                        )
+                                                                    "
                                                                     filter
                                                                     uppercase
                                                                 />
                                                             </td>
-                                                            <td class="px-3 py-2 text-slate-600 dark:text-gray-300">
-                                                                    {{
-                                                                    item.subject?.code ??
-                                                                    item.subject?.subject_code ??
+                                                            <td
+                                                                class="px-3 py-2 text-slate-600 dark:text-gray-300"
+                                                            >
+                                                                {{
+                                                                    item.subject
+                                                                        ?.code ??
+                                                                    item.subject
+                                                                        ?.subject_code ??
                                                                     "-"
                                                                 }}
                                                             </td>
                                                             <td
                                                                 class="px-3 py-2 text-left text-slate-600 dark:text-gray-300"
                                                             >
-                                                                    {{
-                                                                    item.subject?.unit ??
+                                                                {{
+                                                                    item.subject
+                                                                        ?.unit ??
                                                                     "-"
                                                                 }}
                                                             </td>
@@ -1359,8 +1521,14 @@
                                                                 class="px-3 py-2 min-w-36"
                                                             >
                                                                 <SelectInput
-                                                                    v-model="item.grade"
-                                                                    :options="academicGradeOptionsForRow(index)"
+                                                                    v-model="
+                                                                        item.grade
+                                                                    "
+                                                                    :options="
+                                                                        academicGradeOptionsForRow(
+                                                                            index,
+                                                                        )
+                                                                    "
                                                                     filter
                                                                 />
                                                             </td>
@@ -1368,164 +1536,200 @@
                                                                 class="px-3 py-2 text-left text-slate-600 dark:text-gray-300"
                                                             >
                                                                 {{
-                                                                    academicSubjectTotal(item) ??
-                                                                    "-"
+                                                                    academicSubjectTotal(
+                                                                        item,
+                                                                    ) ?? "-"
                                                                 }}
                                                             </td>
                                                             <td
                                                                 class="px-3 py-2 text-left"
                                                             >
                                                                 <span
-                                                                    :class="academicSubjectRemarkClass(item)"
+                                                                    :class="
+                                                                        academicSubjectRemarkClass(
+                                                                            item,
+                                                                        )
+                                                                    "
                                                                 >
-                                                                    {{ academicSubjectRemark(item) }}
+                                                                    {{
+                                                                        academicSubjectRemark(
+                                                                            item,
+                                                                        )
+                                                                    }}
                                                                 </span>
                                                             </td>
                                                             <td
                                                                 class="px-3 py-2 text-left"
                                                             >
                                                                 <DefaultButton
-                                                                    :icon="TablerIcons.IconTrash"
+                                                                    :icon="
+                                                                        TablerIcons.IconTrash
+                                                                    "
                                                                     text
                                                                     severity="danger"
                                                                     size="small"
                                                                     shape="circle"
-                                                                    @click="removeAcademicSubject(index)"
+                                                                    @click="
+                                                                        removeAcademicSubject(
+                                                                            index,
+                                                                        )
+                                                                    "
                                                                 />
                                                             </td>
                                                         </template>
                                                         <template v-else>
-                                                        <td
-                                                            class="px-3 py-2 uppercase max-w-70"
-                                                        >
-                                                            {{
-                                                                item.subject
-                                                                    .name
-                                                            }}
-                                                        </td>
-                                                        <td class="px-3 py-2">
-                                                            {{
-                                                                item.subject
-                                                                    ?.code ??
-                                                                item.code
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-3 py-2 text-right"
-                                                        >
-                                                            {{
-                                                                item.subject
-                                                                    ?.unit ??
-                                                                item.unit
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-3 py-2 text-right max-w-35"
-                                                        >
-                                                            {{
-                                                                item.request
-                                                                    ?.grade ??
-                                                                item.grade
-                                                                    ?.grade
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-3 py-2 text-right"
-                                                        >
-                                                            {{
-                                                                item.total ??
-                                                                "-"
-                                                            }}
-                                                        </td>
-                                                        <td
-                                                            class="px-3 py-2 text-center"
-                                                        >
-                                                            <div
-                                                                v-if="
-                                                                    item.request
-                                                                        ?.is_drop
-                                                                "
-                                                                class="text-slate-500 dark:text-gray-400"
+                                                            <td
+                                                                class="px-3 py-2 uppercase max-w-70"
                                                             >
-                                                                Dropped
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.request
-                                                                        ?.is_failed
-                                                                "
-                                                                class="text-rose-600 dark:text-rose-300"
+                                                                {{
+                                                                    item.subject
+                                                                        .name
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2"
                                                             >
-                                                                Failed
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.request
-                                                                        ?.is_incomplete
-                                                                "
-                                                                class="text-amber-600 dark:text-amber-300"
+                                                                {{
+                                                                    item.subject
+                                                                        ?.code ??
+                                                                    item.code
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-right"
                                                             >
-                                                                Incompleted
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
+                                                                {{
+                                                                    item.subject
+                                                                        ?.unit ??
+                                                                    item.unit
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-right max-w-35"
+                                                            >
+                                                                {{
                                                                     item.request
+                                                                        ?.grade ??
+                                                                    item.grade
                                                                         ?.grade
-                                                                "
-                                                                class="text-green-600 dark:text-green-300"
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-right"
                                                             >
-                                                                Passed
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.grade
-                                                                        ?.is_drop
-                                                                "
-                                                                class="text-slate-500 dark:text-gray-400"
+                                                                {{
+                                                                    item.total ??
+                                                                    "-"
+                                                                }}
+                                                            </td>
+                                                            <td
+                                                                class="px-3 py-2 text-center"
                                                             >
-                                                                Dropped
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.grade
-                                                                        ?.is_failed
-                                                                "
-                                                                class="text-rose-600 dark:text-rose-300"
-                                                            >
-                                                                Failed
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.grade
-                                                                        ?.is_incomplete
-                                                                "
-                                                                class="text-amber-600 dark:text-amber-300"
-                                                            >
-                                                                Incompleted
-                                                            </div>
-                                                            <div
-                                                                v-else-if="
-                                                                    item.grade
-                                                                        ?.is_active
-                                                                "
-                                                                class="text-green-600 dark:text-green-300"
-                                                            >
-                                                                Passed
-                                                            </div>
-                                                        </td>
+                                                                <div
+                                                                    v-if="
+                                                                        item
+                                                                            .request
+                                                                            ?.is_drop
+                                                                    "
+                                                                    class="text-slate-500 dark:text-gray-400"
+                                                                >
+                                                                    Dropped
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .request
+                                                                            ?.is_failed
+                                                                    "
+                                                                    class="text-rose-600 dark:text-rose-300"
+                                                                >
+                                                                    Failed
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .request
+                                                                            ?.is_incomplete
+                                                                    "
+                                                                    class="text-amber-600 dark:text-amber-300"
+                                                                >
+                                                                    Incompleted
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .request
+                                                                            ?.grade
+                                                                    "
+                                                                    class="text-green-600 dark:text-green-300"
+                                                                >
+                                                                    Passed
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .grade
+                                                                            ?.is_drop
+                                                                    "
+                                                                    class="text-slate-500 dark:text-gray-400"
+                                                                >
+                                                                    Dropped
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .grade
+                                                                            ?.is_failed
+                                                                    "
+                                                                    class="text-rose-600 dark:text-rose-300"
+                                                                >
+                                                                    Failed
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .grade
+                                                                            ?.is_incomplete
+                                                                    "
+                                                                    class="text-amber-600 dark:text-amber-300"
+                                                                >
+                                                                    Incompleted
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .grade
+                                                                            ?.is_active
+                                                                    "
+                                                                    class="text-green-600 dark:text-green-300"
+                                                                >
+                                                                    Passed
+                                                                </div>
+                                                            </td>
                                                         </template>
                                                     </tr>
                                                     <tr
-                                                        v-if="editingAcademicRecord(termRecord)"
+                                                        v-if="
+                                                            editingAcademicRecord(
+                                                                termRecord,
+                                                            )
+                                                        "
                                                     >
-                                                        <td colspan="7" class="px-3 py-2">
+                                                        <td
+                                                            colspan="7"
+                                                            class="px-3 py-2"
+                                                        >
                                                             <DefaultButton
-                                                                :icon="TablerIcons.IconScriptPlus"
+                                                                :icon="
+                                                                    TablerIcons.IconScriptPlus
+                                                                "
                                                                 label="Add Subject"
                                                                 severity="secondary"
                                                                 size="small"
                                                                 class-name="!rounded-xl w-full !px-5"
-                                                                @click="addAcademicSubject"
+                                                                @click="
+                                                                    addAcademicSubject
+                                                                "
                                                             />
                                                         </td>
                                                     </tr>
@@ -1533,7 +1737,9 @@
                                                         v-if="
                                                             termRecord.subjects
                                                                 ?.length &&
-                                                            !editingAcademicRecord(termRecord)
+                                                            !editingAcademicRecord(
+                                                                termRecord,
+                                                            )
                                                         "
                                                         class="bg-blue-50 font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-100"
                                                     >
@@ -1746,7 +1952,8 @@
                                 :pt="{
                                     root: '!border-slate-200 dark:!border-gray-700 dark:!bg-gray-900',
                                     header: '!border-b !border-slate-200 !border-dashed !p-3 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
-                                    content: '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
+                                    content:
+                                        '!p-0 dark:!bg-gray-900 dark:!text-gray-100',
                                 }"
                             >
                                 <template #header>
@@ -1772,8 +1979,7 @@
                                                 <p
                                                     class="text-xs text-gray-500 dark:text-gray-400"
                                                 >
-                                                    Academic record edit
-                                                    history
+                                                    Academic record edit history
                                                 </p>
                                             </div>
                                         </div>
@@ -1800,8 +2006,7 @@
                                             class="p-1"
                                             :pt="{
                                                 eventOpposite: '!hidden',
-                                                eventSeparator:
-                                                    '!min-w-[3rem]',
+                                                eventSeparator: '!min-w-[3rem]',
                                             }"
                                         >
                                             <template #marker>
@@ -1962,7 +2167,9 @@
                                     }}
                                 </h2>
 
-                                <p class="text-xs text-slate-400 mt-1 dark:text-gray-400">
+                                <p
+                                    class="text-xs text-slate-400 mt-1 dark:text-gray-400"
+                                >
                                     Total approved scholarship amount
                                 </p>
                             </div>
@@ -1996,7 +2203,9 @@
                                     }}
                                 </h2>
 
-                                <p class="text-xs text-slate-400 mt-1 dark:text-gray-400">
+                                <p
+                                    class="text-xs text-slate-400 mt-1 dark:text-gray-400"
+                                >
                                     Successfully received amount
                                 </p>
                             </div>
@@ -2030,7 +2239,9 @@
                                     }}
                                 </h2>
 
-                                <p class="text-xs text-slate-400 mt-1 dark:text-gray-400">
+                                <p
+                                    class="text-xs text-slate-400 mt-1 dark:text-gray-400"
+                                >
                                     Outstanding scholarship balance
                                 </p>
                             </div>
@@ -2445,7 +2656,9 @@
                                                 Total Financial Allowances
                                             </h3>
 
-                                            <p class="text-xs text-slate-500 dark:text-gray-400">
+                                            <p
+                                                class="text-xs text-slate-500 dark:text-gray-400"
+                                            >
                                                 Additional Benefits
                                             </p>
                                         </div>
@@ -2832,6 +3045,8 @@ const personalInfo = useForm({
     civil_status: null,
     address: null,
     fulladdress: null,
+    addressCurrent: null,
+    fulladdressCurrent: null,
     school: null,
     course: null,
     program: null,
@@ -2919,7 +3134,10 @@ const isPrerequisiteSubject = (subject) => {
         subject?.subject_code,
         subject?.class,
         subject?.subject_class,
-    ].filter(Boolean).join(" ").toLowerCase();
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
     return text.includes("prerequisite") || text.includes("pre-requisite");
 };
@@ -2927,17 +3145,25 @@ const isPrerequisiteSubject = (subject) => {
 const academicSubjectOptions = computed(() =>
     (page.props?.subjectOptions ?? [])
         .filter((subject) => {
-            const subjectClass = String(subject?.class ?? subject?.subject_class ?? "academic")
+            const subjectClass = String(
+                subject?.class ?? subject?.subject_class ?? "academic",
+            )
                 .trim()
                 .toLowerCase();
 
-            return subjectClass === "academic" && !isPrerequisiteSubject(subject);
+            return (
+                subjectClass === "academic" && !isPrerequisiteSubject(subject)
+            );
         })
         .map((subject) => ({
             ...subject,
             name: String(subject?.name ?? "").toUpperCase(),
-            code: subject?.code ? String(subject.code).toUpperCase() : subject?.code,
-            subject_code: subject?.subject_code ? String(subject.subject_code).toUpperCase() : subject?.subject_code,
+            code: subject?.code
+                ? String(subject.code).toUpperCase()
+                : subject?.code,
+            subject_code: subject?.subject_code
+                ? String(subject.subject_code).toUpperCase()
+                : subject?.subject_code,
         })),
 );
 
@@ -2945,7 +3171,10 @@ const academicSubjectOptionsForRow = (index) => {
     const selected = academicRecordForm.subjects[index]?.subject;
     const options = academicSubjectOptions.value;
 
-    if (!selected?.id || options.some((subject) => subject.id === selected.id)) {
+    if (
+        !selected?.id ||
+        options.some((subject) => subject.id === selected.id)
+    ) {
         return options;
     }
 
@@ -2953,7 +3182,9 @@ const academicSubjectOptionsForRow = (index) => {
 };
 
 const academicGradeOptions = computed(() =>
-    (page.props?.gradeOptions ?? []).map((grade) => normalizeGradeOption(grade)),
+    (page.props?.gradeOptions ?? []).map((grade) =>
+        normalizeGradeOption(grade),
+    ),
 );
 
 const academicGradeOptionsForRow = (index) => {
@@ -2964,10 +3195,7 @@ const academicGradeOptionsForRow = (index) => {
         return options;
     }
 
-    return [
-        selected,
-        ...options.filter((grade) => grade.id !== selected.id),
-    ];
+    return [selected, ...options.filter((grade) => grade.id !== selected.id)];
 };
 
 const normalizeSubjectOption = (subject) => {
@@ -2975,24 +3203,27 @@ const normalizeSubjectOption = (subject) => {
 
     return {
         id: subject?.id,
-        name: subject?.name ? String(subject.name).toUpperCase() : subject?.name,
+        name: subject?.name
+            ? String(subject.name).toUpperCase()
+            : subject?.name,
         code: code ? String(code).toUpperCase() : code,
         unit: subject?.unit,
         class: subject?.class ?? subject?.subject_class,
     };
 };
 
-const normalizeGradeOption = (grade) => grade
-    ? {
-          id: grade.id,
-          name: grade.name ?? grade.grade,
-          grade: grade.grade ?? grade.name,
-          is_failed: grade.is_failed,
-          is_incomplete: grade.is_incomplete,
-          is_drop: grade.is_drop,
-          is_active: grade.is_active,
-      }
-    : null;
+const normalizeGradeOption = (grade) =>
+    grade
+        ? {
+              id: grade.id,
+              name: grade.name ?? grade.grade,
+              grade: grade.grade ?? grade.name,
+              is_failed: grade.is_failed,
+              is_incomplete: grade.is_incomplete,
+              is_drop: grade.is_drop,
+              is_active: grade.is_active,
+          }
+        : null;
 
 const currentAcademicSubject = (row) => normalizeSubjectOption(row?.subject);
 
@@ -3030,12 +3261,11 @@ const academicSubjectRemarkClass = (row) => {
     return "text-slate-400";
 };
 
-const academicRecordHasUnsavedChanges = computed(() =>
-    Boolean(editBtn.value.academicRecord) &&
-    (
-        academicRecordForm.isDirty ||
-        (academicRecordForm.deleted_subjects?.length ?? 0) > 0
-    ),
+const academicRecordHasUnsavedChanges = computed(
+    () =>
+        Boolean(editBtn.value.academicRecord) &&
+        (academicRecordForm.isDirty ||
+            (academicRecordForm.deleted_subjects?.length ?? 0) > 0),
 );
 
 const scholarLocationDisplay = computed(() => {
@@ -3113,6 +3343,7 @@ const storePersonalInfo = async () => {
             type: "personal",
         }),
         {
+            only: ["flash"],
             onSuccess: () => {
                 editBtn.value.info = false;
                 toast.add({
@@ -3137,7 +3368,7 @@ const editingAcademicRecord = (termRecord) =>
 const academicRecordRows = (termRecord) =>
     editingAcademicRecord(termRecord)
         ? academicRecordForm.subjects
-        : termRecord?.subjects ?? [];
+        : (termRecord?.subjects ?? []);
 
 const editAcademicRecord = (termRecord) => {
     if (!canUpdateScholars.value) return;
@@ -3146,28 +3377,40 @@ const editAcademicRecord = (termRecord) => {
     academicRecordForm.clearErrors();
     academicRecordForm.termRecordId = termRecord.id;
     academicRecordForm.deleted_subjects = [];
-    academicRecordForm.school = termRecord.schoolInput ?? page.props?.details?.schoolInput ?? null;
-    academicRecordForm.course = termRecord.courseInput ?? page.props?.details?.courseInput ?? null;
+    academicRecordForm.school =
+        termRecord.schoolInput ?? page.props?.details?.schoolInput ?? null;
+    academicRecordForm.course =
+        termRecord.courseInput ?? page.props?.details?.courseInput ?? null;
     academicRecordForm.level = termRecord.levelInput ?? null;
     academicRecordForm.term = termRecord.termInput ?? null;
     academicRecordForm.academic_year = termRecord.academic_year ?? null;
     academicRecordForm.scholarship_status =
         page.props?.standingOptions?.find((status) => {
-            const currentStatus = String(termRecord.scholarshipStatus ?? "").toUpperCase();
+            const currentStatus = String(
+                termRecord.scholarshipStatus ?? "",
+            ).toUpperCase();
 
             return (
                 status.name?.toUpperCase() === currentStatus ||
                 String(status.id ?? "").toUpperCase() === currentStatus
             );
-        }) ?? (termRecord.scholarshipStatus
-            ? { id: termRecord.scholarshipStatus, name: termRecord.scholarshipStatus }
+        }) ??
+        (termRecord.scholarshipStatus
+            ? {
+                  id: termRecord.scholarshipStatus,
+                  name: termRecord.scholarshipStatus,
+              }
             : null);
-    academicRecordForm.subjects = (termRecord.subjects ?? []).map((subject) => ({
-        id: subject.id ?? null,
-        subject: academicSubjectOptions.value.find((option) => option.id === subject.subject?.id) ??
-            currentAcademicSubject(subject),
-        grade: normalizeGradeOption(subject.grade),
-    }));
+    academicRecordForm.subjects = (termRecord.subjects ?? []).map(
+        (subject) => ({
+            id: subject.id ?? null,
+            subject:
+                academicSubjectOptions.value.find(
+                    (option) => option.id === subject.subject?.id,
+                ) ?? currentAcademicSubject(subject),
+            grade: normalizeGradeOption(subject.grade),
+        }),
+    );
 };
 
 const discardAcademicRecordEdit = () => {
@@ -3254,7 +3497,8 @@ const confirmAcademicRecordSave = () => {
     confirm.require({
         group: "global",
         header: "Save Academic Records?",
-        message: "This will save the changes made to the scholar's academic records.",
+        message:
+            "This will save the changes made to the scholar's academic records.",
         icon: "pi pi-save",
         severity: "info",
         rejectLabel: "Cancel",
@@ -3287,6 +3531,8 @@ watch(
         personalInfo.civil_status = newVal.civil_status ?? null;
         personalInfo.address = newVal.address?.address ?? null;
         personalInfo.fulladdress = newVal.fullAddress ?? null;
+        personalInfo.addressCurrent = newVal.addressCurrent?.address ?? null;
+        personalInfo.fulladdressCurrent = newVal.fullAddressCurrent ?? null;
         personalInfo.program = newVal.program ?? null;
         personalInfo.sub_program = newVal.type ?? null;
         personalInfo.award_year = newVal.awardYear

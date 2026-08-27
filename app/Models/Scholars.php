@@ -92,6 +92,11 @@ class Scholars extends Model
         return $this->hasOne(ScholarAddresses::class, 'scholar_id', 'id');
     }
 
+    public function addressCurrent()
+    {
+        return $this->hasOne(ScholarAddressCurrent::class, 'scholar_id', 'id');
+    }
+
     public function parent()
     {
         return $this->hasOne(ScholarParentDetails::class, 'scholar_id');
