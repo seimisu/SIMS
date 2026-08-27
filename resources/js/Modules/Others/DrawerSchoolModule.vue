@@ -1,7 +1,7 @@
 <template>
     <DefaultDrawer v-model:visible="drawer" size="!w-[50rem]">
         <template #header>
-            <div class="flex items-center gap-2 !sticky !top-0">
+            <div class="flex items-center gap-2 !sticky !top-0 text-slate-900 dark:text-gray-100">
                 <div class="">
                     <Avatar
                         :label="
@@ -16,7 +16,7 @@
                 </div>
 
                 <div class="flex flex-col">
-                    <div class="font-bold flex items-center gap-1 capitalize">
+                    <div class="font-bold flex items-center gap-1 capitalize text-slate-900 dark:text-gray-100">
                         <div>
                             <span>{{
                                 page.props?.schoolDetail.generated_name
@@ -39,7 +39,7 @@
                             "
                         ></DefaultButton>
                     </div>
-                    <div class="text-xs flex items-center gap-1 text-gray-500">
+                    <div class="text-xs flex items-center gap-1 text-gray-500 dark:text-gray-300">
                         <IconMapPin size="18" />
                         <div>
                             {{
@@ -102,7 +102,7 @@
                 <div class="flex flex-col gap-5 px-5 py-2">
                     <div class="flex justify-between gap-2">
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconUserStar size="20" />
                             </div>
                             <div
@@ -110,11 +110,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>PRESIDENT:</div>
                                 </div>
-                                <div class="text-sm font-light capitalize">
+                                <div class="text-sm font-light capitalize text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info?.dean ??
                                         "Not yet provided"
@@ -129,7 +129,7 @@
                             ></TextInput>
                         </div>
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconUserQuestion size="20" />
                             </div>
                             <div
@@ -137,12 +137,12 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>REGISTRAR:</div>
                                 </div>
                                 <div
-                                    class="text-sm font-light capitalize"
+                                    class="text-sm font-light capitalize text-slate-700 dark:text-gray-200"
                                     v-if="
                                         page.props?.schoolDetail?.info
                                             ?.registrar
@@ -152,7 +152,7 @@
                                         page.props?.schoolDetail.info.registrar
                                     }}
                                 </div>
-                                <div v-else class="text-sm font-light">
+                                <div v-else class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     Not yet provided
                                 </div>
                             </div>
@@ -167,7 +167,7 @@
                     </div>
                     <div class="flex justify-between gap-2">
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconPhone size="20" />
                             </div>
                             <div
@@ -175,11 +175,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>CONTACT NO:</div>
                                 </div>
-                                <div class="text-sm font-light">
+                                <div class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info
                                             ?.contact ?? "Not yet provided"
@@ -194,7 +194,7 @@
                             </TextInput>
                         </div>
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconAt size="20" />
                             </div>
                             <div
@@ -202,11 +202,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>EMAIL:</div>
                                 </div>
-                                <div class="text-sm font-light">
+                                <div class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info?.email ??
                                         "Not yet provided"
@@ -222,7 +222,7 @@
                     </div>
                 </div>
                 <Divider align="left" type="dashed" class="!m-0">
-                    <span class="text-xs font-semibold"
+                    <span class="text-xs font-semibold text-slate-800 dark:text-gray-100"
                         >Curriculum Management</span
                     >
                 </Divider>

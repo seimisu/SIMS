@@ -87,15 +87,6 @@
                         </div>
                     </template>
                 </Column>
-                <Column v-if="activeTab === 'history'" header="Records">
-                    <template #body="props">
-                        <div class="text-sm text-slate-700 dark:text-gray-200">
-                            {{ props.data.terms_count ?? 0 }} term records
-                            <span class="text-slate-400 dark:text-gray-500">/</span>
-                            {{ props.data.files_count ?? 0 }} files
-                        </div>
-                    </template>
-                </Column>
                 <Column header="Status">
                     <template #body="props">
                         <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs uppercase text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
@@ -114,10 +105,6 @@
                 v-if="gradeDialog"
                 v-model="gradeDialog"
             />
-            <DialogScholarAcademicHistoryRequest
-                v-if="historyDialog"
-                v-model="historyDialog"
-            />
             <DialogScholarLandbankRequest
                 v-if="landbankDialog"
                 v-model="landbankDialog"
@@ -133,7 +120,6 @@ import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
-import DialogScholarAcademicHistoryRequest from "../../Modules/Others/DialogScholarAcademicHistoryRequest.vue";
 import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
@@ -141,25 +127,25 @@ import { IconSearch } from "@tabler/icons-vue";
 import { route } from "ziggy-js";
 
 const page = usePage();
-const activeTab = ref(page.props.filters?.tab ?? "grades");
 const searchInput = ref(page.props.filters?.search ?? null);
 const timer = ref(null);
 const gradeDialog = ref(false);
-const historyDialog = ref(false);
 const profileDialog = ref(false);
 const landbankDialog = ref(false);
 
 const tabs = [
     { id: "grades", label: "Grade Submissions" },
-    { id: "history", label: "Academic History" },
     { id: "profile", label: "Profile Requests" },
     { id: "landbank", label: "Landbank Requests" },
 ];
+const initialTab = tabs.some((tab) => tab.id === page.props.filters?.tab)
+    ? page.props.filters.tab
+    : "grades";
+const activeTab = ref(initialTab);
 const counts = computed(() => page.props.counts ?? {});
 const activeRows = computed(() => {
     if (activeTab.value === "profile") return page.props.profileRequests ?? {};
     if (activeTab.value === "landbank") return page.props.landbankRequests ?? {};
-    if (activeTab.value === "history") return page.props.academicHistorySubmissions ?? {};
     return page.props.gradeSubmissions ?? {};
 });
 
@@ -183,26 +169,21 @@ const switchTab = (tab) => {
 };
 
 const openSubmission = (row) => {
-    if (!row?.scholar_id && activeTab.value !== "history") return;
+    if (!row?.scholar_id) return;
 
     const dialog = activeTab.value;
-    const dialogData = dialog === "history"
-        ? { submission: row.submission_id, dialog }
-        : {
-              scholar: row.scholar_id,
-              dialog,
-              ...(dialog === "grades" ? { term: row.id } : {}),
-          };
-
-    if (dialog === "history" && !dialogData.submission) return;
+    const dialogData = {
+        scholar: row.scholar_id,
+        dialog,
+        ...(dialog === "grades" ? { term: row.id } : {}),
+    };
 
     router.reload({
         data: requestData(activeRows.value.current_page ?? 1, dialogData),
-        only: ["details", "subjectRequest", "personalRequest", "landbankRequest", "academicHistoryRequest"],
+        only: ["details", "subjectRequest", "personalRequest", "landbankRequest"],
         preserveScroll: true,
         onSuccess: () => {
             gradeDialog.value = dialog === "grades";
-            historyDialog.value = dialog === "history";
             profileDialog.value = dialog === "profile";
             landbankDialog.value = dialog === "landbank";
         },

@@ -73,71 +73,21 @@
             </template>
         </Menu>
     </div>
-    <DefaultDialog
-        v-model:visible="passDialog"
-        :icon="IconPasswordUser"
-        width-set="lg:!w-[35%]"
-        :loading="passwordForm.processing"
-        @submit-form="submitForm"
-        title="Update Your Password"
-        description="To ensure your account remains protected at all times, please choose a password that is strong, unique, and difficult for others to guess."
-    >
-        <template #message>
-            <DefaultMessages
-                v-if="passwordForm.hasErrors"
-                message-type="error"
-                :message="passwordForm.errors"
-            />
-        </template>
-        <template #forms>
-            <div class="pt-5 flex flex-col gap-5">
-                <PasswordInput
-                    label="Current Password"
-                    v-model="passwordForm.current"
-                    :feedback="false"
-                    toggle-icon
-                />
-                <PasswordInput
-                    label="New Password"
-                    v-model="passwordForm.new"
-                    :feedback="true"
-                    toggle-icon
-                />
-                <PasswordInput
-                    label="Confirm Password"
-                    v-model="passwordForm.confirm"
-                    :feedback="false"
-                />
-            </div>
-        </template>
-    </DefaultDialog>
-    <DefaultToast ref="toastRef" />
+    <ChangePasswordDialog v-model:visible="passDialog" />
 </template>
 
 <script setup>
-import { nextTick, ref } from "vue";
-import { router, usePage, useForm, useRemember } from "@inertiajs/vue3";
+import { ref } from "vue";
+import { router, usePage } from "@inertiajs/vue3";
 import {
     IconLogout2,
     IconPasswordUser,
     IconUserCircle,
 } from "@tabler/icons-vue";
-import DefaultDialog from "../dialogs/DefaultDialog.vue";
-import PasswordInput from "../inputs/PasswordInput.vue";
-import DefaultMessages from "../messages/DefaultMessages.vue";
-import DefaultToast from "../messages/DefaultToast.vue";
+import ChangePasswordDialog from "../dialogs/ChangePasswordDialog.vue";
 
 const passDialog = ref(false);
 const page = usePage();
-const toastRef = ref(null);
-const passwordForm = useForm(
-    {
-        current: null,
-        new: null,
-        confirm: null,
-    },
-    { useRemember: false },
-);
 
 const menu = ref();
 const items = ref([
@@ -178,22 +128,6 @@ const toggle = (event) => {
 
 const openDialog = () => {
     passDialog.value = true;
-    passwordForm.resetAndClearErrors();
-};
-
-const submitForm = () => {
-    passwordForm.post(route("user.changePassword"), {
-        fresh: true,
-        replace: true,
-        onSuccess: () => {
-            toastRef.value.show(page.props.flash);
-            passDialog.value = false;
-            passwordForm.resetAndClearErrors();
-            nextTick(() => {
-                window.location.reload();
-            });
-        },
-    });
 };
 
 const logout = () => {

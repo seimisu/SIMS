@@ -3,11 +3,11 @@
 namespace App\Http\Middleware;
 
 use App\Models\Batches;
-use App\Models\ScholarAcademicHistorySubmission;
 use App\Models\ScholarTerm;
 use App\Models\studentLandbankRequest;
 use App\Models\StudentProfileRequest;
 use App\References\ListClass;
+use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -75,11 +75,21 @@ class HandleInertiaRequests extends Middleware
                 }),
             'menu' => fn() => $this->menuWithBadges(),
             'permissions' => fn() => app(SystemPermissions::class)->permissionsFor(Auth::user()),
+            'filePreview' => fn() => [
+                'scholarPortalBaseUrl' => rtrim((string) config('services.file_preview.scholar_portal_base_url'), '/'),
+            ],
         ]);
     }
 
     private function menuWithBadges()
     {
+        $user = Auth::user();
+        $permissions = app(SystemPermissions::class);
+
+        if ($permissions->isRegionalRole($user)) {
+            app(RoleBellNotificationService::class)->notifyRegionalScholarSubmissions();
+        }
+
         $menu = $this->menu?->getMenu('sidebar');
         $submissionTotal = $this->scholarSubmissionPendingCount();
         $payrollTotal = $this->payrollActionCount();
@@ -114,7 +124,6 @@ class HandleInertiaRequests extends Middleware
     private function scholarSubmissionPendingCount(): int
     {
         return ScholarTerm::where('verification_status', 'submitted')->count()
-            + ScholarAcademicHistorySubmission::where('status', 'submitted')->count()
             + StudentProfileRequest::where('status', 'pending')->count()
             + studentLandbankRequest::where('status', 'pending')->count();
     }

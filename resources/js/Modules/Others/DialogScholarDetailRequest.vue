@@ -165,7 +165,7 @@
                         </div>
                     </div>
                     <div
-                        class="flex flex-col gap-2 p-3 h-full w-full lg:w-8/12"
+                        class="flex flex-col gap-2 p-3 h-full w-full min-h-0 overflow-y-auto lg:w-8/12"
                     >
                         <div
                             class="flex flex-col gap-4 border-b border-gray-200 pb-4 lg:flex-row lg:items-center lg:justify-between"
@@ -182,14 +182,14 @@
                                     <div
                                         class="text-lg font-bold text-gray-900 leading-5"
                                     >
-                                        {{ props.user?.fullname }}
+                                        {{ scholar.fullname }}
                                     </div>
 
                                     <div
                                         class="mt-1 flex items-center gap-1 text-sm text-gray-500"
                                     >
                                         <IconHash :size="14" />
-                                        {{ props.user?.spas_no }}
+                                        {{ scholar.spas_no }}
                                     </div>
                                 </div>
                             </div>
@@ -203,7 +203,7 @@
                                     </div>
 
                                     <div class="font-semibold text-gray-800">
-                                        {{ props.user?.type }}
+                                        {{ scholar.type }}
                                     </div>
                                 </div>
 
@@ -217,19 +217,19 @@
                                     </div>
 
                                     <div class="font-semibold text-gray-800">
-                                        {{ props.user.subProgram }}
+                                        {{ scholar.program }}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div
-                            class="flex items-center w-full h-full gap-1"
+                            class="flex items-stretch w-full gap-1"
                             v-if="selectedRow"
                         >
                             <Fieldset
                                 :pt="{
-                                    root: '!p-2 w-full ',
-                                    content: 'h-105',
+                                    root: '!p-2 w-full',
+                                    content: 'pb-2',
                                 }"
                             >
                                 <template #legend>
@@ -238,226 +238,83 @@
                                     </p>
                                 </template>
                                 <template #default>
-                                    <div class="flex flex-col justify-between">
+                                    <div class="flex flex-col gap-2">
                                         <div
-                                            class="flex-1 flex w-full justify-evenly"
+                                            class="flex flex-col gap-3"
                                         >
                                             <div
-                                                class="flex-2 flex flex-col gap-2"
+                                                class="bg-green-50 border-b border-green-200 px-4 py-2 flex items-center gap-2 dark:bg-green-950/30 dark:border-green-800"
+                                            >
+                                                <IconDatabaseEdit
+                                                    class="text-green-500"
+                                                    :size="18"
+                                                />
+
+                                                <div
+                                                    class="text-sm font-semibold text-green-700 dark:text-green-300"
+                                                >
+                                                    Requested Changes
+                                                </div>
+                                            </div>
+                                            <div
+                                                v-if="changedFields.length"
+                                                class="grid max-h-[18rem] min-h-[12rem] gap-2 overflow-y-auto pr-1"
                                             >
                                                 <div
-                                                    class="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2"
+                                                    v-for="field in changedFields"
+                                                    :key="field.key"
+                                                    class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800"
                                                 >
-                                                    <IconDatabase
-                                                        class="text-amber-500"
-                                                        :size="18"
-                                                    />
-
+                                                    <div class="min-w-0">
+                                                        <div
+                                                            class="text-xs uppercase text-slate-400 dark:text-gray-500"
+                                                        >
+                                                            Current
+                                                            {{ field.label }}
+                                                        </div>
+                                                        <div
+                                                            class="mt-1 break-words font-medium text-slate-800 dark:text-gray-100"
+                                                        >
+                                                            {{
+                                                                field.current ||
+                                                                "No record"
+                                                            }}
+                                                        </div>
+                                                    </div>
                                                     <div
-                                                        class="text-sm font-semibold text-amber-700"
+                                                        class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm dark:bg-gray-900 dark:text-gray-300"
                                                     >
-                                                        Stored Data
+                                                        <IconArrowNarrowRight
+                                                            :size="22"
+                                                        />
                                                     </div>
-                                                </div>
-                                                <div
-                                                    class="flex flex-col gap-3 h-full bg-slate-50 rounded-lg p-1 dark:bg-gray-800"
-                                                >
-                                                    <div class="leading-none">
+                                                    <div class="min-w-0">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
+                                                            class="text-xs uppercase text-green-600 dark:text-green-300"
                                                         >
-                                                            Email
+                                                            Requested
+                                                            {{ field.label }}
                                                         </div>
-                                                        <p
-                                                            v-if="
-                                                                selectedRow.reviewed_at
-                                                            "
-                                                        >
-                                                            {{
-                                                                selectedRow
-                                                                    .records
-                                                                    ?.previous
-                                                                    ?.email ??
-                                                                "No record"
-                                                            }}
-                                                        </p>
-                                                        <p v-else>
-                                                            {{
-                                                                selectedRow.emailStored
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="leading-none">
                                                         <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
+                                                            class="mt-1 break-words font-semibold text-green-700 dark:text-green-200"
                                                         >
-                                                            Contact No.
+                                                            {{ field.requested }}
                                                         </div>
-                                                        <p
-                                                            v-if="
-                                                                selectedRow.reviewed_at
-                                                            "
-                                                        >
-                                                            {{
-                                                                selectedRow
-                                                                    .records
-                                                                    ?.previous
-                                                                    ?.contact_no ??
-                                                                "No record"
-                                                            }}
-                                                        </p>
-                                                        <p v-else>
-                                                            {{
-                                                                selectedRow.contactStored ??
-                                                                "No record"
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="">
-                                                        <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
-                                                        >
-                                                            Civil Status
-                                                        </div>
-                                                        <p
-                                                            class="uppercase"
-                                                            v-if="
-                                                                selectedRow.reviewed_at
-                                                            "
-                                                        >
-                                                            {{
-                                                                selectedRow
-                                                                    .records
-                                                                    ?.previous
-                                                                    ?.civil_status ??
-                                                                "No record"
-                                                            }}
-                                                        </p>
-                                                        <p v-else>
-                                                            {{
-                                                                selectedRow.civilStored ??
-                                                                "No record"
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="">
-                                                        <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
-                                                        >
-                                                            Address
-                                                        </div>
-                                                        <p
-                                                            v-if="
-                                                                selectedRow.reviewed_at
-                                                            "
-                                                        >
-                                                            {{
-                                                                selectedRow
-                                                                    .records
-                                                                    ?.previous
-                                                                    ?.address ??
-                                                                "No record"
-                                                            }}
-                                                        </p>
-                                                        <p v-else>
-                                                            {{
-                                                                selectedRow.fullAddressStored
-                                                            }}
-                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div
-                                                class="flex-1 flex items-center justify-center"
+                                                v-else
+                                                class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
                                             >
-                                                <div
-                                                    class="flex flex-col items-center text-gray-500"
-                                                >
-                                                    <IconArrowNarrowRight
-                                                        :size="35"
-                                                    />
-                                                    <div
-                                                        class="text-xs text-nowrap"
-                                                    >
-                                                        Change to
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div
-                                                class="flex-2 flex flex-col gap-2"
-                                            >
-                                                <div
-                                                    class="bg-green-50 border-b border-green-200 px-4 py-2 flex items-center gap-2"
-                                                >
-                                                    <IconDatabaseEdit
-                                                        class="text-green-500"
-                                                        :size="18"
-                                                    />
-
-                                                    <div
-                                                        class="text-sm font-semibold text-green-700"
-                                                    >
-                                                        Requested Changes
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="flex flex-col gap-3 h-full bg-slate-50 rounded-lg p-1 dark:bg-gray-800"
-                                                >
-                                                    <div class="leading-none">
-                                                        <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
-                                                        >
-                                                            Email
-                                                        </div>
-                                                        <p>
-                                                            {{
-                                                                selectedRow.email
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="leading-none">
-                                                        <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
-                                                        >
-                                                            Contact No.
-                                                        </div>
-                                                        <p>
-                                                            {{
-                                                                selectedRow.contact_no
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="">
-                                                        <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
-                                                        >
-                                                            Civil Status
-                                                        </div>
-                                                        <p>
-                                                            {{
-                                                                selectedRow.civil_status
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="">
-                                                        <div
-                                                            class="text-sm text-gray-500 font-light dark:text-gray-400"
-                                                        >
-                                                            Address
-                                                        </div>
-                                                        <p>
-                                                            {{
-                                                                selectedRow.fullAddress
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                </div>
+                                                No changed fields were found for
+                                                this request.
                                             </div>
                                         </div>
 
-                                        <Divider type="dashed" class="flex-1" />
+                                        <Divider type="dashed" class="!my-1" />
                                         <div
-                                            class="flex-1 flex flex-col w-full gap-2"
+                                            class="flex flex-col w-full gap-2"
                                         >
                                             <div
                                                 class="flex items-center gap-1 text-slate-500"
@@ -468,6 +325,7 @@
                                                 </div>
                                             </div>
                                             <div
+                                                v-if="selectedRow.file"
                                                 class="flex-1 gap-3 flex justify-between"
                                             >
                                                 <div class="flex items-center">
@@ -595,8 +453,7 @@
                                                                         rounded
                                                                         as="a"
                                                                         :href="
-                                                                            'http://172.16.8.35/' +
-                                                                            selectedRow.file
+                                                                            scholarPortalFileUrl(selectedRow.file)
                                                                         "
                                                                         download
                                                                         v-tooltip.top="
@@ -612,8 +469,7 @@
                                                                         as="a"
                                                                         target="_blank"
                                                                         :href="
-                                                                            'http://172.16.8.35/' +
-                                                                            selectedRow.file
+                                                                            scholarPortalFileUrl(selectedRow.file)
                                                                         "
                                                                         v-tooltip.top="
                                                                             'Open in new tab'
@@ -625,14 +481,22 @@
                                                             <!-- Viewer -->
                                                             <iframe
                                                                 :src="
-                                                                    'http://172.16.8.35/' +
-                                                                    selectedRow.file
+                                                                    scholarPortalFileUrl(selectedRow.file)
                                                                 "
                                                                 class="w-full h-[500px] border-0"
                                                             />
                                                         </div>
                                                     </Popover>
                                                 </div>
+                                            </div>
+                                            <div
+                                                v-else
+                                                class="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                            >
+                                                <IconFileOff :size="18" />
+                                                <span>
+                                                    No available attachment
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -671,167 +535,116 @@
                                 </div>
                             </div>
                         </div>
-                        <div
-                            class="flex flex-col gap-3"
-                            v-if="selectedRow && selectedRow.requested_at"
-                        >
-                            <div class="flex flex-col gap-4">
-                                <div
-                                    class="flex justify-end"
-                                    v-if="!selectedRow.reviewed_at"
-                                >
-                                    <div class="flex items-center mb-3 gap-3">
-                                        <div>
-                                            <Button
-                                                size="small"
-                                                class="!text-xs !rounded-xl"
-                                                outlined
-                                                :loading="loading.reject"
-                                                severity="danger"
-                                                @click="toggleOpReject"
-                                            >
-                                                <template #default>
-                                                    <div
-                                                        class="flex gap-1 items-center"
-                                                    >
-                                                        <IconCircleXFilled
-                                                            :stroke-width="1.5"
-                                                            :size="20"
-                                                            v-if="
-                                                                !loading.reject
-                                                            "
-                                                        />
-                                                        <IconLoader2
-                                                            v-else
-                                                            :size="20"
-                                                            class="animate-spin"
-                                                        />
-                                                        <p>Reject</p>
-                                                    </div>
-                                                </template>
-                                            </Button>
-                                            <Popover ref="opReject">
-                                                <div
-                                                    class="w-[26rem] p-1 flex flex-col gap-4"
-                                                >
-                                                    <!-- Header -->
-                                                    <div
-                                                        class="flex flex-col gap-1"
-                                                    >
-                                                        <h3
-                                                            class="text-sm font-semibold"
-                                                        >
-                                                            Reject Profile
-                                                            Request
-                                                        </h3>
-
-                                                        <p
-                                                            class="text-xs text-gray-500"
-                                                        >
-                                                            Please provide the
-                                                            reason for rejecting
-                                                            this profile
-                                                            request. The remarks
-                                                            will be sent to the
-                                                            scholar.
-                                                        </p>
-                                                    </div>
-
-                                                    <!-- Divider -->
-                                                    <div class="border-t"></div>
-
-                                                    <!-- Form -->
-                                                    <div
-                                                        class="flex flex-col gap-2"
-                                                    >
-                                                        <label
-                                                            class="text-xs font-semibold text-gray-700"
-                                                        >
-                                                            Remarks
-                                                            <span
-                                                                class="text-red-500"
-                                                                >*</span
-                                                            >
-                                                        </label>
-                                                        <Textarea
-                                                            id="remarks"
-                                                            class="!text-sm"
-                                                            placeholder="Help the user understand why this request was rejected and what needs to be corrected."
-                                                            fluid
-                                                            rows="5"
-                                                            v-model="
-                                                                selectedRow.remarks
-                                                            "
-                                                        />
-                                                    </div>
-
-                                                    <!-- Actions -->
-                                                    <div
-                                                        class="flex justify-end gap-2 pt-2"
-                                                    >
-                                                        <DefaultButton
-                                                            label="Cancel"
-                                                            rounded
-                                                            severity="secondary"
-                                                            @click="
-                                                                toggleOpReject
-                                                            "
-                                                            outlined
-                                                            size="small"
-                                                            class-name="!px-4"
-                                                        />
-
-                                                        <DefaultButton
-                                                            label="Reject this request"
-                                                            rounded
-                                                            severity="danger"
-                                                            :loading="
-                                                                loading.reject
-                                                            "
-                                                            @click="
-                                                                approveRequest(
-                                                                    'reject',
-                                                                )
-                                                            "
-                                                            size="small"
-                                                            class-name="!px-5"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </Popover>
-                                        </div>
-
-                                        <Button
-                                            size="small"
-                                            class="!text-xs !rounded-xl"
-                                            raised
-                                            :loading="loading.approve"
-                                            @click="approveRequest('accept')"
-                                        >
-                                            <template #default>
-                                                <div
-                                                    class="flex gap-1 items-center"
-                                                >
-                                                    <IconCircleCheckFilled
-                                                        :stroke-width="1.5"
-                                                        :size="20"
-                                                        v-if="!loading.approve"
-                                                    />
-                                                    <IconLoader2
-                                                        v-else
-                                                        :size="20"
-                                                        class="animate-spin"
-                                                    />
-                                                    <p>Accept</p>
-                                                </div>
-                                            </template>
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
+            </div>
+        </template>
+        <template #footer>
+            <div
+                v-if="selectedRow && selectedRow.requested_at && !selectedRow.reviewed_at"
+                class="flex justify-end gap-3"
+            >
+                <Button
+                    size="small"
+                    class="!text-xs !rounded-xl"
+                    outlined
+                    :loading="loading.reject"
+                    severity="danger"
+                    @click="toggleOpReject"
+                >
+                    <template #default>
+                        <div class="flex gap-1 items-center">
+                            <IconCircleXFilled
+                                :stroke-width="1.5"
+                                :size="20"
+                                v-if="!loading.reject"
+                            />
+                            <IconLoader2
+                                v-else
+                                :size="20"
+                                class="animate-spin"
+                            />
+                            <p>Reject</p>
+                        </div>
+                    </template>
+                </Button>
+                <Popover ref="opReject">
+                    <div class="w-[26rem] p-1 flex flex-col gap-4">
+                        <div class="flex flex-col gap-1">
+                            <h3 class="text-sm font-semibold">
+                                Reject Profile Request
+                            </h3>
+
+                            <p class="text-xs text-gray-500">
+                                Please provide the reason for rejecting this
+                                profile request. The remarks will be sent to the
+                                scholar.
+                            </p>
+                        </div>
+
+                        <div class="border-t"></div>
+
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold text-gray-700">
+                                Remarks <span class="text-red-500">*</span>
+                            </label>
+                            <Textarea
+                                id="remarks"
+                                class="!text-sm"
+                                placeholder="Help the user understand why this request was rejected and what needs to be corrected."
+                                fluid
+                                rows="5"
+                                v-model="selectedRow.remarks"
+                            />
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-2">
+                            <DefaultButton
+                                label="Cancel"
+                                rounded
+                                severity="secondary"
+                                @click="toggleOpReject"
+                                outlined
+                                size="small"
+                                class-name="!px-4"
+                            />
+
+                            <DefaultButton
+                                label="Reject this request"
+                                rounded
+                                severity="danger"
+                                :loading="loading.reject"
+                                @click="approveRequest('reject')"
+                                size="small"
+                                class-name="!px-5"
+                            />
+                        </div>
+                    </div>
+                </Popover>
+
+                <Button
+                    size="small"
+                    class="!text-xs !rounded-xl"
+                    raised
+                    :loading="loading.approve"
+                    @click="approveRequest('accept')"
+                >
+                    <template #default>
+                        <div class="flex gap-1 items-center">
+                            <IconCircleCheckFilled
+                                :stroke-width="1.5"
+                                :size="20"
+                                v-if="!loading.approve"
+                            />
+                            <IconLoader2
+                                v-else
+                                :size="20"
+                                class="animate-spin"
+                            />
+                            <p>Accept</p>
+                        </div>
+                    </template>
+                </Button>
             </div>
         </template>
     </Dialog>
@@ -861,7 +674,7 @@ import {
 } from "@tabler/icons-vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
-import { ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useForm, progress, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
 import { route } from "ziggy-js";
@@ -881,10 +694,99 @@ const loading = ref({
     reject: false,
 });
 const personalRequest = ref(null);
+const scholarPortalFileUrl = (path) => {
+    if (!path) return null;
+
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+
+    return `${page.props?.filePreview?.scholarPortalBaseUrl ?? ""}/${String(path).replace(/^\/+/, "")}`;
+};
+
+const scholar = computed(() => {
+    const details = page.props?.details ?? {};
+    const row = selectedRow.value ?? personalRequest.value?.[0] ?? {};
+
+    return {
+        fullname: details.fullname ?? row.fullname ?? "-",
+        spas_no: details.spas_no ?? row.spas_no ?? "-",
+        type: details.type?.name ?? row.scholarshipProgram ?? row.type ?? "-",
+        program: details.program?.name ?? row.program ?? "-",
+    };
+});
+
+const changedFields = computed(() => {
+    const row = selectedRow.value;
+
+    if (!row) {
+        return [];
+    }
+
+    return [
+        {
+            key: "first_name",
+            label: "First Name",
+            current: row.firstNameStored,
+            requested: row.first_name,
+        },
+        {
+            key: "middle_name",
+            label: "Middle Name",
+            current: row.middleNameStored,
+            requested: row.middle_name,
+        },
+        {
+            key: "last_name",
+            label: "Last Name",
+            current: row.lastNameStored,
+            requested: row.last_name,
+        },
+        {
+            key: "suffix",
+            label: "Suffix",
+            current: row.suffixStored,
+            requested: row.suffix,
+        },
+        {
+            key: "email",
+            label: "Email",
+            current: row.emailStored,
+            requested: row.email,
+        },
+        {
+            key: "contact_no",
+            label: "Contact No.",
+            current: row.contactStored,
+            requested: row.contact_no,
+        },
+        {
+            key: "civil_status",
+            label: "Civil Status",
+            current: row.civilStored,
+            requested: row.civil_status,
+        },
+        {
+            key: "address",
+            label: "Address",
+            current: row.fullAddressStored,
+            requested: row.fullAddress,
+        },
+    ].filter((field) => field.requested);
+});
 
 const selectedRequest = (item, index) => {
     selectedRow.value = item;
     selectedRow.value.index = index;
+};
+
+const syncPersonalRequest = (requests) => {
+    personalRequest.value = requests ?? [];
+    selectedRow.value = personalRequest.value[0] ?? null;
+
+    if (selectedRow.value) {
+        selectedRow.value.index = 0;
+    }
 };
 
 const toggleOpReject = (event) => {
@@ -946,6 +848,13 @@ function toTitleCase(name) {
 }
 
 onMounted(() => {
-    personalRequest.value = page.props?.personalRequest;
+    syncPersonalRequest(page.props?.personalRequest);
 });
+
+watch(
+    () => page.props?.personalRequest,
+    (requests) => {
+        syncPersonalRequest(requests);
+    },
+);
 </script>

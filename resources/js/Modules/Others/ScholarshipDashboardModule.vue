@@ -1,32 +1,40 @@
 <template>
-    <div class="min-h-full bg-slate-50 px-3 py-3 text-slate-800">
+    <div class="min-h-full bg-slate-50 px-3 py-3 text-slate-800 dark:bg-gray-800 dark:text-gray-100">
         <div class="mx-auto flex max-w-[1500px] flex-col gap-4">
             <div class="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <div class="text-[11px] font-semibold uppercase text-slate-500">
+                    <div class="text-[11px] font-semibold uppercase text-slate-500 dark:text-gray-400">
                         Scholarship operations
                     </div>
-                    <h1 class="text-lg font-semibold text-slate-900">
+                    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
                         Scholarship Staff Dashboard
                     </h1>
-                    <p class="text-xs text-slate-500">
+                    <p class="text-xs text-slate-500 dark:text-gray-400">
                         Monitor scholar status, distributions, and review workload signals.
                     </p>
                 </div>
+                <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300">
+                    <span>As of</span>
+                    <input
+                        v-model="filterAsOfMonth"
+                        type="month"
+                        class="h-8 cursor-pointer rounded border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                    />
+                </label>
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <section
                     v-for="metric in metrics"
                     :key="metric.label"
-                    class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                    class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-700"
                 >
                     <div class="flex items-start justify-between gap-3">
                         <div>
-                            <div class="text-[11px] font-medium text-slate-500">
+                            <div class="text-[11px] font-medium text-slate-500 dark:text-gray-400">
                                 {{ metric.label }}
                             </div>
-                            <div class="mt-2 text-2xl font-semibold text-slate-900">
+                            <div class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
                                 {{ formatNumber(metric.value) }}
                             </div>
                         </div>
@@ -34,43 +42,30 @@
                             <component :is="metric.icon" :size="20" />
                         </div>
                     </div>
-                    <div class="mt-2 text-xs text-slate-500">
+                    <div class="mt-2 text-xs text-slate-500 dark:text-gray-400">
                         {{ metric.caption }}
                     </div>
                 </section>
             </div>
 
             <div class="grid auto-rows-[minmax(160px,auto)] grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <section class="flex flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 xl:row-span-2">
+                <section class="flex flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-2 xl:row-span-2">
                     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <div class="rounded bg-blue-50 p-2 text-blue-600">
                                 <IconAward :size="20" />
                             </div>
                             <div>
-                                <h2 class="text-sm font-semibold text-slate-900">
+                                <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                     Scholarship Awards by Year
                                 </h2>
-                                <p class="text-[11px] text-slate-500">
+                                <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                     Annual awards grouped by scholarship program.
                                 </p>
                             </div>
                         </div>
-                        <select
-                            v-if="rangeOptions.length"
-                            v-model="filterRangeDate.value"
-                            class="h-8 rounded border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 outline-none focus:border-blue-400"
-                        >
-                            <option
-                                v-for="range in rangeOptions"
-                                :key="rangeKey(range)"
-                                :value="rangeKey(range)"
-                            >
-                                {{ rangeLabel(range) }}
-                            </option>
-                        </select>
                     </div>
-                    <div class="min-h-0 flex-1 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
+                    <div class="min-h-0 flex-1 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800">
                         <ApexChart
                             type="bar"
                             height="420"
@@ -80,17 +75,17 @@
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="rounded bg-emerald-50 p-2 text-emerald-600">
                             <IconChartDonut :size="20" />
                         </div>
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Program Distribution
                             </h2>
-                            <p class="text-[11px] text-slate-500">
-                                Current scholarship program mix.
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
+                                Activated scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
@@ -107,13 +102,13 @@
                             <div
                                 v-for="program in programDistribution"
                                 :key="program.name"
-                                class="flex items-center justify-between gap-3 rounded border border-slate-100 px-3 py-2"
+                                class="flex items-center justify-between gap-3 rounded border border-slate-100 px-3 py-2 dark:border-gray-600"
                             >
                                 <div class="flex min-w-0 items-center gap-2">
                                     <span :class="['h-2.5 w-2.5 shrink-0 rounded-full', program.dot]" />
-                                    <span class="truncate font-medium text-slate-700">{{ program.name }}</span>
+                                    <span class="truncate font-medium text-slate-700 dark:text-gray-200">{{ program.name }}</span>
                                 </div>
-                                <div class="shrink-0 font-semibold text-slate-900">
+                                <div class="shrink-0 font-semibold text-slate-900 dark:text-white">
                                     {{ formatNumber(program.count) }}
                                 </div>
                             </div>
@@ -121,28 +116,28 @@
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="rounded bg-violet-50 p-2 text-violet-600">
                             <IconRainbow :size="20" />
                         </div>
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Sex Distribution
                             </h2>
-                            <p class="text-[11px] text-slate-500">
-                                National scholar profile composition.
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
+                                Activated scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
-                    <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                    <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-800">
                         <div class="mb-3 flex items-end justify-between">
-                            <span class="text-xs text-slate-500">Total with profile sex</span>
-                            <span class="text-2xl font-semibold text-slate-900">
+                            <span class="text-xs text-slate-500 dark:text-gray-400">Total with profile sex</span>
+                            <span class="text-2xl font-semibold text-slate-900 dark:text-white">
                                 {{ formatNumber(genderTotal) }}
                             </span>
                         </div>
-                        <div class="flex h-8 overflow-hidden rounded bg-slate-200">
+                        <div class="flex h-8 overflow-hidden rounded bg-slate-200 dark:bg-gray-700">
                             <div
                                 v-for="segment in sexSegments"
                                 :key="segment.label"
@@ -156,11 +151,11 @@
                                 :key="item.label"
                                 class="flex items-center justify-between gap-3"
                             >
-                                <div class="flex items-center gap-2 text-slate-600">
+                                <div class="flex items-center gap-2 text-slate-600 dark:text-gray-300">
                                     <span :class="['h-2.5 w-2.5 rounded-full', item.dot]" />
                                     {{ item.label }}
                                 </div>
-                                <div class="font-semibold text-slate-900">
+                                <div class="font-semibold text-slate-900 dark:text-white">
                                     {{ formatNumber(item.value) }}
                                     <span class="font-medium text-slate-400">{{ item.percent }}%</span>
                                 </div>
@@ -169,21 +164,21 @@
                     </div>
                 </section>
 
-                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 xl:col-span-3">
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-2 xl:col-span-3">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="rounded bg-purple-50 p-2 text-purple-600">
                             <IconRainbow :size="20" />
                         </div>
                         <div>
-                            <h2 class="text-sm font-semibold text-slate-900">
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                 Sex Breakdown by Region
                             </h2>
-                            <p class="text-[11px] text-slate-500">
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                 Male and female counts compared per region.
                             </p>
                         </div>
                     </div>
-                    <div class="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
+                    <div class="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-800">
                         <ApexChart
                             type="bar"
                             height="450"
@@ -193,17 +188,17 @@
                     </div>
                 </section>
 
-                <section class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:col-span-1 xl:col-span-1" style="height: 360px">
+                <section class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-1 xl:col-span-1" style="height: 360px">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="flex items-center gap-3">
                             <div class="rounded bg-rose-50 p-2 text-rose-600">
                                 <IconBuilding :size="20" />
                             </div>
                             <div>
-                                <h2 class="text-sm font-semibold text-slate-900">
+                                <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                     Registered Scholars by Region
                                 </h2>
-                                <p class="text-[11px] text-slate-500">
+                                <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                     Regional scholar registration totals.
                                 </p>
                             </div>
@@ -217,17 +212,17 @@
                     </div>
                 </section>
 
-                <section class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:col-span-1 xl:col-span-2" style="height: 360px">
+                <section class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-1 xl:col-span-2" style="height: 360px">
                     <div class="mb-4 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <div class="rounded bg-sky-50 p-2 text-sky-600">
                                 <IconBook2 :size="20" />
                             </div>
                             <div>
-                                <h2 class="text-sm font-semibold text-slate-900">
+                                <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
                                     Course Scholar Distribution
                                 </h2>
-                                <p class="text-[11px] text-slate-500">
+                                <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                     Ranked by scholar count.
                                 </p>
                             </div>
@@ -236,6 +231,7 @@
                             label="Details"
                             size="small"
                             severity="secondary"
+                            class="cursor-pointer"
                             @click="toggleDialogs('courseTable')"
                         />
                     </div>
@@ -263,7 +259,7 @@
                     <div class="text-sm font-medium">
                         {{ dialogDetails.data === "schoolTable" ? "School Scholar Distribution" : "Course Scholar Distribution" }}
                     </div>
-                    <div class="text-xs text-slate-500">
+                    <div class="text-xs text-slate-500 dark:text-gray-400">
                         Detailed distribution table
                     </div>
                 </div>
@@ -283,10 +279,10 @@
                 </template>
                 <template #body="{ data }">
                     <div class="flex flex-col">
-                        <span v-if="data.region" class="text-xs text-slate-500">
+                        <span v-if="data.region" class="text-xs text-slate-500 dark:text-gray-400">
                             {{ data.region }}
                         </span>
-                        <span class="text-sm font-medium text-slate-900">
+                        <span class="text-sm font-medium text-slate-900 dark:text-white">
                             {{ data.name }}
                         </span>
                     </div>
@@ -332,7 +328,7 @@
 </template>
 
 <script setup>
-import { usePage, router } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import {
     IconAward,
     IconBook2,
@@ -344,48 +340,47 @@ import {
     IconUser,
     IconRainbow,
 } from "@tabler/icons-vue";
-import { computed, defineComponent, h, ref, watch } from "vue";
+import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch } from "vue";
 import ApexChart from "vue3-apexcharts";
 
 const page = usePage();
 const card = computed(() => page.props.card ?? {});
+const asOf = computed(() => page.props.asOf ?? {});
 const timeline = computed(() => page.props.timeline ?? {});
-const rangeOptions = computed(() => page.props.options?.dateRange ?? []);
 
 const dialogDetails = ref({
     dialog: false,
     data: "schoolTable",
 });
-const filterRangeDate = ref({
-    value: rangeKey(rangeOptions.value.at(-1) ?? null),
-});
+const isDark = ref(false);
+const filterAsOfMonth = ref(page.props.asOf?.month ?? currentMonth());
 
 const metrics = computed(() => [
     {
         label: "Active Scholars",
-        value: card.value.active,
-        caption: "Currently active scholars",
+        value: asOf.value.active,
+        caption: `Active as of ${asOf.value.label ?? "selected month"}`,
         icon: IconUser,
         color: "bg-blue-50 text-blue-600",
     },
     {
         label: "Undergraduate",
-        value: card.value.undergraduate,
-        caption: "Undergraduate scholarship records",
+        value: asOf.value.undergraduate,
+        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconSchool,
         color: "bg-emerald-50 text-emerald-600",
     },
     {
         label: "JLSS",
-        value: card.value.jlss,
-        caption: "JLSS scholarship records",
+        value: asOf.value.jlss,
+        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconFileCheck,
         color: "bg-cyan-50 text-cyan-600",
     },
     {
         label: "Graduated",
-        value: card.value.graduated,
-        caption: "Completed scholarship records",
+        value: asOf.value.graduated,
+        caption: `Graduated through ${asOf.value.year ?? "selected year"}`,
         icon: IconAward,
         color: "bg-violet-50 text-violet-600",
     },
@@ -449,6 +444,10 @@ const dialogTableRows = computed(() => (
         ? page.props.school?.table ?? []
         : page.props.course?.table ?? []
 ));
+const chartTextColor = computed(() => (isDark.value ? "#d1d5db" : "#64748b"));
+const chartGridColor = computed(() => (isDark.value ? "rgba(75,85,99,0.9)" : "rgba(148,163,184,0.35)"));
+const chartStrokeColor = computed(() => (isDark.value ? "#374151" : "#fff"));
+const chartTooltipTheme = computed(() => (isDark.value ? "dark" : "light"));
 
 const apexOptionsTimeline = computed(() => ({
     chart: {
@@ -456,7 +455,7 @@ const apexOptionsTimeline = computed(() => ({
         stacked: true,
         toolbar: { show: false },
         fontFamily: "inherit",
-        foreColor: "#64748b",
+        foreColor: chartTextColor.value,
     },
     plotOptions: {
         bar: {
@@ -467,10 +466,10 @@ const apexOptionsTimeline = computed(() => ({
     },
     colors: programColors,
     dataLabels: { enabled: false },
-    stroke: { show: true, width: 1, colors: ["#fff"] },
+    stroke: { show: true, width: 1, colors: [chartStrokeColor.value] },
     legend: { show: true, position: "bottom" },
     grid: {
-        borderColor: "rgba(148,163,184,0.35)",
+        borderColor: chartGridColor.value,
         strokeDashArray: 3,
     },
     xaxis: {
@@ -478,7 +477,7 @@ const apexOptionsTimeline = computed(() => ({
         axisBorder: { show: false },
         axisTicks: { show: false },
     },
-    tooltip: { theme: "dark" },
+    tooltip: { theme: chartTooltipTheme.value },
 }));
 
 const chartOptionsProgram = computed(() => ({
@@ -486,7 +485,7 @@ const chartOptionsProgram = computed(() => ({
         type: "donut",
         toolbar: { show: false },
         fontFamily: "inherit",
-        foreColor: "#64748b",
+        foreColor: chartTextColor.value,
     },
     labels: programDistribution.value.map((program) => program.name),
     colors: programColors,
@@ -508,7 +507,7 @@ const chartOptionsProgram = computed(() => ({
             },
         },
     },
-    tooltip: { theme: "dark" },
+    tooltip: { theme: chartTooltipTheme.value },
 }));
 
 const chartOptionsSexByRegion = computed(() => ({
@@ -517,7 +516,7 @@ const chartOptionsSexByRegion = computed(() => ({
         stacked: false,
         toolbar: { show: false },
         fontFamily: "inherit",
-        foreColor: "#64748b",
+        foreColor: chartTextColor.value,
     },
     plotOptions: {
         bar: {
@@ -530,7 +529,7 @@ const chartOptionsSexByRegion = computed(() => ({
     dataLabels: { enabled: false },
     legend: { show: true, position: "bottom" },
     grid: {
-        borderColor: "rgba(148,163,184,0.35)",
+        borderColor: chartGridColor.value,
         strokeDashArray: 3,
     },
     xaxis: {
@@ -539,7 +538,7 @@ const chartOptionsSexByRegion = computed(() => ({
         },
     },
     tooltip: {
-        theme: "dark",
+        theme: chartTooltipTheme.value,
         y: {
             formatter: (value) => `${formatNumber(value)} scholars`,
         },
@@ -563,15 +562,15 @@ const RankedDistribution = defineComponent({
             class: "grid grid-cols-[1fr_auto] items-center gap-3",
         }, [
             h("div", { class: "min-w-0" }, [
-                h("div", { class: "truncate text-xs font-medium text-slate-700" }, item.name),
-                h("div", { class: "mt-1 h-2 rounded bg-slate-100" }, [
+                h("div", { class: "truncate text-xs font-medium text-slate-700 dark:text-gray-200" }, item.name),
+                h("div", { class: "mt-1 h-2 rounded bg-slate-100 dark:bg-gray-800" }, [
                     h("div", {
                         class: `h-2 rounded ${props.color}`,
                         style: { width: `${item.percent}%` },
                     }),
                 ]),
             ]),
-            h("div", { class: "text-xs font-semibold text-slate-900" }, formatNumber(item.count)),
+            h("div", { class: "text-xs font-semibold text-slate-900 dark:text-white" }, formatNumber(item.count)),
         ])));
     },
 });
@@ -596,37 +595,42 @@ function toggleDialogs(tab) {
     dialogDetails.value.data = tab;
 }
 
-function rangeKey(range) {
-    return range && typeof range === "object" ? JSON.stringify(range) : range;
-}
-
-function rangeLabel(range) {
-    return typeof range === "object" ? range.name ?? `${range.start}-${range.end}` : range;
-}
-
-function selectedRange(value) {
-    if (!value) return null;
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return value;
-    }
-}
-
 function formatNumber(num) {
     return Number(num ?? 0).toLocaleString("en-US");
 }
 
+function currentMonth() {
+    return new Date().toISOString().slice(0, 7);
+}
+
 watch(
-    () => filterRangeDate.value.value,
+    filterAsOfMonth,
     (value) => {
-        router.get(route("dashboard"), { range: selectedRange(value) }, {
+        router.get(route("dashboard"), { as_of_month: value }, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
         });
     },
 );
+
+let themeObserver;
+
+function syncTheme() {
+    isDark.value = document.documentElement.classList.contains("dark");
+}
+
+onMounted(() => {
+    syncTheme();
+    themeObserver = new MutationObserver(syncTheme);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+    });
+});
+
+onUnmounted(() => {
+    themeObserver?.disconnect();
+});
 
 </script>

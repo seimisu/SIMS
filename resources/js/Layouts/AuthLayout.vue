@@ -208,6 +208,8 @@
                                     >
                                         <div
                                             class="flex items-start justify-between"
+                                            :class="item.data.url ? 'cursor-pointer' : ''"
+                                            @click="openNotification(item)"
                                         >
                                             <div
                                                 class="flex flex-1 items-start gap-2"
@@ -368,7 +370,7 @@
                                                     tooltip="Mark as read"
                                                     text
                                                     v-if="!item.read_at"
-                                                    @click="markAsRead(item.id)"
+                                                    @click.stop="markAsRead(item.id)"
                                                     :icon="IconCheck"
                                                     :icon-size="15"
                                                 />
@@ -471,6 +473,29 @@ const markAsRead = (id) => {
         {
             preserveScroll: true,
             preserveState: true,
+        },
+    );
+};
+
+const openNotification = (item) => {
+    const url = item?.data?.url;
+
+    if (!url) {
+        return;
+    }
+
+    if (item.read_at) {
+        router.visit(url);
+        return;
+    }
+
+    router.patch(
+        route("notif.read", item.id),
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => router.visit(url),
         },
     );
 };

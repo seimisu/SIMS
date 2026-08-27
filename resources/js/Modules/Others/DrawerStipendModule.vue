@@ -120,6 +120,43 @@
                                     Showing the last submitted payroll. Regional edits will appear after resubmission.
                                 </div>
 
+                                <div
+                                    v-if="showMonthlyCredits"
+                                    class="grid gap-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-gray-600 dark:bg-gray-800 md:grid-cols-5"
+                                >
+                                    <div
+                                        v-for="credit in monthlyCredits"
+                                        :key="credit.month_no"
+                                        class="flex min-w-0 flex-col gap-2 rounded border border-slate-200 bg-white p-2 dark:border-gray-600 dark:bg-gray-900"
+                                    >
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="min-w-0">
+                                                <div class="text-xs font-semibold text-slate-700 dark:text-gray-100">
+                                                    {{ credit.label }}
+                                                </div>
+                                                <div class="text-[11px] text-slate-500 dark:text-gray-400">
+                                                    PHP {{ formatMoney(credit.payroll_amount) }}
+                                                </div>
+                                            </div>
+                                            <span
+                                                :class="[
+                                                    creditStatusClass(credit.status),
+                                                    'shrink-0 rounded border px-2 py-0.5 text-[10px] font-semibold',
+                                                ]"
+                                            >
+                                                {{ statusLabel(credit.status) }}
+                                            </span>
+                                        </div>
+                                        <div
+                                            v-if="credit.status === 'credited'"
+                                            class="text-[11px] leading-4 text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{ credit.credited_by || "Cashier" }}
+                                            <span v-if="credit.credited_at"> | {{ credit.credited_at }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="flex-1 overflow-auto rounded-lg border bg-white dark:border-gray-600 dark:bg-gray-900">
                                     <table class="min-w-[1600px] w-full text-xs dark:text-gray-200">
                                         <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-gray-800 dark:text-gray-300">
@@ -696,10 +733,18 @@
         modal
         header="Payroll Signatories"
         :style="{ width: '36rem' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
     >
         <div class="flex flex-col gap-3">
             <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Prepared by</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-gray-200">Prepared by</label>
                 <MultiSelect
                     v-model="preparedBy"
                     :options="signatoryOptions"
@@ -709,10 +754,22 @@
                     display="chip"
                     :maxSelectedLabels="3"
                     class="w-full !text-sm"
+                    :pt="{
+                        root: 'dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-100',
+                        labelContainer: 'dark:!text-gray-100',
+                        label: 'dark:!text-gray-100',
+                        token: 'dark:!bg-gray-700 dark:!text-gray-100',
+                        removeTokenIcon: 'dark:!text-gray-300',
+                        dropdown: 'dark:!text-gray-300',
+                        overlay: 'dark:!border-gray-700 dark:!bg-gray-800',
+                        option: 'dark:!text-gray-100 dark:hover:!bg-gray-700',
+                        emptyMessage: 'dark:!text-gray-300',
+                        filterInput: 'dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+                    }"
                 >
                     <template #option="slotProps">
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-gray-100">{{ slotProps.option.name }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
@@ -721,7 +778,7 @@
                 </MultiSelect>
             </div>
             <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Noted by</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-gray-200">Noted by</label>
                 <Select
                     v-model="notedBy"
                     :options="signatoryOptions"
@@ -729,10 +786,19 @@
                     placeholder="Select noted by"
                     filter
                     class="w-full !text-sm"
+                    :pt="{
+                        root: 'dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-100',
+                        label: 'dark:!text-gray-100',
+                        dropdown: 'dark:!text-gray-300',
+                        overlay: 'dark:!border-gray-700 dark:!bg-gray-800',
+                        option: 'dark:!text-gray-100 dark:hover:!bg-gray-700',
+                        emptyMessage: 'dark:!text-gray-300',
+                        filterInput: 'dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+                    }"
                 >
                     <template #option="slotProps">
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-gray-100">{{ slotProps.option.name }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
@@ -741,7 +807,7 @@
                 </Select>
             </div>
             <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium">Certified correct</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-gray-200">Certified correct</label>
                 <Select
                     v-model="certifiedBy"
                     :options="signatoryOptions"
@@ -749,10 +815,19 @@
                     placeholder="Select certified correct"
                     filter
                     class="w-full !text-sm"
+                    :pt="{
+                        root: 'dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-100',
+                        label: 'dark:!text-gray-100',
+                        dropdown: 'dark:!text-gray-300',
+                        overlay: 'dark:!border-gray-700 dark:!bg-gray-800',
+                        option: 'dark:!text-gray-100 dark:hover:!bg-gray-700',
+                        emptyMessage: 'dark:!text-gray-300',
+                        filterInput: 'dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+                    }"
                 >
                     <template #option="slotProps">
                         <div class="flex flex-col">
-                            <span class="text-sm font-medium">{{ slotProps.option.name }}</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-gray-100">{{ slotProps.option.name }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ slotProps.option.designation || "No designation" }}
                             </span>
@@ -760,7 +835,7 @@
                     </template>
                 </Select>
             </div>
-            <small v-if="signatoryError" class="text-red-500">
+            <small v-if="signatoryError" class="text-red-500 dark:text-red-300">
                 Select prepared by, noted by, and certified correct before exporting.
             </small>
         </div>
@@ -869,6 +944,7 @@ const batchPermissions = computed(
             canReject: false,
             canViewGeneratedExcel: false,
             canDelete: false,
+            canViewCredits: false,
         },
 );
 const canBuildPayroll = computed(() => batchPermissions.value.canEdit);
@@ -931,6 +1007,17 @@ const statusLabel = (status) =>
 
 const fixedAllowanceLimits = computed(() => page.props.allowanceLimits ?? {});
 const signatoryOptions = computed(() => page.props.signatoryOptions ?? []);
+const monthlyCredits = computed(() => details.value?.monthly_credits ?? []);
+const showMonthlyCredits = computed(() =>
+    details.value?.status === "approved_payroll" &&
+    batchPermissions.value.canViewCredits &&
+    monthlyCredits.value.length > 0,
+);
+
+const creditStatusClass = (status) =>
+    status === "credited"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+        : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
 
 const syncPayrollRows = () => {
     payrollRows.value = (page.props.payrollRecipients ?? []).map((row) => ({
@@ -1050,7 +1137,7 @@ const reloadBatch = (extra = {}) => {
             id: details.value.id,
             ...extra,
         },
-        only: ["details", "payrollRecipients", "allowanceLimits", "signatoryOptions"],
+        only: ["batches", "details", "payrollRecipients", "allowanceLimits", "signatoryOptions"],
         preserveScroll: true,
         onSuccess: () => {
             syncPayrollRows();

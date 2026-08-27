@@ -1,6 +1,7 @@
 <template>
     <Head title="Downloadables" />
     <AuthLayout>
+        <DefaultConfirmDialog ref="confirmRef" />
         <div class="flex flex-col w-full h-full gap-4">
             <div class="flex">
                 <HeaderModule
@@ -98,7 +99,7 @@
                                                 v-model="documentForm.regions"
                                                 label="Regions"
                                                 :options="page.props.regionOptions"
-                                                :disable="documentForm.available_all"
+                                                :disable="documentForm.available_all || isRegionLocked"
                                                 filter
                                             />
                                             <SelectMultiInput
@@ -311,6 +312,7 @@ import TextInput from "../../Components/inputs/TextInput.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
+import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
 
 const page = usePage();
 const searchInput = ref(null);
@@ -318,6 +320,7 @@ const categorySearchInput = ref(null);
 const searchTimer = ref(null);
 const documentToolbarRef = ref(null);
 const categoryToolbarRef = ref(null);
+const confirmRef = ref(null);
 const uploadRef = ref(null);
 const progressUpload = ref(0);
 const activeTab = ref("documents");
@@ -325,6 +328,14 @@ const tabs = [
     { label: "Downloadables", value: "documents" },
     { label: "Categories", value: "categories" },
 ];
+const isRegionLocked = computed(() => Boolean(page.props.targetingScope?.is_region_locked));
+const lockedRegion = computed(() => page.props.targetingScope?.region ?? page.props.regionOptions?.[0] ?? null);
+
+const applyRegionalTargeting = () => {
+    if (!isRegionLocked.value || !lockedRegion.value) return;
+
+    documentForm.regions = [lockedRegion.value];
+};
 
 const documentForm = useForm({
     id: null,
@@ -348,6 +359,24 @@ const categoryForm = useForm({
 });
 
 const targets = computed(() => {
+    if (isRegionLocked.value) {
+        return [
+            { target_type: "region", target_id: lockedRegion.value?.id },
+            ...(documentForm.scholarships.length
+                ? documentForm.scholarships.map((item) => ({
+                      target_type: "scholarship_program",
+                      target_id: item.id,
+                  }))
+                : [{ target_type: "scholarship_program", target_id: "all" }]),
+            ...(documentForm.programs.length
+                ? documentForm.programs.map((item) => ({
+                      target_type: "program",
+                      target_id: item.id,
+                  }))
+                : [{ target_type: "program", target_id: "all" }]),
+        ];
+    }
+
     if (documentForm.available_all) {
         return [{ target_type: "all", target_id: null }];
     }
@@ -420,6 +449,7 @@ const openDocumentForm = (row = null) => {
     documentForm.clearErrors();
     progressUpload.value = 0;
     uploadRef.value?.clear();
+    applyRegionalTargeting();
 
     if (row) {
         const hasAll = row.targets?.some((target) => target.target_type === "all");
@@ -431,11 +461,15 @@ const openDocumentForm = (row = null) => {
             : null;
         documentForm.is_active = row.is_active;
         documentForm.publish_now = !!row.published_at;
-        documentForm.available_all = hasAll;
-        documentForm.regions = mapTargets(row, "region", page.props.regionOptions);
+        documentForm.available_all = isRegionLocked.value ? true : hasAll;
+        documentForm.regions = isRegionLocked.value
+            ? [lockedRegion.value].filter(Boolean)
+            : mapTargets(row, "region", page.props.regionOptions);
         documentForm.scholarships = mapTargets(row, "scholarship_program", page.props.scholarshipOptions);
         documentForm.programs = mapTargets(row, "program", page.props.programOptions);
     }
+
+    applyRegionalTargeting();
 
     documentToolbarRef.value.openModal();
 };
@@ -496,10 +530,14 @@ const saveDocument = () => {
 };
 
 const deleteDocument = (row) => {
-    if (!confirm(`Delete "${row.title}"?`)) return;
-
-    router.delete(route("documents.destroy", row.id), {
-        preserveScroll: true,
+    confirmRef.value.popupDialog(() => {
+        router.delete(route("documents.destroy", row.id), {
+            preserveScroll: true,
+        });
+    }, {
+        header: "Delete Downloadable",
+        message: `Delete "${row.title}"?`,
+        icon: "pi pi-trash",
     });
 };
 
@@ -558,10 +596,14 @@ const resetCategoryForm = () => {
 };
 
 const deleteCategory = (row) => {
-    if (!confirm(`Delete "${row.name}"?`)) return;
-
-    router.delete(route("document-categories.destroy", row.id), {
-        preserveScroll: true,
+    confirmRef.value.popupDialog(() => {
+        router.delete(route("document-categories.destroy", row.id), {
+            preserveScroll: true,
+        });
+    }, {
+        header: "Delete Category",
+        message: `Delete "${row.name}"?`,
+        icon: "pi pi-trash",
     });
 };
 

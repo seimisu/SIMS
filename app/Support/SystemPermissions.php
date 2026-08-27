@@ -18,10 +18,12 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.update',
+            'scholars.landbank.view-sensitive',
             'payroll.view',
             'payroll.update',
             'payroll.export',
             'payroll.submit',
+            'payroll.credits.view',
             'documents.view',
             'documents.create',
             'documents.update',
@@ -39,10 +41,12 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.update',
+            'scholars.landbank.view-sensitive',
             'payroll.view',
             'payroll.update',
             'payroll.export',
             'payroll.submit',
+            'payroll.credits.view',
             'documents.view',
             'documents.create',
             'documents.update',
@@ -60,6 +64,7 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.review',
+            'scholars.landbank.view-sensitive',
             'profile-requests.view',
             'profile-requests.approve',
             'profile-requests.reject',
@@ -83,6 +88,7 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.review',
+            'scholars.landbank.view-sensitive',
             'profile-requests.view',
             'profile-requests.approve',
             'profile-requests.reject',
@@ -105,6 +111,12 @@ class SystemPermissions
             'dashboard.view',
             'scholars.view',
             'scholars.update',
+        ],
+
+        'cashier' => [
+            'dashboard.view',
+            'payroll.credits.view',
+            'payroll.credits.update',
         ],
     ];
 
@@ -174,12 +186,12 @@ class SystemPermissions
         'scholar.grade-update' => 'scholars.update',
         'scholar.grade-delete' => 'scholars.update',
         'scholars.update' => 'scholars.update',
+        'scholars.landbank.reveal' => 'scholars.landbank.view-sensitive',
         'scholars.activation' => 'scholars.activate',
         'scholars.transfer' => 'scholars.transfer',
         'review.validate' => 'scholars.review',
         'review.publish' => 'scholars.review',
         'scholar.grade-request' => 'grade-submissions.view',
-        'scholar-academic-history.decision' => 'grade-submissions.view',
         'profile.request' => 'profile-requests.view',
         'landbank.request' => 'landbank-requests.view',
 
@@ -187,6 +199,7 @@ class SystemPermissions
         'stipends.payroll.update' => 'payroll.update',
         'stipends.recipients.mark-for-removal' => 'payroll.recipients.manage-removal',
         'stipends.recipients.cancel-removal' => 'payroll.recipients.manage-removal',
+        'cashier.credits.update' => 'payroll.credits.update',
         'stipends.export' => 'payroll.export',
         'stipends.update' => 'payroll.view',
 
@@ -265,6 +278,18 @@ class SystemPermissions
             return true;
         }
 
+        if (
+            $permission === 'scholars.landbank.view-sensitive'
+            && in_array($this->roleName($user), [
+                'regional staff',
+                'regional supervisor',
+                'scholarship staff',
+                'scholarship coordinator',
+            ], true)
+        ) {
+            return true;
+        }
+
         if ($this->hasPermissionTables()) {
             return $user->role?->permissions()
                 ->where('list_permissions.is_active', true)
@@ -328,6 +353,11 @@ class SystemPermissions
             || $this->hasRole($user, 'scholarship coordinator');
     }
 
+    public function isCashier(?User $user): bool
+    {
+        return $this->hasRole($user, 'cashier');
+    }
+
     public function dashboardType(?User $user): string
     {
         if ($this->isRegionalRole($user)) {
@@ -340,6 +370,14 @@ class SystemPermissions
 
         if ($this->isAdministrator($user)) {
             return 'admin';
+        }
+
+        if ($this->isScholarshipReviewer($user)) {
+            return 'scholarship';
+        }
+
+        if ($this->isCashier($user)) {
+            return 'cashier';
         }
 
         return 'default';
@@ -416,6 +454,8 @@ class SystemPermissions
             'canReject' => $this->can($user, 'payroll.return') && $this->canReviewPayroll($user, $status),
             'canViewGeneratedExcel' => $canViewGeneratedExcel,
             'canDelete' => false,
+            'canViewCredits' => $this->can($user, 'payroll.credits.view'),
+            'canCreditMonths' => $this->can($user, 'payroll.credits.update') && $status === 'approved_payroll',
         ];
     }
 

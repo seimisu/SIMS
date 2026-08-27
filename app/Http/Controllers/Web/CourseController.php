@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\CourseRequest;
 use App\Models\ListCourse;
 use App\References\ListClass;
+use App\Services\Notifications\RoleBellNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -24,12 +25,20 @@ class CourseController extends Controller
     {
         $data = $request->validated();
 
-        ListCourse::create([
+        $course = ListCourse::create([
             'name' => $data['name'],
             'field' => is_array($data['field']) ? $data['field']['name'] : $data['field'],
             'abbreviation' => $data['abbreviation'],
             'created_by'    => Auth::user()->profile->fullname
         ]);
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'course_added',
+            'New course added',
+            "{$course->name} was added to the course list.",
+            '/academic/courses',
+            'list_courses',
+            $course->id
+        );
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
@@ -51,6 +60,14 @@ class CourseController extends Controller
                 'updated_by'    => Auth::user()->profile->fullname,
                 'updated_at'    => now()
             ]);
+            app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+                'course_updated',
+                'Course updated',
+                "{$find->name} was updated in the course list.",
+                '/academic/courses',
+                'list_courses',
+                $find->id
+            );
         } else {
             $find->update([
                 'is_active' => $data['isActive'],

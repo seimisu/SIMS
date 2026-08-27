@@ -10,10 +10,14 @@
                         Regional Operations Dashboard
                     </h1>
                 </div>
-                <div class="text-xs text-slate-500 dark:text-gray-400">
-                    {{ formatNumber(card.total) }} scholars across
-                    {{ formatNumber(insights.activeCampuses) }} campuses
-                </div>
+                <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300">
+                    <span>As of</span>
+                    <input
+                        v-model="filterAsOfMonth"
+                        type="month"
+                        class="h-8 cursor-pointer rounded border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                    />
+                </label>
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -49,13 +53,13 @@
                                 Payroll Work Queue
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Draft and returned payrolls that regional staff can update or resubmit.
+                                Draft and returned payrolls updated through {{ asOf.label }}.
                             </p>
                         </div>
                         <div class="flex flex-wrap justify-end gap-1 text-[11px]">
                             <button
                                 type="button"
-                                class="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-1 font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
+                                class="inline-flex cursor-pointer items-center gap-1 rounded bg-blue-50 px-2 py-1 font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
                                 @click="goToPayroll"
                             >
                                 <IconEye :size="13" />
@@ -70,7 +74,7 @@
                         </div>
                     </div>
 
-                    <div class="max-h-[210px] overflow-auto rounded border border-slate-200 dark:border-gray-600">
+                    <div class="max-h-[320px] overflow-auto rounded border border-slate-200 dark:border-gray-600">
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-100 text-xs text-slate-600 dark:bg-gray-800 dark:text-gray-300">
                                 <tr>
@@ -89,9 +93,6 @@
                                 >
                                     <td class="px-2 py-1.5">
                                         <div class="font-medium text-slate-800 dark:text-gray-100">{{ batch.name }}</div>
-                                        <div v-if="batch.remarks" class="truncate text-xs text-slate-500 dark:text-gray-400">
-                                            {{ batch.remarks }}
-                                        </div>
                                     </td>
                                     <td class="px-2 py-1.5 text-slate-600 dark:text-gray-300">
                                         {{ batch.term }} {{ batch.school_year }}
@@ -130,7 +131,7 @@
                         </div>
                         <button
                             type="button"
-                            class="inline-flex shrink-0 items-center gap-1 rounded bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
+                            class="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60"
                             @click="goToSubmissions()"
                         >
                             <IconEye :size="13" />
@@ -148,7 +149,7 @@
                                     <div class="text-slate-500 dark:text-gray-400">{{ item.label }}</div>
                                     <button
                                         type="button"
-                                        class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+                                        class="mt-1 inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
                                         @click="goToSubmissions(item.tab)"
                                     >
                                         View
@@ -196,7 +197,7 @@
                                 Scholarship Type Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Scholars grouped by scholarship type.
+                                Activated scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
@@ -237,7 +238,7 @@
                                 Sex Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Profile composition across regional scholars.
+                                Activated scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
@@ -335,13 +336,15 @@ import {
     IconSchool,
     IconUsersGroup,
 } from "@tabler/icons-vue";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import ApexChart from "vue3-apexcharts";
 import { route } from "ziggy-js";
 
 const page = usePage();
 const { card, timeline, user, gender } = page.props;
 const isDark = ref(false);
+const asOf = computed(() => page.props.asOf ?? {});
+const filterAsOfMonth = ref(page.props.asOf?.month ?? currentMonth());
 const insights = computed(() => page.props.regionalInsights ?? {});
 const regionName = computed(() => user.profile.agency.slug?.toUpperCase() ?? "Regional");
 const payrollSummary = computed(() => insights.value.payrollSummary ?? {});
@@ -351,28 +354,28 @@ const metrics = computed(() => [
     {
         label: "Total Scholars",
         value: card.total,
-        caption: "Current scholar records",
+        caption: `Activated scholars awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconUsersGroup,
         color: "bg-blue-50 text-blue-600",
     },
     {
         label: "Undergraduate",
         value: card.Ucnt,
-        caption: "Current undergraduate scholars",
+        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconSchool,
         color: "bg-emerald-50 text-emerald-600",
     },
     {
         label: "JLSS",
         value: card.Jcnt,
-        caption: "Current JLSS scholars",
+        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconFileCheck,
         color: "bg-cyan-50 text-cyan-600",
     },
     {
         label: "Payroll Needs Action",
         value: Number(payrollSummary.value.draft ?? 0) + Number(payrollSummary.value.rejected_payroll ?? 0),
-        caption: "Draft and returned payrolls",
+        caption: `Updated through ${asOf.value.label ?? "selected month"}`,
         icon: IconClipboardList,
         color: "bg-red-50 text-red-600",
     },
@@ -430,7 +433,6 @@ const schoolDistribution = computed(() => {
 });
 const pendingSubmissionCards = computed(() => [
     { label: "Grade Submissions", value: insights.value.pendingSubmissions?.grades ?? 0, tab: "grades" },
-    { label: "Academic History", value: insights.value.pendingSubmissions?.history ?? 0, tab: "history" },
     { label: "Profile Updates", value: insights.value.pendingSubmissions?.profile ?? 0, tab: "profile" },
     { label: "Landbank Requests", value: insights.value.pendingSubmissions?.landbank ?? 0, tab: "landbank" },
 ]);
@@ -520,6 +522,21 @@ function statusClass(status) {
 function formatNumber(num) {
     return Number(num ?? 0).toLocaleString("en-US");
 }
+
+function currentMonth() {
+    return new Date().toISOString().slice(0, 7);
+}
+
+watch(
+    filterAsOfMonth,
+    (value) => {
+        router.get(route("dashboard"), { as_of_month: value }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    },
+);
 
 function goToPayroll() {
     router.visit(route("stipends"));

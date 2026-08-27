@@ -49,12 +49,12 @@ class Scholars extends Model
 
     public function profileRequest()
     {
-        return $this->hasMany(StudentProfileRequest::class, 'spas_no', 'spas_no');
+        return $this->hasMany(StudentProfileRequest::class, 'scholar_id', 'id');
     }
 
     public function landbankRequest()
     {
-        return $this->hasMany(studentLandbankRequest::class, 'spas_no', 'spas_no');
+        return $this->hasMany(studentLandbankRequest::class, 'scholar_id', 'id');
     }
 
     public function status()

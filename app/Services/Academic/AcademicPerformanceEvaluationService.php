@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Academic;
 
 use App\Models\ScholarTerm;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
@@ -13,7 +13,7 @@ class AcademicPerformanceEvaluationService
     private const STATUS_CONTINUED = 'GOOD STANDING';
     private const STATUS_PROBATION = 'CONTINUE UNDER PROBATION';
     private const STATUS_PARTIAL = 'CONTINUE WITH PARTIAL ALLOWANCE';
-    private const STATUS_TERMINATED = 'TERMINATED WITH SERVICE OBLIGATION';
+    private const STATUS_TERMINATED = 'TERMINATED';
     private const STATUS_SUBMIT_GRADES = 'CONTINUED';
 
     public function evaluate(ScholarTerm $term): array

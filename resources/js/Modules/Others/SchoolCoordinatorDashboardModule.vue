@@ -795,7 +795,7 @@ const chartOptionsCourseTreemap = ref({
         formatter(text, opts) {
             const value = opts.value;
 
-            const total = page.props?.school?.total ?? 0;
+            const total = page.props?.course?.total ?? 0;
 
             const percent =
                 total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";

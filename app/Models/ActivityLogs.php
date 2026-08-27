@@ -60,6 +60,13 @@ class ActivityLogs extends Model
                 'display' => 'name',
                 'new_key' => 'course',
             ],
+            'curriculum_id' => [
+                'model' => SchoolCampusCourseCurriculums::class,
+                'search' => 'id',
+                'display' => 'years',
+                'new_key' => 'curriculum',
+                'prefix' => 'Curriculum ',
+            ],
         ];
 
         foreach ($lookups as $field => $lookup) {
@@ -67,10 +74,14 @@ class ActivityLogs extends Model
                 continue;
             }
 
-            $data[$lookup['new_key']] = $lookup['model']::where(
+            $value = $lookup['model']::where(
                 $lookup['search'],
                 $data[$field]
             )->value($lookup['display']);
+
+            $data[$lookup['new_key']] = $value
+                ? ($lookup['prefix'] ?? '').$value
+                : null;
 
             unset($data[$field]);
         }
