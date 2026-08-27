@@ -101,6 +101,8 @@ class PayrollMonthlyCreditService
             'remarks' => $remarks,
         ])->save();
 
+        $this->creditRecipientStipends($batch, $month);
+
         return $credit;
     }
 
@@ -122,6 +124,31 @@ class PayrollMonthlyCreditService
             ->map(fn ($row) => [
                 'amount' => (float) $row->amount,
                 'recipient_count' => (int) $row->recipient_count,
+            ]);
+    }
+
+    private function creditRecipientStipends(Batches $batch, int $month): void
+    {
+        $activeRecipientIds = DB::table('batch_recipients')
+            ->where('batch_id', $batch->id)
+            ->where(function ($query) {
+                $query->where('is_for_removal_from_payroll', false)
+                    ->orWhereNull('is_for_removal_from_payroll');
+            })
+            ->where('status', '!=', 'for_removal_from_payroll')
+            ->pluck('id');
+
+        if ($activeRecipientIds->isEmpty()) {
+            return;
+        }
+
+        DB::table('recipient_stipends')
+            ->whereIn('recipient_id', $activeRecipientIds)
+            ->where('month_no', $month)
+            ->where('amount', '>', 0)
+            ->update([
+                'status' => 'credited',
+                'updated_at' => now(),
             ]);
     }
 }
