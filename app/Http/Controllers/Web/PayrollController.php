@@ -332,7 +332,8 @@ class PayrollController extends Controller
                     $query->whereIn('status', ['submitted_payroll', 'rejected_payroll', 'approved_payroll']);
                 })
                 ->with([
-                    'latestLog'
+                    'latestLog',
+                    'monthlyCredits',
                 ])
                 ->withCount([
                     'recipients as scholars_count' => fn($query) => $query
@@ -361,6 +362,8 @@ class PayrollController extends Controller
                         : null,
                     'remarks'       => $q->latestLog?->remarks,
                     'status'        => $this->payrollStatuses()->currentBatchStatus($q),
+                    'credit_summary' => $this->creditSummary($q),
+                    'monthly_credits' => $this->creditRowsForList($q),
                     'requires_export_before_submit' => $this->requiresExportBeforeSubmit($q),
                     'source'        => $q->source,
                     'is_historical' => (bool) $q->is_historical,
@@ -443,6 +446,8 @@ class PayrollController extends Controller
             'generated_excel_path',
             'generated_excel_name',
             'generated_excel_at',
+            'source',
+            'is_historical',
         )
             ->whereId($batchId)
             ->first();
@@ -472,6 +477,9 @@ class PayrollController extends Controller
         }
 
         $activityLogs = $this->visiblePayrollActivityLogs($batch);
+        $monthlyCredits = $permissions['canViewCredits'] && $status === 'approved_payroll'
+            ? app(\App\Services\Payroll\PayrollMonthlyCreditService::class)->rowsForBatch($batch)
+            : collect();
 
         return [
             'id' => Hashids::encode($batch->id),
@@ -522,9 +530,42 @@ class PayrollController extends Controller
                 ])->filter()->join(' ')) : null,
                 'metadata' => $log->metadata,
             ]),
+            'monthly_credits' => $monthlyCredits,
             'is_editable' => $permissions['canEdit'],
             'permissions' => $permissions,
         ];
+    }
+
+    private function creditSummary(Batches $batch): array
+    {
+        $creditService = app(\App\Services\Payroll\PayrollMonthlyCreditService::class);
+
+        if (! $creditService->isCreditEligible($batch)) {
+            return [
+                'credited' => 0,
+                'total' => 0,
+            ];
+        }
+
+        $credits = $batch->relationLoaded('monthlyCredits')
+            ? $batch->monthlyCredits
+            : $batch->monthlyCredits()->get();
+
+        return [
+            'credited' => $credits->where('status', 'credited')->count(),
+            'total' => 5,
+        ];
+    }
+
+    private function creditRowsForList(Batches $batch)
+    {
+        $status = $this->payrollStatuses()->currentBatchStatus($batch);
+
+        if ($status !== 'approved_payroll') {
+            return collect();
+        }
+
+        return app(\App\Services\Payroll\PayrollMonthlyCreditService::class)->rowsForBatch($batch);
     }
 
     private function payrollActivityLabel(string $action): string
@@ -835,7 +876,7 @@ class PayrollController extends Controller
         }
 
         $movedScholarCount = DB::transaction(function () use ($batch, $data, $payrollFilePath, $payrollFileName, $latestStatus) {
-            return $this->payrollStatusTransitions()->transition(
+            $moved = $this->payrollStatusTransitions()->transition(
                 $batch,
                 $data['status'],
                 $latestStatus,
@@ -845,6 +886,12 @@ class PayrollController extends Controller
                 $this->actorName(),
                 self::BATCH_SCHOLAR_LIMIT
             );
+
+            if ($data['status'] === 'approved_payroll') {
+                app(\App\Services\Payroll\PayrollMonthlyCreditService::class)->ensureForBatch($batch);
+            }
+
+            return $moved;
         });
 
         $this->sendPayrollBellNotification($batch, $data['status']);

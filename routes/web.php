@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\OtpRequestController;
 use App\Http\Controllers\Web\CampusCourseController;
 use App\Http\Controllers\Web\CampusCourseSubjectController;
 use App\Http\Controllers\Web\CampusGradeController;
+use App\Http\Controllers\Web\CashierCreditController;
 use App\Http\Controllers\Web\CourseController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\DocumentController;
@@ -154,6 +155,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
 
     Route::put('stipends/recipients/{id}/mark-for-removal', [PayrollController::class, 'markRecipientForRemoval'])->name('stipends.recipients.mark-for-removal');
     Route::put('stipends/recipients/{id}/cancel-removal', [PayrollController::class, 'cancelRecipientForRemoval'])->name('stipends.recipients.cancel-removal');
+    Route::put('cashier/credits/{id}/months/{month}', [CashierCreditController::class, 'update'])->name('cashier.credits.update');
     Route::post('stipends/import-historical/preview', [PayrollController::class, 'previewHistorical'])->name('stipends.import-historical.preview');
     Route::post('stipends/import-historical', [PayrollController::class, 'importHistorical'])->name('stipends.import-historical');
     Route::put('stipends/{id}/payroll', [PayrollController::class, 'savePayroll'])->name('stipends.payroll.update');
@@ -191,6 +193,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('cashier/credits', [CashierCreditController::class, 'index'])->name('cashier.credits');
     Route::get('roles', [RoleController::class, 'index'])->name('roles');
     Route::get('routes', [RouteController::class, 'index'])->name('routes');
     Route::get('users', [UserController::class, 'index'])->name('users');

@@ -459,6 +459,10 @@ class ListRouteSeeder extends Seeder
                         [
                             'id' => 1,
                             'name' => 'Administrator'
+                        ],
+                        [
+                            'id' => 5,
+                            'name' => 'Cashier'
                         ]
                     ]),
                     "main_id" => null,

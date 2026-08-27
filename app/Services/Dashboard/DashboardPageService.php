@@ -25,6 +25,10 @@ class DashboardPageService
             return app(ScholarshipDashboardService::class)->render($request, $user, $permissions);
         }
 
+        if ($permissions->isCashier($user)) {
+            return app(CashierDashboardService::class)->render($request, $user, $permissions);
+        }
+
         return app(AdminDashboardService::class)->render($request, $user, $permissions);
     }
 }

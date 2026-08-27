@@ -36,6 +36,15 @@ class PayrollNotificationService
                 'batches',
                 $batch->id
             );
+
+            $this->notifications->notifyCashiers(
+                'payroll_ready_for_crediting',
+                'Payroll ready for crediting',
+                "{$batchName} was approved and is ready for monthly crediting.",
+                '/cashier/credits',
+                'batches',
+                $batch->id
+            );
         }
 
         if ($status === 'rejected_payroll') {

@@ -54,6 +54,7 @@ class PayrollActivityService
                 'payroll_saved',
                 'payroll_submitted',
                 'payroll_returned',
+                'payroll_month_credited',
                 'scholar_removed',
             ]);
         } elseif ($permissions->isScholarshipReviewer($user)) {
@@ -64,6 +65,11 @@ class PayrollActivityService
                 'scholar_marked_for_removal',
                 'scholar_moved_from_returned_payroll',
                 'scholar_removal_cancelled',
+            ]);
+        } elseif ($permissions->isCashier($user)) {
+            $query->whereIn('action', [
+                'payroll_approved',
+                'payroll_month_credited',
             ]);
         }
 
@@ -80,6 +86,7 @@ class PayrollActivityService
             'payroll_approved' => 'Payroll approved',
             'payroll_imported' => 'Historical payroll imported',
             'payroll_returned' => 'Payroll returned',
+            'payroll_month_credited' => 'Payroll month credited',
             'scholar_marked_for_removal' => 'Scholar marked for removal',
             'scholar_moved_from_returned_payroll' => 'Scholar moved from returned payroll',
             'scholar_removal_cancelled' => 'Scholar removal cancelled',

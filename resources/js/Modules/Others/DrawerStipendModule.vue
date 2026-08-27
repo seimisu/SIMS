@@ -120,6 +120,43 @@
                                     Showing the last submitted payroll. Regional edits will appear after resubmission.
                                 </div>
 
+                                <div
+                                    v-if="showMonthlyCredits"
+                                    class="grid gap-2 rounded border border-slate-200 bg-slate-50 p-2 dark:border-gray-600 dark:bg-gray-800 md:grid-cols-5"
+                                >
+                                    <div
+                                        v-for="credit in monthlyCredits"
+                                        :key="credit.month_no"
+                                        class="flex min-w-0 flex-col gap-2 rounded border border-slate-200 bg-white p-2 dark:border-gray-600 dark:bg-gray-900"
+                                    >
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="min-w-0">
+                                                <div class="text-xs font-semibold text-slate-700 dark:text-gray-100">
+                                                    {{ credit.label }}
+                                                </div>
+                                                <div class="text-[11px] text-slate-500 dark:text-gray-400">
+                                                    PHP {{ formatMoney(credit.payroll_amount) }}
+                                                </div>
+                                            </div>
+                                            <span
+                                                :class="[
+                                                    creditStatusClass(credit.status),
+                                                    'shrink-0 rounded border px-2 py-0.5 text-[10px] font-semibold',
+                                                ]"
+                                            >
+                                                {{ statusLabel(credit.status) }}
+                                            </span>
+                                        </div>
+                                        <div
+                                            v-if="credit.status === 'credited'"
+                                            class="text-[11px] leading-4 text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{ credit.credited_by || "Cashier" }}
+                                            <span v-if="credit.credited_at"> | {{ credit.credited_at }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="flex-1 overflow-auto rounded-lg border bg-white dark:border-gray-600 dark:bg-gray-900">
                                     <table class="min-w-[1600px] w-full text-xs dark:text-gray-200">
                                         <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-gray-800 dark:text-gray-300">
@@ -907,6 +944,7 @@ const batchPermissions = computed(
             canReject: false,
             canViewGeneratedExcel: false,
             canDelete: false,
+            canViewCredits: false,
         },
 );
 const canBuildPayroll = computed(() => batchPermissions.value.canEdit);
@@ -969,6 +1007,17 @@ const statusLabel = (status) =>
 
 const fixedAllowanceLimits = computed(() => page.props.allowanceLimits ?? {});
 const signatoryOptions = computed(() => page.props.signatoryOptions ?? []);
+const monthlyCredits = computed(() => details.value?.monthly_credits ?? []);
+const showMonthlyCredits = computed(() =>
+    details.value?.status === "approved_payroll" &&
+    batchPermissions.value.canViewCredits &&
+    monthlyCredits.value.length > 0,
+);
+
+const creditStatusClass = (status) =>
+    status === "credited"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+        : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
 
 const syncPayrollRows = () => {
     payrollRows.value = (page.props.payrollRecipients ?? []).map((row) => ({

@@ -23,6 +23,7 @@ class SystemPermissions
             'payroll.update',
             'payroll.export',
             'payroll.submit',
+            'payroll.credits.view',
             'documents.view',
             'documents.create',
             'documents.update',
@@ -45,6 +46,7 @@ class SystemPermissions
             'payroll.update',
             'payroll.export',
             'payroll.submit',
+            'payroll.credits.view',
             'documents.view',
             'documents.create',
             'documents.update',
@@ -109,6 +111,12 @@ class SystemPermissions
             'dashboard.view',
             'scholars.view',
             'scholars.update',
+        ],
+
+        'cashier' => [
+            'dashboard.view',
+            'payroll.credits.view',
+            'payroll.credits.update',
         ],
     ];
 
@@ -191,6 +199,7 @@ class SystemPermissions
         'stipends.payroll.update' => 'payroll.update',
         'stipends.recipients.mark-for-removal' => 'payroll.recipients.manage-removal',
         'stipends.recipients.cancel-removal' => 'payroll.recipients.manage-removal',
+        'cashier.credits.update' => 'payroll.credits.update',
         'stipends.export' => 'payroll.export',
         'stipends.update' => 'payroll.view',
 
@@ -344,6 +353,11 @@ class SystemPermissions
             || $this->hasRole($user, 'scholarship coordinator');
     }
 
+    public function isCashier(?User $user): bool
+    {
+        return $this->hasRole($user, 'cashier');
+    }
+
     public function dashboardType(?User $user): string
     {
         if ($this->isRegionalRole($user)) {
@@ -360,6 +374,10 @@ class SystemPermissions
 
         if ($this->isScholarshipReviewer($user)) {
             return 'scholarship';
+        }
+
+        if ($this->isCashier($user)) {
+            return 'cashier';
         }
 
         return 'default';
@@ -436,6 +454,8 @@ class SystemPermissions
             'canReject' => $this->can($user, 'payroll.return') && $this->canReviewPayroll($user, $status),
             'canViewGeneratedExcel' => $canViewGeneratedExcel,
             'canDelete' => false,
+            'canViewCredits' => $this->can($user, 'payroll.credits.view'),
+            'canCreditMonths' => $this->can($user, 'payroll.credits.update') && $status === 'approved_payroll',
         ];
     }
 

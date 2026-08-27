@@ -52,6 +52,11 @@ class Batches extends Model
         return $this->hasMany(PayrollBatchRevision::class, 'batch_id');
     }
 
+    public function monthlyCredits()
+    {
+        return $this->hasMany(PayrollBatchMonthlyCredit::class, 'batch_id');
+    }
+
     public function term()
     {
         return $this->belongsTo(ListReferences::class, 'term_id');

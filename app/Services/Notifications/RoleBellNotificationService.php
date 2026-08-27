@@ -75,6 +75,11 @@ class RoleBellNotificationService
         $this->notifyUsers($this->regionalUsersForAgencyName($region), compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
     }
 
+    public function notifyCashiers(string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId): void
+    {
+        $this->notifyUsers($this->cashierUsers(), compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
+    }
+
     public function notifyRegionalAndScholarshipStaff(string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId): void
     {
         $users = $this->regionalUsers()
@@ -141,6 +146,13 @@ class RoleBellNotificationService
     {
         return User::with('role')
             ->whereHas('role', fn ($role) => $role->whereRaw('LOWER(name) IN (?, ?)', ['scholarship staff', 'scholarship coordinator']))
+            ->get();
+    }
+
+    private function cashierUsers(): EloquentCollection
+    {
+        return User::with('role')
+            ->whereHas('role', fn ($role) => $role->whereRaw('LOWER(name) = ?', ['cashier']))
             ->get();
     }
 

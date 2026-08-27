@@ -132,6 +132,21 @@
                             </div>
                         </template>
                     </Column>
+                    <Column header="Credited">
+                        <template #body="props">
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
+                                :class="{ 'cursor-not-allowed opacity-60': !hasMonthlyCredits(props.data) }"
+                                :disabled="!hasMonthlyCredits(props.data)"
+                                v-tooltip.top="hasMonthlyCredits(props.data) ? 'View monthly crediting' : 'No monthly crediting yet'"
+                                @click.stop="openCreditDialog(props.data)"
+                            >
+                                <IconChecks size="16" stroke-width="1.7" />
+                                {{ props.data.credit_summary?.credited ?? 0 }}/{{ props.data.credit_summary?.total ?? 5 }}
+                            </button>
+                        </template>
+                    </Column>
                     <Column header="Actions">
                         <template #body="props">
                             <div class="flex justify-start">
@@ -419,6 +434,78 @@
     </Dialog>
 
     <Dialog
+        v-model:visible="creditDialog"
+        modal
+        header="Payroll Crediting"
+        :style="{ width: '52rem', maxWidth: '95vw' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+        }"
+    >
+        <div class="flex flex-col gap-3">
+            <div class="min-w-0">
+                <div class="truncate text-sm font-semibold text-slate-800 dark:text-gray-100">
+                    {{ selectedCreditBatch?.name }}
+                </div>
+                <div class="text-xs text-slate-500 dark:text-gray-400">
+                    {{ selectedCreditBatch?.region }} | {{ selectedCreditBatch?.term }} / {{ selectedCreditBatch?.sy }}
+                </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <div
+                    v-for="credit in selectedMonthlyCredits"
+                    :key="credit.month_no"
+                    :class="[
+                        credit.status === 'credited'
+                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/30'
+                            : 'border-slate-200 bg-slate-50 dark:border-gray-600 dark:bg-gray-800',
+                        'flex min-h-32 min-w-0 flex-col gap-3 rounded border p-3',
+                    ]"
+                >
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="text-xs font-semibold text-slate-700 dark:text-gray-100">
+                                {{ credit.label }}
+                            </div>
+                        </div>
+                        <span
+                            :class="[
+                                creditStatusClass(credit.status),
+                                'shrink-0 rounded border px-2 py-0.5 text-[10px] font-semibold',
+                            ]"
+                        >
+                            {{ creditStatusLabel(credit.status) }}
+                        </span>
+                    </div>
+                    <div
+                        v-if="credit.status === 'credited'"
+                        class="mt-auto flex flex-col gap-1 text-[11px] leading-4 text-slate-500 dark:text-gray-400"
+                    >
+                        <span class="font-medium text-slate-600 dark:text-gray-300">
+                            {{ credit.credited_by || "Cashier" }}
+                        </span>
+                        <span v-if="credit.credited_at">{{ credit.credited_at }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <DefaultButton
+                size="small"
+                label="Close"
+                severity="secondary"
+                outlined
+                @click="creditDialog = false"
+            />
+        </template>
+    </Dialog>
+
+    <Dialog
         v-model:visible="historicalImportDialog"
         modal
         header="Import Historical Payroll"
@@ -501,6 +588,7 @@ import {
     IconFilterOff,
     IconMessageCircle,
     IconSend,
+    IconChecks,
 } from "@tabler/icons-vue";
 import { computed, ref, watch } from "vue";
 import { route } from "ziggy-js";
@@ -519,6 +607,8 @@ const submitPdfError = ref("");
 const actionMenu = ref(null);
 const selectedActionBatch = ref(null);
 const remarksDialog = ref(false);
+const creditDialog = ref(false);
+const selectedCreditBatch = ref(null);
 const historicalImportDialog = ref(false);
 const historicalImportFile = ref(null);
 const historicalImportInput = ref(null);
@@ -645,6 +735,18 @@ const hasBatchFilters = computed(() =>
 const selectedAcademicYear = (value) => value?.name ?? value;
 const canSubmitBatch = (batch) =>
     Boolean(batch?.permissions?.canSubmit) && Number(batch?.scholars_count ?? 0) > 0;
+const hasMonthlyCredits = (batch) =>
+    Array.isArray(batch?.monthly_credits) && batch.monthly_credits.length > 0;
+const selectedMonthlyCredits = computed(() => selectedCreditBatch.value?.monthly_credits ?? []);
+const creditStatusLabel = (status) =>
+    ({
+        pending: "Pending",
+        credited: "Credited",
+    })[status] ?? status;
+const creditStatusClass = (status) =>
+    status === "credited"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+        : "border-slate-200 bg-white text-slate-600 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300";
 const batchStatusMeta = (status) =>
     ({
         draft: {
@@ -688,6 +790,13 @@ const toggleActionMenu = (event, batch) => {
 const openRemarksDialog = (batch) => {
     selectedActionBatch.value = batch;
     remarksDialog.value = true;
+};
+
+const openCreditDialog = (batch) => {
+    if (!hasMonthlyCredits(batch)) return;
+
+    selectedCreditBatch.value = batch;
+    creditDialog.value = true;
 };
 
 const openHistoricalImportDialog = () => {
