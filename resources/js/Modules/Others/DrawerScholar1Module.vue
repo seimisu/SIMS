@@ -629,14 +629,18 @@
                                             v-model="personalInfo.course"
                                             uppercase
                                             :disable="!editBtn.info"
-                                            @update:model-value="renderCurriculum"
+                                            @update:model-value="
+                                                renderCurriculum
+                                            "
                                             :options="page.props?.courseOptions"
                                         />
                                         <SelectInput
                                             label="Curriculum"
                                             v-model="personalInfo.curriculum"
                                             :disable="!editBtn.info"
-                                            :options="page.props?.curriculumOptions"
+                                            :options="
+                                                page.props?.curriculumOptions
+                                            "
                                             clearable
                                         />
                                     </div>
@@ -715,11 +719,11 @@
                                     </div>
 
                                     <div class="">
-                                        <h3
-                                            class="text-xs font-semibold uppercase text-slate-500"
+                                        <span
+                                            class="text-xs font-semibold uppercase text-slate-500 bg-blue-50 rounded-lg p-1"
                                         >
                                             Current Address
-                                        </h3>
+                                        </span>
                                         <TextInput
                                             v-model="
                                                 personalInfo.addressCurrent
@@ -746,16 +750,30 @@
                                 <section
                                     class="flex flex-col gap-2 border-t border-slate-200 pt-3"
                                 >
-                                    <div class="flex items-center justify-between gap-3">
+                                    <div
+                                        class="flex items-center justify-between gap-3"
+                                    >
                                         <h3
                                             class="text-xs font-semibold uppercase text-slate-500"
                                         >
                                             Other Information
                                         </h3>
                                         <DefaultButton
-                                            v-if="!editBtn.info && canRevealLandbank && landbankHasValues"
-                                            :icon="landbankRevealed ? TablerIcons.IconEyeOff : TablerIcons.IconEye"
-                                            :label="landbankRevealed ? 'Hide Landbank Details' : 'View Landbank Details'"
+                                            v-if="
+                                                !editBtn.info &&
+                                                canRevealLandbank &&
+                                                landbankHasValues
+                                            "
+                                            :icon="
+                                                landbankRevealed
+                                                    ? TablerIcons.IconEyeOff
+                                                    : TablerIcons.IconEye
+                                            "
+                                            :label="
+                                                landbankRevealed
+                                                    ? 'Hide Landbank Details'
+                                                    : 'View Landbank Details'
+                                            "
                                             size="small"
                                             severity="secondary"
                                             outlined
@@ -775,13 +793,19 @@
                                             v-model="personalInfo.acc_name"
                                             label="Landbank Account Name"
                                             capitalize
-                                            :disabled="!editBtn.info || !landbankRevealed"
+                                            :disabled="
+                                                !editBtn.info ||
+                                                !landbankRevealed
+                                            "
                                         />
                                         <TextInput
                                             v-model="personalInfo.acc_no"
                                             capitalize
                                             label="Landbank Account Number"
-                                            :disabled="!editBtn.info || !landbankRevealed"
+                                            :disabled="
+                                                !editBtn.info ||
+                                                !landbankRevealed
+                                            "
                                         />
                                     </div>
                                 </section>
@@ -836,9 +860,7 @@
                                     </template>
                                     <template #default>
                                         <div
-                                            v-if="
-                                                activityLogs.length
-                                            "
+                                            v-if="activityLogs.length"
                                             class="max-h-[22rem] overflow-y-auto p-4"
                                         >
                                             <Timeline
@@ -1227,10 +1249,14 @@
                                                     >
                                                         <a
                                                             v-if="
-                                                                isCorDocument(file)
+                                                                isCorDocument(
+                                                                    file,
+                                                                )
                                                             "
                                                             :href="
-                                                                scholarPortalFileUrl(file.file_path)
+                                                                scholarPortalFileUrl(
+                                                                    file.file_path,
+                                                                )
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
@@ -1239,10 +1265,14 @@
                                                         </a>
                                                         <a
                                                             v-if="
-                                                                isGradesProofDocument(file)
+                                                                isGradesProofDocument(
+                                                                    file,
+                                                                )
                                                             "
                                                             :href="
-                                                                scholarPortalFileUrl(file.file_path)
+                                                                scholarPortalFileUrl(
+                                                                    file.file_path,
+                                                                )
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
@@ -2925,8 +2955,16 @@
 
                                                     <span class="text-red-500">
                                                         {{
-                                                            logValue(slotProps.item, 'previous', key) != ""
-                                                                ? logValue(slotProps.item, 'previous', key)
+                                                            logValue(
+                                                                slotProps.item,
+                                                                "previous",
+                                                                key,
+                                                            ) != ""
+                                                                ? logValue(
+                                                                      slotProps.item,
+                                                                      "previous",
+                                                                      key,
+                                                                  )
                                                                 : "Not Set"
                                                         }}
                                                     </span>
@@ -2940,8 +2978,16 @@
                                                         class="text-emerald-600 font-medium"
                                                     >
                                                         {{
-                                                            logValue(slotProps.item, 'changes', key) != ""
-                                                                ? logValue(slotProps.item, 'changes', key)
+                                                            logValue(
+                                                                slotProps.item,
+                                                                "changes",
+                                                                key,
+                                                            ) != ""
+                                                                ? logValue(
+                                                                      slotProps.item,
+                                                                      "changes",
+                                                                      key,
+                                                                  )
                                                                 : "Removed"
                                                         }}
                                                     </span>
@@ -3042,17 +3088,20 @@ const page = usePage();
 const canUpdateScholars = computed(() =>
     (page.props?.permissions ?? []).includes("scholars.update"),
 );
-const canRevealLandbank = computed(() =>
-    (page.props?.permissions ?? []).includes("scholars.landbank.view-sensitive") ||
-    [
-        "administrator",
-        "regional staff",
-        "regional supervisor",
-        "scholarship staff",
-        "scholarship coordinator",
-    ].includes(
-        String(page.props?.user?.role_array?.name ?? "").toLowerCase(),
-    ),
+const canRevealLandbank = computed(
+    () =>
+        (page.props?.permissions ?? []).includes(
+            "scholars.landbank.view-sensitive",
+        ) ||
+        [
+            "administrator",
+            "regional staff",
+            "regional supervisor",
+            "scholarship staff",
+            "scholarship coordinator",
+        ].includes(
+            String(page.props?.user?.role_array?.name ?? "").toLowerCase(),
+        ),
 );
 const opTransfer = ref(null);
 const opHistory = ref([]);
@@ -3484,7 +3533,9 @@ const revealLandbank = async () => {
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            throw new Error(payload.message || "Unable to reveal Landbank details.");
+            throw new Error(
+                payload.message || "Unable to reveal Landbank details.",
+            );
         }
 
         personalInfo.acc_name = payload.account_name ?? null;
@@ -3909,10 +3960,9 @@ const cancelEdit = () => {
             window.history.replaceState({}, "", url);
             personalInfo.school = page.props?.details.schoolInput ?? null;
             personalInfo.course = page.props?.details.courseInput ?? null;
-            personalInfo.curriculum =
-                page.props?.details.curriculumInput?.id
-                    ? page.props.details.curriculumInput
-                    : null;
+            personalInfo.curriculum = page.props?.details.curriculumInput?.id
+                ? page.props.details.curriculumInput
+                : null;
         },
     });
 };
