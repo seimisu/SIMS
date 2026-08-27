@@ -17,6 +17,7 @@ class ScholarManagementUpdateService
         $slice = isset($data['fulladdress']['id'])
             ? explode('-', $data['fulladdress']['id'])
             : null;
+        $sliceCurrent = explode('-', $data['fulladdressCurrent']['id']);
 
         $scholar->update([
             'program_id' => $data['program']['id'],
@@ -27,6 +28,7 @@ class ScholarManagementUpdateService
 
         $this->updateProfile($scholar, $scholarId, $data);
         $this->updateAddress($scholar, $scholarId, $data, $slice);
+        $this->updateAddressCurrent($scholar, $scholarId, $data, $sliceCurrent);
         $this->updateSchool($scholar, $scholarId, $data);
         $this->updateLandbank($scholar, $scholarId, $data);
         $this->updateGuardian($scholar, $data);
@@ -85,6 +87,32 @@ class ScholarManagementUpdateService
 
         if ($address->wasChanged()) {
             $this->logChange($scholarId, 'address', $address->getPrevious(), $address->getChanges());
+        }
+    }
+
+    private function updateAddressCurrent(Scholars $scholar, int $scholarId, array $data, ?array $slice): void
+    {
+        $addressData = [
+            'address' => $data['addressCurrent'] ?? null,
+        ];
+
+        if ($slice) {
+            $addressData = [
+                ...$addressData,
+                'barangay_code' => $slice[0] ?? null,
+                'municipality_code' => $slice[1] ?? null,
+                'province_code' => $slice[2] ?? null,
+                'region_code' => $slice[3] ?? null,
+            ];
+        }
+
+        $address = $scholar->addressCurrent()->updateOrCreate(
+            ['scholar_id' => $scholar->id],
+            $addressData
+        );
+
+        if ($address->wasChanged()) {
+            $this->logChange($scholarId, 'current address', $address->getPrevious(), $address->getChanges());
         }
     }
 
