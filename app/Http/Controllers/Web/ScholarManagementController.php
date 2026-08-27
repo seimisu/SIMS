@@ -136,6 +136,8 @@ class ScholarManagementController extends Controller
                 'civil_status' => 'nullable|string|max:255',
                 'fulladdress' => 'nullable',
                 'address' => 'nullable',
+                'fulladdressCurrent' => 'nullable',
+                'addressCurrent' => 'nullable',
                 'program' => 'nullable',
                 'sub_program' => 'nullable',
                 'award_year' => 'nullable',
