@@ -3,10 +3,13 @@
         :model="list"
         class="flex-1 !bg-transparent !min-w-1 z-1000 !border-0"
         :pt="{
-            submenu: { class: '!min-w-[200px] dark:!bg-gray-600 !border-0' },
+            submenu: {
+                class: '!min-w-[200px] dark:!bg-gray-600 !border-0  ',
+            },
             separator: {
                 class: 'my-2 !border-gray-400 dark:border-gray-600',
             },
+            itemContent: 'bg-transparent!',
         }"
     >
         <template #item="{ item }">
@@ -14,7 +17,7 @@
                 v-if="item.route"
                 :href="item.route"
                 :class="[
-                    'flex items-center gap-3 px-[0.7rem] py-[10px] rounded hover:text-blue-600 w-full dark:text-white',
+                    'flex items-center gap-3 px-[0.7rem] py-[10px] rounded hover:text-blue-500 hover:bg-transparent! w-full dark:text-white',
                     item.component === page.component
                         ? ' text-blue-600 dark:!text-blue-400 font-semibold'
                         : '',
