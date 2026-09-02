@@ -119,11 +119,13 @@
                         <DefaultToggle
                             v-model="isDark"
                             @update-value="toggleDark"
-                            :un-check-icon="IconSun"
+                            un-check-icon-class="text-yellow-500 "
+                            :un-check-icon="IconSunHighFilled"
                             :check-icon="IconMoon"
                         />
 
-                        <OverlayBadge
+                        <div></div>
+                        <!-- <OverlayBadge
                             severity="danger"
                             class="inline-flex"
                             v-if="
@@ -141,18 +143,35 @@
                                 @click="toggleNotif"
                                 rounded
                             />
-                        </OverlayBadge>
-                        <DefaultButton
-                            v-else
-                            variant="text"
-                            class="!text-white hover:!bg-transparent"
-                            :icon="IconBell"
-                            size="lg"
-                            :icon-size="20"
-                            class-name="!w-6 !h-6"
+                        </OverlayBadge> -->
+                        <Button
+                            size="small"
+                            class="!w-10 !h-10 rounded-full! text-white! hover:bg-transparent! !p-0"
                             @click="toggleNotif"
-                            rounded
-                        />
+                            text
+                        >
+                            <template #default>
+                                <div class="relative inline-flex">
+                                    <IconBell size="20" />
+
+                                    <span
+                                        class="absolute -top-0.5 -right-0.5 flex size-2.5"
+                                        v-if="
+                                            page.props?.notif.filter(
+                                                (e) => !e.read_at,
+                                            ).length != 0
+                                        "
+                                    >
+                                        <span
+                                            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-95"
+                                        ></span>
+                                        <span
+                                            class="relative inline-flex size-2.5 rounded-full bg-red-500"
+                                        ></span>
+                                    </span>
+                                </div>
+                            </template>
+                        </Button>
                         <Popover
                             ref="popNotif"
                             :pt="{
@@ -189,6 +208,12 @@
                                     >
                                         <div
                                             class="flex items-start justify-between"
+                                            :class="
+                                                item.data.url
+                                                    ? 'cursor-pointer'
+                                                    : ''
+                                            "
+                                            @click="openNotification(item)"
                                         >
                                             <div
                                                 class="flex flex-1 items-start gap-2"
@@ -253,7 +278,6 @@
                                                         <IconCircleCheck />
                                                     </Avatar>
                                                 </div>
-
                                                 <div
                                                     class="p-1"
                                                     v-if="
@@ -278,6 +302,48 @@
                                                         <IconCircleX />
                                                     </Avatar>
                                                 </div>
+                                                <div
+                                                    class="p-1"
+                                                    v-if="
+                                                        item.data.type ==
+                                                        'updateInfoSchool'
+                                                    "
+                                                >
+                                                    <OverlayBadge
+                                                        severity="danger"
+                                                        v-if="!item.read_at"
+                                                    >
+                                                        <Avatar
+                                                            class="rounded-2xl !bg-green-100 !text-green-700"
+                                                        >
+                                                            <IconPencilCheck />
+                                                        </Avatar>
+                                                    </OverlayBadge>
+                                                    <Avatar
+                                                        v-else
+                                                        class="rounded-2xl !bg-green-100 !text-green-700"
+                                                    >
+                                                        <IconPencilCheck />
+                                                    </Avatar>
+                                                </div>
+                                                <!-- <div class="p-1" v-else>
+                                                    <OverlayBadge
+                                                        severity="danger"
+                                                        v-if="!item.read_at"
+                                                    >
+                                                        <Avatar
+                                                            class="rounded-2xl !bg-blue-100 !text-blue-700"
+                                                        >
+                                                            <IconDots />
+                                                        </Avatar>
+                                                    </OverlayBadge>
+                                                    <Avatar
+                                                        v-else
+                                                        class="rounded-2xl !bg-blue-100 !text-blue-700"
+                                                    >
+                                                        <IconDots />
+                                                    </Avatar>
+                                                </div> -->
                                                 <div class="flex flex-col">
                                                     <div
                                                         class="text-xs font-semibold"
@@ -308,7 +374,9 @@
                                                     tooltip="Mark as read"
                                                     text
                                                     v-if="!item.read_at"
-                                                    @click="markAsRead(item.id)"
+                                                    @click.stop="
+                                                        markAsRead(item.id)
+                                                    "
                                                     :icon="IconCheck"
                                                     :icon-size="15"
                                                 />
@@ -345,10 +413,13 @@
         </div>
     </div>
     <Toast />
+    <DefaultConfirmDialog group="global" />
+    <ConfirmDialog />
 </template>
 <script setup>
 import SidebarIconMenu from "../Components/menus/SidebarIconMenu.vue";
 import DefaultButton from "../Components/buttons/DefaultButton.vue";
+import DefaultConfirmDialog from "../Components/dialogs/DefaultConfirmDialog.vue";
 import HeadBarButtonMenu from "../Components/menus/HeadBarButtonMenu.vue";
 import {
     IconDashboard,
@@ -365,14 +436,17 @@ import {
     IconListDetails,
     IconChevronLeft,
     IconChevronRight,
-    IconSun,
+    IconSunHighFilled,
     IconMoon,
     IconBell,
     IconFileDownload,
     IconBellFilled,
     IconChecks,
     IconCheck,
+    IconBellExclamation,
     IconCheckbox,
+    IconDots,
+    IconPencilCheck,
     IconCircle,
     IconCircleCheck,
     IconCircleX,
@@ -385,7 +459,11 @@ import { router, usePage } from "@inertiajs/vue3";
 
 const page = usePage();
 const isDark = ref(false);
-const sidebar = ref(false);
+const savedSidebar =
+    typeof window !== "undefined"
+        ? localStorage.getItem("sidebar") === "true"
+        : false;
+const sidebar = ref(savedSidebar);
 const popNotif = ref(null);
 const isMobile = ref(false);
 const drawerMobile = ref(false);
@@ -401,6 +479,29 @@ const markAsRead = (id) => {
         {
             preserveScroll: true,
             preserveState: true,
+        },
+    );
+};
+
+const openNotification = (item) => {
+    const url = item?.data?.url;
+
+    if (!url) {
+        return;
+    }
+
+    if (item.read_at) {
+        router.visit(url);
+        return;
+    }
+
+    router.patch(
+        route("notif.read", item.id),
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => router.visit(url),
         },
     );
 };
@@ -430,7 +531,6 @@ function applyTheme() {
 onMounted(() => {
     isDark.value = localStorage.getItem("theme") === "dark";
     applyTheme();
-    sidebar.value = localStorage.getItem("sidebar") === "true";
 });
 checkIfMobile();
 onMounted(() => {

@@ -18,11 +18,21 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.update',
+            'scholars.landbank.view-sensitive',
             'payroll.view',
-            'payroll.create',
-            'payroll.edit',
+            'payroll.update',
+            'payroll.export',
             'payroll.submit',
-            'payroll.delete',
+            'payroll.credits.view',
+            'documents.view',
+            'documents.create',
+            'documents.update',
+            'documents.delete',
+            'document-categories.manage',
+            'video-resources.view',
+            'video-resources.create',
+            'video-resources.update',
+            'video-resources.delete',
             'geolocation.upload',
         ],
 
@@ -31,11 +41,21 @@ class SystemPermissions
             'schools.view',
             'scholars.view',
             'scholars.update',
+            'scholars.landbank.view-sensitive',
             'payroll.view',
-            'payroll.create',
-            'payroll.edit',
+            'payroll.update',
+            'payroll.export',
             'payroll.submit',
-            'payroll.delete',
+            'payroll.credits.view',
+            'documents.view',
+            'documents.create',
+            'documents.update',
+            'documents.delete',
+            'document-categories.manage',
+            'video-resources.view',
+            'video-resources.create',
+            'video-resources.update',
+            'video-resources.delete',
             'geolocation.upload',
         ],
 
@@ -43,26 +63,48 @@ class SystemPermissions
             'dashboard.view',
             'schools.view',
             'scholars.view',
-            'scholars.update',
             'scholars.review',
-            'scholars.requests.review',
+            'scholars.landbank.view-sensitive',
+            'profile-requests.view',
+            'profile-requests.approve',
+            'profile-requests.reject',
+            'landbank-requests.view',
+            'landbank-requests.approve',
+            'landbank-requests.reject',
+            'grade-submissions.view',
+            'grade-submissions.approve',
+            'grade-submissions.reject',
             'payroll.view',
-            'payroll.review',
+            'payroll.export',
             'payroll.approve',
-            'payroll.reject',
+            'payroll.return',
+            'payroll.recipients.manage-removal',
+            'documents.view',
+            'video-resources.view',
         ],
 
         'scholarship coordinator' => [
             'dashboard.view',
             'schools.view',
             'scholars.view',
-            'scholars.update',
             'scholars.review',
-            'scholars.requests.review',
+            'scholars.landbank.view-sensitive',
+            'profile-requests.view',
+            'profile-requests.approve',
+            'profile-requests.reject',
+            'landbank-requests.view',
+            'landbank-requests.approve',
+            'landbank-requests.reject',
+            'grade-submissions.view',
+            'grade-submissions.approve',
+            'grade-submissions.reject',
             'payroll.view',
-            'payroll.review',
+            'payroll.export',
             'payroll.approve',
-            'payroll.reject',
+            'payroll.return',
+            'payroll.recipients.manage-removal',
+            'documents.view',
+            'video-resources.view',
         ],
 
         'school coordinator' => [
@@ -70,91 +112,106 @@ class SystemPermissions
             'scholars.view',
             'scholars.update',
         ],
+
+        'cashier' => [
+            'dashboard.view',
+            'payroll.credits.view',
+            'payroll.credits.update',
+        ],
     ];
 
     public const ROUTE_PERMISSIONS = [
-        'roles.store' => 'roles.manage',
-        'roles.update' => 'roles.manage',
-        'roles.destroy' => 'roles.manage',
-        'routes.store' => 'routes.manage',
-        'routes.update' => 'routes.manage',
-        'routes.destroy' => 'routes.manage',
-        'users.store' => 'users.manage',
-        'users.resend' => 'users.manage',
-        'users.update' => 'users.manage',
-        'users.destroy' => 'users.manage',
+        'roles.store' => 'roles.create',
+        'roles.update' => 'roles.update',
+        'roles.destroy' => 'roles.delete',
+        'routes.store' => 'routes.create',
+        'routes.update' => 'routes.update',
+        'routes.destroy' => 'routes.delete',
+        'users.store' => 'users.create',
+        'users.resend' => 'users.resend-activation',
+        'users.update' => 'users.update',
+        'users.destroy' => 'users.delete',
 
-        'programs.store' => 'programs.manage',
-        'programs.update' => 'programs.manage',
-        'programs.destroy' => 'programs.manage',
-        'status.store' => 'statuses.manage',
-        'status.update' => 'statuses.manage',
-        'status.destroy' => 'statuses.manage',
+        'programs.store' => 'programs.create',
+        'programs.update' => 'programs.update',
+        'programs.destroy' => 'programs.delete',
+        'status.store' => 'statuses.create',
+        'status.update' => 'statuses.update',
+        'status.destroy' => 'statuses.delete',
 
-        'location.regions.store' => 'locations.manage',
-        'location.regions.update' => 'locations.manage',
-        'location.regions.destroy' => 'locations.manage',
-        'location.provinces.store' => 'locations.manage',
-        'location.provinces.update' => 'locations.manage',
-        'location.provinces.destroy' => 'locations.manage',
-        'location.cities.store' => 'locations.manage',
-        'location.cities.update' => 'locations.manage',
-        'location.cities.destroy' => 'locations.manage',
-        'location.barangays.store' => 'locations.manage',
-        'location.barangays.update' => 'locations.manage',
-        'location.barangays.destroy' => 'locations.manage',
+        'location.regions.store' => 'locations.create',
+        'location.regions.update' => 'locations.update',
+        'location.regions.destroy' => 'locations.delete',
+        'location.provinces.store' => 'locations.create',
+        'location.provinces.update' => 'locations.update',
+        'location.provinces.destroy' => 'locations.delete',
+        'location.cities.store' => 'locations.create',
+        'location.cities.update' => 'locations.update',
+        'location.cities.destroy' => 'locations.delete',
+        'location.barangays.store' => 'locations.create',
+        'location.barangays.update' => 'locations.update',
+        'location.barangays.destroy' => 'locations.delete',
 
-        'academic.courses.store' => 'academic.manage',
-        'academic.courses.update' => 'academic.manage',
-        'academic.courses.destroy' => 'academic.manage',
-        'academic.references.store' => 'academic.manage',
-        'academic.references.update' => 'academic.manage',
-        'academic.references.destroy' => 'academic.manage',
-        'academic.universities.store' => 'schools.manage',
-        'academic.universities.update' => 'schools.manage',
-        'academic.universities.destroy' => 'schools.manage',
-        'academic.universities.course.store' => 'schools.manage',
-        'academic.universities.course.update' => 'schools.manage',
-        'academic.universities.course.destroy' => 'schools.manage',
-        'academic.universities.grade.store' => 'schools.manage',
-        'academic.universities.grade.update' => 'schools.manage',
-        'academic.universities.grade.destroy' => 'schools.manage',
-        'campus.info.store' => 'schools.manage',
-        'campus.info.update' => 'schools.manage',
-        'campus.info.destroy' => 'schools.manage',
-        'campus.semester.store' => 'schools.manage',
-        'campus.semester.update' => 'schools.manage',
-        'campus.semester.destroy' => 'schools.manage',
-        'campus.curriculum.store' => 'schools.manage',
-        'campus.curriculum.update' => 'schools.manage',
-        'campus.curriculum.destroysubject' => 'schools.manage',
-        'campus.curriculum.destroyCurriculum' => 'schools.manage',
-        'campus.curriculum.copy' => 'schools.manage',
-        'campus.curriculum.paste' => 'schools.manage',
+        'academic.courses.store' => 'academic.create',
+        'academic.courses.update' => 'academic.update',
+        'academic.courses.destroy' => 'academic.delete',
+        'academic.references.store' => 'academic.create',
+        'academic.references.update' => 'academic.update',
+        'academic.references.destroy' => 'academic.delete',
+        'academic.universities.store' => 'schools.create',
+        'academic.universities.update' => 'schools.update',
+        'academic.universities.destroy' => 'schools.delete',
+        'academic.universities.course.store' => 'schools.create',
+        'academic.universities.course.update' => 'schools.update',
+        'academic.universities.course.destroy' => 'schools.delete',
+        'academic.universities.grade.store' => 'schools.create',
+        'academic.universities.grade.update' => 'schools.update',
+        'academic.universities.grade.destroy' => 'schools.delete',
+        'campus.info.store' => 'schools.create',
+        'campus.info.update' => 'schools.update',
+        'campus.info.destroy' => 'schools.delete',
+        'campus.semester.store' => 'schools.create',
+        'campus.semester.update' => 'schools.update',
+        'campus.semester.destroy' => 'schools.delete',
+        'campus.curriculum.store' => 'schools.create',
+        'campus.curriculum.update' => 'schools.update',
+        'campus.curriculum.destroysubject' => 'schools.delete',
+        'campus.curriculum.destroyCurriculum' => 'schools.delete',
+        'campus.curriculum.copy' => 'schools.curriculum.copy',
+        'campus.curriculum.paste' => 'schools.curriculum.paste',
 
-        'scholar.store' => 'scholars.manage',
+        'scholar.store' => 'scholars.create',
         'scholar.insert' => 'scholars.review',
-        'scholar.destroy' => 'scholars.manage',
+        'scholar.destroy' => 'scholars.delete',
         'scholar.grade-update' => 'scholars.update',
         'scholar.grade-delete' => 'scholars.update',
-        'scholar.requestSubject-denied' => 'scholars.requests.review',
-        'scholar.requestSubject-accept' => 'scholars.requests.review',
         'scholars.update' => 'scholars.update',
-        'scholars.activation' => 'scholars.update',
-        'scholars.transfer' => 'scholars.update',
+        'scholars.landbank.reveal' => 'scholars.landbank.view-sensitive',
+        'scholars.activation' => 'scholars.activate',
+        'scholars.transfer' => 'scholars.transfer',
         'review.validate' => 'scholars.review',
         'review.publish' => 'scholars.review',
-        'scholar.grade-request' => 'scholars.requests.review',
-        'profile.request' => 'scholars.requests.review',
-        'landbank.request' => 'scholars.requests.review',
+        'scholar.grade-request' => 'grade-submissions.view',
+        'profile.request' => 'profile-requests.view',
+        'landbank.request' => 'landbank-requests.view',
 
         'geolocation.store' => 'geolocation.upload',
-        'stipends.store' => 'payroll.create',
-        'stipends.recipients.store' => 'payroll.edit',
-        'stipends.payroll.update' => 'payroll.edit',
-        'stipends.export' => 'payroll.view',
+        'stipends.payroll.update' => 'payroll.update',
+        'stipends.recipients.mark-for-removal' => 'payroll.recipients.manage-removal',
+        'stipends.recipients.cancel-removal' => 'payroll.recipients.manage-removal',
+        'cashier.credits.update' => 'payroll.credits.update',
+        'stipends.export' => 'payroll.export',
         'stipends.update' => 'payroll.view',
-        'stipends.destroy' => 'payroll.delete',
+
+        'documents.store' => 'documents.create',
+        'documents.update' => 'documents.update',
+        'documents.destroy' => 'documents.delete',
+        'document-categories.store' => 'document-categories.manage',
+        'document-categories.update' => 'document-categories.manage',
+        'document-categories.destroy' => 'document-categories.manage',
+        'video-resources.store' => 'video-resources.create',
+        'video-resources.update' => 'video-resources.update',
+        'video-resources.destroy' => 'video-resources.delete',
     ];
 
     public static function permissionDefinitions(): array
@@ -221,6 +278,18 @@ class SystemPermissions
             return true;
         }
 
+        if (
+            $permission === 'scholars.landbank.view-sensitive'
+            && in_array($this->roleName($user), [
+                'regional staff',
+                'regional supervisor',
+                'scholarship staff',
+                'scholarship coordinator',
+            ], true)
+        ) {
+            return true;
+        }
+
         if ($this->hasPermissionTables()) {
             return $user->role?->permissions()
                 ->where('list_permissions.is_active', true)
@@ -284,6 +353,11 @@ class SystemPermissions
             || $this->hasRole($user, 'scholarship coordinator');
     }
 
+    public function isCashier(?User $user): bool
+    {
+        return $this->hasRole($user, 'cashier');
+    }
+
     public function dashboardType(?User $user): string
     {
         if ($this->isRegionalRole($user)) {
@@ -296,6 +370,14 @@ class SystemPermissions
 
         if ($this->isAdministrator($user)) {
             return 'admin';
+        }
+
+        if ($this->isScholarshipReviewer($user)) {
+            return 'scholarship';
+        }
+
+        if ($this->isCashier($user)) {
+            return 'cashier';
         }
 
         return 'default';
@@ -338,13 +420,17 @@ class SystemPermissions
     public function permissionForRoute(?string $routeName): ?string
     {
         if ($routeName && $this->hasPermissionRouteTables()) {
-            return ListPermissionRoute::query()
+            $permission = ListPermissionRoute::query()
                 ->where('route_name', $routeName)
                 ->whereHas('permission', fn ($query) => $query->where('is_active', true))
                 ->with('permission:id,name')
                 ->first()
                 ?->permission
                 ?->name;
+
+            if ($permission) {
+                return $permission;
+            }
         }
 
         return $routeName ? (self::ROUTE_PERMISSIONS[$routeName] ?? null) : null;
@@ -352,29 +438,49 @@ class SystemPermissions
 
     public function payrollBatchPermissions(User $user, object $batch, string $status): array
     {
+        $canView = $this->can($user, 'payroll.view') && $this->canAccessPayrollRegion($user, $batch);
+        $canViewGeneratedExcel = $canView && (
+            $this->can($user, 'payroll.approve')
+            || $this->can($user, 'payroll.return')
+            || $this->can($user, 'payroll.recipients.manage-removal')
+        );
+
         return [
-            'canView' => $this->can($user, 'payroll.view') && $this->canAccessPayrollRegion($user, $batch),
+            'canView' => $canView,
             'canEdit' => $this->canEditPayroll($user, $batch, $status),
-            'canSubmit' => $this->canEditPayroll($user, $batch, $status),
+            'canSubmit' => $this->canSubmitPayroll($user, $batch, $status),
             'canReview' => $this->canReviewPayroll($user, $status),
             'canApprove' => $this->can($user, 'payroll.approve') && $this->canReviewPayroll($user, $status),
-            'canReject' => $this->can($user, 'payroll.reject') && $this->canReviewPayroll($user, $status),
-            'canDelete' => $this->can($user, 'payroll.delete')
-                && $this->canAccessPayrollRegion($user, $batch)
-                && in_array($status, ['draft', 'rejected_payroll'], true),
+            'canReject' => $this->can($user, 'payroll.return') && $this->canReviewPayroll($user, $status),
+            'canViewGeneratedExcel' => $canViewGeneratedExcel,
+            'canDelete' => false,
+            'canViewCredits' => $this->can($user, 'payroll.credits.view'),
+            'canCreditMonths' => $this->can($user, 'payroll.credits.update') && $status === 'approved_payroll',
         ];
     }
 
     public function canEditPayroll(User $user, object $batch, string $status): bool
     {
-        return $this->can($user, 'payroll.edit')
+        return $this->can($user, 'payroll.update')
+            && $this->canAccessPayrollRegion($user, $batch)
+            && in_array($status, ['draft', 'rejected_payroll'], true);
+    }
+
+    public function canSubmitPayroll(User $user, object $batch, string $status): bool
+    {
+        return $this->can($user, 'payroll.submit')
             && $this->canAccessPayrollRegion($user, $batch)
             && in_array($status, ['draft', 'rejected_payroll'], true);
     }
 
     public function canReviewPayroll(User $user, string $status): bool
     {
-        return $this->can($user, 'payroll.review') && $status === 'submitted_payroll';
+        return (
+            $this->can($user, 'payroll.approve')
+            || $this->can($user, 'payroll.return')
+            || $this->can($user, 'payroll.recipients.manage-removal')
+        )
+            && $status === 'submitted_payroll';
     }
 
     private function canAccessPayrollRegion(User $user, object $batch): bool

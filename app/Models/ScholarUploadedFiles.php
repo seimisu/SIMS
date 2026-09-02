@@ -17,6 +17,12 @@ class ScholarUploadedFiles extends Model
         'validated_at',
         'created_at',
         'status',
+        'total_rows',
+        'valid_rows',
+        'needs_correction_rows',
+        'duplicate_rows',
+        'missing_required_rows',
+        'published_rows',
 
     ];
 

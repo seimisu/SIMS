@@ -2,7 +2,12 @@
     <div class="w-full flex flex-col">
         <div class="text-sm font-medium" v-show="label">
             {{ label }}
-            <span class="text-red-600 font-semibold" v-if="errorMark">*</span>
+            <span
+                class="text-red-600 font-semibold"
+                v-if="errorMark"
+                v-tooltip.top="error"
+                >*</span
+            >
         </div>
 
         <InputText

@@ -20,6 +20,7 @@
                     class: [
                         'dark:!bg-gray-700 dark:!text-gray-100 !text-sm dark:!border-gray-700 ',
                         capitalize ? 'capitalize' : '',
+                        uppercase ? 'uppercase' : '',
                     ],
                 },
                 label: {
@@ -57,6 +58,10 @@ defineProps({
         default: false,
     },
     capitalize: {
+        type: Boolean,
+        default: false,
+    },
+    uppercase: {
         type: Boolean,
         default: false,
     },

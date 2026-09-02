@@ -20,10 +20,23 @@ class BatchRecipients extends Model
         'grand_total',
         'remarks',
         'status',
+        'is_for_removal_from_payroll',
+        'marked_for_removal_by',
+        'marked_for_removal_at',
+        'moved_from_batch_id',
+        'moved_from_batch_name',
+        'moved_from_reason',
+        'moved_from_marked_by',
+        'moved_from_marked_at',
+        'moved_notice_cleared_at',
     ];
 
     protected $casts = [
         'birthday' => 'date',
+        'is_for_removal_from_payroll' => 'boolean',
+        'marked_for_removal_at' => 'datetime',
+        'moved_from_marked_at' => 'datetime',
+        'moved_notice_cleared_at' => 'datetime',
         'total_stipend' => 'decimal:2',
         'total_withheld' => 'decimal:2',
         'learning_materials_amount' => 'decimal:2',
@@ -39,6 +52,11 @@ class BatchRecipients extends Model
     public function logs()
     {
         return $this->hasMany(BatchLogs::class, 'batch_id', 'batch_id');
+    }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(PayrollBatchActivityLog::class, 'batch_recipient_id');
     }
 
     public function scholar()

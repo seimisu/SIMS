@@ -16,37 +16,46 @@
         :loading="loading"
         @page="onPageChange"
         responsiveLayout="scroll"
+        :scrollable="scrollable"
+        :scrollHeight="scrollHeight"
         :showGridlines="grid"
         :pt="{
             root: {
-                class: '!text-sm ',
+                class: '!text-sm dark:!bg-transparent dark:!text-gray-100',
+            },
+            header: {
+                class: 'dark:!border-gray-700 dark:!bg-gray-800',
             },
             headerRow: {
-                class: '!text-xs !font-bold !text-blue-300',
+                class: '!text-xs !font-bold !text-blue-300 dark:!bg-gray-800 dark:!text-gray-300',
             },
             pcPaginator: {
                 root: 'dark:!bg-transparent dark:!text-gray-100',
             },
             tableContainer: {
-                class: ' border-t border-x rounded-xl !border-gray-200 dark:!border-gray-700 ',
+                class: ' border-t border-x rounded-xl !border-gray-200 dark:!border-gray-700 dark:!bg-gray-800 ',
             },
             bodycell: {
-                class: 'dark:!border-gray-700',
+                class: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
             },
             column: {
-                root: { class: 'dark:!border-gray-700 dark:text-gray-300' },
+                root: { class: 'dark:!border-gray-700 dark:!bg-gray-800 dark:text-gray-300' },
             },
             bodyRow: {
-                class: 'dark:!bg-transparent dark:!border-gray-700',
+                class: 'dark:!bg-gray-800 dark:!border-gray-700 dark:!text-gray-100 dark:hover:!bg-gray-700',
             },
             rowGroupHeader: {
-                class: 'dark: !bg-gray-50 dark:!text-gray-300',
+                class: 'dark:!bg-gray-800 dark:!text-gray-300',
             },
             loadingIcon: {
                 class: 'text-blue-300 ',
             },
         }"
     >
+        <template v-if="$slots.header" #header>
+            <slot name="header" />
+        </template>
+
         <template #groupheader="slotProps">
             <slot name="groupheader" v-bind="slotProps" />
         </template>
@@ -56,7 +65,7 @@
         </template>
 
         <template #paginatorstart>
-            <div class="text-gray-500 text-sm">
+            <div class="text-gray-500 text-sm dark:text-gray-400">
                 Showing
                 <span class="font-semibold">{{
                     (pagination.currentPage - 1) * pagination.perPage + 1
@@ -75,7 +84,7 @@
         </template>
         <template #empty>
             <div
-                class="flex justify-center font-semibold items-center gap-2 text-gray-500"
+                class="flex justify-center font-semibold items-center gap-2 text-gray-500 dark:text-gray-400"
             >
                 <IconDatabaseSearch size="20" />
                 <div class="text-sm">No records available.</div>
@@ -105,6 +114,14 @@ const props = defineProps({
         default: null,
     },
     rowGroupMode: {
+        type: String,
+        default: null,
+    },
+    scrollable: {
+        type: Boolean,
+        default: false,
+    },
+    scrollHeight: {
         type: String,
         default: null,
     },
@@ -148,6 +165,26 @@ function onRowSelected(event) {
 
 ::v-deep(.p-datatable-header-cell) {
     background-color: transparent !important;
+}
+
+:global(.dark) ::v-deep(.p-datatable),
+:global(.dark) ::v-deep(.p-datatable-table),
+:global(.dark) ::v-deep(.p-datatable-thead > tr > th),
+:global(.dark) ::v-deep(.p-datatable-tbody > tr),
+:global(.dark) ::v-deep(.p-datatable-tbody > tr > td),
+:global(.dark) ::v-deep(.p-datatable-header),
+:global(.dark) ::v-deep(.p-datatable-table-container) {
+    background: #1f2937 !important;
+    color: #f3f4f6 !important;
+}
+
+:global(.dark) ::v-deep(.p-datatable-thead > tr > th),
+:global(.dark) ::v-deep(.p-datatable-tbody > tr > td) {
+    border-color: #374151 !important;
+}
+
+:global(.dark) ::v-deep(.p-datatable-tbody > tr:hover > td) {
+    background: #374151 !important;
 }
 
 ::v-deep(.p-datatable-column-header-content) {

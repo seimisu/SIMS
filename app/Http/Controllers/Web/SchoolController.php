@@ -10,6 +10,7 @@ use App\Models\SchoolCampuses;
 use App\Models\Schools;
 use App\References\ListClass;
 use App\References\LocationClass;
+use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -75,7 +76,6 @@ class SchoolController extends Controller
                         'updated_by',
                         'created_by',
                     )->where('is_delete', false),
-
                 ])
                     ->select([
                         'id',
@@ -180,6 +180,14 @@ class SchoolController extends Controller
                 'created_by' => Auth::user()->profile->fullname,
             ]);
         }
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'school_added',
+            'New school added',
+            "{$school->name} was added to the school list.",
+            '/academic/schools',
+            'schools',
+            $school->id
+        );
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
@@ -253,6 +261,14 @@ class SchoolController extends Controller
                 'is_active' => $data['isActive'],
             ]);
         }
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'school_updated',
+            'School updated',
+            "{$find->name} was updated in the school list.",
+            '/academic/schools',
+            'schools',
+            $find->id
+        );
 
         return redirect()->back()->with('flash', [
             'status' => 'success',

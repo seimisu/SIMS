@@ -33,7 +33,7 @@ class ScholarRequest extends FormRequest
     {
         return [
             'files.*.file' => 'Each item must be a valid file.',
-            'files.*.mimes' => 'Only XLS, XLSX, and CSV files are allowed.',
+            'files.*.mimes' => 'Invalid Excel format. Only XLS, XLSX, and CSV files are allowed.',
        
         ];
     }
