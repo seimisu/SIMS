@@ -208,7 +208,11 @@
                                     >
                                         <div
                                             class="flex items-start justify-between"
-                                            :class="item.data.url ? 'cursor-pointer' : ''"
+                                            :class="
+                                                item.data.url
+                                                    ? 'cursor-pointer'
+                                                    : ''
+                                            "
                                             @click="openNotification(item)"
                                         >
                                             <div
@@ -370,7 +374,9 @@
                                                     tooltip="Mark as read"
                                                     text
                                                     v-if="!item.read_at"
-                                                    @click.stop="markAsRead(item.id)"
+                                                    @click.stop="
+                                                        markAsRead(item.id)
+                                                    "
                                                     :icon="IconCheck"
                                                     :icon-size="15"
                                                 />
