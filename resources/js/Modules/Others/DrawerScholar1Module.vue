@@ -753,7 +753,7 @@
                                             Other Information
                                         </h3>
                                         <DefaultButton
-                                            v-if="!editBtn.info && canRevealLandbank && landbankHasValues"
+                                            v-if="canRevealLandbank && landbankHasValues"
                                             :icon="landbankRevealed ? TablerIcons.IconEyeOff : TablerIcons.IconEye"
                                             :label="landbankRevealed ? 'Hide Landbank Details' : 'View Landbank Details'"
                                             size="small"
@@ -3422,11 +3422,16 @@ const storePersonalInfo = async () => {
         {
             only: ["flash"],
             onSuccess: () => {
-                editBtn.value.info = false;
+                const flash = page.props.flash ?? {};
+
+                if (flash.status === "success") {
+                    editBtn.value.info = false;
+                }
+
                 toast.add({
-                    severity: page.props.flash?.status,
-                    summary: page.props.flash?.title,
-                    detail: page.props.flash?.message,
+                    severity: flash.status,
+                    summary: flash.title,
+                    detail: flash.message,
                     life: 3000,
                 });
             },

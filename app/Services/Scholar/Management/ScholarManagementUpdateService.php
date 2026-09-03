@@ -14,18 +14,25 @@ class ScholarManagementUpdateService
     public function updatePersonal(int $scholarId, array $data): array
     {
         $scholar = Scholars::findOrFail($scholarId);
-        $slice = isset($data['fulladdress']['id'])
-            ? explode('-', $data['fulladdress']['id'])
+        $slice = data_get($data, 'fulladdress.id')
+            ? explode('-', data_get($data, 'fulladdress.id'))
             : null;
-        $sliceCurrent = isset($data['fulladdressCurrent']['id'])
-            ? explode('-', $data['fulladdressCurrent']['id'])
+        $sliceCurrent = data_get($data, 'fulladdressCurrent.id')
+            ? explode('-', data_get($data, 'fulladdressCurrent.id'))
             : null;
 
         $scholar->update([
-            'program_id' => $data['program']['id'],
-            'type_id' => $data['sub_program']['id'],
-            'award_year' => Carbon::parse($data['award_year'])->format('Y') + 1,
-            'academic_status' => Str::upper($data['status']['name'] ?? $data['status']['id'] ?? 'NEW'),
+            'program_id' => data_get($data, 'program.id', $scholar->program_id),
+            'type_id' => data_get($data, 'sub_program.id', $scholar->type_id),
+            'award_year' => isset($data['award_year'])
+                ? Carbon::parse($data['award_year'])->format('Y') + 1
+                : $scholar->award_year,
+            'academic_status' => Str::upper(
+                data_get($data, 'status.name')
+                    ?? data_get($data, 'status.id')
+                    ?? $scholar->academic_status
+                    ?? 'NEW'
+            ),
         ]);
 
         $this->updateProfile($scholar, $scholarId, $data);
@@ -120,15 +127,19 @@ class ScholarManagementUpdateService
 
     private function updateSchool(Scholars $scholar, int $scholarId, array $data): void
     {
+        if (! isset($data['schoolId']) || ! data_get($data, 'school.id') || ! data_get($data, 'course.id')) {
+            return;
+        }
+
         $school = $scholar->schoolInfo()->updateOrCreate(
             [
                 'id' => $data['schoolId'],
                 'scholar_id' => $scholar->id,
             ],
             [
-                'campus_id' => $data['school']['id'],
-                'campus_course_id' => $data['course']['id'],
-                'curriculum_id' => $data['curriculum']['id'] ?? null,
+                'campus_id' => data_get($data, 'school.id'),
+                'campus_course_id' => data_get($data, 'course.id'),
+                'curriculum_id' => data_get($data, 'curriculum.id'),
             ]
         );
 

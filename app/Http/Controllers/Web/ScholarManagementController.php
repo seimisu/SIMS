@@ -151,7 +151,15 @@ class ScholarManagementController extends Controller
                 'guardian_place_issue' => 'nullable|string|max:255',
                 'guardian_date_issue' => 'nullable|date',
                 'acc_name' => 'nullable|string|max:255',
-                'acc_no' => 'nullable|string|max:16',
+                'acc_no' => [
+                    'nullable',
+                    'string',
+                    function ($attribute, $value, $fail) {
+                        if ($value !== '**********************' && strlen($value) > 16) {
+                            $fail('The Landbank account number must not be greater than 16 characters.');
+                        }
+                    },
+                ],
             ]);
 
             $decodedId = Hashids::decode($id)[0] ?? 0;
