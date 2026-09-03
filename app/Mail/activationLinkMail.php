@@ -26,7 +26,7 @@ class activationLinkMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Scholar Portal Activation')
+        return $this->subject('Scholars Portal Activation')
             ->view(('activation'))
             ->with([
                 'token' => $this->token,

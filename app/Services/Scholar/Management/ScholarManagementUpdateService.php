@@ -3,6 +3,7 @@
 namespace App\Services\Scholar\Management;
 
 use App\Models\ActivityLogs;
+use App\Models\ListStatuses;
 use App\Models\Scholars;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -21,18 +22,21 @@ class ScholarManagementUpdateService
             ? explode('-', data_get($data, 'fulladdressCurrent.id'))
             : null;
 
+        $statusName = data_get($data, 'status.name') ?? data_get($data, 'status.id');
+        $status = $this->progressStatus($statusName);
+
+        if (filled($statusName) && ! $status) {
+            throw new \InvalidArgumentException("Status '{$statusName}' was not found as an active progress status.");
+        }
+
         $scholar->update([
             'program_id' => data_get($data, 'program.id', $scholar->program_id),
             'type_id' => data_get($data, 'sub_program.id', $scholar->type_id),
             'award_year' => isset($data['award_year'])
                 ? Carbon::parse($data['award_year'])->format('Y') + 1
                 : $scholar->award_year,
-            'academic_status' => Str::upper(
-                data_get($data, 'status.name')
-                    ?? data_get($data, 'status.id')
-                    ?? $scholar->academic_status
-                    ?? 'NEW'
-            ),
+            'status_id' => $status?->id ?? $scholar->status_id,
+            'academic_status' => $status ? Str::upper($status->name) : Str::upper($scholar->academic_status ?? 'NEW'),
         ]);
 
         $this->updateProfile($scholar, $scholarId, $data);
@@ -196,5 +200,18 @@ class ScholarManagementUpdateService
             'created_by' => Auth::user()->profile->fullname,
             'scholar_id' => $scholarId,
         ]);
+    }
+
+    private function progressStatus(?string $statusName): ?ListStatuses
+    {
+        if (! filled($statusName)) {
+            return null;
+        }
+
+        return ListStatuses::where('type', 'progress')
+            ->where('is_active', true)
+            ->where('is_delete', false)
+            ->whereRaw('UPPER(name) = ?', [Str::upper(trim($statusName))])
+            ->first();
     }
 }

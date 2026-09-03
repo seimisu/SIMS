@@ -857,6 +857,8 @@ class ScholarReviewController extends Controller
                     throw new Exception("Row {$data->row_number}: validated row no longer matches current school, course, curriculum, or address records.");
                 }
 
+                $status = $this->progressStatus($data['status'] ?? null);
+
                 $scholars = Scholars::create([
                     'spas_no' => trim($data['spas_no']) ?? null,
                     'type_id' => ListReferences::whereRaw('LOWER(name) = ?', [strtolower(trim($data['scholarship_type']))])
@@ -868,11 +870,8 @@ class ScholarReviewController extends Controller
                     'category_id' => ListReferences::whereRaw('LOWER(name) = ?', [strtolower(trim($data['scholarship_subprogram']))])
                         ->value('id') ?? null,
 
-                    'status_id' => ListStatuses::whereRaw('LOWER(name) = ?', [strtolower(trim($data['status']))])
-                        ->value('id') ?? null,
-                    'academic_status' => in_array(trim($data['status'] ?? ''), ['Ongoing', 'Graduating', 'Graduated', 'LOA', 'Terminated'], true)
-                        ? trim($data['status'])
-                        : 'Ongoing',
+                    'status_id' => $status?->id,
+                    'academic_status' => Str::upper($status?->name ?? 'ONGOING'),
                     'created_by' => Auth::user()->profile->fullname,
                     'award_year' => $data['year_awarded'],
                 ]);
@@ -1061,9 +1060,9 @@ class ScholarReviewController extends Controller
             $lookupCache,
             'statuses',
             $data['status'],
-            fn () => ListStatuses::whereRaw('LOWER(name) = ?', [Str::lower($data['status'])])->exists()
+            fn () => $this->progressStatus($data['status']) !== null
         )) {
-            $errors[] = "Status '{$data['status']}' was not found in the database.";
+            $errors[] = "Status '{$data['status']}' was not found as an active progress status.";
         }
 
         if (filled($data['scholarship_type'] ?? null) && ! $this->cachedLookupExists(
@@ -1401,6 +1400,19 @@ class ScholarReviewController extends Controller
         }
 
         return $lookupCache[$bucket][$key];
+    }
+
+    private function progressStatus(?string $statusName): ?ListStatuses
+    {
+        if (! filled($statusName)) {
+            return null;
+        }
+
+        return ListStatuses::where('type', 'progress')
+            ->where('is_active', true)
+            ->where('is_delete', false)
+            ->whereRaw('UPPER(name) = ?', [Str::upper(trim($statusName))])
+            ->first();
     }
 
     private function matchedAddress($data): ?array

@@ -271,12 +271,6 @@
                                 v-if="canManageSchools"
                                 :icon="IconReport"
                                 outlined
-                                :disabled="
-                                    page.props?.schoolDetail?.grading_array
-                                        .name != 'Percent Grading'
-                                        ? false
-                                        : true
-                                "
                                 @click="gradeSystemDialog = true"
                                 tooltip="Grade System"
                                 size="small"
