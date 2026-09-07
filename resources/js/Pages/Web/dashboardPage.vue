@@ -1,11 +1,11 @@
 <template>
     <Head title="Dashboard" />
     <AuthLayout>
-        <div class="mx-auto" v-if="page.props.dashboardType === 'admin'">
-            <h1 class="text-2xl font-bold mb-4">Welcome to the Dashboard</h1>
-            <p class="text-gray-700">
-                This is your dashboard where you can manage your activities.
-            </p>
+        <div
+            class="mx-auto flex flex-col"
+            v-if="page.props.dashboardType === 'admin'"
+        >
+            <AdminDashboardModule :summary="page.props.adminSummary" />
         </div>
         <div
             class="mx-auto flex flex-col"
@@ -41,6 +41,7 @@ import CashierDashboardModule from "../../Modules/Others/CashierDashboardModule.
 import { ref } from "vue";
 import { IconMapPin, IconSchool } from "@tabler/icons-vue";
 import ScholarshipDashboardModule from "../../Modules/Others/ScholarshipDashboardModule.vue";
+import AdminDashboardModule from "../../Modules/Others/AdminDashboardModule.vue";
 
 const page = usePage();
 </script>

@@ -210,7 +210,7 @@
             <!-- SECURITY -->
             <!-- ================================================= -->
 
-            <Card class="dark:bg-slate-700! dark:text-white!" disabled>
+            <Card class="dark:bg-slate-700! dark:text-white!">
                 <template #title>
                     <div class="flex items-center gap-3">
                         <div
@@ -274,8 +274,21 @@
                                         your account.
                                     </p>
                                 </div>
+                                <div class="flex flex-col items-end gap-3">
+                                    <ToggleSwitch
+                                        v-model="twoFactorEnabled"
+                                        @update:modelValue="toggleTwoFactor"
+                                    />
 
-                                <ToggleSwitch v-model="twoFactorEnabled" />
+                                    <Button
+                                        size="small"
+                                        class="p-0!"
+                                        v-if="twoFactorEnabled"
+                                        @click="showQRcodeDialog = true"
+                                        link
+                                        >Show 2FA QR Code</Button
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -477,10 +490,166 @@
             </div>
         </Dialog>
     </AuthLayout>
+    <DefaultDialog
+        v-model:visible="confirmPasswordDialog"
+        :icon="IconPasswordUser"
+        width-set="lg:!w-[35%]"
+        :loading="confirmPasswordForm.processing"
+        @submit-form="submitConfirmPassword"
+        title="Confirm Your Password"
+        description="Enter your current password to continue enabling two-factor authentication."
+    >
+        <template #message>
+            <DefaultMessages
+                v-if="confirmPasswordForm.hasErrors"
+                message-type="error"
+                :message="confirmPasswordForm.errors"
+            />
+        </template>
+        <template #forms>
+            <div class="pt-5 flex flex-col gap-5">
+                <PasswordInput
+                    label="Password"
+                    v-model="confirmPasswordForm.password"
+                    :feedback="false"
+                    toggle-icon
+                />
+            </div>
+        </template>
+    </DefaultDialog>
+    <Dialog
+        v-model:visible="showQRcodeDialog"
+        modal
+        style="width: 50rem"
+        class="m-2"
+    >
+        <template #header>
+            <div class="flex items-center gap-3">
+                <Avatar class="shrink-0">
+                    <IconCircleKey />
+                </Avatar>
+
+                <div class="flex flex-col">
+                    <div class="text-sm font-semibold text-surface-900">
+                        Set Up Two-Factor Authentication
+                    </div>
+
+                    <div class="text-xs leading-5 text-surface-500">
+                        Secure your account with an authenticator app
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template #default>
+            <div class="space-y-6">
+                <!-- Header / Instructions -->
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-surface-900">
+                        Set Up Two-Factor Authentication
+                    </h3>
+
+                    <p class="mt-1 text-sm text-surface-500">
+                        Scan the QR code with your authenticator app to secure
+                        your account.
+                    </p>
+                </div>
+
+                <!-- Main Content -->
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <!-- QR Code -->
+                    <div
+                        class="flex flex-col items-center rounded-xl border border-surface-200 bg-surface-50 p-5"
+                    >
+                        <h4 class="font-semibold text-surface-900">
+                            Scan QR Code
+                        </h4>
+
+                        <p class="mt-1 text-center text-sm text-surface-500">
+                            Open your authenticator app and scan the code below.
+                        </p>
+
+                        <div
+                            v-if="QrCodeResult"
+                            v-html="QrCodeResult"
+                            class="mt-5 rounded-xl border border-surface-200 bg-white p-4 shadow-sm"
+                        ></div>
+                    </div>
+
+                    <!-- Recovery Codes -->
+                    <div
+                        class="rounded-xl border border-surface-200 bg-white p-5"
+                    >
+                        <h4 class="font-semibold text-center text-surface-900">
+                            Save Your Recovery Codes
+                        </h4>
+
+                        <p class="mt-1 text-sm leading-6 text-surface-500">
+                            Store these codes somewhere safe. You can use them
+                            to access your account if you lose your
+                            authenticator device.
+                        </p>
+
+                        <!-- Recovery Codes -->
+                        <div class="mt-4 rounded-lg bg-surface-50 p-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div
+                                    v-for="(code, index) in recoveryCodes"
+                                    :key="index"
+                                    class="rounded-md bg-white px-3 py-2 text-center font-mono text-sm text-surface-700 shadow-sm"
+                                >
+                                    {{ code }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button
+                            label="Generate New Recovery Codes"
+                            class="mt-4 w-full"
+                            size="small"
+                            severity="secondary"
+                            outlined
+                            :loading="loading.generateRecoveryCodes"
+                            @click="generateRecoveryCodes"
+                        >
+                            <div class="flex items-center gap-2">
+                                <IconRefresh
+                                    class="h-4 w-4"
+                                    v-if="!loading.generateRecoveryCodes"
+                                />
+                                <IconLoader
+                                    class="h-4 w-4 animate-spin"
+                                    v-else
+                                />
+                                <span>Generate New Recovery Codes</span>
+                            </div>
+                        </Button>
+                    </div>
+                </div>
+
+                <!-- Security Notice -->
+                <div
+                    class="flex gap-3 rounded-lg border border-surface-200 bg-surface-50 p-4"
+                >
+                    <i class="pi pi-shield mt-0.5 text-primary"></i>
+
+                    <div>
+                        <p class="text-sm font-medium text-surface-900">
+                            Keep your recovery codes private
+                        </p>
+
+                        <p class="mt-1 text-xs leading-5 text-surface-500">
+                            Anyone with these codes may be able to access your
+                            account. Do not share them with anyone.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </Dialog>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 import { Head, router, useForm } from "@inertiajs/vue3";
 
@@ -493,7 +662,6 @@ import ChangePasswordDialog from "../../Components/dialogs/ChangePasswordDialog.
 import Card from "primevue/card";
 import Avatar from "primevue/avatar";
 import Button from "primevue/button";
-import InputText from "primevue/inputtext";
 import Tag from "primevue/tag";
 import Divider from "primevue/divider";
 import DataTable from "primevue/datatable";
@@ -504,14 +672,25 @@ import { useToast } from "primevue";
 import PasswordInput from "../../Components/inputs/PasswordInput.vue";
 import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
-import { IconPasswordUser } from "@tabler/icons-vue";
+import {
+    IconPasswordUser,
+    IconCircleKey,
+    IconRefresh,
+    IconLoader,
+} from "@tabler/icons-vue";
 
 const toast = useToast();
 
 const disable = ref({
     userDetails: true,
 });
+const loading = ref({
+    generateRecoveryCodes: false,
+});
 const props = defineProps({
+    isTwoFactorEnabled: Boolean,
+    QrCodeResult: String,
+    recoveryCodes: Array,
     user: Object,
     agencyOption: Object,
     logs: Object,
@@ -521,31 +700,59 @@ const profile = ref({
     name: "John Rey Dalit",
     firstName: "John Rey",
     lastName: "Dalit",
-
     email: "johnrey@example.com",
-
     phone: "0912 345 6789",
-
     employeeId: "DOST-SEI-001",
-
     role: "Administrator",
-
     position: "Project Technical Specialist I",
-
     office: "DOST-SEI",
-
     memberSince: "January 2024",
 });
-
-/*
-|--------------------------------------------------------------------------
-| Form
-|--------------------------------------------------------------------------
-*/
 
 const selectedPhoto = ref(null);
 const photoPreview = ref(null);
 const uploadingPhoto = ref(false);
+const passwordDialog = ref(false);
+const showQRcodeDialog = ref(false);
+const confirmPasswordDialog = ref(false);
+
+const form = useForm({
+    firstName: props.user?.profile.fname,
+    lastName: props.user?.profile.lname,
+    email: props.user?.email,
+    phone: props.user?.profile.contact_no,
+    position: props.user?.profile.designation,
+    office: props.user?.profile.agency_array,
+});
+
+const confirmPasswordForm = useForm({
+    password: "",
+});
+
+const initials = computed(() => {
+    return props.user?.profile.fullname
+        .split(" ")
+        .map((name) => name.charAt(0))
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+});
+
+const passwordForm = useForm({
+    current: "",
+    new: "",
+    confirm: "",
+});
+
+const twoFactorEnabled = ref(props.isTwoFactorEnabled ?? false);
+const pendingTwoFactorState = ref(twoFactorEnabled.value);
+const twoFactorChangeConfirmed = ref(false);
+
+const photoDialog = ref(false);
+
+const openPhotoDialog = () => {
+    photoDialog.value = true;
+};
 
 const onPhotoSelect = (event) => {
     const file = event.files[0];
@@ -592,57 +799,6 @@ const uploadPhoto = () => {
             },
         },
     );
-};
-const form = useForm({
-    firstName: props.user?.profile.fname,
-    lastName: props.user?.profile.lname,
-    email: props.user?.email,
-    phone: props.user?.profile.contact_no,
-    position: props.user?.profile.designation,
-    office: props.user?.profile.agency_array,
-});
-
-/*
-|--------------------------------------------------------------------------
-| Initials
-|--------------------------------------------------------------------------
-*/
-
-const initials = computed(() => {
-    return profile.value.name
-        .split(" ")
-        .map((name) => name.charAt(0))
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
-});
-
-/*
-|--------------------------------------------------------------------------
-| Password
-|--------------------------------------------------------------------------
-*/
-
-const passwordDialog = ref(false);
-
-const passwordForm = useForm({
-    current: "",
-    new: "",
-    confirm: "",
-});
-
-/*
-|--------------------------------------------------------------------------
-| Two Factor
-|--------------------------------------------------------------------------
-*/
-
-const twoFactorEnabled = ref(false);
-
-const photoDialog = ref(false);
-
-const openPhotoDialog = () => {
-    photoDialog.value = true;
 };
 
 const updateProfile = () => {
@@ -706,4 +862,74 @@ const changePassword = () => {
         },
     });
 };
+
+const toggleTwoFactor = (newValue) => {
+    pendingTwoFactorState.value = newValue;
+    confirmPasswordDialog.value = true;
+};
+
+const submitConfirmPassword = () => {
+    confirmPasswordForm.post(route("password.confirm.store"), {
+        fresh: true,
+        replace: true,
+        onSuccess: () => {
+            twoFactorChangeConfirmed.value = true;
+            confirmPasswordDialog.value = false;
+            confirmPasswordForm.resetAndClearErrors();
+            if (pendingTwoFactorState.value) {
+                router.post(route("two-factor.enable"), {}, {
+                    preserveState: true,
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        twoFactorEnabled.value = true;
+                    },
+                    onError: () => {
+                        twoFactorEnabled.value = false;
+                    },
+                });
+            } else {
+                router.delete(route("two-factor.disable"), {
+                    preserveState: true,
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        twoFactorEnabled.value = false;
+                    },
+                    onError: () => {
+                        twoFactorEnabled.value = true;
+                    },
+                });
+            }
+        },
+    });
+};
+
+const generateRecoveryCodes = () => {
+    loading.value.generateRecoveryCodes = true;
+
+    router.post(
+        route("two-factor.regenerate-recovery-codes"),
+        {},
+        {
+            preserveState: true,
+            preserveScroll: true,
+            onFinish: () => {
+                loading.value.generateRecoveryCodes = false;
+            },
+        },
+    );
+};
+
+watch(
+    () => confirmPasswordDialog.value,
+    (newValue) => {
+        if (!newValue) {
+            if (twoFactorChangeConfirmed.value) {
+                twoFactorChangeConfirmed.value = false;
+                return;
+            }
+
+            twoFactorEnabled.value = props.isTwoFactorEnabled;
+        }
+    },
+);
 </script>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\ListAgencies;
 use App\Models\User;
+use App\Services\Profile\TwoFactoryAuthenticatorQR;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +15,7 @@ use Inertia\Inertia;
 
 class UserProfileController extends Controller
 {
-
-    public function index()
+    public function index(TwoFactoryAuthenticatorQR $enableQR)
     {
 
         $currentSessionId = request()->session()->getId();
@@ -36,22 +36,24 @@ class UserProfileController extends Controller
                             'user_agent' => $session->user_agent,
                             'device' => $this->getDeviceType($session->user_agent),
 
-
                             'last_activity' => Carbon::createFromTimestamp($session->last_activity)
                                 ->timezone('Asia/Manila')
                                 ->diffInDays(Carbon::now('Asia/Manila')) < 5
                                 ? Carbon::createFromTimestamp($session->last_activity)
-                                ->timezone('Asia/Manila')
-                                ->diffForHumans()
+                                    ->timezone('Asia/Manila')
+                                    ->diffForHumans()
                                 : Carbon::createFromTimestamp($session->last_activity)
-                                ->timezone('Asia/Manila')
-                                ->format('M d, Y h:i A'),
+                                    ->timezone('Asia/Manila')
+                                    ->format('M d, Y h:i A'),
 
                             'status' => $session->id === $currentSessionId
                                 ? 'Current'
                                 : 'Completed',
                         ];
                     }),
+                'QrCodeResult' => $enableQR->getTwoFactorQrCodeUrl(),
+                'isTwoFactorEnabled' => $enableQR->isTwoFactorEnabled(),
+                'recoveryCodes' => $enableQR->getRecorveryCodes(),
             ]
         );
     }
@@ -77,7 +79,7 @@ class UserProfileController extends Controller
                 'required',
                 'email',
                 'max:255',
-                'unique:users,email,' . $user->id,
+                'unique:users,email,'.$user->id,
             ],
 
             'phone' => [
@@ -118,7 +120,6 @@ class UserProfileController extends Controller
         ]);
     }
 
-
     public function updatePhoto(Request $request)
     {
         $request->validate([
@@ -143,7 +144,7 @@ class UserProfileController extends Controller
         $extension = $file->getClientOriginalExtension();
 
         // Generate filename
-        $filename = 'profile_' . time() . '.' . $extension;
+        $filename = 'profile_'.time().'.'.$extension;
 
         // Store:
         // storage/app/public/avatars/{user_id}/{filename}
@@ -158,7 +159,7 @@ class UserProfileController extends Controller
             'avatar' => $filename,
         ]);
 
-          return back()->with([
+        return back()->with([
             'status' => 'success',
             'title' => 'Profile picture Updated',
             'message' => 'Your picture has been successfully updated.',
@@ -167,7 +168,7 @@ class UserProfileController extends Controller
 
     private function getDeviceType(?string $userAgent): string
     {
-        if (!$userAgent) {
+        if (! $userAgent) {
             return 'Unknown';
         }
 

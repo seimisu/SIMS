@@ -49,6 +49,7 @@ Route::get('documents/{document}/download', [DocumentController::class, 'downloa
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
+    Route::get('two-factor-challenge', [LoginController::class, 'twoFactorChallenge'])->name('two-factor.login');
     Route::post('login', [LoginController::class, 'store'])->name('login.store');
     Route::post('otp/request', [OtpRequestController::class, 'create'])->name('otp.check');
     Route::post('otp/login', [OtpRequestController::class, 'store'])->name('otp.store');

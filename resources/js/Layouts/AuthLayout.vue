@@ -178,227 +178,144 @@
                                 root: 'lg:popover-notification !ml-5 !rounded-xl',
                             }"
                         >
-                            <div class="w-[25rem] max-h-[20rem] flex flex-col">
-                                <div class="flex items-center justify-between">
-                                    <div class="font-semibold text-sm">
-                                        Notifications
-                                        <span
-                                            class="font-bold text-xs"
-                                            v-show="
-                                                page.props?.notif.length != 0
-                                            "
-                                            >({{
-                                                page.props?.notif.filter(
-                                                    (e) => !e.read_at,
-                                                ).length
-                                            }})</span
-                                        >
-                                    </div>
-                                </div>
-                                <Divider class="!my-3"></Divider>
+                            <div
+                                class="flex w-[min(25rem,calc(100vw-2rem))] max-h-[30rem] flex-col"
+                            >
                                 <div
-                                    class="flex-1 overflow-auto"
-                                    v-if="page.props?.notif.length != 0"
+                                    class="flex items-start justify-between gap-4"
+                                >
+                                    <div>
+                                        <div
+                                            class="text-sm font-semibold text-slate-900 dark:text-gray-100"
+                                        >
+                                            Notifications
+                                        </div>
+                                        <div
+                                            class="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{
+                                                unreadNotifications.length
+                                                    ? `${unreadNotifications.length} unread updates`
+                                                    : "You're all caught up"
+                                            }}
+                                        </div>
+                                    </div>
+                                    <Button
+                                        v-if="unreadNotifications.length"
+                                        label="Mark all read"
+                                        text
+                                        size="small"
+                                        class="!p-0 !text-xs"
+                                        @click="markAllAsRead"
+                                    />
+                                </div>
+                                <Divider class="!my-3" />
+                                <div
+                                    v-if="page.props?.notif?.length"
+                                    class="flex-1 overflow-auto pr-1"
                                 >
                                     <div
                                         v-for="(item, index) in page.props
-                                            ?.notif"
-                                        :key="index"
-                                        class="flex flex-col"
+                                            .notif"
+                                        :key="item.id ?? index"
+                                        class="group flex items-start gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-gray-700/60"
+                                        :class="
+                                            item.data.url
+                                                ? 'cursor-pointer'
+                                                : ''
+                                        "
+                                        @click="openNotification(item)"
                                     >
                                         <div
-                                            class="flex items-start justify-between"
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
                                             :class="
-                                                item.data.url
-                                                    ? 'cursor-pointer'
-                                                    : ''
+                                                notificationMeta(item).surface
                                             "
-                                            @click="openNotification(item)"
                                         >
+                                            <component
+                                                :is="
+                                                    notificationMeta(item).icon
+                                                "
+                                                :size="18"
+                                                :class="
+                                                    notificationMeta(item).color
+                                                "
+                                            />
+                                        </div>
+                                        <div class="min-w-0 flex-1">
                                             <div
-                                                class="flex flex-1 items-start gap-2"
+                                                class="flex items-start justify-between gap-3"
                                             >
-                                                <div
-                                                    class="p-1"
-                                                    v-if="
-                                                        item.data.type ==
-                                                        'scholar_upload'
-                                                    "
-                                                >
-                                                    <OverlayBadge
-                                                        severity="danger"
-                                                        v-if="!item.read_at"
-                                                    >
-                                                        <Avatar
-                                                            class="rounded-2xl"
-                                                            style="
-                                                                background-color: #dee9fc;
-                                                                color: #1a2551;
-                                                            "
-                                                        >
-                                                            <IconFileDownload
-                                                                class="text-slate-600"
-                                                            />
-                                                        </Avatar>
-                                                    </OverlayBadge>
-                                                    <Avatar
-                                                        v-else
-                                                        class="rounded-2xl"
-                                                        style="
-                                                            background-color: #dee9fc;
-                                                            color: #1a2551;
-                                                        "
-                                                    >
-                                                        <IconFileDownload
-                                                            class="text-slate-600"
-                                                        />
-                                                    </Avatar>
-                                                </div>
-                                                <div
-                                                    class="p-1"
-                                                    v-if="
-                                                        item.data.type ==
-                                                        'upload_accept'
-                                                    "
-                                                >
-                                                    <OverlayBadge
-                                                        severity="danger"
-                                                        v-if="!item.read_at"
-                                                    >
-                                                        <Avatar
-                                                            class="rounded-2xl !bg-green-100 !text-green-700"
-                                                        >
-                                                            <IconCircleCheck />
-                                                        </Avatar>
-                                                    </OverlayBadge>
-                                                    <Avatar
-                                                        v-else
-                                                        class="rounded-2xl !bg-green-100 !text-green-700"
-                                                    >
-                                                        <IconCircleCheck />
-                                                    </Avatar>
-                                                </div>
-                                                <div
-                                                    class="p-1"
-                                                    v-if="
-                                                        item.data.type ==
-                                                        'upload_reject'
-                                                    "
-                                                >
-                                                    <OverlayBadge
-                                                        severity="danger"
-                                                        v-if="!item.read_at"
-                                                    >
-                                                        <Avatar
-                                                            class="rounded-2xl !bg-red-100 !text-red-700"
-                                                        >
-                                                            <IconCircleX />
-                                                        </Avatar>
-                                                    </OverlayBadge>
-                                                    <Avatar
-                                                        v-else
-                                                        class="rounded-2xl !bg-red-100 !text-red-700"
-                                                    >
-                                                        <IconCircleX />
-                                                    </Avatar>
-                                                </div>
-                                                <div
-                                                    class="p-1"
-                                                    v-if="
-                                                        item.data.type ==
-                                                        'updateInfoSchool'
-                                                    "
-                                                >
-                                                    <OverlayBadge
-                                                        severity="danger"
-                                                        v-if="!item.read_at"
-                                                    >
-                                                        <Avatar
-                                                            class="rounded-2xl !bg-green-100 !text-green-700"
-                                                        >
-                                                            <IconPencilCheck />
-                                                        </Avatar>
-                                                    </OverlayBadge>
-                                                    <Avatar
-                                                        v-else
-                                                        class="rounded-2xl !bg-green-100 !text-green-700"
-                                                    >
-                                                        <IconPencilCheck />
-                                                    </Avatar>
-                                                </div>
-                                                <!-- <div class="p-1" v-else>
-                                                    <OverlayBadge
-                                                        severity="danger"
-                                                        v-if="!item.read_at"
-                                                    >
-                                                        <Avatar
-                                                            class="rounded-2xl !bg-blue-100 !text-blue-700"
-                                                        >
-                                                            <IconDots />
-                                                        </Avatar>
-                                                    </OverlayBadge>
-                                                    <Avatar
-                                                        v-else
-                                                        class="rounded-2xl !bg-blue-100 !text-blue-700"
-                                                    >
-                                                        <IconDots />
-                                                    </Avatar>
-                                                </div> -->
-                                                <div class="flex flex-col">
+                                                <div class="min-w-0">
                                                     <div
-                                                        class="text-xs font-semibold"
+                                                        class="truncate text-xs font-semibold"
+                                                        :class="
+                                                            item.read_at
+                                                                ? 'text-slate-700 dark:text-gray-200'
+                                                                : 'text-slate-900 dark:text-white'
+                                                        "
                                                     >
                                                         {{ item.data.title }}
                                                     </div>
                                                     <div
-                                                        class="text-xs text-gray-500"
+                                                        class="mt-1 line-clamp-2 text-xs leading-4 text-slate-500 dark:text-gray-400"
                                                     >
                                                         {{ item.data.message }}
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            <div
-                                                class="flex flex-col items-end"
-                                            >
-                                                <div
-                                                    class="text-xs font-medium"
+                                                <span
+                                                    class="shrink-0 text-[10px] text-slate-400"
+                                                    >{{ item.diff_time }}</span
                                                 >
-                                                    {{ item.diff_time }}
-                                                </div>
-
-                                                <DefaultButton
-                                                    size="small"
-                                                    severity="secondary"
-                                                    rounded
-                                                    tooltip="Mark as read"
-                                                    text
+                                            </div>
+                                            <div
+                                                class="mt-2 flex items-center justify-between"
+                                            >
+                                                <span
                                                     v-if="!item.read_at"
+                                                    class="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 dark:text-blue-400"
+                                                >
+                                                    <span
+                                                        class="h-1.5 w-1.5 rounded-full bg-blue-500"
+                                                    />
+                                                    New
+                                                </span>
+                                                <span
+                                                    v-else
+                                                    class="text-[10px] text-slate-400"
+                                                    >Read</span
+                                                >
+                                                <Button
+                                                    v-if="!item.read_at"
+                                                    type="button"
+                                                    label="Mark read"
+                                                    text
+                                                    size="small"
+                                                    class="!p-0 !text-[10px] !font-medium"
                                                     @click.stop="
                                                         markAsRead(item.id)
                                                     "
-                                                    :icon="IconCheck"
-                                                    :icon-size="15"
                                                 />
-                                                <div v-else class="p-2">
-                                                    <IconCheckbox size="15" />
-                                                </div>
                                             </div>
                                         </div>
-                                        <Divider
-                                            class="!my-2"
-                                            type="dashed"
-                                        ></Divider>
                                     </div>
                                 </div>
-                                <div v-else>
-                                    <div class="flex justify-center py-10">
-                                        <div
-                                            class="flex flex-col gap-1 items-center text-gray-500"
-                                        >
-                                            <IconBellFilled />
-                                            <div>No notifications</div>
-                                        </div>
+                                <div
+                                    v-else
+                                    class="flex flex-col items-center justify-center gap-2 py-12 text-center text-slate-400"
+                                >
+                                    <div
+                                        class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 dark:bg-gray-700"
+                                    >
+                                        <IconBellFilled :size="20" />
+                                    </div>
+                                    <div
+                                        class="text-xs font-medium text-slate-600 dark:text-gray-300"
+                                    >
+                                        No notifications yet
+                                    </div>
+                                    <div class="text-[11px]">
+                                        New updates will appear here.
                                     </div>
                                 </div>
                             </div>
@@ -441,18 +358,14 @@ import {
     IconBell,
     IconFileDownload,
     IconBellFilled,
-    IconChecks,
     IconCheck,
     IconBellExclamation,
-    IconCheckbox,
     IconDots,
     IconPencilCheck,
-    IconCircle,
     IconCircleCheck,
     IconCircleX,
-    IconMenu,
 } from "@tabler/icons-vue";
-import { ref, onMounted, Transition, onUnmounted } from "vue";
+import { computed, ref, onMounted, Transition, onUnmounted } from "vue";
 import SidebarLabelMenu from "../Components/menus/SidebarLabelMenu.vue";
 import DefaultToggle from "../Components/toggleswitches/DefaultToggle.vue";
 import { router, usePage } from "@inertiajs/vue3";
@@ -467,6 +380,9 @@ const sidebar = ref(savedSidebar);
 const popNotif = ref(null);
 const isMobile = ref(false);
 const drawerMobile = ref(false);
+const unreadNotifications = computed(() =>
+    (page.props?.notif ?? []).filter((item) => !item.read_at),
+);
 
 const toggleNotif = (e) => {
     popNotif.value.toggle(e);
@@ -480,6 +396,43 @@ const markAsRead = (id) => {
             preserveScroll: true,
             preserveState: true,
         },
+    );
+};
+
+const markAllAsRead = () => {
+    unreadNotifications.value.forEach((item) => markAsRead(item.id));
+};
+
+const notificationMeta = (item) => {
+    const metadata = {
+        scholar_upload: {
+            icon: IconFileDownload,
+            surface: "bg-blue-100 dark:bg-blue-900/40",
+            color: "text-blue-700 dark:text-blue-300",
+        },
+        upload_accept: {
+            icon: IconCircleCheck,
+            surface: "bg-emerald-100 dark:bg-emerald-900/40",
+            color: "text-emerald-700 dark:text-emerald-300",
+        },
+        upload_reject: {
+            icon: IconCircleX,
+            surface: "bg-red-100 dark:bg-red-900/40",
+            color: "text-red-700 dark:text-red-300",
+        },
+        updateInfoSchool: {
+            icon: IconPencilCheck,
+            surface: "bg-amber-100 dark:bg-amber-900/40",
+            color: "text-amber-700 dark:text-amber-300",
+        },
+    };
+
+    return (
+        metadata[item?.data?.type] ?? {
+            icon: IconDots,
+            surface: "bg-slate-100 dark:bg-gray-700",
+            color: "text-slate-600 dark:text-gray-300",
+        }
     );
 };
 
