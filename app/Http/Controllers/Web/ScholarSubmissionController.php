@@ -12,4 +12,14 @@ class ScholarSubmissionController extends Controller
     {
         return app(ScholarSubmissionPageService::class)->index($request);
     }
+
+    public function profileRequests(Request $request)
+    {
+        return app(ScholarSubmissionPageService::class)->profileRequestsIndex($request);
+    }
+
+    public function landbankRequests(Request $request)
+    {
+        return app(ScholarSubmissionPageService::class)->landbankRequestsIndex($request);
+    }
 }

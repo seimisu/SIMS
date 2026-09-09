@@ -150,7 +150,7 @@
                                     <button
                                         type="button"
                                         class="mt-1 inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
-                                        @click="goToSubmissions(item.tab)"
+                                        @click="goToSubmissions(item.routeName)"
                                     >
                                         View
                                         <IconArrowRight :size="12" />
@@ -432,9 +432,9 @@ const schoolDistribution = computed(() => {
     }));
 });
 const pendingSubmissionCards = computed(() => [
-    { label: "Grade Submissions", value: insights.value.pendingSubmissions?.grades ?? 0, tab: "grades" },
-    { label: "Profile Updates", value: insights.value.pendingSubmissions?.profile ?? 0, tab: "profile" },
-    { label: "Landbank Requests", value: insights.value.pendingSubmissions?.landbank ?? 0, tab: "landbank" },
+    { label: "Grade Submissions", value: insights.value.pendingSubmissions?.grades ?? 0, routeName: "scholar-submissions" },
+    { label: "Profile Updates", value: insights.value.pendingSubmissions?.profile ?? 0, routeName: "scholar-profile-requests" },
+    { label: "Landbank Requests", value: insights.value.pendingSubmissions?.landbank ?? 0, routeName: "scholar-landbank-requests" },
 ]);
 const chartTextColor = computed(() => (isDark.value ? "#d1d5db" : "#64748b"));
 const chartGridColor = computed(() => (isDark.value ? "rgba(75,85,99,0.9)" : "rgba(148,163,184,0.35)"));
@@ -542,8 +542,8 @@ function goToPayroll() {
     router.visit(route("stipends"));
 }
 
-function goToSubmissions(tab = null) {
-    router.visit(route("scholar-submissions", tab ? { tab } : undefined));
+function goToSubmissions(routeName = "scholar-submissions") {
+    router.visit(route(routeName));
 }
 
 let themeObserver;

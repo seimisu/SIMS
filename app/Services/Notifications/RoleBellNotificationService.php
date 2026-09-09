@@ -29,7 +29,7 @@ class RoleBellNotificationService
                 'grade_submission_created',
                 'New grade submission',
                 $this->scholarName($term->scholar).' submitted grades for review.',
-                '/scholar-submissions?tab=grades',
+                '/scholar-submissions',
                 'scholar_term_records',
                 $term->id
             ));
@@ -44,7 +44,7 @@ class RoleBellNotificationService
                 'profile_request_created',
                 'New profile update request',
                 $this->scholarName($request->scholar).' submitted a profile update request.',
-                '/scholar-submissions?tab=profile',
+                '/scholar-profile-requests',
                 'profile_requests',
                 $request->id
             ));
@@ -59,7 +59,7 @@ class RoleBellNotificationService
                 'landbank_request_created',
                 'New Landbank request',
                 $this->scholarName($request->scholar).' submitted a Landbank request.',
-                '/scholar-submissions?tab=landbank',
+                '/scholar-landbank-requests',
                 'landbank_requests',
                 $request->id
             ));

@@ -16,7 +16,7 @@ return new class extends Migration
         DB::table('list_routes')->updateOrInsert(
             ['slug' => 'scholar-submissions'],
             [
-                'label' => 'Scholar Submissions',
+                'label' => 'Submissions',
                 'roles' => $roles,
                 'main_id' => null,
                 'route' => '/scholar-submissions',

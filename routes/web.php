@@ -208,6 +208,8 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     // Route::get('scholarsV1/oldVersion', [ScholarReviewController::class, 'index'])->name('scholarsOldVersion');
     Route::get('scholars', [ScholarManagementController::class, 'index'])->name('scholars');
     Route::get('scholar-submissions', [ScholarSubmissionController::class, 'index'])->name('scholar-submissions');
+    Route::get('scholar-profile-requests', [ScholarSubmissionController::class, 'profileRequests'])->name('scholar-profile-requests');
+    Route::get('scholar-landbank-requests', [ScholarSubmissionController::class, 'landbankRequests'])->name('scholar-landbank-requests');
     Route::get('programs', [programController::class, 'index'])->name('programs');
     Route::get('events', [eventController::class, 'index'])->name('events');
     Route::get('stipends', [PayrollController::class, 'index'])->name('stipends');

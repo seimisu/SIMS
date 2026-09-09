@@ -1,113 +1,100 @@
 <template>
-    <Head title="Scholar Submissions" />
+    <Head title="Grade Submissions" />
     <AuthLayout>
         <div class="flex h-full w-full flex-col gap-4">
             <HeaderModule
                 class="!flex-none shrink-0"
-                title="Scholar Submissions"
-                description="Review submitted grades, profile updates, and Landbank requests across all academic years and schools."
+                title="Grade Submissions"
+                description="Monitor scholar grade submissions by academic year and semester."
             />
 
-            <div class="flex">
-                <Tabs
-                    :value="activeTab"
-                    class="w-fit max-w-full compact-submission-tabs"
-                    @update:value="switchTab"
-                >
-                    <TabList class="dark:!bg-gray-800">
-                        <Tab
-                            v-for="tab in tabs"
-                            :key="tab.id"
-                            :value="tab.id"
+            <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
+                <aside class="min-h-0 border-r border-slate-200 pr-3 dark:border-gray-700">
+                    <div class="mb-2 text-xs font-semibold uppercase text-slate-500 dark:text-gray-400">
+                        Semesters
+                    </div>
+                    <div class="flex max-h-full flex-col gap-1 overflow-y-auto">
+                        <button
+                            v-for="semester in semesters"
+                            :key="semester.id"
+                            type="button"
+                            :class="[
+                                'w-full cursor-pointer rounded-md border px-3 py-2 text-left text-sm transition-colors duration-150',
+                                selectedSemesterKey === semester.id
+                                    ? 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-blue-500/20'
+                                    : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:hover:text-white',
+                            ]"
+                            @click="selectSemester(semester)"
                         >
-                            <span class="inline-flex items-center gap-1.5">
-                                {{ tab.label }}
-                                <span
-                                    v-if="Number(counts[tab.id] ?? 0) > 0"
-                                    class="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-600"
-                                >
-                                    {{ counts[tab.id] ?? 0 }}
-                                </span>
+                            <span class="block font-semibold">{{ semester.term_name }}</span>
+                            <span class="block text-xs opacity-75">{{ semester.academic_year }}</span>
+                        </button>
+                    </div>
+                </aside>
+
+                <DefaultSelectionTable
+                    class="min-h-0"
+                    :items="rows.data ?? []"
+                    :pagination="pagination"
+                    scrollable
+                    scroll-height="flex"
+                    clickable
+                    @selected="openSubmission"
+                    @paginate="loadPage"
+                >
+                    <template #header>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="text-sm font-semibold text-slate-700 dark:text-gray-200">
+                                {{ selectedSemester?.name ?? "Grade Submissions" }}
+                            </div>
+                            <IconTextInput
+                                v-model="searchInput"
+                                :icon="IconSearch"
+                                placeholder="Search SPAS or scholar"
+                                class="w-full sm:w-72"
+                            />
+                        </div>
+                    </template>
+
+                    <Column header="Scholar">
+                        <template #body="props">
+                            <div class="min-w-56">
+                                <div class="text-sm font-semibold uppercase text-slate-700 dark:text-gray-200">
+                                    {{ props.data.fullname || "Unnamed Scholar" }}
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.spas_no }}</div>
+                            </div>
+                        </template>
+                    </Column>
+                    <Column header="Program" field="program" />
+                    <Column header="Scholarship" field="type" />
+                    <Column header="School">
+                        <template #body="props">
+                            <div class="min-w-64">
+                                <div class="text-sm text-slate-700 dark:text-gray-200">{{ props.data.school }}</div>
+                                <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.course }}</div>
+                            </div>
+                        </template>
+                    </Column>
+                    <Column header="Status">
+                        <template #body="props">
+                            <span :class="statusClass(props.data.status)">
+                                {{ props.data.status }}
                             </span>
-                        </Tab>
-                    </TabList>
-                </Tabs>
+                        </template>
+                    </Column>
+                    <Column header="Scholarship Status">
+                        <template #body="props">
+                            {{ props.data.scholarship_status ?? "-" }}
+                        </template>
+                    </Column>
+                    <Column header="Submitted" field="submitted_at" />
+                </DefaultSelectionTable>
             </div>
 
-            <DefaultSelectionTable
-                class="min-h-0 flex-1"
-                :items="activeRows.data ?? []"
-                :pagination="{
-                    total: activeRows.total ?? 0,
-                    perPage: activeRows.per_page ?? 10,
-                    currentPage: activeRows.current_page ?? 1,
-                }"
-                scrollable
-                scroll-height="flex"
-                @selected="openSubmission"
-                @paginate="loadPage"
-            >
-                <template #header>
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
-                        <IconTextInput
-                            v-model="searchInput"
-                            :icon="IconSearch"
-                            placeholder="Search SPAS or scholar"
-                            class="w-full sm:w-72"
-                        />
-                    </div>
-                </template>
-
-                <Column header="Scholar">
-                    <template #body="props">
-                        <div class="min-w-56">
-                            <div class="text-sm font-semibold uppercase text-slate-700 dark:text-gray-200">
-                                {{ props.data.fullname || "Unnamed Scholar" }}
-                            </div>
-                            <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.spas_no }}</div>
-                        </div>
-                    </template>
-                </Column>
-                <Column header="Program" field="program" />
-                <Column header="Scholarship" field="type" />
-                <Column v-if="activeTab === 'grades'" header="School">
-                    <template #body="props">
-                        <div class="min-w-64">
-                            <div class="text-sm text-slate-700 dark:text-gray-200">{{ props.data.school }}</div>
-                            <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.course }}</div>
-                        </div>
-                    </template>
-                </Column>
-                <Column v-if="activeTab === 'grades'" header="AY / Term">
-                    <template #body="props">
-                        <div class="text-sm">
-                            {{ props.data.academic_year }}
-                            <span class="text-slate-400 dark:text-gray-500">/</span>
-                            {{ props.data.term }}
-                        </div>
-                    </template>
-                </Column>
-                <Column header="Status">
-                    <template #body="props">
-                        <span class="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs uppercase text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                            {{ props.data.status }}
-                        </span>
-                    </template>
-                </Column>
-                <Column header="Submitted" field="submitted_at" />
-            </DefaultSelectionTable>
-
-            <DialogScholarDetailRequest
-                v-if="profileDialog"
-                v-model="profileDialog"
-            />
             <DialogScholarGradeRequest
                 v-if="gradeDialog"
                 v-model="gradeDialog"
-            />
-            <DialogScholarLandbankRequest
-                v-if="landbankDialog"
-                v-model="landbankDialog"
             />
         </div>
     </AuthLayout>
@@ -118,9 +105,7 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
-import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
-import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import { IconSearch } from "@tabler/icons-vue";
@@ -130,65 +115,68 @@ const page = usePage();
 const searchInput = ref(page.props.filters?.search ?? null);
 const timer = ref(null);
 const gradeDialog = ref(false);
-const profileDialog = ref(false);
-const landbankDialog = ref(false);
-
-const tabs = [
-    { id: "grades", label: "Grade Submissions" },
-    { id: "profile", label: "Profile Requests" },
-    { id: "landbank", label: "Landbank Requests" },
-];
-const initialTab = tabs.some((tab) => tab.id === page.props.filters?.tab)
-    ? page.props.filters.tab
-    : "grades";
-const activeTab = ref(initialTab);
-const counts = computed(() => page.props.counts ?? {});
-const activeRows = computed(() => {
-    if (activeTab.value === "profile") return page.props.profileRequests ?? {};
-    if (activeTab.value === "landbank") return page.props.landbankRequests ?? {};
-    return page.props.gradeSubmissions ?? {};
-});
+const semesters = computed(() => page.props.semesters ?? []);
+const selectedSemester = computed(() => page.props.selectedSemester ?? null);
+const selectedSemesterKey = computed(() => selectedSemester.value?.id ?? null);
+const rows = computed(() => page.props.gradeSubmissions ?? {});
+const pagination = computed(() => ({
+    total: rows.value.total ?? 0,
+    perPage: rows.value.per_page ?? 10,
+    currentPage: rows.value.current_page ?? 1,
+}));
 
 const requestData = (pageNumber = 1, extra = {}) => ({
-    tab: activeTab.value,
     page: pageNumber,
     ...(searchInput.value ? { search: searchInput.value } : {}),
+    ...(selectedSemester.value
+        ? {
+              academicYear: selectedSemester.value.academic_year,
+              termId: selectedSemester.value.term_id,
+          }
+        : {}),
     ...extra,
 });
 
-const loadPage = (pageNumber = 1) => {
-    router.get(route("scholar-submissions"), requestData(pageNumber), {
+const loadPage = (pageNumber = 1, extra = {}) => {
+    router.get(route("scholar-submissions"), requestData(pageNumber, extra), {
         preserveState: true,
         preserveScroll: true,
     });
 };
 
-const switchTab = (tab) => {
-    activeTab.value = tab;
-    loadPage(1);
+const selectSemester = (semester) => {
+    loadPage(1, {
+        academicYear: semester.academic_year,
+        termId: semester.term_id,
+    });
 };
 
 const openSubmission = (row) => {
-    if (!row?.scholar_id) return;
-
-    const dialog = activeTab.value;
-    const dialogData = {
-        scholar: row.scholar_id,
-        dialog,
-        ...(dialog === "grades" ? { term: row.id } : {}),
-    };
+    if (!row?.scholar_id || !row.id || row.status === "No Submission") return;
 
     router.reload({
-        data: requestData(activeRows.value.current_page ?? 1, dialogData),
-        only: ["details", "subjectRequest", "personalRequest", "landbankRequest"],
+        data: requestData(rows.value.current_page ?? 1, {
+            scholar: row.scholar_id,
+            dialog: "grades",
+            term: row.id,
+        }),
+        only: ["details", "subjectRequest"],
         preserveScroll: true,
         onSuccess: () => {
-            gradeDialog.value = dialog === "grades";
-            profileDialog.value = dialog === "profile";
-            landbankDialog.value = dialog === "landbank";
+            gradeDialog.value = true;
         },
     });
 };
+
+const statusClass = (status) => [
+    "rounded border px-2 py-1 text-xs uppercase",
+    {
+        submitted: "border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200",
+        approved: "border-green-200 bg-green-50 text-green-600 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200",
+        rejected: "border-red-200 bg-red-50 text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
+    }[status] ??
+        "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300",
+];
 
 watch(
     () => searchInput.value,
@@ -200,47 +188,12 @@ watch(
 </script>
 
 <style scoped>
-:deep(.compact-submission-tabs .p-tablist-tab-list) {
-    gap: 0.25rem;
-    border-width: 0;
-}
-
-:global(.dark) :deep(.compact-submission-tabs .p-tablist),
-:global(.dark) :deep(.compact-submission-tabs .p-tablist-tab-list),
-:global(.dark) :deep(.compact-submission-tabs .p-tab) {
-    background: #1f2937 !important;
-    color: #d1d5db !important;
-    border-color: #374151 !important;
-}
-
-:deep(.compact-submission-tabs .p-tab) {
-    padding: 0.45rem 0.8rem;
-    font-size: 0.8125rem;
-    border-bottom: 2px solid transparent;
-}
-
-:deep(.compact-submission-tabs .p-tab-active) {
-    border-bottom-color: #1a2551;
-    color: #1a2551;
-}
-
-:global(.dark) :deep(.compact-submission-tabs .p-tab-active) {
-    border-bottom-color: #60a5fa !important;
-    color: #ffffff !important;
-}
-
-:deep(.compact-submission-tabs .p-tablist-active-bar) {
-    display: none;
-}
-
 :deep(.p-datatable-header) {
     border-bottom: 0;
     padding: 0.5rem 0 0.75rem;
 }
 
-:deep(.p-tabs *),
 :deep(.p-datatable *),
-:deep(.p-select *),
 :deep(.p-inputtext) {
     transition: none !important;
     animation: none !important;

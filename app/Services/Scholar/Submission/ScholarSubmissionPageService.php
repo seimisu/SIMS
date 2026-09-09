@@ -18,6 +18,7 @@ use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,28 +33,26 @@ class ScholarSubmissionPageService
         $tab = $request->input('tab', 'grades');
         $status = $tab === 'grades' ? 'submitted' : 'pending';
         $search = $request->input('search');
+        $semesters = $this->semesterOptions($permissions, $user);
+        $selectedSemester = $this->selectedSemester($request, $semesters);
 
         return Inertia::render('Web/scholarSubmissionsPage', [
             'filters' => [
-                'tab' => $tab,
+                'tab' => 'grades',
                 'status' => $status,
                 'search' => $search,
+                'academicYear' => $selectedSemester['academic_year'] ?? null,
+                'termId' => $selectedSemester['term_id'] ?? null,
             ],
             'counts' => [
                 'grades' => ScholarTerm::where('verification_status', 'submitted')->count(),
                 'profile' => StudentProfileRequest::where('status', 'pending')->count(),
                 'landbank' => studentLandbankRequest::where('status', 'pending')->count(),
             ],
+            'semesters' => $semesters,
+            'selectedSemester' => $selectedSemester,
             'standingOptions' => fn () => $this->standingOptions(),
-            'gradeSubmissions' => fn () => $tab === 'grades'
-                ? $this->gradeSubmissions($request, $permissions, $user)
-                : null,
-            'profileRequests' => fn () => $tab === 'profile'
-                ? $this->profileRequests($request, $permissions, $user)
-                : null,
-            'landbankRequests' => fn () => $tab === 'landbank'
-                ? $this->landbankRequests($request, $permissions, $user)
-                : null,
+            'gradeSubmissions' => fn () => $this->gradeSubmissions($request, $permissions, $user, $selectedSemester),
             'details' => fn () => $request->input('scholar')
                 ? $this->scholarDetails($request, $permissions, $user)
                 : null,
@@ -69,49 +68,197 @@ class ScholarSubmissionPageService
         ]);
     }
 
-    private function gradeSubmissions(Request $request, SystemPermissions $permissions, $user)
+    public function profileRequestsIndex(Request $request): Response
+    {
+        $user = Auth::user();
+        $permissions = app(SystemPermissions::class);
+
+        return Inertia::render('Web/scholarProfileRequestsPage', [
+            'filters' => [
+                'search' => $request->input('search'),
+            ],
+            'counts' => [
+                'profile' => StudentProfileRequest::where('status', 'pending')->count(),
+            ],
+            'profileRequests' => fn () => $this->profileRequests($request, $permissions, $user),
+            'details' => fn () => $request->input('scholar')
+                ? $this->scholarDetails($request, $permissions, $user)
+                : null,
+            'personalRequest' => fn () => $request->input('scholar')
+                ? $this->personalRequest($request, $permissions, $user)
+                : null,
+        ]);
+    }
+
+    public function landbankRequestsIndex(Request $request): Response
+    {
+        $user = Auth::user();
+        $permissions = app(SystemPermissions::class);
+
+        return Inertia::render('Web/scholarLandbankRequestsPage', [
+            'filters' => [
+                'search' => $request->input('search'),
+            ],
+            'counts' => [
+                'landbank' => studentLandbankRequest::where('status', 'pending')->count(),
+            ],
+            'landbankRequests' => fn () => $this->landbankRequests($request, $permissions, $user),
+            'details' => fn () => $request->input('scholar')
+                ? $this->scholarDetails($request, $permissions, $user)
+                : null,
+            'landbankRequest' => fn () => $request->input('scholar')
+                ? $this->landbankRequest($request, $permissions, $user)
+                : null,
+        ]);
+    }
+
+    private function gradeSubmissions(Request $request, SystemPermissions $permissions, $user, ?array $selectedSemester)
     {
         $search = $request->input('search');
+        $academicYear = $selectedSemester['academic_year'] ?? null;
+        $termId = $selectedSemester['term_id'] ?? null;
 
-        return ScholarTerm::query()
+        return Scholars::query()
+            ->select(
+                'scholars.id',
+                'scholars.spas_no',
+                'scholars.program_id',
+                'scholars.type_id'
+            )
+            ->join('scholar_profiles', 'scholar_profiles.scholar_id', '=', 'scholars.id')
             ->with([
-                'scholar.profile:id,scholar_id,fname,lname,mname,suffix',
-                'scholar.program:id,name',
-                'scholar.type:id,name',
-                'schoolInfo.campus:id,generated_name,agency_id',
-                'schoolInfo.campus.agency:id,name',
-                'schoolInfo.course.course:id,name',
-                'term:id,name',
+                'profile:id,scholar_id,fname,lname,mname,suffix',
+                'program:id,name',
+                'type:id,name',
+                'schoolInfo' => fn ($q) => $q
+                    ->select('id', 'scholar_id', 'campus_id', 'campus_course_id')
+                    ->with([
+                        'campus:id,generated_name,agency_id',
+                        'campus.agency:id,name',
+                        'campus.address:campus_id,region_code',
+                        'course' => fn ($q) => $q
+                            ->select('id', 'course_id')
+                            ->with('course:id,name'),
+                    ])
+                    ->latest()
+                    ->limit(1),
             ])
-            ->where('verification_status', 'submitted')
             ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
                 $query->whereHas('schoolInfo.campus.address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
-                    $query->whereHas('scholar.profile', function ($profile) use ($search) {
+                    $query->whereHas('profile', function ($profile) use ($search) {
                         $profile->whereRaw("CONCAT(lname, ' ', fname, ' ', COALESCE(mname, '')) ILIKE ?", ['%'.$search.'%']);
-                    })->orWhereHas('scholar', fn ($scholar) => $scholar->where('spas_no', 'ILIKE', '%'.$search.'%'));
+                    })->orWhere('scholars.spas_no', 'ILIKE', '%'.$search.'%');
                 });
             })
-            ->orderBy('created_at')
+            ->when($academicYear && $termId, function ($query) use ($academicYear, $termId) {
+                $statusSubquery = ScholarTerm::query()
+                    ->select('verification_status')
+                    ->whereColumn('scholar_term_records.scholar_id', 'scholars.id')
+                    ->where('academic_year', $academicYear)
+                    ->where('term_id', $termId)
+                    ->latest('id')
+                    ->limit(1);
+
+                $query->orderByRaw(
+                    "CASE COALESCE(({$statusSubquery->toSql()}), 'No Submission')
+                        WHEN 'pending' THEN 1
+                        WHEN 'submitted' THEN 1
+                        WHEN 'rejected' THEN 2
+                        WHEN 'approved' THEN 3
+                        ELSE 4
+                    END",
+                    $statusSubquery->getBindings()
+                );
+            })
+            ->orderBy('scholar_profiles.lname')
             ->paginate(10)
             ->withQueryString()
-            ->through(fn ($term) => [
-                'id' => $term->id,
-                'scholar_id' => Hashids::encode($term->scholar_id),
-                'spas_no' => $term->scholar?->spas_no,
-                'fullname' => $this->fullname($term->scholar),
-                'program' => $term->scholar?->program?->name,
-                'type' => $term->scholar?->type?->name,
-                'school' => $term->schoolInfo?->campus?->generated_name,
-                'course' => $term->schoolInfo?->course?->course?->name,
-                'region' => $term->schoolInfo?->campus?->agency?->name,
+            ->through(function ($scholar) use ($academicYear, $termId, $selectedSemester) {
+                $schoolInfo = $scholar->schoolInfo?->first();
+                $term = $academicYear && $termId
+                    ? $scholar->termRecords()
+                        ->with('term:id,name')
+                        ->where('academic_year', $academicYear)
+                        ->where('term_id', $termId)
+                        ->latest('id')
+                        ->first()
+                    : null;
+                $submissionStatus = $term?->verification_status ?: 'No Submission';
+
+                $scholarshipStatus = $term && $submissionStatus !== 'No Submission'
+                    ? DB::connection('scholars')
+                        ->table('scholar_processes')
+                        ->where('term_record_id', $term->id)
+                        ->value('scholarship_status')
+                    : null;
+
+                return [
+                    'id' => $term?->id,
+                    'scholar_id' => Hashids::encode($scholar->id),
+                    'spas_no' => $scholar->spas_no,
+                    'fullname' => $this->fullname($scholar),
+                    'program' => $scholar->program?->name,
+                    'type' => $scholar->type?->name,
+                    'school' => $schoolInfo?->campus?->generated_name,
+                    'course' => $schoolInfo?->course?->course?->name,
+                    'region' => $schoolInfo?->campus?->agency?->name,
+                    'academic_year' => $academicYear,
+                    'term' => $term?->term?->name ?? ($selectedSemester['term_name'] ?? null),
+                    'status' => $submissionStatus,
+                    'scholarship_status' => $scholarshipStatus,
+                    'submitted_at' => $submissionStatus !== 'No Submission'
+                        ? $term?->created_at?->format('M d, Y h:i A')
+                        : null,
+                ];
+            });
+    }
+
+    private function semesterOptions(SystemPermissions $permissions, $user)
+    {
+        return ScholarTerm::query()
+            ->with('term:id,name')
+            ->whereNotNull('academic_year')
+            ->whereNotNull('term_id')
+            ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
+                $query->whereHas('schoolInfo.campus.address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+            })
+            ->select('academic_year', 'term_id')
+            ->distinct()
+            ->orderByDesc('academic_year')
+            ->orderByDesc('term_id')
+            ->get()
+            ->map(fn ($term) => [
+                'id' => $term->academic_year.'-'.$term->term_id,
                 'academic_year' => $term->academic_year,
-                'term' => $term->term?->name,
-                'status' => $term->verification_status,
-                'submitted_at' => $term->created_at?->format('M d, Y h:i A'),
-            ]);
+                'term_id' => $term->term_id,
+                'term_name' => $term->term?->name,
+                'name' => trim(($term->term?->name ?? 'Term').' '.$term->academic_year),
+            ])
+            ->values();
+    }
+
+    private function selectedSemester(Request $request, $semesters): ?array
+    {
+        if ($semesters->isEmpty()) {
+            return null;
+        }
+
+        $academicYear = $request->input('academicYear');
+        $termId = $request->input('termId');
+
+        if ($academicYear && $termId) {
+            $selected = $semesters->first(fn ($semester) => (string) $semester['academic_year'] === (string) $academicYear
+                && (int) $semester['term_id'] === (int) $termId);
+
+            if ($selected) {
+                return $selected;
+            }
+        }
+
+        return $semesters->first();
     }
 
     private function standingOptions()
@@ -221,19 +368,21 @@ class ScholarSubmissionPageService
             return collect();
         }
 
-        $submittedTerms = ScholarTerm::where('scholar_id', $scholar->id)
-            ->where('verification_status', 'submitted')
-            ->latest('created_at')
-            ->get();
-
         $selectedTermId = (int) $request->input('term');
         $currentTerm = $selectedTermId
-            ? $submittedTerms->firstWhere('id', $selectedTermId)
-            : $submittedTerms->first();
+            ? ScholarTerm::where('scholar_id', $scholar->id)
+                ->whereKey($selectedTermId)
+                ->first()
+            : ScholarTerm::where('scholar_id', $scholar->id)
+                ->where('verification_status', 'submitted')
+                ->latest('created_at')
+                ->first();
 
-        if ($currentTerm) {
-            $submittedTerms = collect([$currentTerm]);
+        if (! $currentTerm) {
+            return collect();
         }
+
+        $terms = collect([$currentTerm]);
 
         $previousTerm = $currentTerm
             ? ScholarTerm::where('scholar_id', $scholar->id)
@@ -243,15 +392,15 @@ class ScholarSubmissionPageService
                 ->first()
             : null;
 
-        return $submittedTerms
+        return $terms
             ->when(
-                $previousTerm && ! $submittedTerms->contains('id', $previousTerm->id),
+                $previousTerm && ! $terms->contains('id', $previousTerm->id),
                 fn ($terms) => $terms->push($previousTerm)
             )
             ->map(function ($term) use ($currentTerm, $previousTerm) {
                 $recommendation = null;
 
-                if ($term->id === $currentTerm?->id) {
+                if ($term->id === $currentTerm?->id && $term->verification_status === 'submitted') {
                     $recommendation = $previousTerm
                         ? app(AcademicPerformanceEvaluationService::class)->evaluate($previousTerm)
                         : [

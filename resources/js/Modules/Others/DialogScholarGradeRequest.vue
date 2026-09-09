@@ -311,7 +311,10 @@
                         </Divider>
                         <div class="flex flex-col gap-3">
                             <div class="flex flex-col gap-4">
-                                <div class="flex justify-end">
+                                <div
+                                    v-if="submittedTerm"
+                                    class="flex justify-end"
+                                >
                                     <div class="flex items-center mb-3 gap-3">
                                         <div>
                                             <Button
