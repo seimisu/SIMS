@@ -3565,7 +3565,7 @@ const storePersonalInfo = async () => {
             type: "personal",
         }),
         {
-            only: ["flash"],
+            only: ["flash", "details"],
             onSuccess: () => {
                 const flash = page.props.flash ?? {};
 
