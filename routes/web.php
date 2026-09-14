@@ -31,6 +31,7 @@ use App\Http\Controllers\Web\SchoolCampusInfoController;
 use App\Http\Controllers\Web\SchoolCampusSemesterController;
 use App\Http\Controllers\Web\SchoolController;
 use App\Http\Controllers\Web\SchoolCoordinatorController;
+use App\Http\Controllers\Web\ScholarPortalDocumentController;
 use App\Http\Controllers\Web\StatusController;
 use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\Web\UserController;
@@ -63,6 +64,8 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::get('/profile', [UserProfileController::class, 'index'])->name('profile');
     Route::put('/profile/update', [UserProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/photo',[UserProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+    Route::get('scholar-documents/{document}/preview', [ScholarPortalDocumentController::class, 'preview'])->name('scholar-documents.preview');
+    Route::get('scholar-documents/{document}/download', [ScholarPortalDocumentController::class, 'download'])->name('scholar-documents.download');
 });
 
 Route::middleware(['auth', 'web', 'permission'])->group(function () {

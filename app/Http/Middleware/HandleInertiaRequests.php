@@ -75,9 +75,6 @@ class HandleInertiaRequests extends Middleware
                 }),
             'menu' => fn() => $this->menuWithBadges(),
             'permissions' => fn() => app(SystemPermissions::class)->permissionsFor(Auth::user()),
-            'filePreview' => fn() => [
-                'scholarPortalBaseUrl' => rtrim((string) config('services.file_preview.scholar_portal_base_url'), '/'),
-            ],
         ]);
     }
 

@@ -35,8 +35,9 @@ return [
         ],
     ],
 
-    'file_preview' => [
-        'scholar_portal_base_url' => env('SCHOLAR_PORTAL_FILE_BASE_URL', 'http://172.16.8.98:85'),
+    'scholar_portal' => [
+        'api_base_url' => env('SCHOLAR_PORTAL_API_BASE_URL', env('SCHOLAR_PORTAL_FILE_BASE_URL', 'http://172.16.8.98:85')),
+        'file_api_key' => env('SCHOLAR_PORTAL_FILE_API_KEY', env('SIMS_API_KEY')),
     ],
 
 ];

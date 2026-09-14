@@ -1230,7 +1230,7 @@
                                                                 isCorDocument(file)
                                                             "
                                                             :href="
-                                                                scholarPortalFileUrl(file.file_path)
+                                                                scholarPortalFileUrl(file)
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
@@ -1242,7 +1242,7 @@
                                                                 isGradesProofDocument(file)
                                                             "
                                                             :href="
-                                                                scholarPortalFileUrl(file.file_path)
+                                                                scholarPortalFileUrl(file)
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
@@ -3618,14 +3618,10 @@ const resetActivityLogs = () => {
     }));
 };
 
-const scholarPortalFileUrl = (path) => {
-    if (!path) return null;
+const scholarPortalFileUrl = (file) => {
+    const documentId = file?.id ?? file?.document_id;
 
-    if (/^https?:\/\//i.test(path)) {
-        return path;
-    }
-
-    return `${page.props?.filePreview?.scholarPortalBaseUrl ?? ""}/${String(path).replace(/^\/+/, "")}`;
+    return documentId ? route("scholar-documents.preview", documentId) : null;
 };
 
 const normalizedDocumentType = (file) =>

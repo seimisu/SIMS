@@ -453,7 +453,7 @@
                                                                         rounded
                                                                         as="a"
                                                                         :href="
-                                                                            scholarPortalFileUrl(selectedRow.file)
+                                                                            scholarPortalFileUrl(selectedRow)
                                                                         "
                                                                         download
                                                                         v-tooltip.top="
@@ -469,7 +469,7 @@
                                                                         as="a"
                                                                         target="_blank"
                                                                         :href="
-                                                                            scholarPortalFileUrl(selectedRow.file)
+                                                                            scholarPortalFileUrl(selectedRow)
                                                                         "
                                                                         v-tooltip.top="
                                                                             'Open in new tab'
@@ -481,7 +481,7 @@
                                                             <!-- Viewer -->
                                                             <iframe
                                                                 :src="
-                                                                    scholarPortalFileUrl(selectedRow.file)
+                                                                    scholarPortalFileUrl(selectedRow)
                                                                 "
                                                                 class="w-full h-[500px] border-0"
                                                             />
@@ -694,14 +694,10 @@ const loading = ref({
     reject: false,
 });
 const personalRequest = ref(null);
-const scholarPortalFileUrl = (path) => {
-    if (!path) return null;
+const scholarPortalFileUrl = (file) => {
+    const documentId = file?.document_id ?? file?.id ?? file?.request_id;
 
-    if (/^https?:\/\//i.test(path)) {
-        return path;
-    }
-
-    return `${page.props?.filePreview?.scholarPortalBaseUrl ?? ""}/${String(path).replace(/^\/+/, "")}`;
+    return documentId ? route("scholar-documents.preview", documentId) : null;
 };
 
 const scholar = computed(() => {

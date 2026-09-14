@@ -686,7 +686,7 @@
                                     as="a"
                                     target="_blank"
                                     :href="
-                                        scholarPortalFileUrl(selectedFilePath)
+                                        scholarPortalFileUrl(selectedFile)
                                     "
                                     v-tooltip.top="'Open in new tab'"
                                 />
@@ -704,7 +704,7 @@
 
                         <iframe
                             :src="
-                                scholarPortalFileUrl(selectedFilePath)
+                                scholarPortalFileUrl(selectedFile)
                             "
                             class="w-full h-[700px] rounded-xl border"
                         >
@@ -763,14 +763,10 @@ const selectedScholarshipStatus = ref(null);
 const selectedFilePath = computed(
     () => selectedFile.value?.file_path ?? selectedFile.value?.path ?? null,
 );
-const scholarPortalFileUrl = (path) => {
-    if (!path) return null;
+const scholarPortalFileUrl = (file) => {
+    const documentId = file?.id ?? file?.document_id;
 
-    if (/^https?:\/\//i.test(path)) {
-        return path;
-    }
-
-    return `${page.props?.filePreview?.scholarPortalBaseUrl ?? ""}/${String(path).replace(/^\/+/, "")}`;
+    return documentId ? route("scholar-documents.preview", documentId) : null;
 };
 
 const normalizedDocumentType = (file) =>
