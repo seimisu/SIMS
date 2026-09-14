@@ -23,28 +23,7 @@
                         scholarship data — all in one place.
                     </div>
                 </div>
-                <div class="">
-                    <DefaultButton
-                        label="Login OTP"
-                        outlined
-                        class-name="w-full"
-                        severity="secondary"
-                        :icon="IconPasswordUser"
-                        @click="openModal"
-                    />
-                    <Divider
-                        align="center"
-                        :pt="{
-                            content: {
-                                class: 'dark:!bg-gray-800 dark:!text-gray-200',
-                            },
-                        }"
-                    >
-                        <span class="text-xs text-gray-400"
-                            >Or continue with email</span
-                        >
-                    </Divider>
-                </div>
+
                 <DefaultMessages
                     v-if="loginForm.hasErrors"
                     :message="loginForm.errors"
@@ -91,6 +70,40 @@
                     </div>
                 </form>
                 <!-- <span class="text-center mt-5 text-sm text-gray-400">@SEI - 2025</span> -->
+            </div>
+            <div class="flex flex-col gap-3">
+                <Divider
+                    align="center"
+                    :pt="{
+                        content: {
+                            class: 'dark:!bg-gray-800 dark:!text-gray-200',
+                        },
+                    }"
+                >
+                    <span class="text-xs text-gray-400">
+                        Or continue with another method
+                    </span>
+                </Divider>
+                <DefaultButton
+                    label="Sign in with Passkey"
+                    outlined
+                    class-name="w-full"
+                    severity="secondary"
+                    :icon="IconKey"
+                    :loading="passkeyLoading"
+                    :disabled="!passkeySupported || passkeyLoading"
+                    type="button"
+                    @click="verifyWithPasskey"
+                />
+
+                <DefaultButton
+                    label="Login OTP"
+                    outlined
+                    class-name="w-full"
+                    severity="secondary"
+                    :icon="IconPasswordUser"
+                    @click="openModal"
+                />
             </div>
         </div>
         <OtpDialog
@@ -234,14 +247,17 @@
             v-if="resetPasswordDialog"
         />
     </GuestLayout>
+    <Toast />
 </template>
 <script setup>
 import {
     IconPasswordUser,
     IconAlertCircle,
     IconShieldLockFilled,
+    IconKey,
 } from "@tabler/icons-vue";
-import { Head, useForm } from "@inertiajs/vue3";
+import { Head, router, useForm } from "@inertiajs/vue3";
+import { usePasskeyVerify } from "@laravel/passkeys/vue";
 import GuestLayout from "../../Layouts/GuestLayout.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import PasswordInput from "../../Components/inputs/PasswordInput.vue";
@@ -249,8 +265,11 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultCheckbox from "../../Components/checkboxs/DefaultCheckbox.vue";
 import OtpDialog from "../../Components/dialogs/OtpDialog.vue";
 import { ref } from "vue";
+import { useToast } from "primevue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
 import DialogResetPassword from "../../Modules/Others/DialogResetPassword.vue";
+
+const toast = useToast();
 
 const loginForm = useForm({
     email: "",
@@ -265,6 +284,27 @@ const useRecoveryCode = ref(false);
 const twoFactorForm = useForm({
     code: "",
     recovery_code: "",
+});
+
+const {
+    verify: verifyWithPasskey,
+    isLoading: passkeyLoading,
+    error: passkeyError,
+    isSupported: passkeySupported,
+} = usePasskeyVerify({
+    remember: () => loginForm.remember,
+    onSuccess: (response) => {
+        router.visit(response.redirect ?? route("dashboard"));
+    },
+    onError: (error) => {
+        console.error("Passkey login failed:", error);
+        toast.add({
+            severity: "error",
+            summary: "Passkey Login Failed",
+            detail: error.message,
+            life: 5000,
+        });
+    },
 });
 
 const openModal = () => {

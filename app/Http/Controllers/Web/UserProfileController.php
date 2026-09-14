@@ -24,6 +24,9 @@ class UserProfileController extends Controller
             'Web/userProfilePage',
             [
                 'agencyOption' => ListAgencies::select('id', 'name')->where('is_active', true)->get(),
+                'passkeys' => User::findOrFail(Auth::id())->passkeys()
+                    ->latest()
+                    ->get(['id', 'name', 'last_used_at', 'created_at']),
                 'logs' => DB::table('sessions')
                     ->where('user_id', Auth::id())
                     ->orderByDesc('last_activity')

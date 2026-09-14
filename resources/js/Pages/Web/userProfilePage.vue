@@ -291,6 +291,92 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Passkeys -->
+                        <div
+                            class="border border-surface-200 rounded-xl p-5 lg:col-span-2"
+                        >
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <i
+                                            class="pi pi-shield text-primary"
+                                        ></i>
+
+                                        <h4 class="font-semibold">Passkeys</h4>
+                                    </div>
+
+                                    <p class="text-sm text-surface-500 mt-2">
+                                        Sign in securely with your device or
+                                        password manager.
+                                    </p>
+
+                                    <div class="mt-4 space-y-2">
+                                        <div
+                                            v-for="passkey in props.passkeys"
+                                            :key="passkey.id"
+                                            class="flex items-center justify-between gap-4 rounded-lg border border-surface-200 px-3 py-2"
+                                        >
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="truncate text-sm font-medium"
+                                                >
+                                                    {{ passkey.name }}
+                                                </p>
+                                                <p
+                                                    class="text-xs text-surface-500"
+                                                >
+                                                    Added
+                                                    {{
+                                                        formatPasskeyDate(
+                                                            passkey.created_at,
+                                                        )
+                                                    }}
+                                                    <span
+                                                        v-if="
+                                                            passkey.last_used_at
+                                                        "
+                                                    >
+                                                        · Last used
+                                                        {{
+                                                            formatPasskeyDate(
+                                                                passkey.last_used_at,
+                                                            )
+                                                        }}
+                                                    </span>
+                                                </p>
+                                            </div>
+
+                                            <Button
+                                                icon="pi pi-trash"
+                                                text
+                                                rounded
+                                                severity="danger"
+                                                size="small"
+                                                aria-label="Remove passkey"
+                                                @click="deletePasskey(passkey)"
+                                            />
+                                        </div>
+
+                                        <p
+                                            v-if="!props.passkeys?.length"
+                                            class="text-sm text-surface-500"
+                                        >
+                                            No passkeys registered.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    label="Add"
+                                    severity="secondary"
+                                    outlined
+                                    size="small"
+                                    :disabled="!passkeySupported"
+                                    @click="passkeyDialog = true"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </template>
             </Card>
@@ -431,6 +517,31 @@
                         label="Confirm Password"
                         v-model="passwordForm.confirm"
                         :feedback="false"
+                    />
+                </div>
+            </template>
+        </DefaultDialog>
+
+        <DefaultDialog
+            v-model:visible="passkeyDialog"
+            :loading="passkeyLoading"
+            @submit-form="registerPasskey"
+            title="Add a Passkey"
+            description="Name this passkey so you can recognize it later. Your device will ask you to confirm its use."
+        >
+            <template #message>
+                <DefaultMessages
+                    v-if="passkeyError"
+                    message-type="error"
+                    :message="{ passkey: [passkeyError] }"
+                />
+            </template>
+            <template #forms>
+                <div class="pt-5">
+                    <TextInput
+                        label="Passkey Name"
+                        v-model="passkeyName"
+                        placeholder="My laptop"
                     />
                 </div>
             </template>
@@ -652,6 +763,7 @@
 import { computed, ref, watch } from "vue";
 
 import { Head, router, useForm } from "@inertiajs/vue3";
+import axios from "axios";
 
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 
@@ -669,6 +781,7 @@ import Column from "primevue/column";
 import Dialog from "primevue/dialog";
 import FileUpload from "primevue/fileupload";
 import { useToast } from "primevue";
+import { usePasskeyRegister } from "@laravel/passkeys/vue";
 import PasswordInput from "../../Components/inputs/PasswordInput.vue";
 import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
@@ -694,6 +807,7 @@ const props = defineProps({
     user: Object,
     agencyOption: Object,
     logs: Object,
+    passkeys: Array,
 });
 
 const profile = ref({
@@ -713,6 +827,8 @@ const selectedPhoto = ref(null);
 const photoPreview = ref(null);
 const uploadingPhoto = ref(false);
 const passwordDialog = ref(false);
+const passkeyDialog = ref(false);
+const passkeyName = ref("");
 const showQRcodeDialog = ref(false);
 const confirmPasswordDialog = ref(false);
 
@@ -747,6 +863,25 @@ const passwordForm = useForm({
 const twoFactorEnabled = ref(props.isTwoFactorEnabled ?? false);
 const pendingTwoFactorState = ref(twoFactorEnabled.value);
 const twoFactorChangeConfirmed = ref(false);
+
+const {
+    register: registerPasskeyWithBrowser,
+    isLoading: passkeyLoading,
+    error: passkeyError,
+    isSupported: passkeySupported,
+} = usePasskeyRegister({
+    onSuccess: () => {
+        passkeyDialog.value = false;
+        passkeyName.value = "";
+        toast.add({
+            severity: "success",
+            summary: "Passkey Added",
+            detail: "Your passkey has been registered successfully.",
+            life: 3000,
+        });
+        router.reload({ only: ["passkeys"], preserveScroll: true });
+    },
+});
 
 const photoDialog = ref(false);
 
@@ -863,6 +998,41 @@ const changePassword = () => {
     });
 };
 
+const registerPasskey = () => {
+    if (passkeyName.value.trim()) {
+        registerPasskeyWithBrowser(passkeyName.value.trim());
+    }
+};
+
+const formatPasskeyDate = (date) => {
+    if (!date) {
+        return "Never";
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    }).format(new Date(date));
+};
+
+const deletePasskey = (passkey) => {
+    if (!window.confirm(`Remove the passkey "${passkey.name}"?`)) {
+        return;
+    }
+
+    router.delete(route("passkey.destroy", passkey.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({
+                severity: "success",
+                summary: "Passkey Removed",
+                detail: "The passkey has been removed from your account.",
+                life: 3000,
+            });
+        },
+    });
+};
+
 const toggleTwoFactor = (newValue) => {
     pendingTwoFactorState.value = newValue;
     confirmPasswordDialog.value = true;
@@ -877,16 +1047,20 @@ const submitConfirmPassword = () => {
             confirmPasswordDialog.value = false;
             confirmPasswordForm.resetAndClearErrors();
             if (pendingTwoFactorState.value) {
-                router.post(route("two-factor.enable"), {}, {
-                    preserveState: true,
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        twoFactorEnabled.value = true;
+                router.post(
+                    route("two-factor.enable"),
+                    {},
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        onSuccess: () => {
+                            twoFactorEnabled.value = true;
+                        },
+                        onError: () => {
+                            twoFactorEnabled.value = false;
+                        },
                     },
-                    onError: () => {
-                        twoFactorEnabled.value = false;
-                    },
-                });
+                );
             } else {
                 router.delete(route("two-factor.disable"), {
                     preserveState: true,

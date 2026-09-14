@@ -19,6 +19,7 @@ use App\Http\Controllers\Web\LocationCityController;
 use App\Http\Controllers\Web\LocationProvinceController;
 use App\Http\Controllers\Web\LocationRegionController;
 use App\Http\Controllers\Web\NotificationController;
+use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\Web\programController;
 use App\Http\Controllers\Web\ReferenceController;
 use App\Http\Controllers\Web\RoleController;
@@ -32,7 +33,6 @@ use App\Http\Controllers\Web\SchoolCampusSemesterController;
 use App\Http\Controllers\Web\SchoolController;
 use App\Http\Controllers\Web\SchoolCoordinatorController;
 use App\Http\Controllers\Web\StatusController;
-use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\Web\UserController;
 use App\Http\Controllers\Web\UserProfileController;
 use App\Http\Controllers\Web\VideoResourceController;
@@ -63,7 +63,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'web'])->group(function () {
     Route::get('/profile', [UserProfileController::class, 'index'])->name('profile');
     Route::put('/profile/update', [UserProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/photo',[UserProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+    Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->name('profile.photo.update');
 });
 
 Route::middleware(['auth', 'web', 'permission'])->group(function () {

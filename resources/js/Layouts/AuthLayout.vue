@@ -369,7 +369,12 @@ import { computed, ref, onMounted, Transition, onUnmounted } from "vue";
 import SidebarLabelMenu from "../Components/menus/SidebarLabelMenu.vue";
 import DefaultToggle from "../Components/toggleswitches/DefaultToggle.vue";
 import { router, usePage } from "@inertiajs/vue3";
+import { useInactivityGuard } from "@/Composables/useInactivityGuard";
 
+useInactivityGuard({
+    inactivityTimeout: 15 * 60 * 1000,
+    warningTimeout: 20,
+});
 const page = usePage();
 const isDark = ref(false);
 const savedSidebar =
