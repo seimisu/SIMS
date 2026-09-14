@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class ScholarPortalDocumentController extends Controller
 {
@@ -21,12 +21,28 @@ class ScholarPortalDocumentController extends Controller
 
     private function proxy(int|string $document, bool $inline)
     {
-        abort_unless(auth()->check(), 403);
+        if (! auth()->check()) {
+            Log::warning('Scholar Portal document proxy rejected unauthenticated request.', [
+                'document' => $document,
+                'mode' => $inline ? 'preview' : 'download',
+                'url' => request()->fullUrl(),
+            ]);
+
+            abort(403);
+        }
 
         $baseUrl = rtrim((string) config('services.scholar_portal.api_base_url'), '/');
         $apiKey = (string) config('services.scholar_portal.file_api_key');
 
-        abort_if($baseUrl === '' || $apiKey === '', 404);
+        if ($baseUrl === '' || $apiKey === '') {
+            Log::warning('Scholar Portal document proxy is missing configuration.', [
+                'document' => $document,
+                'has_base_url' => $baseUrl !== '',
+                'has_api_key' => $apiKey !== '',
+            ]);
+
+            abort(404);
+        }
 
         $portalResponse = Http::withHeaders([
             'X-SIMS-API-Key' => $apiKey,
@@ -35,7 +51,18 @@ class ScholarPortalDocumentController extends Controller
             ->timeout(30)
             ->get($baseUrl.'/api/sims/documents/'.$document);
 
-        abort_unless($portalResponse->successful(), $portalResponse->status());
+        if (! $portalResponse->successful()) {
+            Log::warning('Scholar Portal document proxy request failed.', [
+                'document' => $document,
+                'mode' => $inline ? 'preview' : 'download',
+                'portal_url' => $baseUrl.'/api/sims/documents/'.$document,
+                'portal_status' => $portalResponse->status(),
+                'portal_content_type' => $portalResponse->header('Content-Type'),
+                'portal_body_preview' => substr($portalResponse->body(), 0, 500),
+            ]);
+
+            return response('Unable to retrieve the document from the Scholar Portal.', 502);
+        }
 
         $contentType = $portalResponse->header('Content-Type') ?: 'application/octet-stream';
         $filename = $this->filename($portalResponse->header('Content-Disposition'), $document);
