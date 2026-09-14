@@ -13,16 +13,28 @@ class Batches extends Model
         'region',
         'academic_term',
         'term_id',
-        'level_id',
         'school_year',
         'is_lock',
+        'status',
+        'generated_excel_path',
+        'generated_excel_name',
+        'generated_excel_at',
+        'source',
+        'is_historical',
+        'imported_by',
+        'imported_at',
+        'import_file_path',
+        'import_file_name',
     ];
-
-    public $timestamps = false;
 
     public function logs()
     {
         return $this->hasMany(BatchLogs::class, 'batch_id');
+    }
+
+    public function latestLog()
+    {
+        return $this->hasOne(BatchLogs::class, 'batch_id')->latestOfMany('created_at');
     }
 
     public function recipients()
@@ -30,13 +42,24 @@ class Batches extends Model
         return $this->hasMany(BatchRecipients::class, 'batch_id');
     }
 
+    public function activityLogs()
+    {
+        return $this->hasMany(PayrollBatchActivityLog::class, 'batch_id');
+    }
+
+    public function revisions()
+    {
+        return $this->hasMany(PayrollBatchRevision::class, 'batch_id');
+    }
+
+    public function monthlyCredits()
+    {
+        return $this->hasMany(PayrollBatchMonthlyCredit::class, 'batch_id');
+    }
+
     public function term()
     {
         return $this->belongsTo(ListReferences::class, 'term_id');
     }
 
-    public function level()
-    {
-        return $this->belongsTo(ListReferences::class, 'level_id');
-    }
 }

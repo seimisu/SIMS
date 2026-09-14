@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'file_preview' => [
+        'scholar_portal_base_url' => env('SCHOLAR_PORTAL_FILE_BASE_URL', 'http://172.16.8.98:85'),
+    ],
+
 ];

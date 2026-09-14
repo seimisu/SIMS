@@ -14,7 +14,7 @@ class LocationRegions extends Model
         'is_active',
         'is_delete',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
 
     protected $appends = ['island_array'];
@@ -30,5 +30,15 @@ class LocationRegions extends Model
     public function provinceCode()
     {
         return $this->hasMany(LocationProvinces::class, 'region_code', 'code');
+    }
+
+    public function scholarAddress()
+    {
+        return $this->hasMany(ScholarAddresses::class, 'region_code', 'code');
+    }
+
+    public function scholars()
+    {
+        return $this->hasManyThrough(Scholars::class, ScholarAddresses::class, 'region_code', 'id', 'code', 'scholar_id');
     }
 }

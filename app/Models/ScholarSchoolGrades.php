@@ -10,7 +10,11 @@ class ScholarSchoolGrades extends Model
         'term_record_id',
         'subject_id',
         'remarks',
+        'input_grade',
         'grade_id',
+        'is_incomplete',
+        'is_drop',
+        'is_withdrawn',
         'is_deleted',
     ];
 
@@ -31,15 +35,4 @@ class ScholarSchoolGrades extends Model
         return $this->belongsTo(SchoolCampusGrades::class, 'grade_id');
     }
 
-    public function gradeRequests()
-    {
-        return $this->hasManyThrough(
-            StudentGradeRequest::class,
-            StudentGrade::class,
-            'term_record_id',      // Foreign key on StudentGrade
-            'student_grades_id',   // Foreign key on StudentGradeRequest
-            'term_record_id',      // Local key on ScholarSchoolGrades
-            'id'                   // Local key on StudentGrade
-        )->where('student_grade_requests.subject_id', $this->subject_id);
-    }
 }

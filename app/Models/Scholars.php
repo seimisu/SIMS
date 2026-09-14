@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Scholars extends Model
 {
+    protected $connection = 'pgsql';
+
     protected $fillable = [
         'spas_no',
         'status_id',
@@ -25,6 +27,11 @@ class Scholars extends Model
         'validate_status',
     ];
 
+    public function logs()
+    {
+        return $this->hasMany(ActivityLogs::class, 'scholar_id', 'id');
+    }
+
     public function payrolls()
     {
         return $this->hasMany(BatchRecipients::class, 'scholar_id', 'id');
@@ -42,12 +49,12 @@ class Scholars extends Model
 
     public function profileRequest()
     {
-        return $this->hasMany(StudentProfileRequest::class, 'spas_no', 'spas_no');
+        return $this->hasMany(StudentProfileRequest::class, 'scholar_id', 'id');
     }
 
     public function landbankRequest()
     {
-        return $this->hasMany(studentLandbankRequest::class, 'spas_no', 'spas_no');
+        return $this->hasMany(studentLandbankRequest::class, 'scholar_id', 'id');
     }
 
     public function status()
@@ -83,6 +90,11 @@ class Scholars extends Model
     public function address()
     {
         return $this->hasOne(ScholarAddresses::class, 'scholar_id', 'id');
+    }
+
+    public function addressCurrent()
+    {
+        return $this->hasOne(ScholarAddressCurrent::class, 'scholar_id', 'id');
     }
 
     public function parent()

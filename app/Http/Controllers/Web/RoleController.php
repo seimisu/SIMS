@@ -7,6 +7,7 @@ use App\Http\Requests\Web\RoleRequest;
 use App\Models\ListPermission;
 use App\Models\ListRole;
 use App\References\ListClass;
+use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -65,6 +66,10 @@ class RoleController extends Controller
                 'updated_at'    => now()
             ]);
         } elseif ($type == 'permissions') {
+            if (! app(SystemPermissions::class)->can(Auth::user(), 'roles.assign-permissions')) {
+                abort(403, 'Unauthorized');
+            }
+
             $find->permissions()->sync($data['permissions'] ?? []);
         } else {
             $find->update([

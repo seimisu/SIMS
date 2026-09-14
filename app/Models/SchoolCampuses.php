@@ -40,6 +40,11 @@ class SchoolCampuses extends Model
         return $this->hasOne(SchoolCampusAddresses::class, 'campus_id', 'id');
     }
 
+    public function scholarCampus()
+    {
+        return $this->hasMany(ScholarSchoolInfos::class, 'campus_id', 'id');
+    }
+
     public function term()
     {
         return $this->belongsTo(ListReferences::class, 'term_id', 'id');

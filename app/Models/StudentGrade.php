@@ -26,8 +26,4 @@ class StudentGrade extends Model
         return $this->belongsTo(SchoolCampusGrades::class, 'grades_id');
     }
 
-    public function gradeRequests()
-    {
-        return $this->hasMany(StudentGradeRequest::class, 'student_grades_id', 'id');
-    }
 }

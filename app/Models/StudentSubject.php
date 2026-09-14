@@ -16,8 +16,4 @@ class StudentSubject extends Model
         return $this->belongsTo(ScholarTerm::class, 'term_record_id');
     }
 
-    public function subjectRequests()
-    {
-        return $this->hasMany(StudentSubjectRequest::class, 'student_subject_id', 'id');
-    }
 }

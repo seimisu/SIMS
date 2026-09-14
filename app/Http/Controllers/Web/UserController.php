@@ -45,6 +45,7 @@ class UserController extends Controller
         return Inertia::render('Web/userPage', [
             'users' => $user,
             'roleOption' => $reference->getRoles(false),
+            'agencyOption' => $reference->getAgencies(false),
             'schoolOption' => SchoolCampuses::where([
                 'is_delete' => false,
                 'is_active' => true,
@@ -74,6 +75,9 @@ class UserController extends Controller
         $user->profile()->create([
             'fname' => Str::lower($data['fname']),
             'lname' => Str::lower($data['lname']),
+            'contact_no' => $data['contact_no'] ?? null,
+            'designation' => isset($data['designation']) ? Str::lower($data['designation']) : null,
+            'agency_id' => $data['agency']['id'] ?? null,
         ]);
 
         Mail::to($data['email'])->send(new UserCreatedMail($user, $activation));
@@ -131,6 +135,9 @@ class UserController extends Controller
                 $find->profile()->update([
                     'fname' => $data['fname'],
                     'lname' => $data['lname'],
+                    'contact_no' => $data['contact_no'] ?? null,
+                    'designation' => isset($data['designation']) ? Str::lower($data['designation']) : null,
+                    'agency_id' => $data['agency']['id'] ?? null,
                 ]);
                 break;
         }

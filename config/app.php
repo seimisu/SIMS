@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'scholar_portal_url' => env('SCHOLAR_PORTAL_URL', env('APP_URL', 'http://localhost')),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
@@ -98,6 +100,10 @@ return [
     'cipher' => 'AES-256-CBC',
 
     'key' => env('APP_KEY'),
+
+    'external_encryption_secret' => env('ENCRYPTION_SECRET'),
+
+    'external_encryption_salt' => env('ENCRYPTION_SALT'),
 
     'previous_keys' => [
         ...array_filter(

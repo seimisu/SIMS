@@ -202,70 +202,6 @@
                         </Popover>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-2">
-                    <ToggleButton
-                        v-model="filterProfileRequest"
-                        size="small"
-                        :disabled="page.props?.request_cnt?.profile == 0"
-                        class="!rounded-xl h-8.5"
-                        @update:model-value="toggleRequest"
-                    >
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Profile Request</div>
-                                <Badge
-                                    v-if="page.props?.request_cnt?.profile != 0"
-                                    :value="page.props?.request_cnt?.profile"
-                                    size="small"
-                                    severity="danger"
-                                ></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                    <ToggleButton
-                        v-model="filterLandbankRequest"
-                        size="small"
-                        :disabled="page.props?.request_cnt?.landbank == 0"
-                        class="!rounded-xl h-8.5"
-                        @update:model-value="toggleRequest"
-                    >
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Landbank Request</div>
-                                <Badge
-                                    v-if="
-                                        page.props?.request_cnt?.landbank != '0'
-                                    "
-                                    :value="page.props?.request_cnt?.landbank"
-                                    size="small"
-                                    severity="danger"
-                                ></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                    <ToggleButton
-                        v-model="filterTorRequest"
-                        size="small"
-                        :disabled="page.props?.request_cnt?.grades == 0"
-                        class="!rounded-xl h-8.5"
-                        @update:model-value="toggleRequest"
-                    >
-                        <template #default>
-                            <div class="flex items-center gap-2">
-                                <div class="text-xs">Grade Submitted</div>
-                                <Badge
-                                    v-if="
-                                        page.props?.request_cnt?.grades != '0'
-                                    "
-                                    :value="page.props?.request_cnt?.grades"
-                                    size="small"
-                                    severity="danger"
-                                ></Badge>
-                            </div>
-                        </template>
-                    </ToggleButton>
-                </div>
             </div>
             <DefaultSelectionTable
                 :items="page.props.scholars.data"
@@ -282,31 +218,7 @@
                     <template #body="props">
                         <div class="flex items-center gap-2">
                             <div class="">
-                                <OverlayBadge
-                                    severity="danger"
-                                    class="inline-flex"
-                                    v-if="props.data.hasRequest"
-                                >
-                                    <Avatar
-                                        :label="
-                                            props.data.fullname
-                                                .charAt(0)
-                                                .toUpperCase()
-                                        "
-                                        style="
-                                            background-color: #dee9fc;
-                                            color: #1a2551;
-                                        "
-                                        class="!w-[40px] !h-[40px] !rounded-xl"
-                                        :image="
-                                            props.data.photo == null
-                                                ? null
-                                                : props.data.photo
-                                        "
-                                    />
-                                </OverlayBadge>
                                 <Avatar
-                                    v-else
                                     :label="
                                         props.data.fullname
                                             .charAt(0)
@@ -333,7 +245,7 @@
                                     <div># {{ props.data.spas_no }}</div>
                                 </div>
                                 <div class="flex gap-1 items-center">
-                                    <div class="font-medium">
+                                    <div class="font-medium uppercase">
                                         {{ props.data.fullname }}
                                     </div>
                                     <div
@@ -362,7 +274,7 @@
                         </div>
                     </template>
                 </Column>
-                <Column header="Regions">
+                <Column header="Region">
                     <template #body="props">
                         <div class="uppercase text-xs font-medium">
                             {{ props.data.agency }}
@@ -372,7 +284,7 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Types</div>
+                            <div class="font-semibold">Type</div>
                         </div>
                     </template>
                     <template #body="props">
@@ -384,7 +296,7 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Programs</div>
+                            <div class="font-semibold">Program</div>
                         </div>
                     </template>
                     <template #body="props">
@@ -396,19 +308,7 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Award Years</div>
-                        </div>
-                    </template>
-                    <template #body="props">
-                        <div class="text-center text-xs font-medium">
-                            {{ props.data.awardyear }}
-                        </div>
-                    </template>
-                </Column>
-                <Column>
-                    <template #header>
-                        <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Status</div>
+                            <div class="font-semibold">Progress Status</div>
                         </div>
                     </template>
                     <template #body="props">
@@ -471,54 +371,20 @@
                                 <template #item="{ item, props }">
                                     <a
                                         v-ripple
-                                        class="flex items-center !text-gray-500"
+                                        class="flex items-center text-gray-500!"
                                         v-bind="props.action"
                                     >
-                                        <div>
+                                        <div class="text-gray-400">
                                             <component
                                                 :is="item.icon"
                                                 size="20"
                                                 stroke-width="1.5"
                                             ></component>
                                         </div>
-                                        <span class="ml-2 text-xs">{{
-                                            item.label
-                                        }}</span>
-                                        <Badge
-                                            v-if="
-                                                selectedRow?.count?.profile !=
-                                                    '0' &&
-                                                item.label == 'Profile Request'
-                                            "
-                                            class="ml-auto"
-                                            size="small"
-                                            severity="danger"
-                                            :value="selectedRow?.count?.profile"
-                                        />
-                                        <Badge
-                                            v-if="
-                                                selectedRow?.count?.landbank !=
-                                                    '0' &&
-                                                item.label == 'Landbank Request'
-                                            "
-                                            class="ml-auto"
-                                            size="small"
-                                            severity="danger"
-                                            :value="
-                                                selectedRow?.count?.landbank
-                                            "
-                                        />
-                                        <Badge
-                                            v-if="
-                                                selectedRow?.count?.grades !=
-                                                    '0' &&
-                                                item.label == 'Grade Submitted'
-                                            "
-                                            class="ml-auto"
-                                            size="small"
-                                            severity="danger"
-                                            :value="selectedRow?.count?.grades"
-                                        />
+                                        <span
+                                            class="ml-2 text-xs dark:text-white"
+                                            >{{ item.label }}</span
+                                        >
                                         <Badge
                                             v-if="
                                                 selectedRow.activationRequested &&
@@ -536,26 +402,10 @@
                 </Column>
             </DefaultSelectionTable>
         </div>
-        <DialogScholarDetailRequest
-            v-if="drawerDetailsRequest"
-            v-model="drawerDetailsRequest"
-        />
-        <DialogScholarGradeRequest
-            v-if="drawerGradeRequest"
-            v-model="drawerGradeRequest"
-        />
         <DrawerScholar1Module v-if="drawerScholar" v-model="drawerScholar" />
-        <DialogScholarLandbankRequest
-            v-if="dialogLandbankRequest"
-            v-model="dialogLandbankRequest"
-        />
     </AuthLayout>
 </template>
 <script setup>
-import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
-import DialogScholarDetailRequest from "../../Modules/Others/DialogScholarDetailRequest.vue";
-import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
-import DrawerScholarRequestModule from "../../Modules/Others/DrawerScholar1Module.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
@@ -592,15 +442,7 @@ const filterSchool = ref(page.props?.filterSchool ?? null);
 const filterProgram = ref(null);
 const filterSub = ref(null);
 const filterStatus = ref(null);
-const filterSubjectRequest = ref(false);
-const filterGradeRequest = ref(false);
-const filterProfileRequest = ref(false);
-const filterLandbankRequest = ref(false);
-const filterTorRequest = ref(false);
-const drawerDetailsRequest = ref(false);
-const drawerGradeRequest = ref(false);
 const drawerScholar = ref(false);
-const dialogLandbankRequest = ref(false);
 const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
@@ -646,63 +488,6 @@ const menuItems = computed((item) => {
             },
         },
         {
-            label: "Profile Request",
-            icon: TablerIcons.IconUserQuestion,
-            class: "text-cyan-500",
-
-            command: () => {
-                router.reload({
-                    only: ["personalRequest"],
-                    data: { id: selectedRow.value.id },
-                    preserveState: false,
-                    showProgress: true,
-                    replace: true,
-                    onFinish: () => {
-                        drawerDetailsRequest.value = true;
-                    },
-                });
-            },
-        },
-        {
-            label: "Landbank Request",
-            icon: TablerIcons.IconCreditCard,
-            class: "text-cyan-500",
-            command: () => {
-                router.reload({
-                    only: ["landbankRequest"],
-                    data: { id: selectedRow.value.id },
-                    preserveState: false,
-                    showProgress: true,
-                    replace: true,
-                    onFinish: () => {
-                        dialogLandbankRequest.value = true;
-                    },
-                });
-            },
-        },
-        {
-            label: "Grade Submitted",
-            icon: TablerIcons.IconId,
-            disabled: selectedRow.value.count.grades == "0" ? true : false,
-            class: "text-cyan-500",
-            command: () => {
-                router.reload({
-                    only: ["subjectRequest"],
-                    data: { id: selectedRow.value.id },
-
-                    preserveState: false,
-                    showProgress: true,
-                    replace: true,
-                    onFinish: () => {
-                        drawerGradeRequest.value = true;
-                    },
-                });
-            },
-        },
-        {
-            separator: true,
-        },
-        {
             label: "Chat Support",
             icon: TablerIcons.IconMessageChatbot,
             class: "text-cyan-500",
@@ -716,7 +501,7 @@ const menuItems = computed((item) => {
     ];
 });
 
-const loadPage = (page) => {
+const loadPage = (page, options = {}) => {
     router.get(
         route("scholars"),
         {
@@ -726,15 +511,6 @@ const loadPage = (page) => {
             ...(filterProgram.value ? { programs: filterProgram.value } : {}),
             ...(filterSub.value ? { sub: filterSub.value } : {}),
             ...(filterStatus.value ? { status: filterStatus.value } : {}),
-            ...(filterProfileRequest.value
-                ? { profileRequest: filterProfileRequest.value }
-                : {}),
-            ...(filterLandbankRequest.value
-                ? { landbankRequest: filterLandbankRequest.value }
-                : {}),
-            ...(filterTorRequest.value
-                ? { gradeRequest: filterTorRequest.value }
-                : {}),
         },
         {
             preserveState: true,
@@ -757,6 +533,9 @@ const toggleScholarDetails = (event) => {
             "yearOptions",
             "schoolOptions",
             "courseOptions",
+            "curriculumOptions",
+            "subjectOptions",
+            "gradeOptions",
         ],
         data: { id: event.id, campus: null },
         preserveState: false,

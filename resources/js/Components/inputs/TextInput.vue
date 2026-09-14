@@ -2,7 +2,12 @@
     <div class="w-full flex flex-col">
         <div class="text-sm font-medium" v-show="label">
             {{ label }}
-            <span class="text-red-600 font-semibold" v-if="errorMark">*</span>
+            <span
+                class="text-red-600 font-semibold"
+                v-if="errorMark"
+                v-tooltip.top="error"
+                >*</span
+            >
         </div>
 
         <InputText
@@ -11,6 +16,9 @@
             v-model="modelValue"
             fluid
             :disabled="disabled"
+            :step="step"
+            :min="min"
+            :max="max"
             autocomplete="off"
             :pt="{
                 root: {
@@ -54,6 +62,18 @@ defineProps({
     disabled: {
         type: Boolean,
         default: false,
+    },
+    step: {
+        type: [String, Number],
+        default: null,
+    },
+    min: {
+        type: [String, Number],
+        default: null,
+    },
+    max: {
+        type: [String, Number],
+        default: null,
     },
     errorMark: {
         type: [Boolean, String],

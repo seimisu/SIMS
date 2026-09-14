@@ -3,8 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ScholarUploadedNotification extends Notification
@@ -12,6 +10,7 @@ class ScholarUploadedNotification extends Notification
     use Queueable;
 
     public $regionStaff;
+
     public $region;
 
     public function __construct($regionStaff, $region)

@@ -1,5 +1,5 @@
 <template>
-    <Toast />
+    <span class="hidden"></span>
 </template>
 <script setup>
 import { useToast } from "primevue";

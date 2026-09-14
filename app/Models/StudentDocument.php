@@ -10,5 +10,10 @@ class StudentDocument extends Model
 
     protected $connection = 'scholars';
 
-    protected $table = 'student_documents';
+    protected $table = 'scholar_documents';
+
+    public function getTermAttribute()
+    {
+        return $this->term_record_id;
+    }
 }

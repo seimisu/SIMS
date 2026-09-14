@@ -1,7 +1,7 @@
 <template>
     <DefaultDrawer v-model:visible="drawer" size="!w-[50rem]">
         <template #header>
-            <div class="flex items-center gap-2 !sticky !top-0">
+            <div class="flex items-center gap-2 !sticky !top-0 text-slate-900 dark:text-gray-100">
                 <div class="">
                     <Avatar
                         :label="
@@ -16,7 +16,7 @@
                 </div>
 
                 <div class="flex flex-col">
-                    <div class="font-bold flex items-center gap-1 capitalize">
+                    <div class="font-bold flex items-center gap-1 capitalize text-slate-900 dark:text-gray-100">
                         <div>
                             <span>{{
                                 page.props?.schoolDetail.generated_name
@@ -39,7 +39,7 @@
                             "
                         ></DefaultButton>
                     </div>
-                    <div class="text-xs flex items-center gap-1 text-gray-500">
+                    <div class="text-xs flex items-center gap-1 text-gray-500 dark:text-gray-300">
                         <IconMapPin size="18" />
                         <div>
                             {{
@@ -102,7 +102,7 @@
                 <div class="flex flex-col gap-5 px-5 py-2">
                     <div class="flex justify-between gap-2">
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconUserStar size="20" />
                             </div>
                             <div
@@ -110,11 +110,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>PRESIDENT:</div>
                                 </div>
-                                <div class="text-sm font-light capitalize">
+                                <div class="text-sm font-light capitalize text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info?.dean ??
                                         "Not yet provided"
@@ -129,7 +129,7 @@
                             ></TextInput>
                         </div>
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconUserQuestion size="20" />
                             </div>
                             <div
@@ -137,12 +137,12 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>REGISTRAR:</div>
                                 </div>
                                 <div
-                                    class="text-sm font-light capitalize"
+                                    class="text-sm font-light capitalize text-slate-700 dark:text-gray-200"
                                     v-if="
                                         page.props?.schoolDetail?.info
                                             ?.registrar
@@ -152,7 +152,7 @@
                                         page.props?.schoolDetail.info.registrar
                                     }}
                                 </div>
-                                <div v-else class="text-sm font-light">
+                                <div v-else class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     Not yet provided
                                 </div>
                             </div>
@@ -167,7 +167,7 @@
                     </div>
                     <div class="flex justify-between gap-2">
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconPhone size="20" />
                             </div>
                             <div
@@ -175,11 +175,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>CONTACT NO:</div>
                                 </div>
-                                <div class="text-sm font-light">
+                                <div class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info
                                             ?.contact ?? "Not yet provided"
@@ -194,7 +194,7 @@
                             </TextInput>
                         </div>
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconAt size="20" />
                             </div>
                             <div
@@ -202,11 +202,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>EMAIL:</div>
                                 </div>
-                                <div class="text-sm font-light">
+                                <div class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info?.email ??
                                         "Not yet provided"
@@ -222,7 +222,7 @@
                     </div>
                 </div>
                 <Divider align="left" type="dashed" class="!m-0">
-                    <span class="text-xs font-semibold"
+                    <span class="text-xs font-semibold text-slate-800 dark:text-gray-100"
                         >Curriculum Management</span
                     >
                 </Divider>
@@ -271,12 +271,6 @@
                                 v-if="canManageSchools"
                                 :icon="IconReport"
                                 outlined
-                                :disabled="
-                                    page.props?.schoolDetail?.grading_array
-                                        .name != 'Percent Grading'
-                                        ? false
-                                        : true
-                                "
                                 @click="gradeSystemDialog = true"
                                 tooltip="Grade System"
                                 size="small"
@@ -440,19 +434,23 @@
                         <div class="flex flex-col gap-5 mt-5">
                             <TextInput
                                 v-model="gradeForm.grade"
-                                label="Grade"
-                                placeholder="e.g. A, B, C, etc."
+                                label="Label / Classification"
+                                placeholder="e.g. Passed, Failed, Incomplete, Withdrawn"
                             ></TextInput>
                             <div class="flex gap-5 items-center">
                                 <TextInput
                                     v-model="gradeForm.lower"
+                                    type="number"
+                                    step="0.01"
                                     label="Lower Limit"
-                                    placeholder="e.g. 90, 80, etc."
+                                    placeholder="e.g. 1.00"
                                 ></TextInput>
                                 <TextInput
                                     v-model="gradeForm.upper"
+                                    type="number"
+                                    step="0.01"
                                     label="Upper Limit"
-                                    placeholder="e.g. 100, 89, etc."
+                                    placeholder="e.g. 2.99"
                                 ></TextInput>
                             </div>
                         </div>
@@ -496,6 +494,20 @@
                                 />
                             </div>
                         </div>
+                        <div class="flex flex-col">
+                            <Divider type="dashed" />
+                            <div class="flex justify-between items-center">
+                                <div class="text-sm">
+                                    Is it a withdrawn grade?
+                                </div>
+
+                                <DefaultToggle
+                                    v-model="gradeForm.withdrawn"
+                                    :check-icon="IconCheck"
+                                    :un-check-icon="IconX"
+                                />
+                            </div>
+                        </div>
                     </template>
                 </ToolbarModule>
                 <DefaultScrollTable :items="page.props.schoolDetail?.grades">
@@ -533,6 +545,17 @@
                                             stroke-width="2"
                                         />
                                         <div>DROPPED</div>
+                                    </div>
+                                </div>
+                                <div v-else-if="props.data.is_withdrawn">
+                                    <div
+                                        class="font-semibold flex items-center gap-1 text-purple-600 px-4 rounded-xl"
+                                    >
+                                        <IconCircleX
+                                            size="20"
+                                            stroke-width="2"
+                                        />
+                                        <div>WITHDRAWN</div>
                                     </div>
                                 </div>
                                 <div v-else>
@@ -721,9 +744,9 @@
             />
         </template>
         <template #forms>
-            <div class="mt-5">
-                <Tabs :value="0">
-                    <TabList>
+            <div class="mt-5 dark:bg-gray-900 dark:text-gray-100">
+                <Tabs :value="0" class="school-curriculum-tabs">
+                    <TabList class="dark:!bg-gray-900">
                         <Tab
                             v-for="(curItem, curKey) in curriculumForm.multi"
                             :key="curKey"
@@ -814,7 +837,7 @@
                             ></DefaultButton>
                         </div>
                     </TabList>
-                    <TabPanels class="!p-0 flex flex-col gap-3 mt-3">
+                    <TabPanels class="!p-0 flex flex-col gap-3 mt-3 dark:!bg-gray-900">
                         <TabPanel
                             v-for="(curItem, curKey) in curriculumForm.multi"
                             :key="curKey"
@@ -872,6 +895,11 @@
                                 <Panel
                                     toggleable
                                     :collapsed="year != 1 ? true : false"
+                                    :pt="{
+                                        root: 'dark:!border-gray-700 dark:!bg-gray-800',
+                                        header: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                                        content: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                                    }"
                                 >
                                     <template #header>
                                         <div
@@ -950,7 +978,7 @@
                                                         '!rounded-t-lg',
                                                     ],
                                                     content: [
-                                                        '!border-x-1 !rounded-bl-lg !rounded-br-lg !border-b-1  !border-gray-200',
+                                                        '!border-x-1 !rounded-bl-lg !rounded-br-lg !border-b-1 !border-gray-200 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
                                                     ],
                                                 }"
                                             >
@@ -1062,7 +1090,7 @@
                                                             class="flex items-center gap-2 pb-5"
                                                         >
                                                             <div
-                                                                class="bg-slate-100 text-slate-500 p-1 rounded-lg border-1 border-slate-500 shadow-slate-500"
+                                                                class="bg-slate-100 text-slate-500 p-1 rounded-lg border-1 border-slate-500 shadow-slate-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                                                             >
                                                                 <IconBooks
                                                                     stroke-width="2"
@@ -1079,7 +1107,7 @@
                                                                     semester
                                                                 </div>
                                                                 <div
-                                                                    class="text-xs text-gray-400 font-light"
+                                                                    class="text-xs text-gray-400 font-light dark:text-gray-400"
                                                                 >
                                                                     This section
                                                                     displays all
@@ -1354,8 +1382,16 @@ const selectedRow = ref(null);
 const menu = ref(null);
 const menuGrade = ref(null);
 const hideRemoveButton = ref("create");
-const { can } = usePermissions();
-const canManageSchools = computed(() => can("schools.manage"));
+const { canAny } = usePermissions();
+const canManageSchools = computed(() =>
+    canAny([
+        "schools.create",
+        "schools.update",
+        "schools.delete",
+        "schools.curriculum.copy",
+        "schools.curriculum.paste",
+    ]),
+);
 
 const props = defineProps({
     id: [Number, String],
@@ -1500,6 +1536,7 @@ const gradeForm = useForm({
     fail: false,
     incomplete: false,
     drop: false,
+    withdrawn: false,
 });
 
 const templateForm = useForm({
@@ -1552,6 +1589,7 @@ const toggleModal = (res) => {
         gradeForm.fail = selectedRow.value.is_failed;
         gradeForm.drop = selectedRow.value.is_drop;
         gradeForm.incomplete = selectedRow.value.is_incomplete;
+        gradeForm.withdrawn = selectedRow.value.is_withdrawn;
     }
 
     if (res.class == "course") {
@@ -2101,6 +2139,7 @@ watch(
         if (val) {
             gradeForm.fail = false;
             gradeForm.incomplete = false;
+            gradeForm.withdrawn = false;
         }
     },
 );
@@ -2111,6 +2150,7 @@ watch(
         if (val) {
             gradeForm.drop = false;
             gradeForm.incomplete = false;
+            gradeForm.withdrawn = false;
         }
     },
 );
@@ -2121,6 +2161,18 @@ watch(
         if (val) {
             gradeForm.drop = false;
             gradeForm.fail = false;
+            gradeForm.withdrawn = false;
+        }
+    },
+);
+
+watch(
+    () => gradeForm.withdrawn,
+    (val) => {
+        if (val) {
+            gradeForm.drop = false;
+            gradeForm.fail = false;
+            gradeForm.incomplete = false;
         }
     },
 );

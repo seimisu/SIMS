@@ -61,11 +61,11 @@
                     </template>
                 </ToolbarModule>
                 <DefaultTable
-                    :items="page.props.status.data"
+                    :items="page.props.status?.data ?? []"
                     :pagination="{
-                        total: page.props.status.total,
-                        perPage: page.props.status.per_page,
-                        currentPage: page.props.status.current_page,
+                        total: page.props.status?.total ?? 0,
+                        perPage: page.props.status?.per_page ?? 10,
+                        currentPage: page.props.status?.current_page ?? 1,
                     }"
                     @paginate="loadPage"
                 >
@@ -74,11 +74,12 @@
                             <div
                                 :class="[
                                     'flex items-center gap-1 w-fit',
-                                    props.data.color_array.textColor,
+                                    props.data.color_array?.textColor ??
+                                        'text-slate-600',
                                 ]"
                             >
                                 <component
-                                    :is="TablerIcons[props.data.icon]"
+                                    :is="TablerIcons[props.data.icon] ?? IconLock"
                                     size="20"
                                 />
                                 <div class="capitalize">

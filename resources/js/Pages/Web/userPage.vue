@@ -44,6 +44,25 @@
                                 label="Email"
                                 type="email"
                             ></TextInput>
+                            <template v-if="userForm.id">
+                                <TextInput
+                                    v-model="userForm.contact_no"
+                                    label="Contact Number"
+                                ></TextInput>
+                                <TextInput
+                                    v-model="userForm.designation"
+                                    label="Designation"
+                                    capitalize
+                                ></TextInput>
+                                <SelectInput
+                                    label="Agency"
+                                    v-model="userForm.agency"
+                                    :options="page.props.agencyOption"
+                                    :clearable="true"
+                                    filter
+                                    capitalize
+                                ></SelectInput>
+                            </template>
 
                             <SelectInput
                                 label="Role"
@@ -267,6 +286,9 @@ const userForm = useForm({
     lname: null,
     email: null,
     role: null,
+    contact_no: null,
+    designation: null,
+    agency: null,
     school: null,
     isActive: false,
 });
@@ -326,6 +348,9 @@ const toggleModal = (res) => {
         userForm.lname = res.data.profile.lname;
         userForm.email = res.data.email;
         userForm.role = res.data.role_array;
+        userForm.contact_no = res.data.profile?.contact_no;
+        userForm.designation = res.data.profile?.designation;
+        userForm.agency = res.data.profile?.agency_array;
         userForm.school = res.data.school_array;
     }
 
