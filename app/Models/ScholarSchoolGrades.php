@@ -10,7 +10,11 @@ class ScholarSchoolGrades extends Model
         'term_record_id',
         'subject_id',
         'remarks',
+        'input_grade',
         'grade_id',
+        'is_incomplete',
+        'is_drop',
+        'is_withdrawn',
         'is_deleted',
     ];
 

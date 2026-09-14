@@ -20,13 +20,14 @@ class ScholarActivationService
 
         $activation = Str::random(60);
 
+        $portalUrl = rtrim(config('app.scholar_portal_url'), '/');
+        $url = $portalUrl.'/activate?token='.$activation;
+        Mail::to($scholar->profile->email)
+            ->send(new activationLinkMail($url));
+
         $scholar->update([
             'activation_token' => $activation,
         ]);
-
-        $url = 'http://172.16.8.98:85/activation?token='.$activation;
-        Mail::to($scholar->profile->email)
-            ->send(new activationLinkMail($url));
 
         return [
             'status' => 'success',

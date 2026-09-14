@@ -28,6 +28,7 @@ use App\Models\User;
 use App\Notifications\ScholarUploadedNotification;
 use App\Notifications\ValidatedFilesNotification;
 use App\References\LocationClass;
+use App\Services\Academic\CampusGradeResolver;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Exception;
@@ -490,8 +491,10 @@ class ScholarReviewController extends Controller
             'deleted_subjects' => ['nullable', 'array'],
             'deleted_subjects.*' => ['integer'],
             'subjects.*.id' => ['nullable', 'integer'],
-            'subjects.*.grade' => ['nullable', 'array'],
-            'subjects.*.grade.id' => ['nullable', 'integer'],
+            'subjects.*.input_grade' => ['nullable'],
+            'subjects.*.is_incomplete' => ['nullable', 'boolean'],
+            'subjects.*.is_drop' => ['nullable', 'boolean'],
+            'subjects.*.is_withdrawn' => ['nullable', 'boolean'],
             'subjects.*.subject' => ['required', 'array'],
             'subjects.*.subject.id' => ['required', 'integer'],
         ]);
@@ -538,6 +541,14 @@ class ScholarReviewController extends Controller
                 'level_id' => $data['level']['id'] ?? $termRecord->level_id,
                 'academic_year' => $data['academic_year'] ?? $termRecord->academic_year,
             ])->save();
+            $termRecord->load('schoolInfo');
+            $campusId = $termRecord->schoolInfo?->campus_id;
+
+            if (! $campusId) {
+                throw ValidationException::withMessages([
+                    'subjects' => ['Unable to resolve the campus for this academic record.'],
+                ]);
+            }
 
             if (! empty($data['deleted_subjects'])) {
                 ScholarSchoolGrades::where('term_record_id', $termRecordId)
@@ -545,15 +556,26 @@ class ScholarReviewController extends Controller
                     ->update(['is_deleted' => true]);
             }
 
+            $gradeResolver = app(CampusGradeResolver::class);
+
             foreach ($data['subjects'] as $key => $value) {
-                $gradeId = $value['grade']['id'] ?? null;
+                $isIncomplete = (bool) ($value['is_incomplete'] ?? false);
+                $isDrop = (bool) ($value['is_drop'] ?? false);
+                $isWithdrawn = (bool) ($value['is_withdrawn'] ?? false);
+                $inputGrade = ($isIncomplete || $isDrop || $isWithdrawn) ? null : ($value['input_grade'] ?? null);
+                $matchedGrade = $gradeResolver->resolve($campusId, $inputGrade, $isIncomplete, $isDrop, $isWithdrawn);
+                $gradeId = $matchedGrade?->id;
 
                 if (! empty($value['id'])) {
                     ScholarSchoolGrades::where('term_record_id', $termRecordId)
                         ->whereKey($value['id'])
                         ->update([
                             'subject_id' => $value['subject']['id'],
+                            'input_grade' => $inputGrade,
                             'grade_id' => $gradeId,
+                            'is_incomplete' => $isIncomplete,
+                            'is_drop' => $isDrop,
+                            'is_withdrawn' => $isWithdrawn,
                             'is_deleted' => false,
                         ]);
 
@@ -566,7 +588,11 @@ class ScholarReviewController extends Controller
                         'subject_id' => $value['subject']['id'],
                     ],
                     [
+                        'input_grade' => $inputGrade,
                         'grade_id' => $gradeId,
+                        'is_incomplete' => $isIncomplete,
+                        'is_drop' => $isDrop,
+                        'is_withdrawn' => $isWithdrawn,
                         'is_deleted' => false,
                     ]
                 );
@@ -664,7 +690,11 @@ class ScholarReviewController extends Controller
                 ->map(fn ($subject) => [
                     'id' => $subject->id,
                     'subject_id' => $subject->subject_id,
+                    'input_grade' => $subject->input_grade,
                     'grade_id' => $subject->grade_id,
+                    'is_incomplete' => (bool) $subject->is_incomplete,
+                    'is_drop' => (bool) $subject->is_drop,
+                    'is_withdrawn' => (bool) $subject->is_withdrawn,
                     'label' => $this->academicRecordSubjectLogLabel($subject),
                 ])
                 ->all(),
@@ -676,9 +706,18 @@ class ScholarReviewController extends Controller
         $code = $subject->subject?->subject_code ?? 'No Code';
         $name = $subject->subject?->name ?? 'No Subject';
         $unit = $subject->subject?->unit ?? '-';
-        $grade = $subject->grade?->grade ?? '-';
+        if ($subject->is_drop) {
+            $grade = 'Dropped';
+        } elseif ($subject->is_withdrawn) {
+            $grade = 'Withdrawn';
+        } elseif ($subject->is_incomplete) {
+            $grade = 'Incomplete';
+        } else {
+            $grade = $subject->input_grade ?? '-';
+        }
+        $classification = $subject->grade?->grade ? " ({$subject->grade->grade})" : '';
 
-        return "{$code} - {$name} | {$unit} unit(s) | Grade: {$grade}";
+        return "{$code} - {$name} | {$unit} unit(s) | Grade: {$grade}{$classification}";
     }
 
     private function academicRecordLogChanges(array $previous, array $updated): array
@@ -713,6 +752,10 @@ class ScholarReviewController extends Controller
             if (
                 ($oldSubject['subject_id'] ?? null) !== ($subject['subject_id'] ?? null)
                 || ($oldSubject['grade_id'] ?? null) !== ($subject['grade_id'] ?? null)
+                || ($oldSubject['input_grade'] ?? null) !== ($subject['input_grade'] ?? null)
+                || ($oldSubject['is_incomplete'] ?? null) !== ($subject['is_incomplete'] ?? null)
+                || ($oldSubject['is_drop'] ?? null) !== ($subject['is_drop'] ?? null)
+                || ($oldSubject['is_withdrawn'] ?? null) !== ($subject['is_withdrawn'] ?? null)
             ) {
                 $updatedSubjectChanges[] = [
                     'previous' => $oldSubject['label'],
@@ -857,6 +900,8 @@ class ScholarReviewController extends Controller
                     throw new Exception("Row {$data->row_number}: validated row no longer matches current school, course, curriculum, or address records.");
                 }
 
+                $status = $this->progressStatus($data['status'] ?? null);
+
                 $scholars = Scholars::create([
                     'spas_no' => trim($data['spas_no']) ?? null,
                     'type_id' => ListReferences::whereRaw('LOWER(name) = ?', [strtolower(trim($data['scholarship_type']))])
@@ -868,11 +913,8 @@ class ScholarReviewController extends Controller
                     'category_id' => ListReferences::whereRaw('LOWER(name) = ?', [strtolower(trim($data['scholarship_subprogram']))])
                         ->value('id') ?? null,
 
-                    'status_id' => ListStatuses::whereRaw('LOWER(name) = ?', [strtolower(trim($data['status']))])
-                        ->value('id') ?? null,
-                    'academic_status' => in_array(trim($data['status'] ?? ''), ['Ongoing', 'Graduating', 'Graduated', 'LOA', 'Terminated'], true)
-                        ? trim($data['status'])
-                        : 'Ongoing',
+                    'status_id' => $status?->id,
+                    'academic_status' => Str::upper($status?->name ?? 'ONGOING'),
                     'created_by' => Auth::user()->profile->fullname,
                     'award_year' => $data['year_awarded'],
                 ]);
@@ -1061,9 +1103,9 @@ class ScholarReviewController extends Controller
             $lookupCache,
             'statuses',
             $data['status'],
-            fn () => ListStatuses::whereRaw('LOWER(name) = ?', [Str::lower($data['status'])])->exists()
+            fn () => $this->progressStatus($data['status']) !== null
         )) {
-            $errors[] = "Status '{$data['status']}' was not found in the database.";
+            $errors[] = "Status '{$data['status']}' was not found as an active progress status.";
         }
 
         if (filled($data['scholarship_type'] ?? null) && ! $this->cachedLookupExists(
@@ -1401,6 +1443,19 @@ class ScholarReviewController extends Controller
         }
 
         return $lookupCache[$bucket][$key];
+    }
+
+    private function progressStatus(?string $statusName): ?ListStatuses
+    {
+        if (! filled($statusName)) {
+            return null;
+        }
+
+        return ListStatuses::where('type', 'progress')
+            ->where('is_active', true)
+            ->where('is_delete', false)
+            ->whereRaw('UPPER(name) = ?', [Str::upper(trim($statusName))])
+            ->first();
     }
 
     private function matchedAddress($data): ?array

@@ -34,6 +34,15 @@ class SystemPermissions
             'video-resources.update',
             'video-resources.delete',
             'geolocation.upload',
+            'profile-requests.view',
+            'profile-requests.approve',
+            'profile-requests.reject',
+            'landbank-requests.view',
+            'landbank-requests.approve',
+            'landbank-requests.reject',
+            'grade-submissions.view',
+            'grade-submissions.approve',
+            'grade-submissions.reject',
         ],
 
         'regional supervisor' => [
@@ -65,15 +74,6 @@ class SystemPermissions
             'scholars.view',
             'scholars.review',
             'scholars.landbank.view-sensitive',
-            'profile-requests.view',
-            'profile-requests.approve',
-            'profile-requests.reject',
-            'landbank-requests.view',
-            'landbank-requests.approve',
-            'landbank-requests.reject',
-            'grade-submissions.view',
-            'grade-submissions.approve',
-            'grade-submissions.reject',
             'payroll.view',
             'payroll.export',
             'payroll.approve',
@@ -89,15 +89,6 @@ class SystemPermissions
             'scholars.view',
             'scholars.review',
             'scholars.landbank.view-sensitive',
-            'profile-requests.view',
-            'profile-requests.approve',
-            'profile-requests.reject',
-            'landbank-requests.view',
-            'landbank-requests.approve',
-            'landbank-requests.reject',
-            'grade-submissions.view',
-            'grade-submissions.approve',
-            'grade-submissions.reject',
             'payroll.view',
             'payroll.export',
             'payroll.approve',
@@ -152,12 +143,12 @@ class SystemPermissions
         'location.barangays.update' => 'locations.update',
         'location.barangays.destroy' => 'locations.delete',
 
-        'academic.courses.store' => 'academic.create',
-        'academic.courses.update' => 'academic.update',
-        'academic.courses.destroy' => 'academic.delete',
-        'academic.references.store' => 'academic.create',
-        'academic.references.update' => 'academic.update',
-        'academic.references.destroy' => 'academic.delete',
+        'academic.courses.store' => 'courses.create',
+        'academic.courses.update' => 'courses.update',
+        'academic.courses.destroy' => 'courses.delete',
+        'academic.references.store' => 'courses.create',
+        'academic.references.update' => 'courses.update',
+        'academic.references.destroy' => 'courses.delete',
         'academic.universities.store' => 'schools.create',
         'academic.universities.update' => 'schools.update',
         'academic.universities.destroy' => 'schools.delete',
@@ -191,6 +182,9 @@ class SystemPermissions
         'scholars.transfer' => 'scholars.transfer',
         'review.validate' => 'scholars.review',
         'review.publish' => 'scholars.review',
+        'scholar-submissions' => 'grade-submissions.view',
+        'scholar-profile-requests' => 'profile-requests.view',
+        'scholar-landbank-requests' => 'landbank-requests.view',
         'scholar.grade-request' => 'grade-submissions.view',
         'profile.request' => 'profile-requests.view',
         'landbank.request' => 'landbank-requests.view',
@@ -214,6 +208,41 @@ class SystemPermissions
         'video-resources.destroy' => 'video-resources.delete',
     ];
 
+    public const PERMISSION_LABEL_OVERRIDES = [
+        'scholars.landbank.view-sensitive' => [
+            'label' => 'Scholars - View Landbank Details',
+            'description' => 'Allows viewing sensitive Landbank account details.',
+        ],
+        'schools.curriculum.copy' => [
+            'label' => 'Schools Curriculum - Copy',
+            'description' => 'Allows copying curriculum subject lists.',
+        ],
+        'schools.curriculum.paste' => [
+            'label' => 'Schools Curriculum - Paste',
+            'description' => 'Allows pasting copied curriculum subject lists.',
+        ],
+        'payroll.update' => [
+            'label' => 'Payroll - Edit',
+            'description' => 'Allows editing draft and returned payroll records.',
+        ],
+        'payroll.return' => [
+            'label' => 'Payroll - Reject',
+            'description' => 'Allows rejecting submitted payroll records.',
+        ],
+        'payroll.credits.view' => [
+            'label' => 'Payroll Credits - View',
+            'description' => 'Allows viewing payroll crediting records.',
+        ],
+        'payroll.credits.update' => [
+            'label' => 'Payroll Credits - Update',
+            'description' => 'Allows updating credited months.',
+        ],
+        'payroll.recipients.manage-removal' => [
+            'label' => 'Payroll Recipients - Manage Removal',
+            'description' => 'Allows marking and canceling scholar removal from payroll.',
+        ],
+    ];
+
     public static function permissionDefinitions(): array
     {
         $names = collect(array_merge(
@@ -230,12 +259,13 @@ class SystemPermissions
         return $names->mapWithKeys(function (string $name) {
             $group = Str::before($name, '.');
             $action = Str::of(Str::after($name, '.'))->replace('.', ' ')->headline()->toString();
+            $override = self::PERMISSION_LABEL_OVERRIDES[$name] ?? [];
 
             return [
                 $name => [
-                    'label' => Str::of($group)->headline().' - '.$action,
+                    'label' => $override['label'] ?? Str::of($group)->headline().' - '.$action,
                     'group' => $group,
-                    'description' => "Allows {$action} actions in the ".Str::of($group)->headline().' module.',
+                    'description' => $override['description'] ?? "Allows {$action} actions in the ".Str::of($group)->headline().' module.',
                 ],
             ];
         })->all();

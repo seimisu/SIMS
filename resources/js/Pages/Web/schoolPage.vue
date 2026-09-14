@@ -503,7 +503,7 @@
             :sub-class-option="page.props.subClassOption"
             :confirm-ref="confirmRef"
         ></DrawerSchoolModule>
-        <DefaultConfirmDialog ref="confirmRef" />
+        <DefaultConfirmDialog ref="confirmRef" group="school-page" />
         <DefaultToast ref="toastRef" />
     </AuthLayout>
 </template>

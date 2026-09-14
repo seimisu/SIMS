@@ -151,7 +151,15 @@ class ScholarManagementController extends Controller
                 'guardian_place_issue' => 'nullable|string|max:255',
                 'guardian_date_issue' => 'nullable|date',
                 'acc_name' => 'nullable|string|max:255',
-                'acc_no' => 'nullable|string|max:16',
+                'acc_no' => [
+                    'nullable',
+                    'string',
+                    function ($attribute, $value, $fail) {
+                        if ($value !== '**********************' && strlen($value) > 16) {
+                            $fail('The Landbank account number must not be greater than 16 characters.');
+                        }
+                    },
+                ],
             ]);
 
             $decodedId = Hashids::decode($id)[0] ?? 0;
@@ -169,8 +177,16 @@ class ScholarManagementController extends Controller
 
     public function activation(string $id)
     {
-        $decodedId = Hashids::decode($id)[0] ?? 0;
-        $flash = app(ScholarActivationService::class)->sendActivationLink($decodedId);
+        try {
+            $decodedId = Hashids::decode($id)[0] ?? 0;
+            $flash = app(ScholarActivationService::class)->sendActivationLink($decodedId);
+        } catch (\Throwable $th) {
+            $flash = [
+                'status' => 'error',
+                'title' => 'Activation Email Failed',
+                'message' => $th->getMessage(),
+            ];
+        }
 
         return redirect()->back()->with('flash', $flash);
     }

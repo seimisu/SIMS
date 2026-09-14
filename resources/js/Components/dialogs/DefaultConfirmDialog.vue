@@ -2,7 +2,7 @@
     <ConfirmDialog :group="group" class="w-[90%] sm:w-[24rem]">
         <template #container="{ message, acceptCallback, rejectCallback }">
             <div
-                class="flex flex-col items-center rounded bg-surface-0 p-8 text-center dark:bg-surface-900"
+                class="flex flex-col items-center rounded bg-white p-8 text-center text-slate-700 shadow-xl dark:bg-gray-900 dark:text-gray-100"
             >
                 <div
                     :class="[
@@ -12,10 +12,10 @@
                 >
                     <i :class="[message.icon ?? 'pi pi-question', '!text-3xl']"></i>
                 </div>
-                <span class="font-bold text-2xl block mb-2 mt-6">{{
+                <span class="font-bold text-2xl block mb-2 mt-6 text-slate-800 dark:text-gray-100">{{
                     message.header
                 }}</span>
-                <p class="mb-0 text-sm font-light">{{ message.message }}</p>
+                <p class="mb-0 text-sm font-light text-slate-600 dark:text-gray-300">{{ message.message }}</p>
                 <div class="flex items-center gap-2 mt-6">
                     <Button
                         :label="message.rejectLabel ?? 'Cancel'"
@@ -73,13 +73,13 @@ const filledButtonClass = (severity = "danger") => ({
 }[severity] ?? "!border-red-500 !bg-red-500 hover:!border-red-600 hover:!bg-red-600");
 
 const outlinedButtonClass = (severity = "secondary") => ({
-    danger: "!border-red-500 !text-red-500 hover:!bg-red-50",
-    warn: "!border-amber-500 !text-amber-600 hover:!bg-amber-50",
-    warning: "!border-amber-500 !text-amber-600 hover:!bg-amber-50",
-    info: "!border-blue-500 !text-blue-500 hover:!bg-blue-50",
-    success: "!border-green-500 !text-green-500 hover:!bg-green-50",
-    secondary: "!border-slate-300 !text-slate-500 hover:!bg-slate-50",
-}[severity] ?? "!border-slate-300 !text-slate-500 hover:!bg-slate-50");
+    danger: "!border-red-500 !text-red-500 hover:!bg-red-50 dark:hover:!bg-red-950/40",
+    warn: "!border-amber-500 !text-amber-600 dark:!text-amber-400 hover:!bg-amber-50 dark:hover:!bg-amber-950/40",
+    warning: "!border-amber-500 !text-amber-600 dark:!text-amber-400 hover:!bg-amber-50 dark:hover:!bg-amber-950/40",
+    info: "!border-blue-500 !text-blue-500 hover:!bg-blue-50 dark:hover:!bg-blue-950/40",
+    success: "!border-green-500 !text-green-500 hover:!bg-green-50 dark:hover:!bg-green-950/40",
+    secondary: "!border-slate-300 !text-slate-500 dark:!border-gray-600 dark:!text-gray-200 hover:!bg-slate-50 dark:hover:!bg-gray-800",
+}[severity] ?? "!border-slate-300 !text-slate-500 dark:!border-gray-600 dark:!text-gray-200 hover:!bg-slate-50 dark:hover:!bg-gray-800");
 
 const popupDialog = (onAccept, options = {}) => {
     confirm.require({

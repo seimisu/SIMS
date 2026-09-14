@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Vinkla\Hashids\Facades\Hashids;
 
@@ -119,6 +120,7 @@ class SchoolCoordinatorController extends Controller
                         'is_failed' => $grade->is_failed,
                         'is_incomplete' => $grade->is_incomplete,
                         'is_drop' => $grade->is_drop,
+                        'is_withdrawn' => $grade->is_withdrawn,
                         'is_active' => $grade->is_active,
                     ])
             ),
@@ -259,14 +261,16 @@ class SchoolCoordinatorController extends Controller
 
         $validated = $request->validate([
             'grade' => ['required', 'string'],
-            'lower' => ['nullable', 'integer', 'lte:upper'],
-            'upper' => ['nullable', 'integer', 'gte:lower'],
+            'lower' => ['nullable', 'numeric', 'decimal:0,2'],
+            'upper' => ['nullable', 'numeric', 'decimal:0,2'],
             'drop' => ['nullable', 'boolean'],
             'fail' => ['nullable', 'boolean'],
             'incomplete' => ['nullable', 'boolean'],
+            'withdrawn' => ['nullable', 'boolean'],
         ]);
 
         $campus = SchoolCampuses::findOrFail($campus_id);
+        $this->validateGradeRule($campus, $validated);
 
         $grade = $campus->grades()->create([
             'grade' => $validated['grade'],
@@ -276,6 +280,7 @@ class SchoolCoordinatorController extends Controller
             'is_delete' => false,
             'is_failed' => $validated['fail'] ?? false,
             'is_incomplete' => $validated['incomplete'] ?? false,
+            'is_withdrawn' => $validated['withdrawn'] ?? false,
         ]);
 
         AuditLogs::create([
@@ -287,6 +292,7 @@ class SchoolCoordinatorController extends Controller
                 'drop' => $grade->drop ? 'Set true' : 'Set false',
                 'fail' => $grade->fail ? 'Set true' : 'Set false',
                 'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
+                'withdrawn' => $grade->is_withdrawn ? 'Set true' : 'Set false',
             ],
             'action' => 'Created new grade',
         ]);
@@ -298,6 +304,58 @@ class SchoolCoordinatorController extends Controller
                 'message' => 'The grade has been successfully created.',
             ],
         ]);
+    }
+
+    private function validateGradeRule(SchoolCampuses $campus, array $data): void
+    {
+        $isDrop = (bool) ($data['drop'] ?? false);
+        $isIncomplete = (bool) ($data['incomplete'] ?? false);
+        $isWithdrawn = (bool) ($data['withdrawn'] ?? false);
+        $isFailed = (bool) ($data['fail'] ?? false);
+
+        if (collect([$isDrop, $isIncomplete, $isWithdrawn, $isFailed])->filter()->count() > 1) {
+            throw ValidationException::withMessages([
+                'grade' => 'Only one grade classification flag can be enabled.',
+            ]);
+        }
+
+        if (! $isDrop && ! $isIncomplete && ! $isWithdrawn && (($data['lower'] ?? null) === null || ($data['upper'] ?? null) === null)) {
+            throw ValidationException::withMessages([
+                'lower' => 'Lower and upper limits are required for grade range rules.',
+            ]);
+        }
+
+        if ($isDrop || $isIncomplete || $isWithdrawn) {
+            return;
+        }
+
+        $lower = (float) $data['lower'];
+        $upper = (float) $data['upper'];
+        $minimum = min($lower, $upper);
+        $maximum = max($lower, $upper);
+
+        $overlap = $campus->grades()
+            ->where('is_delete', false)
+            ->where('is_drop', false)
+            ->where('is_incomplete', false)
+            ->where('is_withdrawn', false)
+            ->get()
+            ->contains(function ($rule) use ($minimum, $maximum) {
+                if (! is_numeric($rule->lower) || ! is_numeric($rule->upper)) {
+                    return false;
+                }
+
+                $ruleMinimum = min((float) $rule->lower, (float) $rule->upper);
+                $ruleMaximum = max((float) $rule->lower, (float) $rule->upper);
+
+                return $minimum <= $ruleMaximum && $maximum >= $ruleMinimum;
+            });
+
+        if ($overlap) {
+            throw ValidationException::withMessages([
+                'lower' => 'This grade range overlaps an existing active campus grading range.',
+            ]);
+        }
     }
 
     public function deleteGrade(Request $request, string $id)
@@ -318,6 +376,7 @@ class SchoolCoordinatorController extends Controller
                 'drop' => $grade->drop ? 'Set true' : 'Set false',
                 'fail' => $grade->fail ? 'Set true' : 'Set false',
                 'incomplete' => $grade->incomplete ? 'Set true' : 'Set false',
+                'withdrawn' => $grade->is_withdrawn ? 'Set true' : 'Set false',
             ],
             'new_data' => null,
             'action' => 'Deleted grade',

@@ -31,7 +31,11 @@
                         :stroke-width="1.5"
                     />
                     <span
-                        v-if="Number(item.badge ?? 0) > 0"
+                        v-if="item.badgeDot"
+                        class="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500"
+                    />
+                    <span
+                        v-else-if="Number(item.badge ?? 0) > 0"
                         class="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold leading-none text-white"
                     >
                         {{ item.badge }}
@@ -59,7 +63,11 @@
                         :stroke-width="1.5"
                     />
                     <span
-                        v-if="Number(item.badge ?? 0) > 0"
+                        v-if="item.badgeDot"
+                        class="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500"
+                    />
+                    <span
+                        v-else-if="Number(item.badge ?? 0) > 0"
                         class="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold leading-none text-white"
                     >
                         {{ item.badge }}

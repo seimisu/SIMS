@@ -16,6 +16,9 @@
             v-model="modelValue"
             fluid
             :disabled="disabled"
+            :step="step"
+            :min="min"
+            :max="max"
             autocomplete="off"
             :pt="{
                 root: {
@@ -59,6 +62,18 @@ defineProps({
     disabled: {
         type: Boolean,
         default: false,
+    },
+    step: {
+        type: [String, Number],
+        default: null,
+    },
+    min: {
+        type: [String, Number],
+        default: null,
+    },
+    max: {
+        type: [String, Number],
+        default: null,
     },
     errorMark: {
         type: [Boolean, String],

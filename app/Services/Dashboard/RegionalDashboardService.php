@@ -35,12 +35,15 @@ class RegionalDashboardService
                 'profile:sex,scholar_id',
                 'status:id,name',
                 'schoolInfo.campus:id,generated_name',
+                'schoolInfo.campus.address:campus_id,region_code',
             ])
                 ->whereHas(
                     'schoolInfo.campus.address',
                     fn ($q) => $q->where('region_code', $regionCode)
                 )
-                ->get();
+                ->get()
+                ->filter(fn ($scholar) => $this->currentSchoolInfo($scholar)?->campus?->address?->region_code === $regionCode)
+                ->values();
             $asOfScholars = $scholars
                 ->whereNotNull('activated_at')
                 ->whereNotNull('award_year')
@@ -99,8 +102,8 @@ class RegionalDashboardService
                 ->sortByDesc('count')
                 ->values();
             $scholarCountsBySchool = $scholars
-                ->flatMap(fn ($scholar) => $scholar->schoolInfo)
-                ->filter(fn ($schoolInfo) => $schoolInfo->campus)
+                ->map(fn ($scholar) => $this->currentSchoolInfo($scholar))
+                ->filter(fn ($schoolInfo) => $schoolInfo?->campus)
                 ->groupBy(fn ($schoolInfo) => $schoolInfo->campus->generated_name)
                 ->map(fn ($rows) => $rows->pluck('scholar_id')->unique()->count());
             $schoolDistribution = SchoolCampuses::select('id', 'generated_name')
@@ -270,6 +273,13 @@ class RegionalDashboardService
                     })->values()->toArray(),
                 ],
             ]);
+    }
+
+    private function currentSchoolInfo(Scholars $scholar)
+    {
+        return $scholar->schoolInfo
+            ->sortByDesc('id')
+            ->first();
     }
 
 }

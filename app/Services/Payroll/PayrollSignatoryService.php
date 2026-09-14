@@ -3,26 +3,29 @@
 namespace App\Services\Payroll;
 
 use App\Models\User;
-use App\Support\SystemPermissions;
 use Illuminate\Support\Facades\Auth;
 
 class PayrollSignatoryService
 {
+    private const REGIONAL_SIGNATORY_ROLE_IDS = [4, 5];
+
     public function options()
     {
         $user = Auth::user();
-        $permissions = app(SystemPermissions::class);
+        $agencyId = $user?->profile?->agency_id;
+
+        if (! $agencyId) {
+            return collect();
+        }
 
         return User::query()
             ->where('is_delete', false)
             ->where('is_active', true)
-            ->whereHas('profile')
-            ->with(['profile.agency'])
-            ->when($permissions->shouldScopeToRegion($user), function ($query) use ($user) {
-                $query->whereHas('profile', function ($profile) use ($user) {
-                    $profile->where('agency_id', $user->profile?->agency_id);
-                });
+            ->whereIn('role_id', self::REGIONAL_SIGNATORY_ROLE_IDS)
+            ->whereHas('profile', function ($profile) use ($agencyId) {
+                $profile->where('agency_id', $agencyId);
             })
+            ->with(['profile.agency'])
             ->orderBy('email')
             ->get()
             ->map(fn ($signatory) => [

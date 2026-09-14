@@ -22,7 +22,7 @@ class AcademicPerformanceEvaluationService
             'term:id,name',
             'schoolInfo.course:id,years',
             'subjects.subject:id,curriculum_id,year,unit,subject_class,name,subject_code',
-            'subjects.grade:id,grade,is_drop,is_failed,is_incomplete',
+            'subjects.grade:id,grade,is_drop,is_withdrawn,is_failed,is_incomplete',
         ]);
 
         $subjects = $term->subjects;
@@ -392,7 +392,8 @@ class AcademicPerformanceEvaluationService
 
     private function isDropped($subject): bool
     {
-        return (bool) ($subject->grade?->is_drop ?? false);
+        return (bool) ($subject->is_drop ?? false)
+            || (bool) ($subject->grade?->is_drop ?? false);
     }
 
     private function isFailed($subject): bool
@@ -407,7 +408,8 @@ class AcademicPerformanceEvaluationService
     {
         $grade = Str::upper((string) ($subject->grade?->grade ?? ''));
 
-        return (bool) ($subject->grade?->is_incomplete ?? false)
+        return (bool) ($subject->is_incomplete ?? false)
+            || (bool) ($subject->grade?->is_incomplete ?? false)
             || in_array($grade, ['INC', 'INCOMPLETE', '4', '4.0', '4.00'], true);
     }
 
@@ -416,7 +418,8 @@ class AcademicPerformanceEvaluationService
         return $subject->grade
             && ! $this->isFailed($subject)
             && ! $this->isIncomplete($subject)
-            && ! $this->isDropped($subject);
+            && ! $this->isDropped($subject)
+            && ! ((bool) ($subject->is_withdrawn ?? false) || (bool) ($subject->grade?->is_withdrawn ?? false));
     }
 
     private function subjectHistoryKey($subject): ?string

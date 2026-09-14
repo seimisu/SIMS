@@ -91,11 +91,12 @@ class HandleInertiaRequests extends Middleware
         }
 
         $menu = $this->menu?->getMenu('sidebar');
-        $submissionTotal = $this->scholarSubmissionPendingCount();
+        $submissionCounts = $this->scholarSubmissionPendingCounts();
+        $submissionTotal = array_sum($submissionCounts);
         $payrollTotal = $this->payrollActionCount();
 
-        return $menu?->map(function ($item) use ($submissionTotal, $payrollTotal) {
-            if (($item['slug'] ?? null) === 'scholar-submissions') {
+        return $menu?->map(function ($item) use ($submissionCounts, $submissionTotal, $payrollTotal) {
+            if (in_array(($item['slug'] ?? null), ['scholar-submission-management', 'scholar-submissions'], true)) {
                 $item['badge'] = $submissionTotal;
             }
 
@@ -104,9 +105,17 @@ class HandleInertiaRequests extends Middleware
             }
 
             if (! empty($item['items'])) {
-                $item['items'] = collect($item['items'])->map(function ($child) use ($submissionTotal, $payrollTotal) {
+                $item['items'] = collect($item['items'])->map(function ($child) use ($submissionCounts, $payrollTotal) {
                     if (($child['slug'] ?? null) === 'scholar-submissions') {
-                        $child['badge'] = $submissionTotal;
+                        $child['badgeDot'] = $submissionCounts['grades'] > 0;
+                    }
+
+                    if (($child['slug'] ?? null) === 'scholar-profile-requests') {
+                        $child['badgeDot'] = $submissionCounts['profile'] > 0;
+                    }
+
+                    if (($child['slug'] ?? null) === 'scholar-landbank-requests') {
+                        $child['badgeDot'] = $submissionCounts['landbank'] > 0;
                     }
 
                     if (($child['slug'] ?? null) === 'stipends' || ($child['route'] ?? null) === '/stipends') {
@@ -121,11 +130,13 @@ class HandleInertiaRequests extends Middleware
         });
     }
 
-    private function scholarSubmissionPendingCount(): int
+    private function scholarSubmissionPendingCounts(): array
     {
-        return ScholarTerm::where('verification_status', 'submitted')->count()
-            + StudentProfileRequest::where('status', 'pending')->count()
-            + studentLandbankRequest::where('status', 'pending')->count();
+        return [
+            'grades' => ScholarTerm::where('verification_status', 'submitted')->count(),
+            'profile' => StudentProfileRequest::where('status', 'pending')->count(),
+            'landbank' => studentLandbankRequest::where('status', 'pending')->count(),
+        ];
     }
 
     private function payrollActionCount(): int

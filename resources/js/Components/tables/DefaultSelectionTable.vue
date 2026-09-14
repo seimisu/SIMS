@@ -42,7 +42,10 @@
                 root: { class: 'dark:!border-gray-700 dark:!bg-gray-800 dark:text-gray-300' },
             },
             bodyRow: {
-                class: 'dark:!bg-gray-800 dark:!border-gray-700 dark:!text-gray-100 dark:hover:!bg-gray-700',
+                class: [
+                    clickable ? 'cursor-pointer hover:!bg-slate-50' : '',
+                    'dark:!bg-gray-800 dark:!border-gray-700 dark:!text-gray-100 dark:hover:!bg-gray-700',
+                ],
             },
             rowGroupHeader: {
                 class: 'dark:!bg-gray-800 dark:!text-gray-300',
@@ -124,6 +127,10 @@ const props = defineProps({
     scrollHeight: {
         type: String,
         default: null,
+    },
+    clickable: {
+        type: Boolean,
+        default: false,
     },
 });
 
