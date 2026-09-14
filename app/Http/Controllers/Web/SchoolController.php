@@ -49,7 +49,9 @@ class SchoolController extends Controller
             'classOption' => $ref->getRefs('option', null, null, 'Class'),
             'classificationOption' => $ref->getRefs('option', null, null, 'Term Type'),
             'agencyOption' => $ref->getAgencies(false),
-            'gradingOption' => $ref->getRefs('option', null, null, 'Grading System'),
+            'gradingOption' => collect($ref->getRefs('option', null, null, 'Grading System'))
+                ->filter(fn ($option) => ($option['name'] ?? null) === 'Transmutation')
+                ->values(),
             'courseOption' => $ref->getCourses('option'),
             'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
             'semesterOption' => request('semesterType')

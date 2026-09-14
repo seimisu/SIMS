@@ -36,11 +36,12 @@ class CampusGradeRequest extends FormRequest
                 return [
                     'campusId' => ['nullable'],
                     'grade' => ['required', 'string'],
-                    'upper' => ['nullable', 'string'],
-                    'lower' => ['nullable', 'string'],
+                    'upper' => ['nullable', 'numeric', 'decimal:0,2'],
+                    'lower' => ['nullable', 'numeric', 'decimal:0,2'],
                     'fail' => ['boolean'],
                     'drop' => ['boolean'],
-                    'incomplete' => ['boolean']
+                    'incomplete' => ['boolean'],
+                    'withdrawn' => ['boolean']
                 ];
                 break;
         }

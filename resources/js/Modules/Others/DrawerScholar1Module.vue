@@ -1541,17 +1541,76 @@
                                                             <td
                                                                 class="px-3 py-2 min-w-36"
                                                             >
-                                                                <SelectInput
-                                                                    v-model="
-                                                                        item.grade
-                                                                    "
-                                                                    :options="
-                                                                        academicGradeOptionsForRow(
-                                                                            index,
-                                                                        )
-                                                                    "
-                                                                    filter
-                                                                />
+                                                                <div
+                                                                    class="flex flex-col gap-2"
+                                                                >
+                                                                    <TextInput
+                                                                        v-model="
+                                                                            item.input_grade
+                                                                        "
+                                                                        placeholder="Grade"
+                                                                        :disabled="
+                                                                            item.is_incomplete ||
+                                                                            item.is_drop ||
+                                                                            item.is_withdrawn
+                                                                        "
+                                                                    />
+                                                                    <div
+                                                                        class="flex flex-wrap gap-3 text-xs text-slate-600 dark:text-gray-300"
+                                                                    >
+                                                                        <label
+                                                                            class="inline-flex items-center gap-1"
+                                                                        >
+                                                                            <input
+                                                                                v-model="
+                                                                                    item.is_incomplete
+                                                                                "
+                                                                                type="checkbox"
+                                                                                @change="
+                                                                                    toggleAcademicSpecialGrade(
+                                                                                        item,
+                                                                                        'incomplete',
+                                                                                    )
+                                                                                "
+                                                                            />
+                                                                            Incomplete
+                                                                        </label>
+                                                                        <label
+                                                                            class="inline-flex items-center gap-1"
+                                                                        >
+                                                                            <input
+                                                                                v-model="
+                                                                                    item.is_drop
+                                                                                "
+                                                                                type="checkbox"
+                                                                                @change="
+                                                                                    toggleAcademicSpecialGrade(
+                                                                                        item,
+                                                                                        'drop',
+                                                                                    )
+                                                                                "
+                                                                            />
+                                                                            Dropped
+                                                                        </label>
+                                                                        <label
+                                                                            class="inline-flex items-center gap-1"
+                                                                        >
+                                                                            <input
+                                                                                v-model="
+                                                                                    item.is_withdrawn
+                                                                                "
+                                                                                type="checkbox"
+                                                                                @change="
+                                                                                    toggleAcademicSpecialGrade(
+                                                                                        item,
+                                                                                        'withdrawn',
+                                                                                    )
+                                                                                "
+                                                                            />
+                                                                            Withdrawn
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
                                                             </td>
                                                             <td
                                                                 class="px-3 py-2 text-left text-slate-600 dark:text-gray-300"
@@ -1631,6 +1690,7 @@
                                                                 {{
                                                                     item.request
                                                                         ?.grade ??
+                                                                    item.input_grade ??
                                                                     item.grade
                                                                         ?.grade
                                                                 }}
@@ -1651,6 +1711,8 @@
                                                                         item
                                                                             .request
                                                                             ?.is_drop
+                                                                        ||
+                                                                        item.is_drop
                                                                     "
                                                                     class="text-slate-500 dark:text-gray-400"
                                                                 >
@@ -1661,43 +1723,7 @@
                                                                         item
                                                                             .request
                                                                             ?.is_failed
-                                                                    "
-                                                                    class="text-rose-600 dark:text-rose-300"
-                                                                >
-                                                                    Failed
-                                                                </div>
-                                                                <div
-                                                                    v-else-if="
-                                                                        item
-                                                                            .request
-                                                                            ?.is_incomplete
-                                                                    "
-                                                                    class="text-amber-600 dark:text-amber-300"
-                                                                >
-                                                                    Incompleted
-                                                                </div>
-                                                                <div
-                                                                    v-else-if="
-                                                                        item
-                                                                            .request
-                                                                            ?.grade
-                                                                    "
-                                                                    class="text-green-600 dark:text-green-300"
-                                                                >
-                                                                    Passed
-                                                                </div>
-                                                                <div
-                                                                    v-else-if="
-                                                                        item
-                                                                            .grade
-                                                                            ?.is_drop
-                                                                    "
-                                                                    class="text-slate-500 dark:text-gray-400"
-                                                                >
-                                                                    Dropped
-                                                                </div>
-                                                                <div
-                                                                    v-else-if="
+                                                                        ||
                                                                         item
                                                                             .grade
                                                                             ?.is_failed
@@ -1710,7 +1736,21 @@
                                                                     v-else-if="
                                                                         item
                                                                             .grade
+                                                                            ?.is_withdrawn
+                                                                        ||
+                                                                        item.is_withdrawn
+                                                                    "
+                                                                    class="text-purple-600 dark:text-purple-300"
+                                                                >
+                                                                    Withdrawn
+                                                                </div>
+                                                                <div
+                                                                    v-else-if="
+                                                                        item
+                                                                            .request
                                                                             ?.is_incomplete
+                                                                        ||
+                                                                        item.is_incomplete
                                                                     "
                                                                     class="text-amber-600 dark:text-amber-300"
                                                                 >
@@ -1721,6 +1761,12 @@
                                                                         item
                                                                             .grade
                                                                             ?.is_active
+                                                                        ||
+                                                                        item.input_grade
+                                                                        ||
+                                                                        item
+                                                                            .request
+                                                                            ?.grade
                                                                     "
                                                                     class="text-green-600 dark:text-green-300"
                                                                 >
@@ -3295,9 +3341,12 @@ const normalizeGradeOption = (grade) =>
               id: grade.id,
               name: grade.name ?? grade.grade,
               grade: grade.grade ?? grade.name,
+              lower: grade.lower,
+              upper: grade.upper,
               is_failed: grade.is_failed,
               is_incomplete: grade.is_incomplete,
               is_drop: grade.is_drop,
+              is_withdrawn: grade.is_withdrawn,
               is_active: grade.is_active,
           }
         : null;
@@ -3305,14 +3354,19 @@ const normalizeGradeOption = (grade) =>
 const currentAcademicSubject = (row) => normalizeSubjectOption(row?.subject);
 
 const academicSubjectTotal = (row) => {
-    const gradeValue = Number(row?.grade?.name ?? row?.grade?.grade);
+    const gradeValue = Number(row?.input_grade ?? row?.grade?.grade);
     const unit = Number(row?.subject?.unit);
+    const matchedGrade = academicMatchedGrade(row);
 
     if (
         !Number.isFinite(gradeValue) ||
         !Number.isFinite(unit) ||
-        row?.grade?.is_drop ||
-        row?.grade?.is_incomplete
+        row?.is_drop ||
+        row?.is_incomplete ||
+        row?.is_withdrawn ||
+        matchedGrade?.is_drop ||
+        matchedGrade?.is_incomplete ||
+        matchedGrade?.is_withdrawn
     ) {
         return null;
     }
@@ -3321,21 +3375,67 @@ const academicSubjectTotal = (row) => {
 };
 
 const academicSubjectRemark = (row) => {
-    if (row?.grade?.is_drop) return "Dropped";
-    if (row?.grade?.is_failed) return "Failed";
-    if (row?.grade?.is_incomplete) return "Incompleted";
-    if (row?.grade?.id) return "Passed";
+    const matchedGrade = academicMatchedGrade(row);
+
+    if (row?.is_drop || matchedGrade?.is_drop) return "Dropped";
+    if (row?.is_withdrawn || matchedGrade?.is_withdrawn) return "Withdrawn";
+    if (row?.is_incomplete || matchedGrade?.is_incomplete) return "Incompleted";
+    if (matchedGrade?.is_failed) return "Failed";
+    if (row?.input_grade || matchedGrade?.id) return "Passed";
 
     return "-";
 };
 
 const academicSubjectRemarkClass = (row) => {
-    if (row?.grade?.is_drop) return "text-slate-500";
-    if (row?.grade?.is_failed) return "text-rose-600";
-    if (row?.grade?.is_incomplete) return "text-amber-600";
-    if (row?.grade?.id) return "text-green-600";
+    const matchedGrade = academicMatchedGrade(row);
+
+    if (row?.is_drop || matchedGrade?.is_drop) return "text-slate-500";
+    if (row?.is_withdrawn || matchedGrade?.is_withdrawn) return "text-purple-600";
+    if (row?.is_incomplete || matchedGrade?.is_incomplete) return "text-amber-600";
+    if (matchedGrade?.is_failed) return "text-rose-600";
+    if (row?.input_grade || matchedGrade?.id) return "text-green-600";
 
     return "text-slate-400";
+};
+
+const academicMatchedGrade = (row) => {
+    if (row?.is_drop) {
+        return academicGradeOptions.value.find((grade) => grade?.is_drop);
+    }
+
+    if (row?.is_withdrawn) {
+        return academicGradeOptions.value.find((grade) => grade?.is_withdrawn);
+    }
+
+    if (row?.is_incomplete) {
+        return academicGradeOptions.value.find((grade) => grade?.is_incomplete);
+    }
+
+    const gradeValue = Number(row?.input_grade ?? row?.grade?.grade);
+
+    if (!Number.isFinite(gradeValue)) {
+        return row?.grade ?? null;
+    }
+
+    return (
+        academicGradeOptions.value.find((grade) => {
+            if (grade?.is_drop || grade?.is_incomplete || grade?.is_withdrawn) return false;
+
+            const lower = Number(grade?.lower);
+            const upper = Number(grade?.upper);
+
+            if (!Number.isFinite(lower) || !Number.isFinite(upper)) {
+                return false;
+            }
+
+            return (
+                gradeValue >= Math.min(lower, upper) &&
+                gradeValue <= Math.max(lower, upper)
+            );
+        }) ??
+        row?.grade ??
+        null
+    );
 };
 
 const academicRecordHasUnsavedChanges = computed(
@@ -3624,6 +3724,12 @@ const editAcademicRecord = (termRecord) => {
                 academicSubjectOptions.value.find(
                     (option) => option.id === subject.subject?.id,
                 ) ?? currentAcademicSubject(subject),
+            input_grade: subject.input_grade ?? subject.grade?.grade ?? null,
+            is_incomplete:
+                subject.is_incomplete || subject.grade?.is_incomplete || false,
+            is_drop: subject.is_drop || subject.grade?.is_drop || false,
+            is_withdrawn:
+                subject.is_withdrawn || subject.grade?.is_withdrawn || false,
             grade: normalizeGradeOption(subject.grade),
         }),
     );
@@ -3656,8 +3762,32 @@ const addAcademicSubject = () => {
     academicRecordForm.subjects.push({
         id: null,
         subject: null,
+        input_grade: null,
+        is_incomplete: false,
+        is_drop: false,
+        is_withdrawn: false,
         grade: null,
     });
+};
+
+const toggleAcademicSpecialGrade = (item, type) => {
+    if (type === "incomplete" && item.is_incomplete) {
+        item.is_drop = false;
+        item.is_withdrawn = false;
+        item.input_grade = null;
+    }
+
+    if (type === "drop" && item.is_drop) {
+        item.is_incomplete = false;
+        item.is_withdrawn = false;
+        item.input_grade = null;
+    }
+
+    if (type === "withdrawn" && item.is_withdrawn) {
+        item.is_incomplete = false;
+        item.is_drop = false;
+        item.input_grade = null;
+    }
 };
 
 const removeAcademicSubject = (index) => {

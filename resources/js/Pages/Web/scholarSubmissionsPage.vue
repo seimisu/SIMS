@@ -43,16 +43,65 @@
                     @paginate="loadPage"
                 >
                     <template #header>
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div class="text-sm font-semibold text-slate-700 dark:text-gray-200">
-                                {{ selectedSemester?.name ?? "Grade Submissions" }}
+                        <div class="flex flex-col gap-2">
+                            <div class="flex flex-col gap-2 lg:flex-row lg:items-center">
+                                <IconTextInput
+                                    v-model="searchInput"
+                                    :icon="IconSearch"
+                                    placeholder="Search SPAS or scholar"
+                                    class="w-full lg:w-72"
+                                />
+                                <div class="flex flex-wrap gap-2">
+                                    <DefaultButton :icon="filterSchool ? IconFilterFilled : IconFilter" label="Schools" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'school')" />
+                                    <DefaultButton :icon="filterProgram ? IconFilterFilled : IconFilter" label="Programs" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'program')" />
+                                    <DefaultButton :icon="filterType ? IconFilterFilled : IconFilter" label="Types" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'type')" />
+                                    <DefaultButton :icon="filterStatus ? IconFilterFilled : IconFilter" label="Status" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'status')" />
+                                </div>
                             </div>
-                            <IconTextInput
-                                v-model="searchInput"
-                                :icon="IconSearch"
-                                placeholder="Search SPAS or scholar"
-                                class="w-full sm:w-72"
-                            />
+                            <Popover ref="opSchool">
+                                <div class="flex gap-3">
+                                    <div class="w-60">
+                                        <SelectMultiInput v-model="filterSchool" :options="page.props.schoolFilter" filter capitalize />
+                                    </div>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('school')" />
+                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('school')" />
+                                    </div>
+                                </div>
+                            </Popover>
+                            <Popover ref="opProgram">
+                                <div class="flex gap-3">
+                                    <div class="w-60">
+                                        <SelectMultiInput v-model="filterProgram" :options="page.props.programFilter" filter capitalize />
+                                    </div>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('program')" />
+                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('program')" />
+                                    </div>
+                                </div>
+                            </Popover>
+                            <Popover ref="opType">
+                                <div class="flex gap-3">
+                                    <div class="w-60">
+                                        <SelectMultiInput v-model="filterType" :options="page.props.scholarTypeFilter" filter capitalize />
+                                    </div>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('type')" />
+                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('type')" />
+                                    </div>
+                                </div>
+                            </Popover>
+                            <Popover ref="opStatus">
+                                <div class="flex gap-3">
+                                    <div class="w-60">
+                                        <SelectMultiInput v-model="filterStatus" :options="page.props.statusFilter" filter capitalize />
+                                    </div>
+                                    <div class="flex items-center justify-end gap-2">
+                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('status')" />
+                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('status')" />
+                                    </div>
+                                </div>
+                            </Popover>
                         </div>
                     </template>
 
@@ -67,7 +116,7 @@
                         </template>
                     </Column>
                     <Column header="Program" field="program" />
-                    <Column header="Scholarship" field="type" />
+                    <Column header="Type" field="type" />
                     <Column header="School">
                         <template #body="props">
                             <div class="min-w-64">
@@ -105,16 +154,26 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
+import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
-import { IconSearch } from "@tabler/icons-vue";
+import { IconFilter, IconFilterFilled, IconSearch } from "@tabler/icons-vue";
 import { route } from "ziggy-js";
 
 const page = usePage();
 const searchInput = ref(page.props.filters?.search ?? null);
+const filterSchool = ref(page.props.filters?.schools ?? null);
+const filterProgram = ref(page.props.filters?.programs ?? null);
+const filterType = ref(page.props.filters?.sub ?? null);
+const filterStatus = ref(page.props.filters?.submissionStatus ?? null);
 const timer = ref(null);
 const gradeDialog = ref(false);
+const opSchool = ref(null);
+const opProgram = ref(null);
+const opType = ref(null);
+const opStatus = ref(null);
 const semesters = computed(() => page.props.semesters ?? []);
 const selectedSemester = computed(() => page.props.selectedSemester ?? null);
 const selectedSemesterKey = computed(() => selectedSemester.value?.id ?? null);
@@ -128,6 +187,10 @@ const pagination = computed(() => ({
 const requestData = (pageNumber = 1, extra = {}) => ({
     page: pageNumber,
     ...(searchInput.value ? { search: searchInput.value } : {}),
+    ...(filterSchool.value ? { schools: filterSchool.value } : {}),
+    ...(filterProgram.value ? { programs: filterProgram.value } : {}),
+    ...(filterType.value ? { sub: filterType.value } : {}),
+    ...(filterStatus.value ? { submissionStatus: filterStatus.value } : {}),
     ...(selectedSemester.value
         ? {
               academicYear: selectedSemester.value.academic_year,
@@ -136,6 +199,35 @@ const requestData = (pageNumber = 1, extra = {}) => ({
         : {}),
     ...extra,
 });
+
+const filterPopovers = {
+    school: opSchool,
+    program: opProgram,
+    type: opType,
+    status: opStatus,
+};
+
+const filterRefs = {
+    school: filterSchool,
+    program: filterProgram,
+    type: filterType,
+    status: filterStatus,
+};
+
+const toggleFilter = (event, filter) => {
+    filterPopovers[filter]?.value?.toggle(event);
+};
+
+const applyFilter = (filter) => {
+    filterPopovers[filter]?.value?.hide();
+    loadPage(1);
+};
+
+const clearFilter = (filter) => {
+    filterRefs[filter].value = null;
+    filterPopovers[filter]?.value?.hide();
+    loadPage(1);
+};
 
 const loadPage = (pageNumber = 1, extra = {}) => {
     router.get(route("scholar-submissions"), requestData(pageNumber, extra), {

@@ -316,9 +316,12 @@ class ScholarManagementOptionsService
             ->get()->map(fn ($q) => [
                 'id' => $q->id,
                 'name' => $q->grade,
+                'lower' => $q->lower,
+                'upper' => $q->upper,
                 'is_failed' => $q->is_failed,
                 'is_incomplete' => $q->is_incomplete,
                 'is_drop' => $q->is_drop,
+                'is_withdrawn' => $q->is_withdrawn,
                 'is_active' => $q->is_active,
             ]);
     }

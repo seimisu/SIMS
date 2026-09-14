@@ -614,9 +614,8 @@
                                 <p
                                     class="text-xs text-muted-color mt-2 text-justify mb-0!"
                                 >
-                                    Define a new grade by specifying its
-                                    description, grade equivalent, and score
-                                    range. The grade will be added to the
+                                    Define a grade classification and score
+                                    range. The rule will be added to the
                                     grading scale for this campus.
                                 </p>
                                 <div class="flex flex-col gap-5 mt-5">
@@ -628,8 +627,8 @@
                                                 ? true
                                                 : false
                                         "
-                                        label="Grade"
-                                        placeholder="e.g. A, B, C, etc."
+                                        label="Label / Classification"
+                                        placeholder="e.g. Passed, Failed, Incomplete, Withdrawn"
                                     ></TextInput>
                                     <div class="flex gap-5 items-center">
                                         <TextInput
@@ -640,11 +639,15 @@
                                                     : false
                                             "
                                             v-model="gradeForm.lower"
+                                            type="number"
+                                            step="0.01"
                                             label="Lower Limit"
-                                            placeholder="e.g. 90, 80, etc."
+                                            placeholder="e.g. 1.00"
                                         ></TextInput>
                                         <TextInput
                                             v-model="gradeForm.upper"
+                                            type="number"
+                                            step="0.01"
                                             :error="gradeForm?.errors?.upper"
                                             :error-mark="
                                                 gradeForm?.errors?.upper
@@ -652,7 +655,7 @@
                                                     : false
                                             "
                                             label="Upper Limit"
-                                            placeholder="e.g. 100, 89, etc."
+                                            placeholder="e.g. 2.99"
                                         ></TextInput>
                                     </div>
                                 </div>
@@ -699,6 +702,20 @@
 
                                         <DefaultToggle
                                             v-model="gradeForm.drop"
+                                            :check-icon="IconCheck"
+                                            :un-check-icon="IconX"
+                                        />
+                                    </div>
+                                    <Divider type="dashed" />
+                                    <div
+                                        class="flex justify-between items-center"
+                                    >
+                                        <div class="text-sm">
+                                            Is it a withdrawn grade?
+                                        </div>
+
+                                        <DefaultToggle
+                                            v-model="gradeForm.withdrawn"
                                             :check-icon="IconCheck"
                                             :un-check-icon="IconX"
                                         />
@@ -797,6 +814,17 @@
                                             stroke-width="2"
                                         />
                                         <div>DROPPED</div>
+                                    </div>
+                                </div>
+                                <div v-else-if="props.data.is_withdrawn">
+                                    <div
+                                        class="font-semibold flex items-center gap-1 text-purple-600 px-4 rounded-xl"
+                                    >
+                                        <IconCircleX
+                                            size="20"
+                                            stroke-width="2"
+                                        />
+                                        <div>WITHDRAWN</div>
                                     </div>
                                 </div>
                                 <div v-else>
@@ -1644,6 +1672,7 @@ const gradeForm = useForm({
     fail: false,
     incomplete: false,
     drop: false,
+    withdrawn: false,
 });
 const loading = ref({
     programTable: false,
@@ -2090,6 +2119,7 @@ watch(
         if (val) {
             gradeForm.fail = false;
             gradeForm.incomplete = false;
+            gradeForm.withdrawn = false;
         }
     },
 );
@@ -2100,6 +2130,7 @@ watch(
         if (val) {
             gradeForm.drop = false;
             gradeForm.incomplete = false;
+            gradeForm.withdrawn = false;
         }
     },
 );
@@ -2110,6 +2141,18 @@ watch(
         if (val) {
             gradeForm.drop = false;
             gradeForm.fail = false;
+            gradeForm.withdrawn = false;
+        }
+    },
+);
+
+watch(
+    () => gradeForm.withdrawn,
+    (val) => {
+        if (val) {
+            gradeForm.drop = false;
+            gradeForm.fail = false;
+            gradeForm.incomplete = false;
         }
     },
 );
@@ -2126,6 +2169,7 @@ watch(
                 fail: val.is_failed ? true : false,
                 incomplete: val.is_incomplete ? true : false,
                 drop: val.is_drop ? true : false,
+                withdrawn: val.is_withdrawn ? true : false,
             });
             console.log(gradeForm);
         } else {

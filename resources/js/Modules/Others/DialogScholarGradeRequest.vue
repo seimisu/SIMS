@@ -238,13 +238,21 @@
                                                 class="px-3 py-2 text-right max-w-35 align-text-top"
                                             >
                                                 <p
-                                                    v-if="subject.grade?.grade"
+                                                    v-if="
+                                                        submittedGradeValue(
+                                                            subject,
+                                                        )
+                                                    "
                                                     :class="[
                                                         'inline-flex rounded px-2 py-0.5 text-xs font-semibold',
                                                         subjectGradeClass(subject),
                                                     ]"
                                                 >
-                                                    {{ subject.grade?.grade }}
+                                                    {{
+                                                        submittedGradeValue(
+                                                            subject,
+                                                        )
+                                                    }}
                                                 </p>
                                                 <p
                                                     class="text-xs text-gray-400"
@@ -833,6 +841,7 @@ const recommendedStandingOption = () => {
 
 const subjectStatus = (subject) => {
     if (subject?.is_drop || subject?.grade?.is_drop) return "dropped";
+    if (subject?.is_withdrawn || subject?.grade?.is_withdrawn) return "withdrawn";
     if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
         return "incomplete";
     }
@@ -841,11 +850,22 @@ const subjectStatus = (subject) => {
     return null;
 };
 
+const submittedGradeValue = (subject) => {
+    if (subject?.is_drop || subject?.grade?.is_drop) return "Dropped";
+    if (subject?.is_withdrawn || subject?.grade?.is_withdrawn) return "Withdrawn";
+    if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
+        return "Incomplete";
+    }
+
+    return subject?.input_grade ?? subject?.grade?.grade ?? null;
+};
+
 const subjectRowClass = (subject) => {
     const status = subjectStatus(subject);
 
     return {
         dropped: "border-slate-200 bg-slate-100/80 dark:border-gray-600 dark:bg-gray-800",
+        withdrawn: "border-purple-200 bg-purple-50 dark:border-purple-900/60 dark:bg-purple-950/30",
         incomplete: "border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30",
         failed: "border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30",
     }[status] ?? "border-slate-100 dark:border-gray-700";
@@ -856,6 +876,7 @@ const subjectGradeClass = (subject) => {
 
     return {
         dropped: "bg-slate-200 text-slate-700 dark:bg-gray-700 dark:text-gray-200",
+        withdrawn: "bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-100",
         incomplete: "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-100",
         failed: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-100",
     }[status] ?? "bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-gray-200";
@@ -863,11 +884,12 @@ const subjectGradeClass = (subject) => {
 
 const subjectRemarks = (subject) => {
     if (subject?.is_drop || subject?.grade?.is_drop) return "Dropped";
+    if (subject?.is_withdrawn || subject?.grade?.is_withdrawn) return "Withdrawn";
     if (subject?.is_failed || subject?.grade?.is_failed) return "Failed";
     if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
         return "Incompleted";
     }
-    if (subject?.grade?.id || subject?.grade?.grade || subject?.grade?.is_active) {
+    if (subject?.input_grade || subject?.grade?.id || subject?.grade?.grade || subject?.grade?.is_active) {
         return "Passed";
     }
 
@@ -876,11 +898,12 @@ const subjectRemarks = (subject) => {
 
 const subjectRemarksClass = (subject) => {
     if (subject?.is_drop || subject?.grade?.is_drop) return "text-slate-500";
+    if (subject?.is_withdrawn || subject?.grade?.is_withdrawn) return "text-purple-600 dark:text-purple-300";
     if (subject?.is_failed || subject?.grade?.is_failed) return "text-rose-600 dark:text-rose-300";
     if (subject?.is_incomplete || subject?.grade?.is_incomplete) {
         return "text-amber-600 dark:text-amber-300";
     }
-    if (subject?.grade?.id || subject?.grade?.grade || subject?.grade?.is_active) {
+    if (subject?.input_grade || subject?.grade?.id || subject?.grade?.grade || subject?.grade?.is_active) {
         return "text-green-600 dark:text-green-300";
     }
 

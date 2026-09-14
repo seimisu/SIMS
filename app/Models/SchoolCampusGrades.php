@@ -15,6 +15,7 @@ class SchoolCampusGrades extends Model
         'upper',
         'is_active',
         'is_drop',
+        'is_withdrawn',
         'is_delete',
         'is_failed',
         'is_incomplete'

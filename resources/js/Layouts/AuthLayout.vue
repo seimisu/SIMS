@@ -408,7 +408,6 @@
     </div>
     <Toast />
     <DefaultConfirmDialog group="global" />
-    <ConfirmDialog />
 </template>
 <script setup>
 import SidebarIconMenu from "../Components/menus/SidebarIconMenu.vue";

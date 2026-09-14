@@ -183,11 +183,11 @@ class ScholarManagementDetailsService
                         'schoolInfo.campus:id,generated_name',
                         'schoolInfo.course.course:id,name',
                         'subjects' => fn ($q) => $q
-                            ->select('id', 'term_record_id', 'subject_id', 'grade_id', 'remarks')
+                            ->select('id', 'term_record_id', 'subject_id', 'input_grade', 'grade_id', 'is_incomplete', 'is_drop', 'is_withdrawn', 'remarks')
                             ->where('is_deleted', false)
                             ->with([
                                 'subject:id,name,year,subject_code,unit,subject_class,semester_id',
-                                'grade:id,grade,is_failed,is_incomplete,is_drop,is_active',
+                                'grade:id,grade,is_failed,is_incomplete,is_drop,is_withdrawn,is_active',
                             ]),
                     ]),
                 'logs',
@@ -286,12 +286,12 @@ class ScholarManagementDetailsService
         })->values()->map(function ($term) use ($standings, $documents) {
             $subjects = $term->subjects->map(function ($sub) {
                 $grade = $sub->grade;
-                $gradeValue = is_numeric($grade?->grade) ? (float) $grade->grade : null;
+                $gradeValue = is_numeric($sub->input_grade) ? (float) $sub->input_grade : null;
                 $unit = is_numeric($sub->subject?->unit) ? (float) $sub->subject->unit : 0;
                 $isAcademic = Str::lower($sub->subject?->subject_class ?? '') === 'academic';
                 $isCounted = $isAcademic
                     && $gradeValue !== null
-                    && ! ($grade?->is_drop || $grade?->is_incomplete);
+                    && ! ($sub->is_drop || $sub->is_incomplete || $sub->is_withdrawn || $grade?->is_drop || $grade?->is_incomplete || $grade?->is_withdrawn);
 
                 return [
                     'id' => $sub->id,
@@ -308,14 +308,20 @@ class ScholarManagementDetailsService
                         'is_failed' => $sub->grade?->is_failed,
                         'is_incomplete' => $sub->grade?->is_incomplete,
                         'is_drop' => $sub->grade?->is_drop,
+                        'is_withdrawn' => $sub->grade?->is_withdrawn,
                         'is_active' => $sub->grade?->is_active,
                     ],
+                    'input_grade' => $sub->input_grade,
+                    'is_incomplete' => (bool) $sub->is_incomplete,
+                    'is_drop' => (bool) $sub->is_drop,
+                    'is_withdrawn' => (bool) $sub->is_withdrawn,
                     'request' => [
                         'id' => null,
                         'grade' => null,
                         'is_failed' => null,
                         'is_incomplete' => null,
                         'is_drop' => null,
+                        'is_withdrawn' => null,
                         'is_active' => null,
                     ],
                     'total' => $isCounted ? round($gradeValue * $unit, 2) : null,
