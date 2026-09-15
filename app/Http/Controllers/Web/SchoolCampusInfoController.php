@@ -14,8 +14,10 @@ class SchoolCampusInfoController extends Controller
     {
         $data = $request->validated();
 
-        SchoolCampusInfo::create([
+        $info = SchoolCampusInfo::updateOrCreate([
             'campus_id' => $data['campusId'],
+            'is_delete' => false,
+        ], [
             'dean' => $data['dean'],
             'registrar' => $data['registrar'],
             'contact' => $data['contact'],
@@ -24,9 +26,9 @@ class SchoolCampusInfoController extends Controller
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'School Detail Created',
-            'message' => 'School detail successfully created.',
+            'status' => $info->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $info->wasRecentlyCreated ? 'School Detail Created' : 'School Detail Updated',
+            'message' => $info->wasRecentlyCreated ? 'School detail successfully created.' : 'The existing school detail was updated instead of creating a duplicate.',
         ]);
     }
 

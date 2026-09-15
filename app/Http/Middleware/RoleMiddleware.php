@@ -9,6 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
+    private array $routeAccess = [];
+
     /**
      * Handle an incoming request.
      *
@@ -16,8 +18,9 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $cacheKey = ($request->user()->role_id ?? 'guest').'|'.$request->getPathInfo();
 
-        $check = ListRoutes::where('is_delete', false)
+        $check = $this->routeAccess[$cacheKey] ??= ListRoutes::where('is_delete', false)
             ->where('is_active', true)
             ->whereRaw("
         EXISTS (

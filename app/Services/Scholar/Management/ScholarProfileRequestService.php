@@ -17,6 +17,17 @@ class ScholarProfileRequestService
     public function decide(string $type, array $data): array
     {
         $scholar = Scholars::where('spas_no', $data['spas_no'])->firstOrFail();
+        $request = $scholar->profileRequest()
+            ->where('id', $data['request_id'] ?? null)
+            ->first();
+
+        if (! $request || $request->status !== 'pending') {
+            return [
+                'status' => 'info',
+                'title' => 'Already processed',
+                'message' => 'This scholar information request was already reviewed.',
+            ];
+        }
 
         if ($type === 'accept') {
             $this->approve($scholar, $data);
@@ -97,16 +108,20 @@ class ScholarProfileRequestService
             $scholar->address()->update($addressInput);
         }
 
-        $scholar->requestHistory()->create([
-            'request_type' => 'profile',
-            'previous' => array_intersect_key($previous, $changes),
-            'changes' => $changes,
-            'created_by' => Auth::user()->profile->fullname,
-            'created_at' => now(),
-            'request_no' => $data['count'],
-        ]);
-
         if ($changes !== []) {
+            $scholar->requestHistory()->firstOrCreate(
+                [
+                    'request_type' => 'profile',
+                    'request_no' => $data['count'],
+                ],
+                [
+                    'previous' => array_intersect_key($previous, $changes),
+                    'changes' => $changes,
+                    'created_by' => Auth::user()->profile->fullname,
+                    'created_at' => now(),
+                ]
+            );
+
             ActivityLogs::create([
                 'scholar_id' => $scholar->id,
                 'previous_data' => array_intersect_key($previous, $changes),
@@ -118,6 +133,7 @@ class ScholarProfileRequestService
 
         $scholar->profileRequest()
             ->where('id', $data['request_id'] ?? null)
+            ->where('status', 'pending')
             ->update([
             'status' => 'approved',
             'reviewed_at' => now(),
@@ -129,6 +145,7 @@ class ScholarProfileRequestService
     {
         $scholar->profileRequest()
             ->where('id', $data['request_id'] ?? null)
+            ->where('status', 'pending')
             ->update([
                 'status' => 'rejected',
                 'reviewed_at' => now(),

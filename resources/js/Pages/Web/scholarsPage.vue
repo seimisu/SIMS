@@ -412,11 +412,10 @@ import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
-import TextInput from "../../Components/inputs/TextInput.vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import * as TablerIcons from "@tabler/icons-vue";
 
-import { computed, onMounted, onUpdated, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import {
     IconLineDashed,
     IconSettings,
@@ -446,6 +445,13 @@ const drawerScholar = ref(false);
 const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
+const DEBOUNCE_MS = 600;
+
+const scheduleLoadPage = (pageNumber = 1) => {
+    clearTimeout(timerBounce.value);
+    timerBounce.value = setTimeout(() => loadPage(pageNumber), DEBOUNCE_MS);
+};
+
 const toggleOption = (event, rowData) => {
     selectedRow.value = rowData;
 
@@ -515,6 +521,8 @@ const loadPage = (page, options = {}) => {
         {
             preserveState: true,
             preserveScroll: true,
+            replace: true,
+            only: ["scholars", "filterSearch", "filterSchool"],
             onBefore: () => (loading.table = true),
             onFinish: () => (loading.table = false),
         },
@@ -552,6 +560,8 @@ const toggleScholarDetails = (event) => {
 
 const toggleOpSchool = (event) => {
     opSchool.value.toggle(event);
+    if (page.props?.schoolFilter) return;
+
     router.reload({
         only: ["schoolFilter"],
     });
@@ -559,23 +569,19 @@ const toggleOpSchool = (event) => {
 
 const schoolFilter = (event) => {
     opSchool.value.toggle(event);
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const schoolFilterClear = (event) => {
     opSchool.value.toggle(event);
     filterSchool.value = null;
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const toggleopProgram = (event) => {
     opProgram.value.toggle(event);
+    if (page.props?.programFilter) return;
+
     router.reload({
         only: ["programFilter"],
     });
@@ -583,23 +589,19 @@ const toggleopProgram = (event) => {
 
 const programFilter = (event) => {
     opProgram.value.toggle(event);
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const programFilterClear = (event) => {
     opProgram.value.toggle(event);
     filterProgram.value = null;
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const toggleopSub = (event) => {
     opSub.value.toggle(event);
+    if (page.props?.scholarTypeFilter) return;
+
     router.reload({
         only: ["scholarTypeFilter"],
     });
@@ -607,23 +609,19 @@ const toggleopSub = (event) => {
 
 const subFilter = (event) => {
     opSub.value.toggle(event);
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const subFilterClear = (event) => {
     opSub.value.toggle(event);
     filterSub.value = null;
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const toggleopStatus = (event) => {
     opStatus.value.toggle(event);
+    if (page.props?.statusFilter) return;
+
     router.reload({
         only: ["statusFilter"],
     });
@@ -631,35 +629,25 @@ const toggleopStatus = (event) => {
 
 const statusFilter = (event) => {
     opStatus.value.toggle(event);
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const statusFilterClear = (event) => {
     opStatus.value.toggle(event);
     filterStatus.value = null;
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 const toggleRequest = (event) => {
-    clearTimeout(timerBounce.value);
-    timerBounce.value = setTimeout(() => {
-        loadPage(1);
-    }, 300);
+    scheduleLoadPage();
 };
 
 watch(
     () => searchInput.value ?? null,
-    () => {
-        clearTimeout(timerBounce.value);
-        timerBounce.value = setTimeout(() => {
-            loadPage(1);
-        }, 300);
+    (value, oldValue) => {
+        if (value === oldValue) return;
+
+        scheduleLoadPage();
     },
 );
 </script>

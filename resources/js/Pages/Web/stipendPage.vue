@@ -596,6 +596,7 @@ import { route } from "ziggy-js";
 const page = usePage();
 const toastRef = ref(null);
 const timerBounce = ref(null);
+const DEBOUNCE_MS = 600;
 const stipendDrawer = ref(null);
 const searchInput = ref(null);
 const lastFlashKey = ref(null);
@@ -1033,6 +1034,11 @@ const submitPayroll = () => {
         });
 };
 
+const scheduleLoadPage = (pageNumber = 1) => {
+    clearTimeout(timerBounce.value);
+    timerBounce.value = setTimeout(() => loadPage(pageNumber), DEBOUNCE_MS);
+};
+
 const loadPage = (pageNumber) => {
     router.get(
         route("stipends"),
@@ -1054,6 +1060,8 @@ const loadPage = (pageNumber) => {
         {
             preserveState: true,
             preserveScroll: true,
+            replace: true,
+            only: ["batches", "batchFilters"],
         },
     );
 };
@@ -1068,22 +1076,24 @@ const clearBatchFilters = () => {
 
 watch(
     () => searchInput.value,
-    () => {
-        clearTimeout(timerBounce.value);
-        timerBounce.value = setTimeout(() => loadPage(1), 300);
+    (value, oldValue) => {
+        if (value === oldValue) return;
+
+        scheduleLoadPage();
     },
 );
 
 watch(
     () => [
-        filterRegion.value,
-        filterTerm.value,
-        filterAcademicYear.value,
-        filterStatus.value,
+        filterRegion.value?.id ?? null,
+        filterTerm.value?.id ?? null,
+        filterAcademicYear.value?.id ?? filterAcademicYear.value?.name ?? null,
+        filterStatus.value?.id ?? null,
     ],
-    () => {
-        clearTimeout(timerBounce.value);
-        timerBounce.value = setTimeout(() => loadPage(1), 300);
+    (value, oldValue) => {
+        if (JSON.stringify(value) === JSON.stringify(oldValue)) return;
+
+        scheduleLoadPage();
     },
 );
 

@@ -52,19 +52,21 @@ class programController extends Controller
     {
         $data = $request->validated();
 
-        ListPrograms::create([
+        $program = ListPrograms::firstOrCreate([
             'name' => $data['name'],
-            'description' => $data['description'] ?? null,
             'program_id' => $data['scholarship']['id'] ?? null,
             'type_id' => $data['type']['id'] ?? null,
             'is_sub' => $data['isSub'] ?? false,
+            'is_delete' => false,
+        ], [
+            'description' => $data['description'] ?? null,
             'created_by' =>  Auth::user()->profile->fullname
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Program Created',
-            'message' => 'Program successfully created.',
+            'status' => $program->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $program->wasRecentlyCreated ? 'Program Created' : 'Program Already Exists',
+            'message' => $program->wasRecentlyCreated ? 'Program successfully created.' : 'This program already exists, so no duplicate was created.',
         ]);;
     }
 

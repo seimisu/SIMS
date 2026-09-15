@@ -25,6 +25,8 @@ class Batches extends Model
         'imported_at',
         'import_file_path',
         'import_file_name',
+        'import_file_hash',
+        'generated_excel_hash',
     ];
 
     public function logs()

@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\RoleBellNotification;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -109,19 +110,32 @@ class RoleBellNotificationService
         $users = $users->filter(fn ($user) => $user instanceof User && $user->is_active && ! $user->is_delete);
 
         foreach ($users as $user) {
-            if ($this->notificationExists($user, $data['sourceTable'], $data['sourceId'], $data['type'])) {
-                continue;
-            }
+            Cache::lock($this->notificationLockKey($user, $data), 10)->block(1, function () use ($user, $data) {
+                if ($this->notificationExists($user, $data['sourceTable'], $data['sourceId'], $data['type'])) {
+                    return;
+                }
 
-            Notification::send($user, new RoleBellNotification([
-                'type' => $data['type'],
-                'title' => $data['title'],
-                'message' => $data['message'],
-                'url' => $data['url'],
-                'source_table' => $data['sourceTable'],
-                'source_id' => (string) $data['sourceId'],
-            ]));
+                Notification::send($user, new RoleBellNotification([
+                    'type' => $data['type'],
+                    'title' => $data['title'],
+                    'message' => $data['message'],
+                    'url' => $data['url'],
+                    'source_table' => $data['sourceTable'],
+                    'source_id' => (string) $data['sourceId'],
+                ]));
+            });
         }
+    }
+
+    private function notificationLockKey(User $user, array $data): string
+    {
+        return implode(':', [
+            'bell-notification',
+            $user->id,
+            $data['sourceTable'],
+            $data['sourceId'],
+            $data['type'],
+        ]);
     }
 
     private function notificationExists(User $user, string $sourceTable, int|string $sourceId, string $type): bool

@@ -39,68 +39,9 @@ class ScholarManagementOptionsService
     private function filters(SystemPermissions $permissions, $user, $academicStatusOptions): array
     {
         return [
-            'schoolFilter' => Inertia::optional(
-                fn () => Scholars::with([
-                    'schoolInfo' => fn ($q) => $q
-                        ->select('id', 'scholar_id', 'campus_id')
-                        ->with('campus:id,generated_name')
-                        ->latest()
-                        ->limit(1),
-                ])
-                    ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                        $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
-                            $address->where('region_code', $permissions->regionCodeFor($user));
-                        });
-                    })
-                    ->get()
-                    ->map(function ($q) {
-                        $school = $q->schoolInfo->first()?->campus;
-
-                        return [
-                            'id' => $school?->id,
-                            'name' => $school?->generated_name,
-                        ];
-                    })
-                    ->filter()
-                    ->unique('id')
-                    ->values()
-            ),
-            'programFilter' => Inertia::optional(
-                fn () => Scholars::with([
-                    'program:id,name',
-                ])
-                    ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                        $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
-                            $address->where('region_code', $permissions->regionCodeFor($user));
-                        });
-                    })
-                    ->get()
-                    ->map(fn ($q) => [
-                        'id' => $q->program->id,
-                        'name' => $q->program->name,
-                    ])
-                    ->filter()
-                    ->unique('id')
-                    ->values()
-            ),
-            'scholarTypeFilter' => Inertia::optional(
-                fn () => Scholars::with([
-                    'type:id,name',
-                ])
-                    ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                        $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
-                            $address->where('region_code', $permissions->regionCodeFor($user));
-                        });
-                    })
-                    ->get()
-                    ->map(fn ($q) => [
-                        'id' => $q->type->id,
-                        'name' => $q->type->name,
-                    ])
-                    ->filter()
-                    ->unique('id')
-                    ->values()
-            ),
+            'schoolFilter' => Inertia::optional(fn () => $this->schoolFilter($permissions, $user)),
+            'programFilter' => Inertia::optional(fn () => $this->programFilter($permissions, $user)),
+            'scholarTypeFilter' => Inertia::optional(fn () => $this->scholarTypeFilter($permissions, $user)),
             'statusFilter' => Inertia::optional(fn () => $academicStatusOptions),
             'academicStatusOptions' => $academicStatusOptions,
         ];
@@ -177,19 +118,19 @@ class ScholarManagementOptionsService
     {
         if (! $selectedScholar) {
             return [
-                'statusOptions' => null,
-                'programOptions' => null,
-                'subProgramOptions' => null,
-                'yearOptions' => null,
+                'statusOptions' => Inertia::optional(fn () => $academicStatusOptions),
+                'programOptions' => Inertia::optional(fn () => $this->programOptions()),
+                'subProgramOptions' => Inertia::optional(fn () => $this->subProgramOptions()),
+                'yearOptions' => Inertia::optional(fn () => $this->yearOptions()),
                 'transferCourseOptions' => [],
                 'termOptions' => null,
                 'subjectOptions' => null,
                 'gradeOptions' => null,
-                'schoolOptions' => [],
+                'schoolOptions' => Inertia::optional(fn () => $this->schoolOptions($permissions, $user)),
                 'courseOptions' => [],
                 'curriculumOptions' => [],
                 'generateSubjects' => Inertia::optional(fn () => collect()),
-                'standingOptions' => $this->standingOptions(),
+                'standingOptions' => Inertia::optional(fn () => $this->standingOptions()),
             ];
         }
 
@@ -343,6 +284,64 @@ class ScholarManagementOptionsService
             ]);
     }
 
+    private function schoolFilter(SystemPermissions $permissions, $user)
+    {
+        return SchoolCampuses::select('id', 'generated_name')
+            ->where('is_active', true)
+            ->where('is_delete', false)
+            ->whereHas('scholarCampus')
+            ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                $q->whereHas('address', function ($address) use ($permissions, $user) {
+                    $address->where('region_code', $permissions->regionCodeFor($user));
+                });
+            })
+            ->orderBy('generated_name')
+            ->get()
+            ->map(fn ($school) => [
+                'id' => $school->id,
+                'name' => $school->generated_name,
+            ])
+            ->values();
+    }
+
+    private function programFilter(SystemPermissions $permissions, $user)
+    {
+        $programIds = Scholars::query()
+            ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                    $address->where('region_code', $permissions->regionCodeFor($user));
+                });
+            })
+            ->whereNotNull('program_id')
+            ->distinct()
+            ->pluck('program_id');
+
+        return ListPrograms::select('id', 'name')
+            ->whereIn('id', $programIds)
+            ->orderBy('name')
+            ->get()
+            ->values();
+    }
+
+    private function scholarTypeFilter(SystemPermissions $permissions, $user)
+    {
+        $typeIds = Scholars::query()
+            ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
+                $q->whereHas('schoolInfo.campus.address', function ($address) use ($permissions, $user) {
+                    $address->where('region_code', $permissions->regionCodeFor($user));
+                });
+            })
+            ->whereNotNull('type_id')
+            ->distinct()
+            ->pluck('type_id');
+
+        return ListReferences::select('id', 'name')
+            ->whereIn('id', $typeIds)
+            ->orderBy('name')
+            ->get()
+            ->values();
+    }
+
     private function courseOptions(Request $request, string $campusInput)
     {
         return SchoolCampusCourses::with(['course', 'campus'])->where([
@@ -407,7 +406,13 @@ class ScholarManagementOptionsService
             return null;
         }
 
-        return Scholars::find(Hashids::decode($request->input('id'))[0] ?? 0);
+        return Scholars::with([
+            'schoolInfo' => fn ($q) => $q
+                ->select('id', 'scholar_id', 'campus_id', 'campus_course_id')
+                ->with('campus:id,term_id')
+                ->latest()
+                ->limit(1),
+        ])->find(Hashids::decode($request->input('id'))[0] ?? 0);
     }
 
     private function selectedSchoolFilter(Request $request)
@@ -416,27 +421,13 @@ class ScholarManagementOptionsService
             return null;
         }
 
-        return Scholars::with([
-            'schoolInfo' => fn ($q) => $q
-                ->select('id', 'scholar_id', 'campus_id')
-                ->with('campus:id,generated_name')
-                ->latest()
-                ->limit(1),
-        ])
-            ->when($request->input('schools'), function ($q, $schools) {
-                $q->whereHas('schoolInfo', fn ($w) => $w->whereHas('campus', fn ($r) => $r->whereIn('generated_name', $schools)));
-            })
+        return SchoolCampuses::select('id', 'generated_name')
+            ->whereIn('generated_name', $request->input('schools'))
             ->get()
-            ->map(function ($q) {
-                $school = $q->schoolInfo->first()?->campus;
-
-                return [
-                    'id' => $school?->id,
-                    'name' => $school?->generated_name,
-                ];
-            })
-            ->filter()
-            ->unique('id')
+            ->map(fn ($school) => [
+                'id' => $school->id,
+                'name' => $school->generated_name,
+            ])
             ->values();
     }
 }

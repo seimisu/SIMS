@@ -7,6 +7,7 @@ use App\Http\Requests\Web\GeolocationRequest;
 use App\Imports\GeolocationImport;
 use App\Models\GeolocationFiles;
 use App\Models\geolocations;
+use App\Support\UploadedFileHash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,9 +27,19 @@ class GeolocationController extends Controller
     {
         $data = $r->validated();
         $file = $data['files'][0];
+        $fileHash = UploadedFileHash::uploadedFile($file);
+
+        if (GeolocationFiles::where('file_hash', $fileHash)->exists()) {
+            return redirect()->back()->with('flash', [
+                'status'  => 'info',
+                'title'   => 'Geolocation File Already Imported',
+                'message' => 'This exact geolocation file was already processed, so it was not imported again.',
+            ]);
+        }
+
         try {
 
-            DB::transaction(function () use ($file) {
+            DB::transaction(function () use ($file, $fileHash) {
 
                 Excel::import(new GeolocationImport, $file);
 
@@ -41,7 +52,8 @@ class GeolocationController extends Controller
                 GeolocationFiles::create([
                     'filename' =>  $file->getClientOriginalName(),
                     'path' =>  $path,
-                    'created_by' => Auth::user()->profile->fullname
+                    'created_by' => Auth::user()->profile->fullname,
+                    'file_hash' => $fileHash,
                 ]);
             });
             return redirect()->back()->with('flash', [

@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\CoordinatorUpdateInfoNotification;
 use App\Notifications\UpdateSemesterCoordinatorNotification;
 use App\References\ListClass;
+use App\Support\IdempotencyGuard;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -221,30 +222,38 @@ class SchoolCoordinatorController extends Controller
         //     ]);
 
         // }
-        $semester = $campus->semesters()->update([
-            'is_active' => false,
-        ]);
+        $activeSemesterIds = collect($validatedData['semester'])->pluck('semester_id')->all();
+
+        $campus->semesters()
+            ->whereNotIn('semester_id', $activeSemesterIds)
+            ->update([
+                'is_active' => false,
+            ]);
 
         foreach ($validatedData['semester'] as $key => $value) {
 
-            $semester = $campus->semesters()->create([
+            $semester = $campus->semesters()->updateOrCreate([
                 'semester_id' => $value['semester_id'],
+            ], [
                 'start_date' => $value['startDate'] ?? null,
                 'end_date' => $value['endDate'] ?? null,
                 'submission_date' => $value['submissionDate'] ?? null,
+                'is_active' => true,
             ]);
 
             $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date', ListReferences::find($value['semester_id'])->name]);
 
-            AuditLogs::create([
-                'user_id' => Auth::id(),
-                'old_data' => null,
-                'new_data' => $newData,
-                'action' => 'Updated semester '.ListReferences::find($value['semester_id'])->name,
-            ]);
+            if ($semester->wasRecentlyCreated || $semester->wasChanged()) {
+                AuditLogs::create([
+                    'user_id' => Auth::id(),
+                    'old_data' => null,
+                    'new_data' => $newData,
+                    'action' => 'Updated semester '.ListReferences::find($value['semester_id'])->name,
+                ]);
+            }
         }
 
-        Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new UpdateSemesterCoordinatorNotification(Auth::user()->profile->fullname, $campus->generated_name));
+        IdempotencyGuard::forSeconds("coordinator-semester-notification:{$campus->id}", 60, fn () => Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new UpdateSemesterCoordinatorNotification(Auth::user()->profile->fullname, $campus->generated_name)));
 
         return redirect()->back()->with([
             'flash' => [

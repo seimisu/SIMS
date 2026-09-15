@@ -8,6 +8,7 @@ use App\Mail\UserCreatedMail;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\References\ListClass;
+use App\Support\IdempotencyGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -80,7 +81,7 @@ class UserController extends Controller
             'agency_id' => $data['agency']['id'] ?? null,
         ]);
 
-        Mail::to($data['email'])->send(new UserCreatedMail($user, $activation));
+        IdempotencyGuard::forSeconds("activation-email:{$user->id}", 60, fn () => Mail::to($data['email'])->send(new UserCreatedMail($user, $activation)));
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
@@ -102,10 +103,21 @@ class UserController extends Controller
             ]);
         }
 
-        $user->update([
-            'activation_token' => $activation,
-        ]);
-        Mail::to($user->email)->send(new UserCreatedMail($user, $activation));
+        $sent = IdempotencyGuard::forSeconds("activation-email:{$user->id}", 60, function () use ($user, $activation) {
+            $user->update([
+                'activation_token' => $activation,
+            ]);
+
+            Mail::to($user->email)->send(new UserCreatedMail($user, $activation));
+        });
+
+        if (! $sent) {
+            return redirect()->back()->with('flash', [
+                'status' => 'info',
+                'title' => 'Email Recently Sent',
+                'message' => 'Please wait a moment before resending another activation email.',
+            ]);
+        }
 
         return redirect()->back()->with('flash', [
             'status' => 'success',

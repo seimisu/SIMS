@@ -23,18 +23,20 @@ class LocationRegionController extends Controller
     {
         $data = $request->validated();
 
-        LocationRegions::create([
+        $region = LocationRegions::firstOrCreate([
+            'code' => $data['code'],
+            'is_delete' => false,
+        ], [
             'name' => $data['name'],
             'region' => $data['region'],
-            'code' => $data['code'],
             'island' => $data['island']['name'],
             'created_by'    => Auth::user()->profile->fullname
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Region Created',
-            'message' => 'Region successfully created.',
+            'status' => $region->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $region->wasRecentlyCreated ? 'Region Created' : 'Region Already Exists',
+            'message' => $region->wasRecentlyCreated ? 'Region successfully created.' : 'This region already exists, so no duplicate was created.',
         ]);;
     }
     function update(LocationRegionRequest $request, string $id, string $type)

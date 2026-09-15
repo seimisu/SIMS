@@ -24,19 +24,21 @@ class LocationBarangayController extends Controller
     {
         $data = $request->validated();
 
-        LocationBarangays::create([
+        $barangay = LocationBarangays::firstOrCreate([
+            'code' => $data['code'],
+            'is_delete' => false,
+        ], [
             'name' => $data['name'],
             'old_name' => $data['oldName'],
             'district' => $data['district'],
-            'code' => $data['code'],
             'municipality_code' => $data['municipality']['id'],
             'created_by'    => Auth::user()->profile->fullname
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Barangay Created',
-            'message' => 'Barangay successfully created.',
+            'status' => $barangay->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $barangay->wasRecentlyCreated ? 'Barangay Created' : 'Barangay Already Exists',
+            'message' => $barangay->wasRecentlyCreated ? 'Barangay successfully created.' : 'This barangay already exists, so no duplicate was created.',
         ]);;
     }
     function update(LocationBarangayRequest $request, string $id, string $type)

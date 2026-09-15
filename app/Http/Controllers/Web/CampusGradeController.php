@@ -17,9 +17,11 @@ class CampusGradeController extends Controller
         $data = $request->validated();
         $this->validateGradeRule($data);
 
-        SchoolCampusGrades::create([
+        $grade = SchoolCampusGrades::firstOrCreate([
             'campus_id' => $data['campusId'],
             'grade' => $data['grade'],
+            'is_delete' => false,
+        ], [
             'lower' => $data['lower'],
             'upper' => $data['upper'],
             'is_failed' => $data['fail'],
@@ -32,9 +34,9 @@ class CampusGradeController extends Controller
 
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Campus Grade Created',
-            'message' => 'Campus grade successfully created.',
+            'status' => $grade->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $grade->wasRecentlyCreated ? 'Campus Grade Created' : 'Campus Grade Already Exists',
+            'message' => $grade->wasRecentlyCreated ? 'Campus grade successfully created.' : 'This campus grade already exists, so no duplicate was created.',
         ]);
     }
 

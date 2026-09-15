@@ -33,9 +33,11 @@ class RoleController extends Controller
 
         $data = $request->validated();
 
-        ListRole::create([
-            'name'          => $data['name'],
+        $role = ListRole::firstOrCreate([
             'slug'          => $data['slug'],
+            'is_delete'     => false,
+        ], [
+            'name'          => $data['name'],
             'description'   => $data['description'],
             'is_lock'       => $data['isLock'],
             'created_by'    => Auth::user()->profile->fullname
@@ -43,9 +45,9 @@ class RoleController extends Controller
 
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Role Created',
-            'message' => 'Role successfully created.',
+            'status' => $role->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $role->wasRecentlyCreated ? 'Role Created' : 'Role Already Exists',
+            'message' => $role->wasRecentlyCreated ? 'Role successfully created.' : 'This role already exists, so no duplicate was created.',
         ]);
     }
 

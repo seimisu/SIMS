@@ -25,19 +25,21 @@ class ReferenceController extends Controller
     {
         $data = $request->validated();
 
-        ListReferences::create([
+        $reference = ListReferences::firstOrCreate([
             'name' => $data['name'],
             'classification' => $data['class']['id'] ?? null,
             'type' => $data['typeReference']['id'] ?? null,
-            'color' => $data['color']['id'] ?? null,
             'others' => $data['others'],
+            'is_delete' => false,
+        ], [
+            'color' => $data['color']['id'] ?? null,
             'created_by'    => Auth::user()->profile->fullname
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Reference Created',
-            'message' => 'Reference successfully created.',
+            'status' => $reference->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $reference->wasRecentlyCreated ? 'Reference Created' : 'Reference Already Exists',
+            'message' => $reference->wasRecentlyCreated ? 'Reference successfully created.' : 'This reference already exists, so no duplicate was created.',
         ]);;
     }
     function update(ReferenceRequest $request, string $id, string $type)

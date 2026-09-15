@@ -4,6 +4,7 @@ namespace App\Services\Scholar\Management;
 
 use App\Mail\activationLinkMail;
 use App\Models\Scholars;
+use App\Support\IdempotencyGuard;
 use Exception;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -22,8 +23,16 @@ class ScholarActivationService
 
         $portalUrl = rtrim(config('app.scholar_portal_url'), '/');
         $url = $portalUrl.'/activate?token='.$activation;
-        Mail::to($scholar->profile->email)
-            ->send(new activationLinkMail($url));
+        $sent = IdempotencyGuard::forSeconds("scholar-activation-email:{$scholar->id}", 60, fn () => Mail::to($scholar->profile->email)
+            ->send(new activationLinkMail($url)));
+
+        if (! $sent) {
+            return [
+                'status' => 'info',
+                'title' => 'Activation Link Recently Sent',
+                'message' => 'Please wait a moment before sending another activation link.',
+            ];
+        }
 
         $scholar->update([
             'activation_token' => $activation,

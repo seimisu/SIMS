@@ -29,10 +29,12 @@ class RouteController extends Controller
 
 
 
-        ListRoutes::create([
+        $route = ListRoutes::firstOrCreate([
+            'slug'          => $data['slug'],
+            'is_delete'     => false,
+        ], [
             'route'         => $data['route'],
             'label'         => $data['label'],
-            'slug'          => $data['slug'],
             'icon'          => $data['icon'],
             'component'     => $data['component'],
             'is_submenu'    => $data['isSubmenu'],
@@ -42,9 +44,9 @@ class RouteController extends Controller
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Route Created',
-            'message' => 'Menu route successfully created.',
+            'status' => $route->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $route->wasRecentlyCreated ? 'Route Created' : 'Route Already Exists',
+            'message' => $route->wasRecentlyCreated ? 'Menu route successfully created.' : 'This route already exists, so no duplicate was created.',
         ]);;
     }
     function update(RouteRequest $request, string $id, string $type)

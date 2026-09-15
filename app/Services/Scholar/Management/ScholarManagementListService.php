@@ -3,6 +3,7 @@
 namespace App\Services\Scholar\Management;
 
 use App\Models\Scholars;
+use App\Models\ScholarTerm;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class ScholarManagementListService
         $monitoringTermId = $monitoring['termId'];
         $monitoringSubmissionStatus = $monitoring['submissionStatus'];
 
-        return Scholars::select(
+        $scholars = Scholars::select(
             'scholars.id',
             'scholars.spas_no',
             'scholars.status_id',
@@ -103,26 +104,19 @@ class ScholarManagementListService
                 });
             })
             ->orderBy('scholar_profiles.lname', 'ASC')
-            ->paginate(10)
-            ->through(function ($q) use ($monitoringAcademicYear, $monitoringTermId, $academicStatusOptions) {
-                $monitoringTermRecord = null;
-                $scholarshipStatus = null;
+            ->paginate(10);
+
+        $scholarIds = $scholars->getCollection()->pluck('id')->all();
+        $latestTerms = $this->latestTermsByScholar($scholarIds);
+        $monitoringTerms = $this->monitoringTermsByScholar($scholarIds, $monitoringAcademicYear, $monitoringTermId);
+        $processStatuses = $this->processStatusesByTerm($monitoringTerms->pluck('id')->all());
+
+        return $scholars->through(function ($q) use ($monitoringTerms, $latestTerms, $processStatuses, $academicStatusOptions) {
+                $monitoringTermRecord = $monitoringTerms->get($q->id);
+                $latestTermRecord = $latestTerms->get($q->id);
+                $schoolInfo = $q->schoolInfo?->first();
                 $progressStatus = Str::upper($q->academic_status ?: 'NEW');
                 $progressStatusOption = $academicStatusOptions->firstWhere('name', $progressStatus);
-
-                if ($monitoringAcademicYear && $monitoringTermId) {
-                    $monitoringTermRecord = $q->termRecords()
-                        ->where('academic_year', $monitoringAcademicYear)
-                        ->where('term_id', $monitoringTermId)
-                        ->first();
-
-                    $scholarshipStatus = $monitoringTermRecord
-                        ? DB::connection('scholars')
-                            ->table('scholar_processes')
-                            ->where('term_record_id', $monitoringTermRecord->id)
-                            ->value('scholarship_status')
-                        : null;
-                }
 
                 return [
                     'id' => Hashids::encode($q->id),
@@ -144,14 +138,56 @@ class ScholarManagementListService
                     'mainProgram' => $q->mainProgram?->name,
                     'status' => $this->academicStatusMeta($progressStatus, $progressStatusOption),
                     'submissionStatus' => $this->submissionStatusMeta($monitoringTermRecord?->verification_status),
-                    'scholarshipStatus' => $scholarshipStatus,
-                    'term' => $q->termRecords()->latest()->first()?->toArray(),
-                    'course' => $q->schoolInfo?->first()?->course?->course?->name,
-                    'school' => $q->schoolInfo?->first()?->campus?->generated_name,
-                    'agency' => $q->schoolInfo?->first()?->campus?->agency?->slug,
-                    'region' => $q->schoolInfo?->first()?->campus?->address?->region_array,
+                    'scholarshipStatus' => $monitoringTermRecord ? $processStatuses->get($monitoringTermRecord->id) : null,
+                    'term' => $latestTermRecord?->toArray(),
+                    'course' => $schoolInfo?->course?->course?->name,
+                    'school' => $schoolInfo?->campus?->generated_name,
+                    'agency' => $schoolInfo?->campus?->agency?->slug,
+                    'region' => $schoolInfo?->campus?->address?->region_array,
                 ];
             });
+    }
+
+    private function latestTermsByScholar(array $scholarIds)
+    {
+        if (empty($scholarIds)) {
+            return collect();
+        }
+
+        return ScholarTerm::whereIn('scholar_id', $scholarIds)
+            ->orderBy('scholar_id')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('scholar_id')
+            ->keyBy('scholar_id');
+    }
+
+    private function monitoringTermsByScholar(array $scholarIds, ?string $academicYear, int|string|null $termId)
+    {
+        if (empty($scholarIds) || ! $academicYear || ! $termId) {
+            return collect();
+        }
+
+        return ScholarTerm::whereIn('scholar_id', $scholarIds)
+            ->where('academic_year', $academicYear)
+            ->where('term_id', $termId)
+            ->orderBy('scholar_id')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('scholar_id')
+            ->keyBy('scholar_id');
+    }
+
+    private function processStatusesByTerm(array $termRecordIds)
+    {
+        if (empty($termRecordIds)) {
+            return collect();
+        }
+
+        return DB::connection('scholars')
+            ->table('scholar_processes')
+            ->whereIn('term_record_id', $termRecordIds)
+            ->pluck('scholarship_status', 'term_record_id');
     }
 
     private function academicStatusMeta(?string $status, ?array $statusOption = null): array

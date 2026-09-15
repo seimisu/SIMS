@@ -29,6 +29,8 @@ use App\Notifications\ScholarUploadedNotification;
 use App\Notifications\ValidatedFilesNotification;
 use App\References\LocationClass;
 use App\Services\Academic\CampusGradeResolver;
+use App\Support\IdempotencyGuard;
+use App\Support\UploadedFileHash;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Exception;
@@ -195,6 +197,18 @@ class ScholarReviewController extends Controller
             DB::beginTransaction();
             $data = $request->validated();
             $file = $data['files'][0];
+            $fileHash = UploadedFileHash::uploadedFile($file);
+
+            if (ScholarUploadedFiles::where('file_hash', $fileHash)->whereNot('status', 'reject')->exists()) {
+                DB::rollBack();
+
+                return redirect()->back()->with('flash', [
+                    'status' => 'info',
+                    'title' => 'Scholar File Already Uploaded',
+                    'message' => 'This exact scholar import file is already in review, so it was not uploaded again.',
+                ]);
+            }
+
             $import = new CheckScholarImport;
             $filename = Str::random(12).'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('imports/scholars', $filename, 'public');
@@ -218,6 +232,7 @@ class ScholarReviewController extends Controller
                 'region_office' => Auth::user()->profile->agency_array['name'],
                 'created_by' => Auth::user()->profile->fullname,
                 'status' => 'pending',
+                'file_hash' => $fileHash,
             ]);
             foreach ($import->rows as $key => $value) {
                 $rowNumber = $import->rowNumbers[$key] ?? ($key + 2);
@@ -295,12 +310,12 @@ class ScholarReviewController extends Controller
                 ])->get();
 
             foreach ($highTable as $admin) {
-                $admin->notify(
+                IdempotencyGuard::forSeconds("scholar-upload-notification:{$uploadedfile->id}:{$admin->id}", 60, fn () => $admin->notify(
                     new ScholarUploadedNotification(
                         Auth::user()->profile->fullname,
                         Auth::user()->profile->agency->name,
                     )
-                );
+                ));
             }
 
             DB::commit();
@@ -442,12 +457,12 @@ class ScholarReviewController extends Controller
                 ->get();
 
             foreach ($highTable as $admin) {
-                $admin->notify(
+                IdempotencyGuard::forSeconds("scholar-validated-notification:{$file->id}:{$admin->id}:{$request['status']}", 60, fn () => $admin->notify(
                     new ValidatedFilesNotification(
                         $request['status'],
                         Auth::user()->profile->fullname,
                     )
-                );
+                ));
             }
 
             Excel::import(new ScholarImport, storage_path('app/public/'.$file->filepath));
@@ -848,6 +863,14 @@ class ScholarReviewController extends Controller
                 'status' => 'error',
                 'title' => 'File not found',
                 'message' => 'The selected import batch could not be found.',
+            ]);
+        }
+
+        if (Str::lower((string) $check->status) === 'completed') {
+            return redirect()->back()->with('flash', [
+                'status' => 'info',
+                'title' => 'Import already completed',
+                'message' => 'This scholar import batch was already published, so no duplicate scholars were created.',
             ]);
         }
 

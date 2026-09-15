@@ -8,6 +8,7 @@ use App\Models\DocumentCategory;
 use App\Models\ListReferences;
 use App\Models\LocationRegions;
 use App\Services\Notifications\RoleBellNotificationService;
+use App\Support\UploadedFileHash;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -95,6 +96,16 @@ class DocumentController extends Controller
     {
         $data = $this->validateDocument($request);
         $file = $request->file('file');
+        $fileHash = UploadedFileHash::uploadedFile($file);
+
+        if (Document::where('file_hash', $fileHash)->exists()) {
+            return back()->with('flash', [
+                'status' => 'info',
+                'title' => 'Document Already Uploaded',
+                'message' => 'This exact document file already exists in the library.',
+            ]);
+        }
+
         $path = $file->store('documents', 'public');
 
         $document = Document::create([
@@ -103,6 +114,7 @@ class DocumentController extends Controller
             'description' => $data['description'] ?? null,
             'file_path' => $path,
             'original_filename' => $file->getClientOriginalName(),
+            'file_hash' => $fileHash,
             'mime_type' => $file->getMimeType(),
             'file_size' => $file->getSize(),
             'is_active' => $request->boolean('is_active'),
@@ -143,11 +155,22 @@ class DocumentController extends Controller
         ];
 
         if ($request->hasFile('file')) {
-            Storage::disk('public')->delete($document->file_path);
             $file = $request->file('file');
+            $fileHash = UploadedFileHash::uploadedFile($file);
+
+            if (Document::where('file_hash', $fileHash)->whereKeyNot($document->id)->exists()) {
+                return back()->with('flash', [
+                    'status' => 'info',
+                    'title' => 'Document Already Uploaded',
+                    'message' => 'This exact document file already exists in the library.',
+                ]);
+            }
+
+            Storage::disk('public')->delete($document->file_path);
             $payload = array_merge($payload, [
                 'file_path' => $file->store('documents', 'public'),
                 'original_filename' => $file->getClientOriginalName(),
+                'file_hash' => $fileHash,
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
             ]);

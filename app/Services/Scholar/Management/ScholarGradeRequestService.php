@@ -14,6 +14,16 @@ class ScholarGradeRequestService
 {
     public function decide(string $type, array $data): array
     {
+        $terms = $this->terms($data);
+
+        if ($terms->isEmpty()) {
+            return [
+                'status' => 'info',
+                'title' => 'Already processed',
+                'message' => 'This grade request was already reviewed.',
+            ];
+        }
+
         if ($type === 'accept') {
             $validation = Validator::make($data[0], [
                 'scholarshipStatus' => 'required|array|max:255',
@@ -27,7 +37,7 @@ class ScholarGradeRequestService
                 ];
             }
 
-            $this->approve($data);
+            $this->approve($terms, $data);
         } else {
             $validation = Validator::make($data[0], [
                 'remarks' => 'required|string|max:255',
@@ -41,7 +51,7 @@ class ScholarGradeRequestService
                 ];
             }
 
-            $this->reject($data);
+            $this->reject($terms, $data);
         }
 
         return [
@@ -55,14 +65,12 @@ class ScholarGradeRequestService
         ];
     }
 
-    private function approve(array $data): void
+    private function approve($terms, array $data): void
     {
         $scholarshipStatus = $data[0]['scholarshipStatus']['name']
             ?? $data[0]['scholarshipStatus']['id']
             ?? null;
         $scholarshipStatus = Str::upper($scholarshipStatus);
-
-        $terms = $this->terms($data);
 
         foreach ($terms as $term) {
             DB::table('scholar_term_records')
@@ -104,10 +112,9 @@ class ScholarGradeRequestService
         }
     }
 
-    private function reject(array $data): void
+    private function reject($terms, array $data): void
     {
         $remarks = collect($data)->firstWhere('status', 'submitted')['remarks'];
-        $terms = $this->terms($data);
 
         foreach ($terms as $term) {
             DB::table('scholar_term_records')
@@ -145,6 +152,7 @@ class ScholarGradeRequestService
     {
         return ScholarTerm::with('scholar:id,spas_no')
             ->whereIn('id', collect($data)->pluck('id'))
+            ->where('verification_status', 'submitted')
             ->get();
     }
 }

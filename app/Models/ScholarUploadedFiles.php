@@ -23,6 +23,7 @@ class ScholarUploadedFiles extends Model
         'duplicate_rows',
         'missing_required_rows',
         'published_rows',
+        'file_hash',
 
     ];
 

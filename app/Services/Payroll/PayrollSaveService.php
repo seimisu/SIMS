@@ -14,9 +14,10 @@ class PayrollSaveService
     {
     }
 
-    public function saveRecipients(int $batchId, array $recipients): void
+    public function saveRecipients(int $batchId, array $recipients): bool
     {
         $allowanceTypeIds = $this->allowances->typeIds();
+        $changed = false;
 
         foreach ($recipients as $item) {
             $recipientId = Hashids::decode($item['id'])[0] ?? 0;
@@ -26,13 +27,14 @@ class PayrollSaveService
                 continue;
             }
 
-            $totalStipend = $this->saveStipends($recipient, $item);
+            [$totalStipend, $stipendsChanged] = $this->saveStipends($recipient, $item);
+            $changed = $stipendsChanged || $changed;
             $totalWithheld = (float) ($item['total_withheld'] ?? 0);
             $learningMaterials = (float) ($item['learning_materials_amount'] ?? 0);
             $clothing = (float) ($item['clothing_amount'] ?? 0);
             $grandTotal = $totalStipend + $totalWithheld + $learningMaterials + $clothing;
 
-            $recipient->update([
+            $recipient->fill([
                 'total_stipend' => $totalStipend,
                 'total_withheld' => $totalWithheld,
                 'learning_materials_amount' => $learningMaterials,
@@ -41,20 +43,28 @@ class PayrollSaveService
                 'remarks' => $item['remarks'] ?? null,
             ]);
 
-            $this->saveAllowances($recipient, $item, $allowanceTypeIds, $learningMaterials, $clothing);
-            $this->saveWithheld($recipient, $item, $totalWithheld);
+            if ($recipient->isDirty()) {
+                $recipient->save();
+                $changed = true;
+            }
+
+            $changed = $this->saveAllowances($recipient, $item, $allowanceTypeIds, $learningMaterials, $clothing) || $changed;
+            $changed = $this->saveWithheld($recipient, $item, $totalWithheld) || $changed;
         }
+
+        return $changed;
     }
 
-    private function saveStipends(BatchRecipients $recipient, array $item): float
+    private function saveStipends(BatchRecipients $recipient, array $item): array
     {
         $totalStipend = 0;
+        $changed = false;
 
         foreach (range(1, 5) as $month) {
             $amount = (float) ($item["month_{$month}"] ?? 0);
             $totalStipend += $amount;
 
-            RecipientStipend::updateOrCreate(
+            $stipend = RecipientStipend::updateOrCreate(
                 [
                     'recipient_id' => $recipient->id,
                     'month_no' => $month,
@@ -65,9 +75,11 @@ class PayrollSaveService
                     'status' => $amount > 0 ? 'pending' : 'withheld',
                 ]
             );
+
+            $changed = $stipend->wasRecentlyCreated || $stipend->wasChanged() || $changed;
         }
 
-        return $totalStipend;
+        return [$totalStipend, $changed];
     }
 
     private function saveAllowances(
@@ -76,7 +88,9 @@ class PayrollSaveService
         array $allowanceTypeIds,
         float $learningMaterials,
         float $clothing
-    ): void {
+    ): bool {
+        $changed = false;
+
         foreach ([
             'connectivity' => [
                 'classification' => 'connectivity',
@@ -91,7 +105,7 @@ class PayrollSaveService
             $classification = $allowanceData['classification'];
 
             if ($amount <= 0) {
-                RecipientAllowance::where('recipient_id', $recipient->id)
+                $deleted = RecipientAllowance::where('recipient_id', $recipient->id)
                     ->where(function ($query) use ($classification, $code, $allowanceTypeIds) {
                         $query->where('classification', $classification)
                             ->orWhere('classification', $code);
@@ -102,10 +116,11 @@ class PayrollSaveService
                     })
                     ->delete();
 
+                $changed = $deleted > 0 || $changed;
                 continue;
             }
 
-            RecipientAllowance::updateOrCreate(
+            $allowance = RecipientAllowance::updateOrCreate(
                 [
                     'recipient_id' => $recipient->id,
                     'classification' => $classification,
@@ -117,13 +132,17 @@ class PayrollSaveService
                     'status' => 'pending',
                 ]
             );
+
+            $changed = $allowance->wasRecentlyCreated || $allowance->wasChanged() || $changed;
         }
+
+        return $changed;
     }
 
-    private function saveWithheld(BatchRecipients $recipient, array $item, float $totalWithheld): void
+    private function saveWithheld(BatchRecipients $recipient, array $item, float $totalWithheld): bool
     {
         if ($totalWithheld > 0) {
-            RecipientWithheld::updateOrCreate(
+            $withheld = RecipientWithheld::updateOrCreate(
                 ['recipient_id' => $recipient->id, 'month_no' => null],
                 [
                     'total_amount' => $totalWithheld,
@@ -132,10 +151,10 @@ class PayrollSaveService
                 ]
             );
 
-            return;
+            return $withheld->wasRecentlyCreated || $withheld->wasChanged();
         }
 
-        RecipientWithheld::where('recipient_id', $recipient->id)
+        return RecipientWithheld::where('recipient_id', $recipient->id)
             ->whereNull('month_no')
             ->delete();
     }

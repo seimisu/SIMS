@@ -15,6 +15,7 @@ class Document extends Model
         'description',
         'file_path',
         'original_filename',
+        'file_hash',
         'mime_type',
         'file_size',
         'is_active',

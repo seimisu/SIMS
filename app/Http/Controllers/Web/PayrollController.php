@@ -29,6 +29,7 @@ use App\Services\Payroll\PayrollSignatoryService;
 use App\Services\Payroll\PayrollScholarEligibilityService;
 use App\Services\Payroll\PayrollStatusTransitionService;
 use App\Services\Payroll\PayrollStatusService;
+use App\Support\UploadedFileHash;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Exception;
@@ -714,26 +715,42 @@ class PayrollController extends Controller
             abort(403);
         }
 
+        $exportHash = hash('sha256', json_encode([
+            'batch_id' => $batch->id,
+            'batch_updated_at' => optional($batch->updated_at)->toISOString(),
+            'rows' => $rows,
+            'prepared_by' => array_values(array_map('intval', $data['prepared_by'])),
+            'noted_by' => (int) $data['noted_by'],
+            'certified_by' => (int) $data['certified_by'],
+        ]));
+
         $previousExcelPath = $batch->generated_excel_path;
         $excelName = $filenameBase . '.xlsx';
         $excelPath = "payroll-generated/{$excelName}";
-        Excel::store(new PayrollExport($batch, $rows, $preparedBy, $notedBy, $certifiedBy), $excelPath, 'public');
+        $shouldRegenerateExcel = $batch->generated_excel_hash !== $exportHash
+            || $batch->generated_excel_path !== $excelPath
+            || ! Storage::disk('public')->exists($excelPath);
 
-        if ($previousExcelPath && $previousExcelPath !== $excelPath) {
-            Storage::disk('public')->delete($previousExcelPath);
+        if ($shouldRegenerateExcel) {
+            Excel::store(new PayrollExport($batch, $rows, $preparedBy, $notedBy, $certifiedBy), $excelPath, 'public');
+
+            if ($previousExcelPath && $previousExcelPath !== $excelPath) {
+                Storage::disk('public')->delete($previousExcelPath);
+            }
+
+            $batch->forceFill([
+                'generated_excel_path' => $excelPath,
+                'generated_excel_name' => $excelName,
+                'generated_excel_at' => now(),
+                'generated_excel_hash' => $exportHash,
+            ])->save();
+
+            $batch->logs()->create([
+                'status' => 'exported_payroll',
+                'remarks' => 'Payroll batch was exported.',
+                'action_by' => $this->actorName(),
+            ]);
         }
-
-        $batch->forceFill([
-            'generated_excel_path' => $excelPath,
-            'generated_excel_name' => $excelName,
-            'generated_excel_at' => now(),
-        ])->save();
-
-        $batch->logs()->create([
-            'status' => 'exported_payroll',
-            'remarks' => 'Payroll batch was exported.',
-            'action_by' => $this->actorName(),
-        ]);
 
         return Pdf::loadView('exports.payroll_pdf', [
             'batch' => $batch,
@@ -754,15 +771,26 @@ class PayrollController extends Controller
         }
 
         [$file, $rows, $scholars] = $this->historicalPayrollImports()->validateImport($request);
+        $fileHash = UploadedFileHash::uploadedFile($file);
+
+        if (Batches::where('is_historical', true)->where('import_file_hash', $fileHash)->exists()) {
+            return redirect()->back()->with('flash', [
+                'status' => 'info',
+                'title' => 'Historical Payroll Already Imported',
+                'message' => 'This exact payroll file was already processed, so no duplicate batches were created.',
+            ]);
+        }
+
         $storedPath = $file->store('payroll-historical-imports', 'public');
 
-        [$createdBatches, $createdRecipients] = DB::transaction(function () use ($rows, $scholars, $storedPath, $file) {
+        [$createdBatches, $createdRecipients] = DB::transaction(function () use ($rows, $scholars, $storedPath, $file, $fileHash) {
             return $this->historicalPayrollImports()->store(
                 $rows,
                 $scholars,
                 $storedPath,
                 $file->getClientOriginalName(),
-                $this->actorName()
+                $this->actorName(),
+                $fileHash
             );
         });
 
@@ -866,20 +894,30 @@ class PayrollController extends Controller
             ]);
         }
 
-        $payrollFilePath = null;
-        $payrollFileName = null;
+        $transitionResult = DB::transaction(function () use ($batchId, $data, $request) {
+            $lockedBatch = Batches::whereKey($batchId)->lockForUpdate()->firstOrFail();
+            $lockedStatus = $this->payrollStatuses()->currentBatchStatus($lockedBatch);
 
-        if (($data['status'] ?? null) === 'submitted_payroll' && $request->hasFile('payroll_file')) {
-            $payrollFile = $request->file('payroll_file');
-            $payrollFilePath = $payrollFile->store('payroll-submissions', 'public');
-            $payrollFileName = $payrollFile->getClientOriginalName();
-        }
+            if ($lockedStatus === $data['status']) {
+                return [
+                    'processed' => false,
+                    'moved' => 0,
+                ];
+            }
 
-        $movedScholarCount = DB::transaction(function () use ($batch, $data, $payrollFilePath, $payrollFileName, $latestStatus) {
+            $payrollFilePath = null;
+            $payrollFileName = null;
+
+            if (($data['status'] ?? null) === 'submitted_payroll' && $request->hasFile('payroll_file')) {
+                $payrollFile = $request->file('payroll_file');
+                $payrollFilePath = $payrollFile->store('payroll-submissions', 'public');
+                $payrollFileName = $payrollFile->getClientOriginalName();
+            }
+
             $moved = $this->payrollStatusTransitions()->transition(
-                $batch,
+                $lockedBatch,
                 $data['status'],
-                $latestStatus,
+                $lockedStatus,
                 $data['remarks'] ?? null,
                 $payrollFilePath,
                 $payrollFileName,
@@ -888,13 +926,24 @@ class PayrollController extends Controller
             );
 
             if ($data['status'] === 'approved_payroll') {
-                app(\App\Services\Payroll\PayrollMonthlyCreditService::class)->ensureForBatch($batch);
+                app(\App\Services\Payroll\PayrollMonthlyCreditService::class)->ensureForBatch($lockedBatch);
             }
 
-            return $moved;
+            return [
+                'processed' => true,
+                'moved' => $moved,
+            ];
         });
 
-        $this->sendPayrollBellNotification($batch, $data['status']);
+        if (! $transitionResult['processed']) {
+            return redirect()->back()->with('flash', [
+                'status' => 'info',
+                'title' => 'Already processed',
+                'message' => 'This payroll status was already updated.',
+            ]);
+        }
+
+        $this->sendPayrollBellNotification($batch->fresh(), $data['status']);
 
         $successFlash = match ($data['status']) {
             'submitted_payroll' => [
@@ -907,8 +956,8 @@ class PayrollController extends Controller
             ],
             'rejected_payroll' => [
                 'title' => 'Payroll rejected',
-                'message' => $movedScholarCount > 0
-                    ? "The payroll batch was returned. {$movedScholarCount} marked scholar(s) were moved to the next accepting payroll batch."
+                'message' => $transitionResult['moved'] > 0
+                    ? "The payroll batch was returned. {$transitionResult['moved']} marked scholar(s) were moved to the next accepting payroll batch."
                     : 'The payroll batch was successfully rejected.',
             ],
         };
@@ -968,15 +1017,22 @@ class PayrollController extends Controller
         $this->enforceAllowanceMaximums($data['recipients']);
 
         try {
-            DB::transaction(function () use ($batch, $batchId, $data) {
-                $this->payrollSaves()->saveRecipients($batchId, $data['recipients']);
-                $this->logPayrollActivity($batch, 'payroll_saved', remarks: 'Payroll information was saved.');
+            $changed = DB::transaction(function () use ($batch, $batchId, $data) {
+                $changed = $this->payrollSaves()->saveRecipients($batchId, $data['recipients']);
+
+                if ($changed) {
+                    $this->logPayrollActivity($batch, 'payroll_saved', remarks: 'Payroll information was saved.');
+                }
+
+                return $changed;
             });
 
             return redirect()->back()->with('flash', [
-                'status' => 'success',
-                'title' => 'Payroll saved',
-                'message' => 'Payroll information was saved.',
+                'status' => $changed ? 'success' : 'info',
+                'title' => $changed ? 'Payroll saved' : 'No changes detected',
+                'message' => $changed
+                    ? 'Payroll information was saved.'
+                    : 'The submitted payroll information was already up to date.',
             ]);
         } catch (\Throwable $th) {
             return redirect()->back()->with('flash', [

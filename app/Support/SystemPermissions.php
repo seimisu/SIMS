@@ -10,6 +10,14 @@ use Illuminate\Support\Str;
 
 class SystemPermissions
 {
+    private array $permissionTableChecks = [];
+
+    private array $routePermissions = [];
+
+    private array $userPermissions = [];
+
+    private ?array $allPermissionNames = null;
+
     public const ROLE_PERMISSIONS = [
         'administrator' => ['*'],
 
@@ -277,12 +285,17 @@ class SystemPermissions
             return [];
         }
 
+        $cacheKey = (string) $user->getKey();
+        if (array_key_exists($cacheKey, $this->userPermissions)) {
+            return $this->userPermissions[$cacheKey];
+        }
+
         if ($this->isAdministrator($user)) {
-            return $this->allPermissionNames();
+            return $this->userPermissions[$cacheKey] = $this->allPermissionNames();
         }
 
         if ($this->hasPermissionTables()) {
-            return $user->role?->permissions()
+            return $this->userPermissions[$cacheKey] = $user->role?->permissions()
                 ->where('list_permissions.is_active', true)
                 ->pluck('list_permissions.name')
                 ->unique()
@@ -292,10 +305,10 @@ class SystemPermissions
 
         $permissions = self::ROLE_PERMISSIONS[$this->roleName($user)] ?? [];
         if (in_array('*', $permissions, true)) {
-            return $this->allPermissionNames();
+            return $this->userPermissions[$cacheKey] = $this->allPermissionNames();
         }
 
-        return array_values(array_unique($permissions));
+        return $this->userPermissions[$cacheKey] = array_values(array_unique($permissions));
     }
 
     public function can(?User $user, string $permission): bool
@@ -320,16 +333,7 @@ class SystemPermissions
             return true;
         }
 
-        if ($this->hasPermissionTables()) {
-            return $user->role?->permissions()
-                ->where('list_permissions.is_active', true)
-                ->where('list_permissions.name', $permission)
-                ->exists() ?? false;
-        }
-
-        $rolePermissions = self::ROLE_PERMISSIONS[$this->roleName($user)] ?? [];
-        return in_array('*', $rolePermissions, true)
-            || in_array($permission, $rolePermissions, true);
+        return in_array($permission, $this->permissionsFor($user), true);
     }
 
     public function hasRole(?User $user, string $role): bool
@@ -449,6 +453,14 @@ class SystemPermissions
 
     public function permissionForRoute(?string $routeName): ?string
     {
+        if (! $routeName) {
+            return null;
+        }
+
+        if (array_key_exists($routeName, $this->routePermissions)) {
+            return $this->routePermissions[$routeName];
+        }
+
         if ($routeName && $this->hasPermissionRouteTables()) {
             $permission = ListPermissionRoute::query()
                 ->where('route_name', $routeName)
@@ -459,11 +471,11 @@ class SystemPermissions
                 ?->name;
 
             if ($permission) {
-                return $permission;
+                return $this->routePermissions[$routeName] = $permission;
             }
         }
 
-        return $routeName ? (self::ROUTE_PERMISSIONS[$routeName] ?? null) : null;
+        return $this->routePermissions[$routeName] = self::ROUTE_PERMISSIONS[$routeName] ?? null;
     }
 
     public function payrollBatchPermissions(User $user, object $batch, string $status): array
@@ -528,19 +540,23 @@ class SystemPermissions
 
     private function roleName(User $user): string
     {
-        return Str::lower($user->role_array['name'] ?? '');
+        return Str::lower($user->role?->name ?? $user->role_array['name'] ?? '');
     }
 
     private function allPermissionNames(): array
     {
+        if ($this->allPermissionNames !== null) {
+            return $this->allPermissionNames;
+        }
+
         if ($this->hasPermissionTables()) {
-            return ListPermission::where('is_active', true)
+            return $this->allPermissionNames = ListPermission::where('is_active', true)
                 ->pluck('name')
                 ->values()
                 ->all();
         }
 
-        return array_values(array_unique(array_merge(
+        return $this->allPermissionNames = array_values(array_unique(array_merge(
             array_values(self::ROUTE_PERMISSIONS),
             ...array_values(array_filter(
                 self::ROLE_PERMISSIONS,
@@ -551,13 +567,13 @@ class SystemPermissions
 
     private function hasPermissionTables(): bool
     {
-        return Schema::hasTable('list_permissions')
+        return $this->permissionTableChecks['permissions'] ??= Schema::hasTable('list_permissions')
             && Schema::hasTable('list_role_permissions');
     }
 
     private function hasPermissionRouteTables(): bool
     {
-        return $this->hasPermissionTables()
+        return $this->permissionTableChecks['routes'] ??= $this->hasPermissionTables()
             && Schema::hasTable('list_permission_routes');
     }
 }

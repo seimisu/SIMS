@@ -7,6 +7,7 @@ use App\Models\ListReferences;
 use App\Models\LocationRegions;
 use App\Models\VideoResource;
 use App\Services\Notifications\RoleBellNotificationService;
+use App\Support\UploadedFileHash;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -88,9 +89,9 @@ class VideoResourceController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateResource($request);
-        $thumbnailPath = $request->hasFile('thumbnail')
-            ? $request->file('thumbnail')->store('video-thumbnails', 'public')
-            : null;
+        $thumbnail = $request->file('thumbnail');
+        $thumbnailHash = $thumbnail ? UploadedFileHash::uploadedFile($thumbnail) : null;
+        $thumbnailPath = $thumbnail ? $thumbnail->store('video-thumbnails', 'public') : null;
 
         $resource = VideoResource::create([
             'title' => $data['title'],
@@ -98,6 +99,7 @@ class VideoResourceController extends Controller
             'video_url' => $data['video_url'],
             'thumbnail_url' => $data['thumbnail_url'] ?? null,
             'thumbnail_path' => $thumbnailPath,
+            'thumbnail_hash' => $thumbnailHash,
             'is_active' => $request->boolean('is_active'),
             'published_at' => $request->boolean('publish_now') ? now() : null,
             'created_by' => Auth::id(),
@@ -137,7 +139,9 @@ class VideoResourceController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             Storage::disk('public')->delete($videoResource->thumbnail_path);
-            $payload['thumbnail_path'] = $request->file('thumbnail')->store('video-thumbnails', 'public');
+            $thumbnail = $request->file('thumbnail');
+            $payload['thumbnail_path'] = $thumbnail->store('video-thumbnails', 'public');
+            $payload['thumbnail_hash'] = UploadedFileHash::uploadedFile($thumbnail);
         }
 
         $videoResource->update($payload);

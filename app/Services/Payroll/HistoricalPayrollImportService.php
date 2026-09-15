@@ -200,7 +200,7 @@ class HistoricalPayrollImportService
         ];
     }
 
-    public function store($rows, $scholars, string $storedPath, string $originalFileName, ?string $actorName): array
+    public function store($rows, $scholars, string $storedPath, string $originalFileName, ?string $actorName, string $fileHash): array
     {
         $allowanceTypes = AllowanceType::whereIn('code', ['connectivity', 'clothing'])
             ->get()
@@ -231,6 +231,7 @@ class HistoricalPayrollImportService
                 'imported_at' => now(),
                 'import_file_path' => $storedPath,
                 'import_file_name' => $originalFileName,
+                'import_file_hash' => $fileHash,
             ]);
 
             $batch->logs()->create([

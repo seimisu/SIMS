@@ -15,6 +15,7 @@ class VideoResource extends Model
         'video_url',
         'thumbnail_url',
         'thumbnail_path',
+        'thumbnail_hash',
         'is_active',
         'published_at',
         'created_by',
