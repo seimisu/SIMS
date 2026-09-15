@@ -132,14 +132,14 @@
                             </div>
                         </template>
                     </Column>
-                    <Column header="Credited">
+                    <Column header="Deposit">
                         <template #body="props">
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
                                 :class="{ 'cursor-not-allowed opacity-60': !hasMonthlyCredits(props.data) }"
                                 :disabled="!hasMonthlyCredits(props.data)"
-                                v-tooltip.top="hasMonthlyCredits(props.data) ? 'View monthly crediting' : 'No monthly crediting yet'"
+                                v-tooltip.top="hasMonthlyCredits(props.data) ? 'View monthly deposit' : 'No monthly deposit yet'"
                                 @click.stop="openCreditDialog(props.data)"
                             >
                                 <IconChecks size="16" stroke-width="1.7" />
@@ -436,7 +436,7 @@
     <Dialog
         v-model:visible="creditDialog"
         modal
-        header="Payroll Crediting"
+        header="Payroll Deposit"
         :style="{ width: '52rem', maxWidth: '95vw' }"
         :pt="{
             root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
@@ -741,7 +741,7 @@ const selectedMonthlyCredits = computed(() => selectedCreditBatch.value?.monthly
 const creditStatusLabel = (status) =>
     ({
         pending: "Pending",
-        credited: "Credited",
+        credited: "Deposit",
     })[status] ?? status;
 const creditStatusClass = (status) =>
     status === "credited"

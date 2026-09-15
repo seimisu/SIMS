@@ -86,7 +86,7 @@ class PayrollActivityService
             'payroll_approved' => 'Payroll approved',
             'payroll_imported' => 'Historical payroll imported',
             'payroll_returned' => 'Payroll returned',
-            'payroll_month_credited' => 'Payroll month credited',
+            'payroll_month_credited' => 'Payroll month deposit',
             'scholar_marked_for_removal' => 'Scholar marked for removal',
             'scholar_moved_from_returned_payroll' => 'Scholar moved from returned payroll',
             'scholar_removal_cancelled' => 'Scholar removal cancelled',

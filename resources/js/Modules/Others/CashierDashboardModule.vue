@@ -10,7 +10,7 @@
                         Cashier Dashboard
                     </h1>
                     <p class="text-xs text-slate-500 dark:text-gray-400">
-                        Monitor approved batches and monthly crediting progress.
+                        Monitor approved batches and monthly deposit progress.
                     </p>
                 </div>
                 <button
@@ -19,7 +19,7 @@
                     @click="goToCredits"
                 >
                     <IconEye :size="14" />
-                    Open Crediting
+                    Open Deposit
                 </button>
             </div>
 
@@ -56,7 +56,7 @@
                                 Monthly Release Progress
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Credited and pending release counts by month.
+                                Deposit and pending release counts by month.
                             </p>
                         </div>
                     </div>
@@ -71,7 +71,7 @@
                             </div>
                             <div class="mt-3 flex items-end justify-between gap-2">
                                 <div>
-                                    <div class="text-[11px] text-slate-500 dark:text-gray-400">Credited</div>
+                                    <div class="text-[11px] text-slate-500 dark:text-gray-400">Deposit</div>
                                     <div class="text-xl font-semibold text-emerald-600 dark:text-emerald-300">
                                         {{ formatNumber(month.credited) }}
                                     </div>
@@ -94,7 +94,7 @@
                         </div>
                         <div>
                             <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
-                                Crediting Completion
+                                Deposit Completion
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
                                 Overall monthly release status.
@@ -116,7 +116,7 @@
                         </div>
                         <div class="mt-4 grid gap-2 text-xs">
                             <div class="flex items-center justify-between gap-3">
-                                <span class="text-slate-600 dark:text-gray-300">Credited releases</span>
+                                <span class="text-slate-600 dark:text-gray-300">Deposit releases</span>
                                 <span class="font-semibold text-slate-900 dark:text-white">{{ formatNumber(summary.credited_releases) }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3">
@@ -134,7 +134,7 @@
                                 Recent Approved Batches
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Latest approved batches queued for crediting.
+                                Latest approved batches queued for deposit.
                             </p>
                         </div>
                     </div>
@@ -146,7 +146,7 @@
                                     <th class="px-3 py-2 font-semibold">Region</th>
                                     <th class="px-3 py-2 font-semibold">Term / AY</th>
                                     <th class="px-3 py-2 font-semibold">Scholars</th>
-                                    <th class="px-3 py-2 font-semibold">Credited</th>
+                                    <th class="px-3 py-2 font-semibold">Deposit</th>
                                     <th class="px-3 py-2 font-semibold">Approved</th>
                                 </tr>
                             </thead>
@@ -169,7 +169,7 @@
                                 </tr>
                                 <tr v-if="!recentBatches.length">
                                     <td colspan="6" class="px-3 py-6 text-center text-xs text-slate-500 dark:text-gray-400">
-                                        No approved batches are ready for crediting.
+                                        No approved batches are ready for deposit.
                                     </td>
                                 </tr>
                             </tbody>
@@ -209,7 +209,7 @@ const metrics = computed(() => [
     {
         label: "Approved Batches",
         value: summary.value.approved_batches,
-        caption: "Ready for monthly release crediting",
+        caption: "Ready for monthly release deposit",
         icon: IconClipboardList,
         color: "bg-blue-50 text-blue-600",
     },
@@ -221,9 +221,9 @@ const metrics = computed(() => [
         color: "bg-cyan-50 text-cyan-600",
     },
     {
-        label: "Credited",
+        label: "Deposit",
         value: summary.value.credited_releases,
-        caption: "Monthly releases already credited",
+        caption: "Monthly releases already deposit",
         icon: IconCircleCheck,
         color: "bg-emerald-50 text-emerald-600",
     },

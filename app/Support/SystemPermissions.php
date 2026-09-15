@@ -230,12 +230,12 @@ class SystemPermissions
             'description' => 'Allows rejecting submitted payroll records.',
         ],
         'payroll.credits.view' => [
-            'label' => 'Payroll Credits - View',
-            'description' => 'Allows viewing payroll crediting records.',
+            'label' => 'Payroll Deposit - View',
+            'description' => 'Allows viewing payroll deposit records.',
         ],
         'payroll.credits.update' => [
-            'label' => 'Payroll Credits - Update',
-            'description' => 'Allows updating credited months.',
+            'label' => 'Payroll Deposit - Update',
+            'description' => 'Allows updating deposit months.',
         ],
         'payroll.recipients.manage-removal' => [
             'label' => 'Payroll Recipients - Manage Removal',

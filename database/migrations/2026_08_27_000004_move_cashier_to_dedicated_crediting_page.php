@@ -19,7 +19,7 @@ return new class extends Migration
         DB::table('list_routes')->updateOrInsert(
             ['slug' => 'cashier-crediting'],
             [
-                'label' => 'Crediting',
+                'label' => 'Deposit',
                 'roles' => json_encode([
                     [
                         'id' => (int) $cashierId,

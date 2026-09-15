@@ -1,11 +1,11 @@
 <template>
-    <Head title="Cashier Crediting" />
+    <Head title="Cashier Deposit" />
     <AuthLayout>
         <div class="flex h-full min-h-0 w-full flex-col gap-5 overflow-hidden">
             <div class="shrink-0">
                 <HeaderModule
-                    title="Cashier Crediting"
-                    description="Credit approved financial assistance batches by monthly release."
+                    title="Cashier Deposit"
+                    description="Deposit approved financial assistance batches by monthly release."
                 />
             </div>
 
@@ -53,7 +53,7 @@
                         <SelectInput
                             v-model="filterCreditStatus"
                             :options="page.props.filterOptions?.creditStatuses ?? []"
-                            placeholder="Credit Status"
+                            placeholder="Deposit Status"
                             clearable
                             class="w-full md:w-52"
                         />
@@ -125,7 +125,7 @@
                                 <DefaultButton
                                     v-else
                                     size="small"
-                                    label="Credit"
+                                    label="Deposit"
                                     severity="success"
                                     :icon="IconCashBanknote"
                                     class="mt-2 w-full"
@@ -142,7 +142,7 @@
         <Dialog
             v-model:visible="creditDialog"
             modal
-            header="Confirm Crediting"
+            header="Confirm Deposit"
             :style="{ width: '30rem' }"
             :pt="{
                 root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
@@ -153,7 +153,7 @@
         >
             <div class="flex flex-col gap-3 text-sm text-slate-700 dark:text-gray-200">
                 <div>
-                    Mark this monthly release as credited?
+                    Mark this monthly release as deposit?
                 </div>
                 <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-gray-600 dark:bg-gray-800">
                     <div class="font-semibold text-slate-800 dark:text-gray-100">
@@ -179,7 +179,7 @@
                 />
                 <DefaultButton
                     size="small"
-                    label="Confirm Credit"
+                    label="Confirm Deposit"
                     severity="success"
                     :icon="IconCashBanknote"
                     :loading="creditForm.processing"
@@ -227,7 +227,7 @@ const creditForm = useForm({
 const statusLabel = (status) =>
     ({
         pending: "Pending",
-        credited: "Credited",
+        credited: "Deposit",
     })[status] ?? status;
 
 const creditStatusClass = (status) =>

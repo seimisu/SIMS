@@ -74,7 +74,7 @@ class PayrollMonthlyCreditService
     public function credit(Batches $batch, int $month, int $userId, ?string $remarks = null): PayrollBatchMonthlyCredit
     {
         if (! $this->isCreditEligible($batch)) {
-            abort(422, 'Only system-created payroll batches can be credited.');
+            abort(422, 'Only system-created payroll batches can be marked as deposit.');
         }
 
         $this->ensureForBatch($batch);

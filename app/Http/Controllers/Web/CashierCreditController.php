@@ -71,7 +71,7 @@ class CashierCreditController extends Controller
                     ->get(),
                 'creditStatuses' => [
                     ['id' => 'pending', 'name' => 'Has Pending Month'],
-                    ['id' => 'credited', 'name' => 'Fully Credited'],
+                    ['id' => 'credited', 'name' => 'Complete Deposit'],
                 ],
             ],
             'batches' => fn () => (clone $baseQuery)
@@ -141,7 +141,7 @@ class CashierCreditController extends Controller
             return redirect()->back()->with('flash', [
                 'status' => 'error',
                 'title' => 'Payroll not approved',
-                'message' => 'Only approved payroll batches can be credited.',
+                'message' => 'Only approved payroll batches can be marked as deposit.',
             ]);
         }
 
@@ -154,8 +154,8 @@ class CashierCreditController extends Controller
         if (! $monthlyCredits->isCreditEligible($batch)) {
             return redirect()->back()->with('flash', [
                 'status' => 'error',
-                'title' => 'Payroll not creditable',
-                'message' => 'Historical imported payroll batches cannot be credited by the cashier.',
+                'title' => 'Payroll not available for deposit',
+                'message' => 'Historical imported payroll batches cannot be marked as deposit by the cashier.',
             ]);
         }
 
@@ -164,8 +164,8 @@ class CashierCreditController extends Controller
         if ($batch->monthlyCredits()->where('month_no', $month)->where('status', 'credited')->exists()) {
             return redirect()->back()->with('flash', [
                 'status' => 'info',
-                'title' => 'Already credited',
-                'message' => "Month {$month} was already credited.",
+                'title' => 'Already deposit',
+                'message' => "Month {$month} was already marked as deposit.",
             ]);
         }
 
@@ -196,8 +196,8 @@ class CashierCreditController extends Controller
         app(RoleBellNotificationService::class)->notifyRegionalPayrollResult(
             (string) $batch->region,
             "payroll_month_{$credit->month_no}_credited",
-            'Payroll month credited',
-            "{$batch->name} Month {$credit->month_no} was credited.",
+            'Payroll month deposit',
+            "{$batch->name} Month {$credit->month_no} was marked as deposit.",
             '/stipends',
             'payroll_batch_monthly_credits',
             $credit->id
@@ -205,8 +205,8 @@ class CashierCreditController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Month credited',
-            'message' => "Month {$credit->month_no} was marked as credited.",
+            'title' => 'Month deposit',
+            'message' => "Month {$credit->month_no} was marked as deposit.",
         ]);
     }
 

@@ -39,8 +39,8 @@ class PayrollNotificationService
 
             $this->notifications->notifyCashiers(
                 'payroll_ready_for_crediting',
-                'Payroll ready for crediting',
-                "{$batchName} was approved and is ready for monthly crediting.",
+                'Payroll ready for deposit',
+                "{$batchName} was approved and is ready for monthly deposit.",
                 '/cashier/credits',
                 'batches',
                 $batch->id

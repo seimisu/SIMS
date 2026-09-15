@@ -29,8 +29,8 @@ return new class extends Migration
         $labels = [
             'payroll.update' => 'Payroll - Update',
             'payroll.return' => 'Payroll - Return',
-            'payroll.credits.view' => 'Payroll - Credits View',
-            'payroll.credits.update' => 'Payroll - Credits Update',
+            'payroll.credits.view' => 'Payroll - Deposit View',
+            'payroll.credits.update' => 'Payroll - Deposit Update',
             'payroll.recipients.manage-removal' => 'Payroll - Recipients Manage Removal',
         ];
 
