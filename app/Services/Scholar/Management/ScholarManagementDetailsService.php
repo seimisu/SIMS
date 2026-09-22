@@ -2,6 +2,7 @@
 
 namespace App\Services\Scholar\Management;
 
+use App\Models\PayrollBatchMonthlyCredit;
 use App\Models\Scholars;
 use App\Models\StudentDocument;
 use App\Support\SystemPermissions;
@@ -23,6 +24,7 @@ class ScholarManagementDetailsService
 
         $schoolInfo = $scholar->schoolInfo?->first();
         $payrolls = $scholar->payrolls;
+
         $allowances = $payrolls->flatMap->allowances;
 
         return [
@@ -379,8 +381,9 @@ class ScholarManagementDetailsService
                     'created_at' => Carbon::parse($log->created_at)->format('F d, Y h:i A'),
                     'created_by' => $log->action_by,
                 ]),
-                'stipends' => $payroll->stipends->map(fn ($stipend) => [
+                'stipends' => $payroll->stipends->map(fn ($stipend, $index) => [
                     'month' => $stipend->month,
+                    'test' => PayrollBatchMonthlyCredit::where('batch_id', $payroll->batch_id)->where('month_no', $index + 1)->first(),
                     'amount' => number_format($stipend->amount, 2),
                 ]),
                 'financial' => $payroll->allowances->map(fn ($allowance) => [
