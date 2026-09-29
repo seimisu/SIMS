@@ -20,6 +20,9 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
     public function __construct(
         private Batches $batch,
         private array $rows,
+        private array $preparedBy,
+        private array $notedBy,
+        private array $certifiedBy,
     ) {
     }
 
@@ -29,6 +32,9 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
             'batch' => $this->batch,
             'rows' => $this->rows,
             'monthLabels' => collect(range(1, 5))->map(fn ($month) => "Month {$month}"),
+            'preparedBy' => $this->preparedBy,
+            'notedBy' => $this->notedBy,
+            'certifiedBy' => $this->certifiedBy,
         ]);
     }
 
@@ -46,7 +52,8 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $lastColumn = 'Q';
+                $totalColumnIndex = 17;
+                $lastColumn = Coordinate::stringFromColumnIndex($totalColumnIndex);
                 $recipientRowCount = collect($this->rows)->sum(fn ($programRows) => count($programRows));
                 $subtotalRowCount = count($this->rows);
                 $emptyRowCount = $recipientRowCount === 0 ? 1 : 0;
@@ -71,12 +78,12 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
                 $sheet->getStyle("F4:F5")->getFont()->getColor()->setARGB('FFFF0000');
                 $sheet->getStyle("H5:N5")->getFont()->getColor()->setARGB('FFFF0000');
 
-                $sheet->getStyle("H6:Q{$lastTableRow}")
+                $sheet->getStyle("H6:{$lastColumn}{$lastTableRow}")
                     ->getNumberFormat()
                     ->setFormatCode('#,##0.00;[Red]-#,##0.00;-');
 
                 $sheet->getStyle("A6:G{$lastTableRow}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-                $sheet->getStyle("H6:Q{$lastTableRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("H6:{$lastColumn}{$lastTableRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
                 foreach (range(6, $lastTableRow) as $row) {
                     if (in_array($sheet->getCell("G{$row}")->getValue(), ['Sub-Total', 'TOTAL'], true)) {
@@ -84,13 +91,15 @@ class PayrollExport implements FromView, ShouldAutoSize, WithEvents, WithStyles
                     }
                 }
 
-                foreach (range('A', $lastColumn) as $column) {
-                    $sheet->getColumnDimension($column)->setAutoSize(true);
+                for ($column = 1; $column <= $totalColumnIndex; $column++) {
+                    $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($column))->setAutoSize(true);
                 }
 
-                foreach (['A' => 10, 'B' => 18, 'C' => 30, 'D' => 14, 'E' => 20, 'F' => 16, 'G' => 28, 'N' => 28, 'O' => 22, 'P' => 16, 'Q' => 14] as $column => $width) {
+                foreach (['A' => 10, 'B' => 18, 'C' => 30, 'D' => 14, 'E' => 20, 'F' => 16, 'G' => 28, 'N' => 28, 'O' => 22, 'P' => 16] as $column => $width) {
                     $sheet->getColumnDimension($column)->setAutoSize(false)->setWidth($width);
                 }
+
+                $sheet->getColumnDimension($lastColumn)->setAutoSize(false)->setWidth(14);
 
                 for ($column = Coordinate::columnIndexFromString('H'); $column <= Coordinate::columnIndexFromString('M'); $column++) {
                     $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($column))->setAutoSize(false)->setWidth(13);

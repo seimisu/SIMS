@@ -9,6 +9,7 @@ class GeolocationFiles extends Model
     protected $fillable = [
         'filename',
         'path',
-        'created_by'
+        'created_by',
+        'file_hash',
     ];
 }

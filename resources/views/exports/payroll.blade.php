@@ -1,16 +1,27 @@
 @php
     $money = fn ($value) => (float) ($value ?? 0);
     $display = fn ($value) => $money($value) > 0 ? $money($value) : '-';
+    $columnCount = 17;
     $region = trim(str_replace('DOST', '', $batch->region ?? ''));
     $title = 'PAYROLL OF REGION ' . ($region ?: '____') . ' - MONITORED DOST UNDERGRADUATE SCHOLARS';
+    $preparedSignatories = collect($preparedBy ?? [])
+        ->map(fn ($signatory) => [
+            'name' => strtoupper($signatory['name'] ?? ''),
+            'designation' => strtoupper($signatory['designation'] ?? ''),
+        ])
+        ->values();
+    $notedName = strtoupper($notedBy['name'] ?? '');
+    $notedDesignation = strtoupper($notedBy['designation'] ?? '');
+    $certifiedName = strtoupper($certifiedBy['name'] ?? '');
+    $certifiedDesignation = strtoupper($certifiedBy['designation'] ?? '');
 @endphp
 
 <table>
     <tr>
-        <td colspan="17" style="text-align: center; font-weight: bold;">{{ $title }}</td>
+        <td colspan="{{ $columnCount }}" style="text-align: center; font-weight: bold;">{{ $title }}</td>
     </tr>
-    <tr><td colspan="17"></td></tr>
-    <tr><td colspan="17"></td></tr>
+    <tr><td colspan="{{ $columnCount }}"></td></tr>
+    <tr><td colspan="{{ $columnCount }}"></td></tr>
 
     <tr>
         <th rowspan="2">SPAS ID NO.</th>
@@ -117,7 +128,7 @@
         </tr>
     @empty
         <tr>
-            <td colspan="17" style="text-align: center;">No payroll recipients found.</td>
+            <td colspan="{{ $columnCount }}" style="text-align: center;">No payroll recipients found.</td>
         </tr>
     @endforelse
 
@@ -139,33 +150,49 @@
         <td style="font-weight: bold;" data-format="#,##0.00">{{ $display($grand['total']) }}</td>
     </tr>
 
-    <tr><td colspan="17"></td></tr>
+    <tr><td colspan="{{ $columnCount }}"></td></tr>
     <tr>
         <td></td>
-        <td colspan="14" style="text-align: center;">
+        <td colspan="{{ $columnCount - 1 }}" style="text-align: center;">
             This is to certify that the DOST-SEI undergraduate scholars listed above are of good academic standing and are eligible to receive financial assistance for the {{ $batch->academic_term ?? '____' }} semester/term of AY {{ $batch->school_year ?? '____' }}.
         </td>
     </tr>
-    <tr><td colspan="17"></td></tr>
+    <tr><td colspan="{{ $columnCount }}"></td></tr>
     <tr>
-        <td colspan="3" style="font-weight: bold;">PREPARED BY:</td>
+        <td colspan="4" style="font-weight: bold;">PREPARED BY:</td>
+        <td colspan="3"></td>
+        <td colspan="4" style="font-weight: bold;">NOTED BY:</td>
+        <td colspan="2"></td>
+        <td colspan="4" style="font-weight: bold;">CERTIFIED CORRECT:</td>
     </tr>
-    <tr><td colspan="17"></td></tr>
-    <tr><td colspan="17"></td></tr>
-    <tr><td colspan="17"></td></tr>
-    <tr>
-        <td colspan="4">Printed Name and Signature of Scholarship Project Staff</td>
-    </tr>
-    <tr><td colspan="17"></td></tr>
-    <tr>
-        <td colspan="9"></td>
-        <td colspan="3" style="font-weight: bold;">CERTIFIED CORRECT:</td>
-    </tr>
-    <tr><td colspan="17"></td></tr>
-    <tr><td colspan="17"></td></tr>
-    <tr><td colspan="17"></td></tr>
-    <tr>
-        <td colspan="9"></td>
-        <td colspan="5">Printed Name and Signature of Scholarship Technical Coordinator</td>
-    </tr>
+    <tr><td colspan="{{ $columnCount }}"></td></tr>
+    <tr><td colspan="{{ $columnCount }}"></td></tr>
+    @foreach ($preparedSignatories as $index => $prepared)
+        <tr>
+            <td colspan="4" style="font-weight: bold; font-size: 12px;">{{ $prepared['name'] }}</td>
+            <td colspan="3"></td>
+            @if ($index === 0)
+                <td colspan="4" style="font-weight: bold; font-size: 12px;">{{ $notedName }}</td>
+                <td colspan="2"></td>
+                <td colspan="4" style="font-weight: bold; font-size: 12px;">{{ $certifiedName }}</td>
+            @else
+                <td colspan="10"></td>
+            @endif
+        </tr>
+        <tr>
+            <td colspan="4" style="font-size: 10px;">{{ $prepared['designation'] }}</td>
+            <td colspan="3"></td>
+            @if ($index === 0)
+                <td colspan="4" style="font-size: 10px;">{{ $notedDesignation }}</td>
+                <td colspan="2"></td>
+                <td colspan="4" style="font-size: 10px;">{{ $certifiedDesignation }}</td>
+            @else
+                <td colspan="10"></td>
+            @endif
+        </tr>
+        @if (! $loop->last)
+            <tr><td colspan="{{ $columnCount }}"></td></tr>
+            <tr><td colspan="{{ $columnCount }}"></td></tr>
+        @endif
+    @endforeach
 </table>

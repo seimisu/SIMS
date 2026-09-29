@@ -1,8 +1,25 @@
 <template>
-    <ToggleSwitch v-model="model" v-tooltip.bottom="tooltip" @update:model-value="updateValue()" :disabled="disabled">
+    <ToggleSwitch
+        v-model="model"
+        v-tooltip.bottom="tooltip"
+        @update:model-value="updateValue()"
+        :disabled="disabled"
+    >
         <template #handle="{ checked }">
-            <component :is="checkIcon" v-if="checked" size="12" />
-            <component :is="unCheckIcon" v-else size="12" />
+            <div>
+                <component
+                    :is="checkIcon"
+                    v-if="checked"
+                    :size="12"
+                    :class="checkIconClass"
+                />
+                <component
+                    :is="unCheckIcon"
+                    v-else
+                    :size="12"
+                    :class="unCheckIconClass"
+                />
+            </div>
         </template>
     </ToggleSwitch>
 </template>
@@ -14,6 +31,10 @@ defineProps({
         type: Function,
         default: null,
     },
+    unCheckIconClass: {
+        type: String,
+    },
+    checkIconClass: String,
     unCheckIcon: {
         type: Function,
         default: null,

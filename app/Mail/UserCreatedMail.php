@@ -28,12 +28,13 @@ class UserCreatedMail extends Mailable
 
     public function build()
     {
+        $url = rtrim(config('app.url'), '/').'/activate/'.$this->activation;
 
         return $this->subject('Welcome to SIMS')
             ->view(('UserMail'))
             ->with([
                 'user' => $this->user,
-                'url' => route('activation.show',  $this->activation),
+                'url' => $url,
             ]);
     }
 }

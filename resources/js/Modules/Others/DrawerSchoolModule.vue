@@ -1,7 +1,7 @@
 <template>
     <DefaultDrawer v-model:visible="drawer" size="!w-[50rem]">
         <template #header>
-            <div class="flex items-center gap-2 !sticky !top-0">
+            <div class="flex items-center gap-2 !sticky !top-0 text-slate-900 dark:text-gray-100">
                 <div class="">
                     <Avatar
                         :label="
@@ -16,7 +16,7 @@
                 </div>
 
                 <div class="flex flex-col">
-                    <div class="font-bold flex items-center gap-1 capitalize">
+                    <div class="font-bold flex items-center gap-1 capitalize text-slate-900 dark:text-gray-100">
                         <div>
                             <span>{{
                                 page.props?.schoolDetail.generated_name
@@ -39,7 +39,7 @@
                             "
                         ></DefaultButton>
                     </div>
-                    <div class="text-xs flex items-center gap-1 text-gray-500">
+                    <div class="text-xs flex items-center gap-1 text-gray-500 dark:text-gray-300">
                         <IconMapPin size="18" />
                         <div>
                             {{
@@ -102,7 +102,7 @@
                 <div class="flex flex-col gap-5 px-5 py-2">
                     <div class="flex justify-between gap-2">
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconUserStar size="20" />
                             </div>
                             <div
@@ -110,11 +110,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>PRESIDENT:</div>
                                 </div>
-                                <div class="text-sm font-light capitalize">
+                                <div class="text-sm font-light capitalize text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info?.dean ??
                                         "Not yet provided"
@@ -129,7 +129,7 @@
                             ></TextInput>
                         </div>
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconUserQuestion size="20" />
                             </div>
                             <div
@@ -137,12 +137,12 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>REGISTRAR:</div>
                                 </div>
                                 <div
-                                    class="text-sm font-light capitalize"
+                                    class="text-sm font-light capitalize text-slate-700 dark:text-gray-200"
                                     v-if="
                                         page.props?.schoolDetail?.info
                                             ?.registrar
@@ -152,7 +152,7 @@
                                         page.props?.schoolDetail.info.registrar
                                     }}
                                 </div>
-                                <div v-else class="text-sm font-light">
+                                <div v-else class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     Not yet provided
                                 </div>
                             </div>
@@ -167,7 +167,7 @@
                     </div>
                     <div class="flex justify-between gap-2">
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconPhone size="20" />
                             </div>
                             <div
@@ -175,11 +175,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>CONTACT NO:</div>
                                 </div>
-                                <div class="text-sm font-light">
+                                <div class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info
                                             ?.contact ?? "Not yet provided"
@@ -194,7 +194,7 @@
                             </TextInput>
                         </div>
                         <div class="w-[50%] flex items-center gap-2">
-                            <div class="bg-slate-200 p-2 shadow rounded-xl">
+                            <div class="bg-slate-200 p-2 shadow rounded-xl text-slate-500 dark:bg-gray-700 dark:text-gray-200">
                                 <IconAt size="20" />
                             </div>
                             <div
@@ -202,11 +202,11 @@
                                 v-if="!updateSchool"
                             >
                                 <div
-                                    class="text-xs font-semibold flex items-center"
+                                    class="text-xs font-semibold flex items-center text-slate-800 dark:text-gray-100"
                                 >
                                     <div>EMAIL:</div>
                                 </div>
-                                <div class="text-sm font-light">
+                                <div class="text-sm font-light text-slate-700 dark:text-gray-200">
                                     {{
                                         page.props?.schoolDetail?.info?.email ??
                                         "Not yet provided"
@@ -222,25 +222,11 @@
                     </div>
                 </div>
                 <Divider align="left" type="dashed" class="!m-0">
-                    <span class="text-xs font-semibold"
+                    <span class="text-xs font-semibold text-slate-800 dark:text-gray-100"
                         >Curriculum Management</span
                     >
                 </Divider>
                 <div class="px-5 py-2 gap-2 flex flex-col">
-                    <Message
-                        severity="info"
-                        icon="pi pi-info-circle"
-                        v-if="
-                            page.props?.schoolDetail.grading_array.name ==
-                            'Percent Grading'
-                        "
-                    >
-                        <p class="text-xs">
-                            The grading system is disabled for this school
-                            because it uses percentage-based grading.
-                        </p>
-                    </Message>
-
                     <ToolbarModule
                         v-model="searchInput"
                         @deleteSearch="clearSearch"
@@ -268,15 +254,9 @@
                     >
                         <template #add1>
                             <DefaultButton
-                                v-if="canManageSchools"
+                                v-if="canManageSchools && supportsGradeRanges"
                                 :icon="IconReport"
                                 outlined
-                                :disabled="
-                                    page.props?.schoolDetail?.grading_array
-                                        .name != 'Percent Grading'
-                                        ? false
-                                        : true
-                                "
                                 @click="gradeSystemDialog = true"
                                 tooltip="Grade System"
                                 size="small"
@@ -310,6 +290,14 @@
                                     v-model="courseForm.years"
                                     label="Years"
                                 ></TextInput>
+                                <Divider align="left" type="dashed"><span class="text-xs font-semibold">Specializations</span></Divider>
+                                <div v-for="(specialization, index) in courseForm.specializations" :key="index" class="flex gap-2 items-end">
+                                    <TextInput v-model="specialization.name" label="Name" placeholder="e.g. Web Development" />
+                                    <TextInput v-model="specialization.code" label="Code" placeholder="e.g. WEB" />
+                                    <TextInput v-model="specialization.starts_at_year" type="number" min="1" :max="courseForm.years" label="Starts at year" />
+                                    <DefaultButton :icon="IconX" severity="danger" text tooltip="Remove specialization" @click="courseForm.specializations.splice(index, 1)" />
+                                </div>
+                                <DefaultButton label="Add specialization" :icon="IconPlus" severity="secondary" outlined @click="courseForm.specializations.push({ id: null, name: null, code: null, starts_at_year: 1 })" />
                             </div>
                         </template>
                     </ToolbarModule>
@@ -440,19 +428,27 @@
                         <div class="flex flex-col gap-5 mt-5">
                             <TextInput
                                 v-model="gradeForm.grade"
-                                label="Grade"
-                                placeholder="e.g. A, B, C, etc."
+                                label="Label / Classification"
+                                placeholder="e.g. Passed, Failed, Incomplete, Withdrawn"
                             ></TextInput>
                             <div class="flex gap-5 items-center">
                                 <TextInput
                                     v-model="gradeForm.lower"
+                                    type="number"
+                                    :step="isPercentGrading ? 1 : 0.01"
+                                    :min="isPercentGrading ? 0 : null"
+                                    :max="isPercentGrading ? 100 : null"
                                     label="Lower Limit"
-                                    placeholder="e.g. 90, 80, etc."
+                                    :placeholder="isPercentGrading ? 'e.g. 75' : 'e.g. 1.00'"
                                 ></TextInput>
                                 <TextInput
                                     v-model="gradeForm.upper"
+                                    type="number"
+                                    :step="isPercentGrading ? 1 : 0.01"
+                                    :min="isPercentGrading ? 0 : null"
+                                    :max="isPercentGrading ? 100 : null"
                                     label="Upper Limit"
-                                    placeholder="e.g. 100, 89, etc."
+                                    :placeholder="isPercentGrading ? 'e.g. 100' : 'e.g. 3.00'"
                                 ></TextInput>
                             </div>
                         </div>
@@ -496,6 +492,20 @@
                                 />
                             </div>
                         </div>
+                        <div class="flex flex-col">
+                            <Divider type="dashed" />
+                            <div class="flex justify-between items-center">
+                                <div class="text-sm">
+                                    Is it a withdrawn grade?
+                                </div>
+
+                                <DefaultToggle
+                                    v-model="gradeForm.withdrawn"
+                                    :check-icon="IconCheck"
+                                    :un-check-icon="IconX"
+                                />
+                            </div>
+                        </div>
                     </template>
                 </ToolbarModule>
                 <DefaultScrollTable :items="page.props.schoolDetail?.grades">
@@ -533,6 +543,17 @@
                                             stroke-width="2"
                                         />
                                         <div>DROPPED</div>
+                                    </div>
+                                </div>
+                                <div v-else-if="props.data.is_withdrawn">
+                                    <div
+                                        class="font-semibold flex items-center gap-1 text-purple-600 px-4 rounded-xl"
+                                    >
+                                        <IconCircleX
+                                            size="20"
+                                            stroke-width="2"
+                                        />
+                                        <div>WITHDRAWN</div>
                                     </div>
                                 </div>
                                 <div v-else>
@@ -709,7 +730,7 @@
         :submit-form="submitCurriculum"
         :title="selectedRow?.course?.name"
         @submit-form="submitCurriculum"
-        :hide-footer="!canManageSchools"
+        :hide-footer="!canManageSchools || curriculumForm.multi.length === 0"
         absolute-div
         description="View all subjects offered under this course, including their codes, units, and classifications."
     >
@@ -721,84 +742,17 @@
             />
         </template>
         <template #forms>
-            <div class="mt-5">
-                <Tabs :value="0">
-                    <TabList>
+            <div class="mt-5 dark:bg-gray-900 dark:text-gray-100">
+                <Tabs v-if="curriculumForm.multi.length" v-model:value="activeCurriculumTab" class="school-curriculum-tabs">
+                    <TabList class="dark:!bg-gray-900">
                         <Tab
                             v-for="(curItem, curKey) in curriculumForm.multi"
                             :key="curKey"
                             class="text-sm !font-bold !p-1 !text-center"
                             :value="curKey"
                         >
-                            <span>
-                                <div
-                                    class="flex items-end"
-                                    v-if="!curItem.edit"
-                                >
-                                    <div class="flex items-start">
-                                        <Button
-                                            v-if="canManageSchools"
-                                            severity="danger"
-                                            variant="link"
-                                            size="small"
-                                            @click="
-                                                deleteCurriculumAndSubject({
-                                                    button: 'curriculum',
-                                                    type: !curItem.id,
-                                                    curriculum: curKey,
-                                                })
-                                            "
-                                            class="!p-0"
-                                        >
-                                            <template #icon>
-                                                <IconTrash
-                                                    class="!text-red-600"
-                                                    size="15"
-                                                ></IconTrash>
-                                            </template>
-                                        </Button>
-                                    </div>
-                                    <div>
-                                        Curriculum {{ curItem.yearLevel }}
-                                    </div>
-                                    <div class="flex items-start">
-                                        <Button
-                                            v-if="canManageSchools"
-                                            severity="secondary"
-                                            variant="link"
-                                            size="small"
-                                            @click="curItem.edit = true"
-                                            class="!p-0"
-                                        >
-                                            <template #icon>
-                                                <IconPencil
-                                                    size="15"
-                                                ></IconPencil>
-                                            </template>
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div
-                                    v-else
-                                    class="inline-flex items-center gap-2 font-normal"
-                                >
-                                    <TextInput
-                                        placeholder="Select year"
-                                        class="!w-25"
-                                        v-model="curItem.yearLevel"
-                                    >
-                                    </TextInput>
-
-                                    <DefaultButton
-                                        size="small"
-                                        rounded
-                                        class-name="!w-8 !h-8"
-                                        :icon="IconX"
-                                        @click="curItem.edit = false"
-                                        severity="danger"
-                                        text
-                                    ></DefaultButton>
-                                </div>
+                            <span class="px-3 py-2">
+                                Curriculum {{ curItem.yearLevel || 'New' }}
                             </span>
                         </Tab>
                         <div class="flex items-end">
@@ -814,55 +768,62 @@
                             ></DefaultButton>
                         </div>
                     </TabList>
-                    <TabPanels class="!p-0 flex flex-col gap-3 mt-3">
+                    <TabPanels class="!p-0 flex flex-col gap-3 mt-3 dark:!bg-gray-900">
                         <TabPanel
                             v-for="(curItem, curKey) in curriculumForm.multi"
                             :key="curKey"
                             :value="curKey"
                             class="flex flex-col w-full gap-4"
                         >
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-wrap items-end gap-2 border-b border-gray-200 px-1 pb-2 dark:border-gray-700">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Curriculum</span>
+                                    <div class="w-36">
+                                        <TextInput v-model="curItem.yearLevel" placeholder="2024-2025" :disabled="!canManageSchools" />
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Elective limit</span>
+                                    <div class="w-24">
+                                        <TextInput v-model="curItem.elective_limit" type="number" min="0" placeholder="No limit" :disabled="!canManageSchools" />
+                                    </div>
+                                </div>
                                 <DefaultButton
-                                    label="Make this template"
-                                    size="small"
                                     v-if="canManageSchools && curItem.id"
-                                    :disabled="
-                                        curItem.has_replication ||
-                                        curItem.is_duplicated
-                                    "
-                                    :icon="
-                                        curItem.has_replication ||
-                                        curItem.is_duplicated
-                                            ? IconCheck
-                                            : IconDots
-                                    "
-                                    :icon-size="18"
+                                    label="Make template"
+                                    size="small"
+                                    :disabled="curItem.has_replication || curItem.is_duplicated"
+                                    :icon="curItem.has_replication || curItem.is_duplicated ? IconCheck : IconDots"
                                     @click="copyTemplate(curKey)"
-                                    :severity="
-                                        curItem.has_replication ||
-                                        curItem.is_duplicated
-                                            ? 'primary'
-                                            : 'secondary'
-                                    "
-                                    class="!px-4 !text-xs"
+                                    severity="secondary"
                                 />
-                                <div v-else class="flex items-center gap-2">
-                                    <SelectInput
-                                        v-model="templateForm.select"
-                                        :options="page.props?.templateOptions"
-                                        clearable
-                                    />
+                                <template v-else>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Template</span>
+                                        <div class="w-48">
+                                            <SelectInput v-model="templateForm.select" :options="page.props?.templateOptions" clearable placeholder="Select" />
+                                        </div>
+                                    </div>
                                     <DefaultButton
                                         v-if="canManageSchools"
                                         size="small"
-                                        raised
                                         :disabled="loading.paste"
                                         :loading="loading.paste"
-                                        label="Apply Template"
-                                        class="text-nowrap w-60"
+                                        label="Apply template"
                                         @click="pasteTemplate(curKey)"
-                                    ></DefaultButton>
-                                </div>
+                                    />
+                                </template>
+                                <div class="flex-1"></div>
+                                <DefaultButton v-if="canManageSchools" label="Save changes" size="small" :icon="IconCheck" :loading="curriculumForm.processing" @click="submitCurriculum" />
+                                <DefaultButton
+                                    v-if="canManageSchools"
+                                    label="Delete curriculum"
+                                    size="small"
+                                    :icon="IconTrash"
+                                    severity="danger"
+                                    outlined
+                                    @click="deleteCurriculumAndSubject({ button: 'curriculum', type: !curItem.id, curriculum: curKey })"
+                                />
                             </div>
 
                             <div
@@ -872,6 +833,11 @@
                                 <Panel
                                     toggleable
                                     :collapsed="year != 1 ? true : false"
+                                    :pt="{
+                                        root: 'dark:!border-gray-700 dark:!bg-gray-800',
+                                        header: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                                        content: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                                    }"
                                 >
                                     <template #header>
                                         <div
@@ -950,7 +916,7 @@
                                                         '!rounded-t-lg',
                                                     ],
                                                     content: [
-                                                        '!border-x-1 !rounded-bl-lg !rounded-br-lg !border-b-1  !border-gray-200',
+                                                        '!border-x-1 !rounded-bl-lg !rounded-br-lg !border-b-1 !border-gray-200 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
                                                     ],
                                                 }"
                                             >
@@ -1062,7 +1028,7 @@
                                                             class="flex items-center gap-2 pb-5"
                                                         >
                                                             <div
-                                                                class="bg-slate-100 text-slate-500 p-1 rounded-lg border-1 border-slate-500 shadow-slate-500"
+                                                                class="bg-slate-100 text-slate-500 p-1 rounded-lg border-1 border-slate-500 shadow-slate-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
                                                             >
                                                                 <IconBooks
                                                                     stroke-width="2"
@@ -1079,7 +1045,7 @@
                                                                     semester
                                                                 </div>
                                                                 <div
-                                                                    class="text-xs text-gray-400 font-light"
+                                                                    class="text-xs text-gray-400 font-light dark:text-gray-400"
                                                                 >
                                                                     This section
                                                                     displays all
@@ -1102,7 +1068,7 @@
                                                             :key="index"
                                                         >
                                                             <div
-                                                                class="flex gap-2 items-center py-2"
+                                                                class="flex flex-wrap gap-2 items-center py-2"
                                                                 v-if="
                                                                     item
                                                                         .semester_array
@@ -1114,7 +1080,7 @@
                                                                 "
                                                             >
                                                                 <div
-                                                                    class="w-[20%]"
+                                                                    class="w-[14%] min-w-36"
                                                                 >
                                                                     <SelectInput
                                                                         v-model="
@@ -1132,7 +1098,7 @@
                                                                     ></SelectInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[40%]"
+                                                                    class="flex-1 min-w-56"
                                                                 >
                                                                     <TextInput
                                                                         v-model="
@@ -1147,7 +1113,7 @@
                                                                     </TextInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[20%]"
+                                                                    class="w-[13%] min-w-32"
                                                                 >
                                                                     <TextInput
                                                                         v-model="
@@ -1160,7 +1126,7 @@
                                                                     ></TextInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[10%]"
+                                                                    class="w-[7%] min-w-20"
                                                                 >
                                                                     <TextInput
                                                                         v-model="
@@ -1173,7 +1139,7 @@
                                                                     ></TextInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[10%] pt-5 gap-2 justify-start flex items-end h-full"
+                                                                    class="order-last w-auto pt-5 gap-1 justify-start flex items-end h-full"
                                                                 >
                                                                     <DefaultButton
                                                                         v-if="canManageSchools"
@@ -1239,6 +1205,12 @@
                                                                         "
                                                                     />
                                                                 </div>
+                                                                <div class="w-[17%] min-w-44">
+                                                                    <SelectMultiInput v-model="item.specialization_options" :disable="item.is_lock" label="Applies To" :options="specializationOptions" clearable placeholder="All students" />
+                                                                </div>
+                                                                <div class="w-[13%] min-w-36">
+                                                                    <SelectInput v-model="item.requirement_option" :disable="item.is_lock" label="Requirement" :options="requirementOptions" />
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <Divider
@@ -1269,6 +1241,13 @@
                         </TabPanel>
                     </TabPanels>
                 </Tabs>
+                <div v-else class="flex min-h-48 flex-col items-center justify-center gap-3 border-y border-gray-200 py-8 text-center dark:border-gray-700">
+                    <div>
+                        <div class="text-sm font-semibold">No curriculum configured</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">This program does not currently have a curriculum.</div>
+                    </div>
+                    <DefaultButton v-if="canManageSchools" label="Add curriculum" size="small" :icon="IconPlus" @click="addCurriculum" />
+                </div>
             </div>
         </template>
     </DefaultDialog>
@@ -1326,6 +1305,7 @@ import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import DatePickerInput from "../../Components/inputs/DatePickerInput.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
+import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
@@ -1354,8 +1334,24 @@ const selectedRow = ref(null);
 const menu = ref(null);
 const menuGrade = ref(null);
 const hideRemoveButton = ref("create");
-const { can } = usePermissions();
-const canManageSchools = computed(() => can("schools.manage"));
+const { canAny } = usePermissions();
+const canManageSchools = computed(() =>
+    canAny([
+        "schools.create",
+        "schools.update",
+        "schools.delete",
+        "schools.curriculum.copy",
+        "schools.curriculum.paste",
+    ]),
+);
+const isPercentGrading = computed(
+    () => page.props?.schoolDetail?.grading_array?.name === "Percent Grading",
+);
+const supportsGradeRanges = computed(() =>
+    ["Transmutation", "Percent Grading"].includes(
+        page.props?.schoolDetail?.grading_array?.name,
+    ),
+);
 
 const props = defineProps({
     id: [Number, String],
@@ -1464,12 +1460,14 @@ const semesterForm = useForm({
 const curriculumForm = useForm({
     multi: [],
 });
+const activeCurriculumTab = ref(0);
 
 const courseForm = useForm({
     id: null,
     campusId: null,
     course: null,
     years: null,
+    specializations: [],
     curriculum: [
         {
             id: null,
@@ -1481,6 +1479,11 @@ const courseForm = useForm({
         },
     ],
 });
+const requirementOptions = [
+    { id: "required", name: "Required" },
+    { id: "elective", name: "Elective" },
+];
+const specializationOptions = computed(() => selectedRow.value?.specializations ?? []);
 
 const detailsForm = useForm({
     id: null,
@@ -1500,6 +1503,7 @@ const gradeForm = useForm({
     fail: false,
     incomplete: false,
     drop: false,
+    withdrawn: false,
 });
 
 const templateForm = useForm({
@@ -1534,6 +1538,7 @@ const toggleModal = (res) => {
         courseForm.id = selectedRow.value.id;
         courseForm.course = selectedRow.value.course_array;
         courseForm.years = selectedRow.value.years;
+        courseForm.specializations = JSON.parse(JSON.stringify(selectedRow.value.specializations ?? []));
         selectedRow.value.subjects.forEach((element) => {
             courseForm.subjects.push({
                 id: element.id,
@@ -1552,6 +1557,7 @@ const toggleModal = (res) => {
         gradeForm.fail = selectedRow.value.is_failed;
         gradeForm.drop = selectedRow.value.is_drop;
         gradeForm.incomplete = selectedRow.value.is_incomplete;
+        gradeForm.withdrawn = selectedRow.value.is_withdrawn;
     }
 
     if (res.class == "course") {
@@ -1591,8 +1597,6 @@ const menuItems = computed(() => {
                                     page.props?.subjectDetail[index],
                                 );
                             }
-                        } else {
-                            addCurriculum();
                         }
 
                         templateForm.reset();
@@ -1633,9 +1637,11 @@ const addCurriculum = () => {
         semesterTypeId: page.props?.schoolDetail.term_array.id,
         edit: false,
         yearLevel: null,
+        elective_limit: null,
         subjects: [],
         id: null,
     });
+    activeCurriculumTab.value = curriculumForm.multi.length - 1;
 
     curriculumForm.multi[curriculumForm.multi.length - 1].subjects.forEach(
         (cur, curKey) => {
@@ -1674,6 +1680,8 @@ const addSubject = (curriculumKey, year, semester) => {
             subject_class: null,
             subjectCode: null,
             unit: null,
+            specialization_options: [],
+            requirement_option: requirementOptions[0],
             year: year,
         }),
     );
@@ -1714,6 +1722,7 @@ const deleteCurriculumAndSubject = (res) => {
     } else {
         if (res.type) {
             curriculumForm.multi.splice(res.curriculum, 1);
+            activeCurriculumTab.value = Math.max(0, Math.min(res.curriculum, curriculumForm.multi.length - 1));
         } else {
             props.confirmRef.popupDialog(() => {
                 curriculumForm.delete(
@@ -1725,6 +1734,7 @@ const deleteCurriculumAndSubject = (res) => {
                         onSuccess: () => {
                             curriculumForm.clearErrors();
                             curriculumForm.multi.splice(res.curriculum, 1);
+                            activeCurriculumTab.value = Math.max(0, Math.min(res.curriculum, curriculumForm.multi.length - 1));
                             toastRef.value.show(page.props.flash);
                         },
                     },
@@ -2101,6 +2111,7 @@ watch(
         if (val) {
             gradeForm.fail = false;
             gradeForm.incomplete = false;
+            gradeForm.withdrawn = false;
         }
     },
 );
@@ -2111,6 +2122,7 @@ watch(
         if (val) {
             gradeForm.drop = false;
             gradeForm.incomplete = false;
+            gradeForm.withdrawn = false;
         }
     },
 );
@@ -2121,6 +2133,18 @@ watch(
         if (val) {
             gradeForm.drop = false;
             gradeForm.fail = false;
+            gradeForm.withdrawn = false;
+        }
+    },
+);
+
+watch(
+    () => gradeForm.withdrawn,
+    (val) => {
+        if (val) {
+            gradeForm.drop = false;
+            gradeForm.fail = false;
+            gradeForm.incomplete = false;
         }
     },
 );

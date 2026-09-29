@@ -86,4 +86,15 @@ class ScholarAddresses extends Model
                 ($this->region ? $this->region->name : ''),
         ];
     }
+
+    public function getFullAddressWithStreetAttribute()
+    {
+        return
+         ($this->address ? $this->address.', ' : '').
+        ($this->barangay ? $this->barangay->name.', ' : '').
+                ($this->municipality ? $this->municipality->name.', ' : '').
+                ($this->province ? $this->province->name.', ' : '').
+                ($this->region ? $this->region->name : '');
+
+    }
 }

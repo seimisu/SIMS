@@ -13,12 +13,17 @@ class SchoolCampusCourses extends Model
         'created_by',
         'updated_by',
         'is_active',
-        'is_delete'
+        'is_delete',
     ];
+
+    protected $casts = ['years' => 'integer'];
 
     protected $appends = ['course_array'];
 
-
+    public function scholarCourse()
+    {
+        return $this->hasMany(ScholarSchoolInfos::class, 'campus_course_id', 'id');
+    }
 
     public function campus()
     {
@@ -40,13 +45,16 @@ class SchoolCampusCourses extends Model
         return $this->hasMany(SchoolCampusCourseCurriculums::class, 'campus_course_id');
     }
 
-
+    public function specializations()
+    {
+        return $this->hasMany(SchoolCampusCourseSpecialization::class, 'campus_course_id');
+    }
 
     public function getCourseArrayAttribute()
     {
         return $this->course ? [
             'id' => $this->course->id,
-            'name' => $this->course->name
+            'name' => $this->course->name,
         ] : null;
     }
 }

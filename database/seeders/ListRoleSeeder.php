@@ -55,6 +55,16 @@ class ListRoleSeeder extends Seeder
                 'created_by' => 'John Rey Dalit',
                 'created_at' => now(),
             ],
+            [
+                'name' => 'Cashier',
+                'slug' => 'cashier',
+                'description' => 'Access to cashier dashboard tools.',
+                'is_active' => true,
+                'is_lock' => false,
+                'is_delete' => false,
+                'created_by' => 'John Rey Dalit',
+                'created_at' => now(),
+            ],
         ]);
     }
 }

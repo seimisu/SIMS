@@ -66,10 +66,8 @@ return [
 
         'scholars' => [
             'driver'   => 'pgsql',
-            //  'host'     => env('DB_HOST', '172.16.2.11'),
-            // 'port'     => env('DB_PORT', '5432'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
+            'host' => env('DB_SCHOLARS_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_SCHOLARS_PORT', env('DB_PORT', '5432')),
             'database' => env('DB_SCHOLARS_DATABASE'),
             'username' => env('DB_SCHOLARS_USERNAME'),
             'password' => env('DB_SCHOLARS_PASSWORD'),

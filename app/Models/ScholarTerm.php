@@ -20,6 +20,7 @@ class ScholarTerm extends Model
         'verified_by',
         'verification_status',
         'rejection_reason',
+        'specialization_id',
     ];
 
     public function term()
@@ -42,6 +43,11 @@ class ScholarTerm extends Model
         return $this->belongsTo(ScholarSchoolInfos::class, 'scholar_school_id');
     }
 
+    public function specialization()
+    {
+        return $this->belongsTo(SchoolCampusCourseSpecialization::class, 'specialization_id');
+    }
+
     public function level()
     {
         return $this->belongsTo(ListReferences::class, 'level_id');
@@ -49,7 +55,8 @@ class ScholarTerm extends Model
 
     public function subjects()
     {
-        return $this->hasMany(ScholarSchoolGrades::class, 'term_record_id');
+        return $this->hasMany(ScholarSchoolGrades::class, 'term_record_id')
+            ->where('is_deleted', false);
     }
 
     public function studentSubjects()
@@ -62,18 +69,8 @@ class ScholarTerm extends Model
         return $this->hasMany(StudentSubject::class, 'term_record_id')->where('status', 'pending');
     }
 
-    public function subjectRequests()
-    {
-        return $this->hasManyThrough(StudentSubjectRequest::class, StudentSubject::class, 'term_record_id', 'student_subject_id', 'id', 'id');
-    }
-
     public function grades()
     {
         return $this->hasMany(StudentGrade::class, 'term_record_id');
-    }
-
-    public function gradeRequests()
-    {
-        return $this->hasManyThrough(StudentGradeRequest::class, StudentGrade::class, 'term_record_id', 'student_grades_id', 'id', 'id');
     }
 }

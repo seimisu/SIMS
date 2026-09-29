@@ -17,6 +17,14 @@ export default defineConfig({
             resolvers: [PrimeVueResolver()],
         }),
     ],
+    server: {
+        host: "0.0.0.0",
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: "localhost",
+        },
+    },
     resolve: {
         alias: {
             "@": fileURLToPath(new URL("./resources/js", import.meta.url)),

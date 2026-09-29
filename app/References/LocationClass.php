@@ -137,7 +137,7 @@ class LocationClass
                     $region = Auth::user()->profile->agency->region_code;
 
                     $query->whereHas('cityCode.provinceCode.regionCode', function ($q) use ($region) {
-                        $q->where('code', $region); // use region_code OR code depending on table
+                        $q->where('code', $region);
                     });
                 }
             )

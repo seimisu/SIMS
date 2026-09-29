@@ -10,6 +10,8 @@ use App\Models\SchoolCampuses;
 use App\Models\Schools;
 use App\References\ListClass;
 use App\References\LocationClass;
+use App\Services\Notifications\RoleBellNotificationService;
+use App\Support\GradingSystem;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +33,7 @@ class SchoolController extends Controller
             $school = SchoolCampuses::with([
                 'courses.subjects' => fn ($q) => $q->where('is_delete', false),
                 'courses' => fn ($q) => $q->where('is_delete', false),
+                'courses.specializations' => fn ($q) => $q->where('is_delete', false)->where('is_active', true),
                 'grades' => fn ($q) => $q->where('is_delete', false)->orderBy('grade', 'asc'),
                 'info' => fn ($q) => $q->select(['id', 'campus_id', 'dean', 'registrar', 'contact', 'email'])->where('is_delete', false),
                 'semesters' => fn ($q) => $q->where('is_delete', false),
@@ -48,7 +51,9 @@ class SchoolController extends Controller
             'classOption' => $ref->getRefs('option', null, null, 'Class'),
             'classificationOption' => $ref->getRefs('option', null, null, 'Term Type'),
             'agencyOption' => $ref->getAgencies(false),
-            'gradingOption' => $ref->getRefs('option', null, null, 'Grading System'),
+            'gradingOption' => collect($ref->getRefs('option', null, null, 'Grading System'))
+                ->filter(fn ($option) => in_array($option['name'] ?? null, GradingSystem::SUPPORTED, true))
+                ->values(),
             'courseOption' => $ref->getCourses('option'),
             'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
             'semesterOption' => request('semesterType')
@@ -71,16 +76,18 @@ class SchoolController extends Controller
                         'year',
                         'unit',
                         'subject_class',
+                        'specialization_id',
+                        'requirement_type',
                         'updated_at',
                         'updated_by',
                         'created_by',
                     )->where('is_delete', false),
-
                 ])
                     ->select([
                         'id',
                         'campus_course_id',
                         'years as yearLevel',
+                        'elective_limit',
                         'semester_type_id as semesterTypeId',
                         'is_duplicated',
                     ])
@@ -180,6 +187,14 @@ class SchoolController extends Controller
                 'created_by' => Auth::user()->profile->fullname,
             ]);
         }
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'school_added',
+            'New school added',
+            "{$school->name} was added to the school list.",
+            '/academic/schools',
+            'schools',
+            $school->id
+        );
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
@@ -253,6 +268,14 @@ class SchoolController extends Controller
                 'is_active' => $data['isActive'],
             ]);
         }
+        app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
+            'school_updated',
+            'School updated',
+            "{$find->name} was updated in the school list.",
+            '/academic/schools',
+            'schools',
+            $find->id
+        );
 
         return redirect()->back()->with('flash', [
             'status' => 'success',

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Web;
 
-
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +19,7 @@ class CampusCourseRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -27,12 +27,12 @@ class CampusCourseRequest extends FormRequest
         switch ($this->type) {
             case 'delete':
                 return [
-                    'isDelete' => ['boolean']
+                    'isDelete' => ['boolean'],
                 ];
                 break;
             case 'status':
                 return [
-                    'isActive' => ['boolean']
+                    'isActive' => ['boolean'],
                 ];
                 break;
             default:
@@ -46,7 +46,12 @@ class CampusCourseRequest extends FormRequest
                             ->where('is_delete', 'false')
                             ->ignore($this->id),
                     ],
-                    'years'            => ['required'],
+                    'years' => ['required'],
+                    'specializations' => ['nullable', 'array'],
+                    'specializations.*.id' => ['nullable', 'integer'],
+                    'specializations.*.name' => ['required', 'string', 'max:255'],
+                    'specializations.*.code' => ['nullable', 'string', 'max:50'],
+                    'specializations.*.starts_at_year' => ['required', 'integer', 'min:1', 'lte:years'],
                     // 'subjects.*.id'    => ['nullable'],
                     // 'subjects.*.name'  => ['required'],
                     // 'subjects.*.code'  => ['required'],
@@ -57,12 +62,11 @@ class CampusCourseRequest extends FormRequest
         }
     }
 
-
     public function attributes()
     {
         return [
             'course.id' => 'course',
-            'course' => 'program'
+            'course' => 'program',
         ];
     }
 }

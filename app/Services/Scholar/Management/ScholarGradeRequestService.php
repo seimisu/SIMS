@@ -1,0 +1,158 @@
+<?php
+
+namespace App\Services\Scholar\Management;
+
+use App\Http\Controllers\Web\PayrollController;
+use App\Models\Scholars;
+use App\Models\ScholarTerm;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+
+class ScholarGradeRequestService
+{
+    public function decide(string $type, array $data): array
+    {
+        $terms = $this->terms($data);
+
+        if ($terms->isEmpty()) {
+            return [
+                'status' => 'info',
+                'title' => 'Already processed',
+                'message' => 'This grade request was already reviewed.',
+            ];
+        }
+
+        if ($type === 'accept') {
+            $validation = Validator::make($data[0], [
+                'scholarshipStatus' => 'required|array|max:255',
+            ]);
+
+            if ($validation->fails()) {
+                return [
+                    'status' => 'error',
+                    'title' => 'Validation Failed',
+                    'message' => 'Please fill in the scholarship status.',
+                ];
+            }
+
+            $this->approve($terms, $data);
+        } else {
+            $validation = Validator::make($data[0], [
+                'remarks' => 'required|string|max:255',
+            ]);
+
+            if ($validation->fails()) {
+                return [
+                    'status' => 'error',
+                    'title' => 'Validation Failed',
+                    'message' => 'Please fill in the remarks field.',
+                ];
+            }
+
+            $this->reject($terms, $data);
+        }
+
+        return [
+            'status' => 'success',
+            'title' => $type === 'accept'
+                ? 'Grade request approved'
+                : 'Grade request rejected',
+            'message' => $type === 'accept'
+                ? 'The grade request has been approved.'
+                : 'The grade request has been rejected.',
+        ];
+    }
+
+    private function approve($terms, array $data): void
+    {
+        $scholarshipStatus = $data[0]['scholarshipStatus']['name']
+            ?? $data[0]['scholarshipStatus']['id']
+            ?? null;
+        $scholarshipStatus = Str::upper($scholarshipStatus);
+
+        foreach ($terms as $term) {
+            DB::table('scholar_term_records')
+                ->where('id', $term->id)
+                ->update([
+                    'verification_status' => 'approved',
+                    'verified_by' => Auth::id(),
+                    'updated_at' => now(),
+                ]);
+
+            $term->forceFill([
+                'verification_status' => 'approved',
+                'verified_by' => Auth::id(),
+            ]);
+
+            DB::connection('scholars')
+                ->table('scholar_processes')
+                ->updateOrInsert(
+                    ['term_record_id' => $term->id],
+                    [
+                        'scholar_id' => $term->scholar_id,
+                        'scholarship_status' => $scholarshipStatus,
+                        'submission' => 'APPROVED',
+                        'payroll' => 'NOT SUBMITTED',
+                        'is_end' => false,
+                        'updated_at' => now(),
+                        'updated_by' => Auth::user()->profile->fullname,
+                    ]
+                );
+
+            if ($scholarshipStatus === 'TERMINATED') {
+                Scholars::whereKey($term->scholar_id)->update([
+                    'academic_status' => 'TERMINATED',
+                    'updated_at' => now(),
+                ]);
+            }
+
+            app(PayrollController::class)->autoAttachApprovedTerm($term->fresh());
+        }
+    }
+
+    private function reject($terms, array $data): void
+    {
+        $remarks = collect($data)->firstWhere('status', 'submitted')['remarks'];
+
+        foreach ($terms as $term) {
+            DB::table('scholar_term_records')
+                ->where('id', $term->id)
+                ->update([
+                    'verification_status' => 'rejected',
+                    'rejection_reason' => $remarks,
+                    'verified_by' => Auth::id(),
+                    'updated_at' => now(),
+                ]);
+
+            $term->forceFill([
+                'verification_status' => 'rejected',
+                'rejection_reason' => $remarks,
+                'verified_by' => Auth::id(),
+            ]);
+
+            DB::connection('scholars')
+                ->table('scholar_processes')
+                ->updateOrInsert(
+                    ['term_record_id' => $term->id],
+                    [
+                        'scholar_id' => $term->scholar_id,
+                        'submission' => 'REJECTED',
+                        'payroll' => 'NOT SUBMITTED',
+                        'is_end' => false,
+                        'updated_at' => now(),
+                        'updated_by' => Auth::user()->profile->fullname,
+                    ]
+                );
+        }
+    }
+
+    private function terms(array $data)
+    {
+        return ScholarTerm::with('scholar:id,spas_no')
+            ->whereIn('id', collect($data)->pluck('id'))
+            ->where('verification_status', 'submitted')
+            ->get();
+    }
+}

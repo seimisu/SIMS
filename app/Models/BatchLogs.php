@@ -12,6 +12,8 @@ class BatchLogs extends Model
         'batch_id',
         'status',
         'remarks',
+        'payroll_file_path',
+        'payroll_file_name',
         'action_by'
 
     ];

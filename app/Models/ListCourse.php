@@ -13,12 +13,10 @@ class ListCourse extends Model
         'is_active',
         'is_delete',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
 
     protected $appends = ['suggestion_array'];
-
-
 
     public function getSuggestionArrayAttribute()
     {
@@ -26,5 +24,11 @@ class ListCourse extends Model
             'id' => $this->field,
             'name' => $this->field,
         ] : null;
+    }
+
+    public function schoolCampuses()
+    {
+        return $this->belongsToMany(SchoolCampuses::class, 'school_campus_courses', 'course_id', 'campus_id')
+            ->withPivot('years', 'is_delete');
     }
 }

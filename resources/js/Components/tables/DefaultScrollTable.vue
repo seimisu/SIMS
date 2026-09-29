@@ -11,25 +11,25 @@
         :scrollHeight="scrollHeight"
         :pt="{
             root: {
-                class: '!text-sm ',
+                class: '!text-sm dark:!text-gray-100',
             },
             headerRow: {
-                class: '!text-xs !font-bold ',
+                class: '!text-xs !font-bold dark:!bg-gray-900 dark:!text-gray-100',
             },
             pcPaginator: {
                 root: 'dark:!bg-transparent ',
             },
             tableContainer: {
-                class: ' border-t border-x rounded-xl !border-gray-200 dark:!border-gray-700 ',
+                class: ' border-t border-x rounded-xl !border-gray-200 dark:!border-gray-700 dark:!bg-gray-800 ',
             },
             bodycell: {
-                class: 'dark:!border-gray-700',
+                class: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
             },
             column: {
-                root: { class: 'dark:!border-gray-700 dark:text-gray-300' },
+                root: { class: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100' },
             },
             bodyRow: {
-                class: '!bg-transparent dark:!border-gray-700',
+                class: '!bg-transparent dark:!border-gray-700 dark:!text-gray-100',
             },
             rowGroupHeader: {
                 class: 'dark:!bg-transparent !bg-gray-50 dark:!text-gray-300',

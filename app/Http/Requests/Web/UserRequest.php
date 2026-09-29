@@ -40,6 +40,10 @@ class UserRequest extends FormRequest
                     'lname'     => ['required', 'string', 'max:50'],
                     'email'     => ['required', 'email', Rule::unique('users', 'email')->ignore($this->route('id'))],
                     'role'      => ['required', 'array'],
+                    'contact_no' => ['nullable', 'string', 'max:20'],
+                    'designation' => ['nullable', 'string', 'max:100'],
+                    'agency' => ['nullable', 'array'],
+                    'agency.id' => ['nullable', 'integer', 'exists:list_agencies,id'],
                 ];
                 break;
         }

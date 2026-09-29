@@ -24,12 +24,14 @@ class LocationCityController extends Controller
     {
         $data = $request->validated();
 
-        LocationCity::create([
+        $city = LocationCity::firstOrCreate([
+            'code' => $data['code'],
+            'is_delete' => false,
+        ], [
             'name' => $data['name'],
             'old_name' => $data['oldName'],
             'district' => $data['district'],
             'zipcode' => $data['zipCode'],
-            'code' => $data['code'],
             'is_municipality' => $data['isMunicipalities'],
             'is_chartered' => $data['isChartered'],
             'province_code' => $data['province']['id'],
@@ -37,9 +39,9 @@ class LocationCityController extends Controller
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'City Created',
-            'message' => 'City successfully created.',
+            'status' => $city->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $city->wasRecentlyCreated ? 'City Created' : 'City Already Exists',
+            'message' => $city->wasRecentlyCreated ? 'City successfully created.' : 'This city already exists, so no duplicate was created.',
         ]);;
     }
     function update(LocationCityRequest $request, string $id, string $type)

@@ -24,12 +24,14 @@ class SchoolCampusSemesterController extends Controller
 
 
 
-            SchoolCampusSemesters::create([
+            SchoolCampusSemesters::updateOrCreate([
                 'campus_id' => $data['campusId'],
                 'semester_id' => $semester['semesterId'],
+            ], [
                 'start_date' => Carbon::parse($data['semester'][$key]['startDateFormatted'])->startOfMonth()->format('Y-m-d'),
                 'end_date' => Carbon::parse($data['semester'][$key]['endDateFormatted'])->startOfMonth()->format('Y-m-d'),
                 'submission_date' => Carbon::parse($data['semester'][$key]['submissionDateFormatted'])->format('Y-m-d'),
+                'is_active' => true,
                 'created_by' => Auth::user()->profile->fullname,
             ]);
         }

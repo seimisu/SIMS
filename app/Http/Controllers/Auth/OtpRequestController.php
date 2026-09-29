@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\OtpRequest;
 use App\Mail\OtpRequestMail;
 use App\Models\OtpRequests;
 use App\Models\User;
+use App\Support\IdempotencyGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ class OtpRequestController extends Controller
             ]);
 
 
-            Mail::to($user->email)->send(new OtpRequestMail($genToken, $user->profile->fullname));
+            IdempotencyGuard::forSeconds("otp-email:{$user->id}", 30, fn () => Mail::to($user->email)->send(new OtpRequestMail($genToken, $user->profile->fullname)));
 
             return back()->with('flash', [
                 'message' => 'We sent an OTP to your email.',
@@ -40,18 +41,20 @@ class OtpRequestController extends Controller
             ]);
         }
 
-        $otp->increment('attempts');
+        $sent = IdempotencyGuard::forSeconds("otp-email:{$user->id}", 30, function () use ($otp, $genToken, $user) {
+            $otp->increment('attempts');
 
-        $otp->update([
-            'generated_token' => $genToken,
-            'expires_at' => now()->addMinutes(2 * $otp->attempts),
-        ]);
+            $otp->update([
+                'generated_token' => $genToken,
+                'expires_at' => now()->addMinutes(2 * $otp->attempts),
+            ]);
 
-        Mail::to($user->email)->send(new OtpRequestMail($genToken, $user->profile->fullname));
+            Mail::to($user->email)->send(new OtpRequestMail($genToken, $user->profile->fullname));
+        });
 
         return back()->with('flash', [
-            'message' => 'We re-sent a new OTP to your email.',
-            'status' => 'success',
+            'message' => $sent ? 'We re-sent a new OTP to your email.' : 'An OTP was recently sent. Please check your email before requesting another one.',
+            'status' => $sent ? 'success' : 'info',
             'attempts' => $otp->attempts
         ]);
     }

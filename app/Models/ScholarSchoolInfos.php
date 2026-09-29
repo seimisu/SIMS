@@ -6,13 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class ScholarSchoolInfos extends Model
 {
-
     protected $fillable = [
+        'scholar_id',
         'campus_id',
         'campus_course_id',
         'award_year',
         'graduated_year',
         'curriculum_id',
+        'specialization_id',
         'school_year',
 
     ];
@@ -36,6 +37,12 @@ class ScholarSchoolInfos extends Model
     {
         return $this->belongsTo(SchoolCampusCourseCurriculums::class, 'curriculum_id');
     }
+
+    public function specialization()
+    {
+        return $this->belongsTo(SchoolCampusCourseSpecialization::class, 'specialization_id');
+    }
+
     public function termRecords()
     {
         return $this->hasMany(ScholarTerm::class, 'scholar_school_id');

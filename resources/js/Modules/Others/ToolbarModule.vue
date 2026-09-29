@@ -40,6 +40,7 @@
         :description="dialogDescription"
         :button-label="dialogButtonLabel"
         :loading="dialogButtonLoading"
+        :button-disabled="dialogButtonDisabled"
         @submit-form="triggerSave"
     >
         <template #forms>
@@ -71,6 +72,10 @@ defineProps({
     dialogIcon: Function,
     dialogButtonLabel: String,
     dialogButtonLoading: Boolean,
+    dialogButtonDisabled: {
+        type: Boolean,
+        default: false,
+    },
     buttonLabel: String,
     buttonVisible: {
         type: Boolean,

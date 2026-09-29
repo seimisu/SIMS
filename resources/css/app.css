@@ -10,3 +10,118 @@ body {
 .p-tooltip-text {
     font-size: 12px;
 }
+
+.dark .p-datatable,
+.dark .p-datatable-header,
+.dark .p-datatable-table-container,
+.dark .p-datatable-table,
+.dark .p-datatable-thead > tr,
+.dark .p-datatable-tbody > tr,
+.dark .p-datatable-tbody > tr > td,
+.dark .p-drawer,
+.dark .p-drawer-header,
+.dark .p-drawer-content,
+.dark .p-drawer-footer,
+.dark .p-tabs,
+.dark .p-tablist,
+.dark .p-tablist-tab-list,
+.dark .p-tabpanels,
+.dark .p-tabpanel,
+.dark .p-tab,
+.dark .p-fieldset,
+.dark .p-fieldset-legend,
+.dark .p-fieldset-content,
+.dark .p-panel,
+.dark .p-panel-header,
+.dark .p-panel-content {
+    background: #1f2937 !important;
+    color: #f3f4f6 !important;
+}
+
+.dark .p-drawer,
+.dark .p-drawer-header,
+.dark .p-drawer-content,
+.dark .p-drawer-footer,
+.dark .p-tablist,
+.dark .p-tabpanels,
+.dark .p-tab,
+.dark .p-fieldset,
+.dark .p-fieldset-legend,
+.dark .p-panel,
+.dark .p-panel-header,
+.dark .p-panel-content,
+.dark .p-datatable-table-container,
+.dark .p-datatable-thead > tr > th,
+.dark .p-datatable-tbody > tr > td {
+    border-color: #374151 !important;
+}
+
+.dark .p-datatable-thead > tr > th {
+    background: #111827 !important;
+    color: #f3f4f6 !important;
+}
+
+.dark .p-datatable-tbody > tr:hover > td,
+.dark .p-datatable-tbody > tr.p-highlight > td,
+.dark .p-datatable-tbody > tr.p-datatable-row-selected > td {
+    background: #374151 !important;
+    color: #ffffff !important;
+}
+
+.dark .p-tab-active,
+.dark .p-tab[aria-selected="true"] {
+    color: #60a5fa !important;
+}
+
+.dark .p-inputtext,
+.dark .p-select,
+.dark .p-multiselect,
+.dark .p-inputnumber-input,
+.dark .p-textarea {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f3f4f6 !important;
+}
+
+.dark .p-inputtext::placeholder,
+.dark .p-inputnumber-input::placeholder,
+.dark .p-textarea::placeholder {
+    color: #9ca3af !important;
+}
+
+.dark .p-popover,
+.dark .p-popover-content {
+    background: #111827 !important;
+    color: #f3f4f6 !important;
+    border-color: #374151 !important;
+}
+
+.dark .p-popover:before,
+.dark .p-popover:after {
+    border-top-color: #111827 !important;
+    border-bottom-color: #111827 !important;
+}
+
+.dark .p-menu,
+.dark .p-menu-list,
+.dark .p-menu-item,
+.dark .p-menu-item-content {
+    background: #1f2937 !important;
+    color: #f3f4f6 !important;
+    border-color: #374151 !important;
+}
+
+.dark .p-menu-item-content:hover {
+    background: #374151 !important;
+}
+
+.dark .p-menu-item-link,
+.dark .p-menu-item-label,
+.dark .p-menu-item-icon {
+    color: #f3f4f6 !important;
+}
+
+.grade-approve-popover:before,
+.grade-approve-popover:after {
+    display: none !important;
+}

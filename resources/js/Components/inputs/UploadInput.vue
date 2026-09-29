@@ -54,6 +54,7 @@
                                     <Button
                                         text
                                         severity="danger"
+                                        :disabled="disabled"
                                         class="!rounded-[15px] !h-[20px] !w-[20px] !p-0"
                                         @click="
                                             handleRemoveFile(
@@ -68,18 +69,11 @@
                                     </Button>
                                 </div>
 
-                                <ProgressBar
-                                    v-if="progress < 100"
-                                    class="!h-[10px] !rounded-[5px]"
-                                    :pt="{ label: { class: '!text-[8px]' } }"
-                                    :value="progress"
-                                ></ProgressBar>
-                                <div v-else class="text-xs text-gray-400">
-                                    {{
-                                        page.props.flash?.status == "error"
-                                            ? "Error"
-                                            : "Completed"
-                                    }}
+                                <div
+                                    class="text-xs text-gray-400"
+                                    :class="status === 'uploading' ? 'animate-pulse font-medium text-blue-500' : ''"
+                                >
+                                    {{ statusLabel }}
                                 </div>
                             </div>
                         </div>
@@ -90,21 +84,30 @@
     </FileUpload>
 </template>
 <script setup>
-import { usePage } from "@inertiajs/vue3";
 import { IconFileDescription, IconFileUpload, IconX } from "@tabler/icons-vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 const emit = defineEmits(["select-files", "remove-file"]);
-const page = usePage();
 const fileupload = ref(null);
-defineProps({
+const props = defineProps({
     accept: {
         type: String,
         default: "",
     },
-    progress: {
-        type: Number,
-        default: 0,
+    status: {
+        type: String,
+        default: "idle",
     },
+    disabled: {
+        type: Boolean,
+        default: false,
+    },
+});
+
+const statusLabel = computed(() => {
+    if (props.status === "uploading") return "Uploading";
+    if (props.status === "success") return "Uploaded";
+    if (props.status === "error") return "Error";
+    return "Ready";
 });
 
 function formatFileSize(size) {
@@ -126,14 +129,6 @@ const handleRemoveFile = (
     emit("remove-file", file);
 };
 
-const onUpload = (event) => {
-    const files = event.files;
-};
-
-const upload = () => {
-    fileupload.value.upload();
-};
-
 const clear = () => {
     fileupload.value.clear();
 };
@@ -150,7 +145,6 @@ const clear = () => {
 // };
 
 defineExpose({
-    upload,
     clear,
 });
 </script>

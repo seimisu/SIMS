@@ -24,18 +24,20 @@ class StatusController extends Controller
     {
         $data = $request->validated();
 
-        ListStatuses::create([
+        $status = ListStatuses::firstOrCreate([
             'name' => $data['name'],
-            'icon' => $data['icon'],
             'type' => $data['type'],
+            'is_delete' => false,
+        ], [
+            'icon' => $data['icon'],
             'color_id' => $data['color']['id'],
             'created_by'    => Auth::user()->profile->fullname
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Status Created',
-            'message' => 'Status successfully created.',
+            'status' => $status->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $status->wasRecentlyCreated ? 'Status Created' : 'Status Already Exists',
+            'message' => $status->wasRecentlyCreated ? 'Status successfully created.' : 'This status already exists, so no duplicate was created.',
         ]);;
     }
     function update(StatusRequest $request, string $id, string $type)

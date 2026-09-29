@@ -24,18 +24,20 @@ class LocationProvinceController extends Controller
     {
         $data = $request->validated();
 
-        LocationProvinces::create([
+        $province = LocationProvinces::firstOrCreate([
+            'code' => $data['code'],
+            'is_delete' => false,
+        ], [
             'name' => $data['name'],
             'old_name' => $data['oldName'],
-            'code' => $data['code'],
             'region_code' => $data['region']['id'],
             'created_by'    => Auth::user()->profile->fullname
         ]);
 
         return redirect()->back()->with('flash', [
-            'status' => 'success',
-            'title'  => 'Province Created',
-            'message' => 'Province successfully created.',
+            'status' => $province->wasRecentlyCreated ? 'success' : 'info',
+            'title'  => $province->wasRecentlyCreated ? 'Province Created' : 'Province Already Exists',
+            'message' => $province->wasRecentlyCreated ? 'Province successfully created.' : 'This province already exists, so no duplicate was created.',
         ]);;
     }
     function update(LocationProvinceRequest $request, string $id, string $type)

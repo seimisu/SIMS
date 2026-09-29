@@ -54,18 +54,18 @@
                         :is="item.icons"
                         size="25px"
                         :class="
-                            item.label === 'Logout'
-                                ? 'text-red-500'
-                                : 'text-gray-600'
+                            (item.label === 'Logout'
+                                ? 'text-red-500 dark:text-red-500'
+                                : 'text-gray-600',
+                            'dark:text-white!')
                         "
                         :stroke-width="1.5"
                     />
                     <span
-                        class="text-gray-500"
                         :class="
                             item.label === 'Logout'
-                                ? 'text-red-500'
-                                : 'text-gray-600'
+                                ? 'text-red-500 '
+                                : 'text-gray-600 dark:text-white'
                         "
                         >{{ item.label }}</span
                     >
@@ -73,73 +73,21 @@
             </template>
         </Menu>
     </div>
-    <DefaultDialog
-        v-model:visible="passDialog"
-        :icon="IconPasswordUser"
-        width-set="lg:!w-[35%]"
-        :loading="passwordForm.processing"
-        @submit-form="submitForm"
-        title="Update Your Password"
-        description="To ensure your account remains protected at all times, please choose a password that is strong, unique, and difficult for others to guess."
-    >
-        <template #message>
-            <DefaultMessages
-                v-if="passwordForm.hasErrors"
-                message-type="error"
-                :message="passwordForm.errors"
-            />
-        </template>
-        <template #forms>
-            <div class="pt-5 flex flex-col gap-5">
-                <PasswordInput
-                    label="Current Password"
-                    v-model="passwordForm.current"
-                    :feedback="false"
-                    toggle-icon
-                />
-                <PasswordInput
-                    label="New Password"
-                    v-model="passwordForm.new"
-                    :feedback="true"
-                    toggle-icon
-                />
-                <PasswordInput
-                    label="Confirm Password"
-                    v-model="passwordForm.confirm"
-                    :feedback="false"
-                />
-            </div>
-        </template>
-    </DefaultDialog>
-    <DefaultToast ref="toastRef" />
+    <ChangePasswordDialog v-model:visible="passDialog" />
 </template>
 
 <script setup>
-import { nextTick, ref } from "vue";
-import { router, usePage, useForm, useRemember } from "@inertiajs/vue3";
+import { ref } from "vue";
+import { router, usePage } from "@inertiajs/vue3";
 import {
-    IconUserCircle,
     IconLogout2,
-    IconLockPassword,
     IconPasswordUser,
-    IconExclamationCircleFilled,
+    IconUserCircle,
 } from "@tabler/icons-vue";
-import DefaultDialog from "../dialogs/DefaultDialog.vue";
-import PasswordInput from "../inputs/PasswordInput.vue";
-import DefaultMessages from "../messages/DefaultMessages.vue";
-import DefaultToast from "../messages/DefaultToast.vue";
+import ChangePasswordDialog from "../dialogs/ChangePasswordDialog.vue";
 
 const passDialog = ref(false);
 const page = usePage();
-const toastRef = ref(null);
-const passwordForm = useForm(
-    {
-        current: null,
-        new: null,
-        confirm: null,
-    },
-    { useRemember: false },
-);
 
 const menu = ref();
 const items = ref([
@@ -147,10 +95,10 @@ const items = ref([
         label: "Options",
         items: [
             {
-                label: "Profile",
+                label: "User Profile",
                 icons: IconUserCircle,
                 action: () => {
-                    openProfile();
+                    router.get("/profile");
                 },
             },
             {
@@ -158,13 +106,6 @@ const items = ref([
                 icons: IconPasswordUser,
                 action: () => {
                     openDialog();
-                },
-            },
-            {
-                label: "Lock Screen",
-                icons: IconLockPassword,
-                action: () => {
-                    lockScreen();
                 },
             },
             {
@@ -187,31 +128,7 @@ const toggle = (event) => {
 
 const openDialog = () => {
     passDialog.value = true;
-    passwordForm.resetAndClearErrors();
 };
-
-const submitForm = () => {
-    passwordForm.post(route("user.changePassword"), {
-        fresh: true,
-        replace: true,
-        onSuccess: () => {
-            toastRef.value.show(page.props.flash);
-            passDialog.value = false;
-            passwordForm.resetAndClearErrors();
-            nextTick(() => {
-                window.location.reload();
-            });
-        },
-    });
-};
-
-// const openProfile = () => {
-//     router.get(route("profile.index"));
-// };
-
-// const lockScreen = () => {
-//     router.get(route("locked.show"));
-// };
 
 const logout = () => {
     router.post(route("logout"));
@@ -220,5 +137,9 @@ const logout = () => {
 <style>
 .p-menu {
     min-width: 150px !important;
+}
+.dark .p-popover:before,
+.dark .p-popover:after {
+    border-top-color: transparent !important;
 }
 </style>

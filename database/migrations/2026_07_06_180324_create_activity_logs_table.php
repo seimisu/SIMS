@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->json('previous')->nullable();
-            $table->json('changes')->nullable();
+            $table->foreignId('scholar_id')->constrained('scholars')->onDelete('cascade');
+            $table->json('previous_data')->nullable();
+            $table->json('changes_data')->nullable();
             $table->string('created_by')->nullable();
             $table->timestamps();
 

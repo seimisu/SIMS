@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'scholar_portal' => [
+        'api_base_url' => env('SCHOLAR_PORTAL_API_BASE_URL', env('SCHOLAR_PORTAL_URL')),
+        'file_api_key' => env('SCHOLAR_PORTAL_FILE_API_KEY', env('SIMS_API_KEY')),
+    ],
+
 ];

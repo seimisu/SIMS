@@ -17,24 +17,38 @@
                 preserve-state
                 preserve-scroll
                 :class="[
-                    'flex items-center gap-2 px-[0.7rem] py-[10px]  hover:text-blue-500 transition-all duration-300 w-full',
+                    'flex items-center px-2 py-[10px] hover:text-blue-500 transition-all duration-300 w-full',
                     item.component === page.component
                         ? ' text-blue-600 dark:text-blue-400 font-semibold'
                         : '',
                     item.subItem
-                        ? 'ml-5 border-l border-l-gray-400'
+                        ? 'ml-4 border-l border-l-gray-400 pl-3'
                         : 'py-[12px]',
                 ]"
             >
-                <component
-                    :is="TablerIcons[item.icon]"
-                    :size="item.subItem ? '20px' : '23px'"
-                    v-show="item.subItem ? false : true"
-                    :stroke-width="1.5"
-                />
-                <span class="text-nowrap truncate text-xs capitalize">{{
+                <span
+                    v-if="!item.subItem"
+                    class="mr-2 flex w-[23px] shrink-0 items-center justify-center"
+                >
+                    <component
+                        :is="TablerIcons[item.icon]"
+                        size="23px"
+                        :stroke-width="1.5"
+                    />
+                </span>
+                <span class="min-w-0 flex-1 text-nowrap truncate text-xs capitalize">{{
                     item.label
                 }}</span>
+                <span
+                    v-if="item.badgeDot"
+                    class="ml-auto h-2 w-2 shrink-0 rounded-full bg-red-500"
+                />
+                <span
+                    v-else-if="Number(item.badge ?? 0) > 0"
+                    class="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold leading-none text-red-600"
+                >
+                    {{ item.badge }}
+                </span>
             </Link>
 
             <a
@@ -47,15 +61,27 @@
                         : '',
                 ]"
             >
-                <div class="flex items-center">
-                    <component
-                        :is="TablerIcons[item.icon]"
-                        size="23px"
-                        :stroke-width="1.5"
-                    />
-                    <span class="ml-2 text-xs text-nowrap capitalize">{{
+                <div class="flex min-w-0 items-center">
+                    <span class="mr-2 flex w-[23px] shrink-0 items-center justify-center">
+                        <component
+                            :is="TablerIcons[item.icon]"
+                            size="23px"
+                            :stroke-width="1.5"
+                        />
+                    </span>
+                    <span class="min-w-0 text-xs text-nowrap truncate capitalize">{{
                         item.label
                     }}</span>
+                    <span
+                        v-if="item.badgeDot"
+                        class="ml-2 h-2 w-2 shrink-0 rounded-full bg-red-500"
+                    />
+                    <span
+                        v-else-if="Number(item.badge ?? 0) > 0"
+                        class="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold leading-none text-red-600"
+                    >
+                        {{ item.badge }}
+                    </span>
                 </div>
 
                 <span

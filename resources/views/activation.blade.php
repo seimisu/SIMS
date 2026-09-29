@@ -11,7 +11,7 @@
             <h2 style="color:#1E5168; text-align:center;">Welcome to Your Scholarship Journey</h2>
             <p style="font-size:15px; color:#555;">
                 Good Day!<br><br>
-                We\'re excited to have you join the Scholars Portal. Your account has been created and is ready for activation.
+                We're excited to have you join the Scholars Portal. Your account has been created and is ready for activation.
             </p>
 
             <div style="background:#ECF9FF; padding:30px 20px; margin:20px 0; border-radius:8px; text-align:center;">
@@ -22,11 +22,11 @@
             </div>
 
             <p style="font-size:14px; color:#555; margin:20px 0; background:#FFF3CD; padding:15px; border-radius:6px; border-left:4px solid #FFC107;">
-                <strong>Note:</strong> This activation link is valid for <strong>24 hours</strong>. If you don\'t activate your account within this time, please request a new activation link by logging in with your credentials.
+                <strong>Note:</strong> This activation link is valid for <strong>24 hours</strong>. If you don't activate your account within this time, please request a new activation link by logging in with your credentials.
             </p>
 
             <p style="font-size:13px; color:#777; margin:20px 0;">
-                <strong>What\'s next?</strong>
+                <strong>What's next?</strong>
             </p>
             <ul style="font-size:13px; color:#777; margin:0 0 20px 20px; padding:0;">
                 <li style="margin:8px 0;">Activate your account using the button above</li>
