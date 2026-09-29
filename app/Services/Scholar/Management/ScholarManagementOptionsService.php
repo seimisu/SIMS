@@ -7,8 +7,8 @@ use App\Models\ListReferences;
 use App\Models\ListStatuses;
 use App\Models\Scholars;
 use App\Models\ScholarTerm;
-use App\Models\SchoolCampusCourseCurriculumSubjects;
 use App\Models\SchoolCampusCourseCurriculums;
+use App\Models\SchoolCampusCourseCurriculumSubjects;
 use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
@@ -231,6 +231,8 @@ class ScholarManagementOptionsService
 
     private function subjectOptions(Scholars $scholar)
     {
+        $schoolInfo = $scholar->schoolInfo->first();
+
         return SchoolCampusCourseCurriculumSubjects::where('is_active', true)
             ->where('is_delete', false)
             ->whereRaw('LOWER(subject_class) = ?', ['academic'])
@@ -240,7 +242,16 @@ class ScholarManagementOptionsService
             ->whereRaw("LOWER(COALESCE(subject_code, '')) NOT LIKE ?", ['%pre-requisite%'])
             ->whereHas('curriculum', function ($q) use ($scholar) {
                 $q->where('campus_course_id', $scholar->schoolInfo->first()?->campus_course_id);
-            })->get()->map(fn ($q) => [
+            })
+            ->when($schoolInfo?->curriculum_id, fn ($query) => $query->where('curriculum_id', $schoolInfo->curriculum_id))
+            ->where(function ($query) use ($schoolInfo) {
+                $query->whereDoesntHave('specializations')
+                    ->when($schoolInfo?->specialization_id, fn ($q) => $q->orWhereHas(
+                        'specializations',
+                        fn ($specialization) => $specialization->whereKey($schoolInfo->specialization_id)
+                    ));
+            })
+            ->get()->map(fn ($q) => [
                 'id' => $q->id,
                 'name' => Str::upper($q->name),
                 'code' => Str::upper($q->subject_code),
@@ -389,6 +400,16 @@ class ScholarManagementOptionsService
                         ->where('is_delete', false)
                         ->where('campus_course_id', $scholar->schoolInfo->first()?->campus_course_id);
                 })
+                ->when($scholar->schoolInfo->first()?->curriculum_id, fn ($query, $id) => $query->where('curriculum_id', $id))
+                ->where(function ($query) use ($scholar) {
+                    $specializationId = $scholar->schoolInfo->first()?->specialization_id;
+                    $query->whereDoesntHave('specializations')
+                        ->when($specializationId, fn ($q) => $q->orWhereHas(
+                            'specializations',
+                            fn ($specialization) => $specialization->whereKey($specializationId)
+                        ));
+                })
+                ->where('requirement_type', 'required')
                 ->where('semester_id', $request->input('term'))
                 ->where('year', $request->input('year'))
                 ->get()->map(fn ($q) => [

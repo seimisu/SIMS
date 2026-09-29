@@ -21,6 +21,7 @@ class CampusCourseController extends Controller
                 'is_delete' => false,
                 'years' => $data['years'],
             ]);
+            $this->syncSpecializations($check, $data['specializations'] ?? []);
 
             return redirect()->back()->with('flash', [
                 'status' => 'success',
@@ -28,12 +29,13 @@ class CampusCourseController extends Controller
                 'message' => 'Campus course successfully recreated.',
             ]);
         } else {
-            SchoolCampusCourses::create([
+            $course = SchoolCampusCourses::create([
                 'years' => $data['years'],
                 'course_id' => $data['course']['id'],
                 'campus_id' => $data['campusId'],
                 'created_by' => Auth::user()->profile->fullname,
             ]);
+            $this->syncSpecializations($course, $data['specializations'] ?? []);
 
             return redirect()->back()->with('flash', [
                 'status' => 'success',
@@ -55,6 +57,7 @@ class CampusCourseController extends Controller
                 'course_id' => $data['course']['id'],
                 'years' => $data['years'],
             ]);
+            $this->syncSpecializations($find, $data['specializations'] ?? []);
 
             // foreach ($data['subjects'] as $subject) {
 
@@ -103,5 +106,23 @@ class CampusCourseController extends Controller
             'title' => 'Campus Course Deleted',
             'message' => 'Campus course successfully deleted.',
         ]);
+    }
+
+    private function syncSpecializations(SchoolCampusCourses $course, array $items): void
+    {
+        $kept = [];
+        foreach ($items as $item) {
+            $specialization = $course->specializations()->updateOrCreate(
+                ['id' => $item['id'] ?? null],
+                [
+                    'name' => $item['name'],
+                    'code' => $item['code'] ?? null,
+                    'starts_at_year' => $item['starts_at_year'],
+                    'is_delete' => false,
+                ]
+            );
+            $kept[] = $specialization->id;
+        }
+        $course->specializations()->when($kept, fn ($query) => $query->whereNotIn('id', $kept))->update(['is_delete' => true]);
     }
 }

@@ -33,6 +33,7 @@ class SchoolController extends Controller
             $school = SchoolCampuses::with([
                 'courses.subjects' => fn ($q) => $q->where('is_delete', false),
                 'courses' => fn ($q) => $q->where('is_delete', false),
+                'courses.specializations' => fn ($q) => $q->where('is_delete', false)->where('is_active', true),
                 'grades' => fn ($q) => $q->where('is_delete', false)->orderBy('grade', 'asc'),
                 'info' => fn ($q) => $q->select(['id', 'campus_id', 'dean', 'registrar', 'contact', 'email'])->where('is_delete', false),
                 'semesters' => fn ($q) => $q->where('is_delete', false),
@@ -75,6 +76,8 @@ class SchoolController extends Controller
                         'year',
                         'unit',
                         'subject_class',
+                        'specialization_id',
+                        'requirement_type',
                         'updated_at',
                         'updated_by',
                         'created_by',
@@ -84,6 +87,7 @@ class SchoolController extends Controller
                         'id',
                         'campus_course_id',
                         'years as yearLevel',
+                        'elective_limit',
                         'semester_type_id as semesterTypeId',
                         'is_duplicated',
                     ])

@@ -16,6 +16,8 @@ class SchoolCampusCourses extends Model
         'is_delete',
     ];
 
+    protected $casts = ['years' => 'integer'];
+
     protected $appends = ['course_array'];
 
     public function scholarCourse()
@@ -41,6 +43,11 @@ class SchoolCampusCourses extends Model
     public function curriculum()
     {
         return $this->hasMany(SchoolCampusCourseCurriculums::class, 'campus_course_id');
+    }
+
+    public function specializations()
+    {
+        return $this->hasMany(SchoolCampusCourseSpecialization::class, 'campus_course_id');
     }
 
     public function getCourseArrayAttribute()

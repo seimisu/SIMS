@@ -137,7 +137,7 @@ class SchoolCoordinatorController extends Controller
             ),
             'subjectDetail' => Inertia::optional(
                 fn () => $campus->courses()
-                    ->with('course:id,name,abbreviation', 'curriculum')
+                    ->with('course:id,name,abbreviation', 'curriculum', 'specializations:id,campus_course_id,name,code,starts_at_year')
                     ->where('id', Hashids::decode($request->input('campusCourseId'))[0] ?? null)
                     ->where('is_delete', false)
                     ->get()
@@ -146,12 +146,14 @@ class SchoolCoordinatorController extends Controller
                         'course' => $course->course->name,
                         'abbreviation' => $course->course->abbreviation,
                         'years' => $course->years,
+                        'specializations' => $course->specializations,
                         'curriculum' => $course->curriculum
                             ->where('is_delete', false)
                             ->map(fn ($curriculum) => [
                                 'id' => $curriculum->id,
                                 'campus_course_id' => $curriculum->campus_course_id,
                                 'yearLevel' => $curriculum->years,
+                                'elective_limit' => $curriculum->elective_limit,
                                 'semesterTypeId' => $curriculum->semester_type_id,
                                 'is_duplicated' => $curriculum->is_duplicated,
                                 'subjects' => $curriculum->subjects()->select(
@@ -164,6 +166,8 @@ class SchoolCoordinatorController extends Controller
                                     'year',
                                     'unit',
                                     'subject_class',
+                                    'specialization_id',
+                                    'requirement_type',
                                     'updated_at',
                                     'updated_by',
                                     'created_by',
@@ -363,6 +367,10 @@ class SchoolCoordinatorController extends Controller
             'course.id' => ['exists:list_courses,id'],
 
             'years' => ['required', 'integer'],
+            'specializations' => ['nullable', 'array'],
+            'specializations.*.name' => ['required', 'string', 'max:255'],
+            'specializations.*.code' => ['nullable', 'string', 'max:50'],
+            'specializations.*.starts_at_year' => ['required', 'integer', 'min:1', 'lte:years'],
         ]);
 
         $course = ListCourse::find($validatedData['course']['id']);
@@ -378,11 +386,14 @@ class SchoolCoordinatorController extends Controller
             ]);
         }
 
-        $campus->courses()->create([
+        $campusCourse = $campus->courses()->create([
             'course_id' => $course->id,
             'years' => $validatedData['years'],
             'created_by' => Auth::user()->profile->fullname,
         ]);
+        foreach ($validatedData['specializations'] ?? [] as $specialization) {
+            $campusCourse->specializations()->create($specialization);
+        }
 
         AuditLogs::create([
             'user_id' => Auth::id(),

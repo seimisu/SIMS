@@ -186,7 +186,7 @@ class ScholarManagementDetailsService
                             ->select('id', 'term_record_id', 'subject_id', 'input_grade', 'grade_id', 'is_incomplete', 'is_drop', 'is_withdrawn', 'remarks')
                             ->where('is_deleted', false)
                             ->with([
-                                'subject:id,name,year,subject_code,unit,subject_class,semester_id',
+                                'subject:id,name,year,subject_code,unit,subject_class,semester_id,requirement_type,specialization_id',
                                 'grade:id,grade,is_failed,is_incomplete,is_drop,is_withdrawn,is_active',
                             ]),
                     ]),

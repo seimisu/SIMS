@@ -13,6 +13,7 @@ class ScholarSchoolInfos extends Model
         'award_year',
         'graduated_year',
         'curriculum_id',
+        'specialization_id',
         'school_year',
 
     ];
@@ -35,6 +36,11 @@ class ScholarSchoolInfos extends Model
     public function curriculum()
     {
         return $this->belongsTo(SchoolCampusCourseCurriculums::class, 'curriculum_id');
+    }
+
+    public function specialization()
+    {
+        return $this->belongsTo(SchoolCampusCourseSpecialization::class, 'specialization_id');
     }
 
     public function termRecords()

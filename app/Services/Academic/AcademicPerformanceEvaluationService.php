@@ -11,9 +11,13 @@ use Illuminate\Support\Str;
 class AcademicPerformanceEvaluationService
 {
     private const STATUS_CONTINUED = 'GOOD STANDING';
+
     private const STATUS_PROBATION = 'CONTINUE UNDER PROBATION';
+
     private const STATUS_PARTIAL = 'CONTINUE WITH PARTIAL ALLOWANCE';
+
     private const STATUS_TERMINATED = 'TERMINATED';
+
     private const STATUS_SUBMIT_GRADES = 'CONTINUED';
 
     public function evaluate(ScholarTerm $term): array
@@ -270,6 +274,15 @@ class AcademicPerformanceEvaluationService
             ->where('year', (string) $dominantYear)
             ->where('is_active', true)
             ->where('is_delete', false)
+            ->where('requirement_type', 'required')
+            ->where(function ($query) use ($term) {
+                $specializationId = $term->specialization_id ?: $term->schoolInfo?->specialization_id;
+                $query->whereDoesntHave('specializations')
+                    ->when($specializationId, fn ($q) => $q->orWhereHas(
+                        'specializations',
+                        fn ($specialization) => $specialization->whereKey($specializationId)
+                    ));
+            })
             ->whereRaw('LOWER(subject_class) = ?', ['academic'])
             ->whereRaw("LOWER(COALESCE(name, '')) NOT LIKE ?", ['%prerequisite%'])
             ->whereRaw("LOWER(COALESCE(name, '')) NOT LIKE ?", ['%pre-requisite%'])

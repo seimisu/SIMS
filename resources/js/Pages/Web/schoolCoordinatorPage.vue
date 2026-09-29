@@ -542,6 +542,14 @@
                 >
                 </SelectInput>
                 <TextInput v-model="courseForm.years" label="Years"></TextInput>
+                <Divider align="left" type="dashed"><span class="text-xs font-semibold">Specializations</span></Divider>
+                <div v-for="(specialization, index) in courseForm.specializations" :key="index" class="flex gap-2 items-end">
+                    <TextInput v-model="specialization.name" label="Name" placeholder="e.g. Web Development" />
+                    <TextInput v-model="specialization.code" label="Code" placeholder="e.g. WEB" />
+                    <TextInput v-model="specialization.starts_at_year" type="number" min="1" :max="courseForm.years" label="Starts at year" />
+                    <DefaultButton :icon="IconX" severity="danger" text tooltip="Remove specialization" @click="courseForm.specializations.splice(index, 1)" />
+                </div>
+                <DefaultButton label="Add specialization" :icon="IconPlus" severity="secondary" outlined @click="courseForm.specializations.push({ name: null, code: null, starts_at_year: 1 })" />
                 <div class="flex items-center justify-end gap-2 mt-4">
                     <Button
                         size="small"
@@ -903,7 +911,7 @@
         :submit-form="submitCurriculum"
         :title="subjectDetail?.course"
         @submit-form="submitCurriculum"
-        :hide-footer="!canManageSchools"
+        :hide-footer="!canManageSchools || curriculumForm.multi.length === 0"
         absolute-div
         description="View all subjects offered under this course, including their codes, units, and classifications."
     >
@@ -916,7 +924,7 @@
         </template>
         <template #forms>
             <div class="mt-5">
-                <Tabs :value="0">
+                <Tabs v-if="curriculumForm.multi.length" v-model:value="activeCurriculumTab">
                     <TabList>
                         <Tab
                             v-for="(curItem, curKey) in curriculumForm.multi"
@@ -924,75 +932,8 @@
                             class="text-sm !font-bold !p-1 !text-center"
                             :value="curKey"
                         >
-                            <span>
-                                <div
-                                    class="flex items-end"
-                                    v-if="!curItem.edit"
-                                >
-                                    <div class="flex items-start">
-                                        <Button
-                                            v-if="canManageSchools"
-                                            severity="danger"
-                                            variant="link"
-                                            size="small"
-                                            @click="
-                                                deleteCurriculumAndSubject({
-                                                    button: 'curriculum',
-                                                    type: !curItem.id,
-                                                    curriculum: curKey,
-                                                })
-                                            "
-                                            class="!p-0"
-                                        >
-                                            <template #icon>
-                                                <IconTrash
-                                                    class="!text-red-600"
-                                                    size="15"
-                                                ></IconTrash>
-                                            </template>
-                                        </Button>
-                                    </div>
-                                    <div>
-                                        Curriculum {{ curItem.yearLevel }}
-                                    </div>
-                                    <div class="flex items-start">
-                                        <Button
-                                            v-if="canManageSchools"
-                                            severity="secondary"
-                                            variant="link"
-                                            size="small"
-                                            @click="curItem.edit = true"
-                                            class="!p-0"
-                                        >
-                                            <template #icon>
-                                                <IconPencil
-                                                    size="15"
-                                                ></IconPencil>
-                                            </template>
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div
-                                    v-else
-                                    class="inline-flex items-center gap-2 font-normal"
-                                >
-                                    <TextInput
-                                        placeholder="2024-2025 etc"
-                                        class="!w-40"
-                                        v-model="curItem.yearLevel"
-                                    >
-                                    </TextInput>
-
-                                    <DefaultButton
-                                        size="small"
-                                        rounded
-                                        class-name="!w-8 !h-8"
-                                        :icon="IconX"
-                                        @click="curItem.edit = false"
-                                        severity="danger"
-                                        text
-                                    ></DefaultButton>
-                                </div>
+                            <span class="px-3 py-2">
+                                Curriculum {{ curItem.yearLevel || 'New' }}
                             </span>
                         </Tab>
                         <div class="flex items-end">
@@ -1015,6 +956,31 @@
                             :value="curKey"
                             class="flex flex-col w-full gap-4"
                         >
+                            <div class="flex flex-wrap items-end gap-2 border-b border-gray-200 px-1 pb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-semibold text-gray-600">Curriculum</span>
+                                    <div class="w-36">
+                                        <TextInput v-model="curItem.yearLevel" placeholder="2024-2025" :disabled="!canManageSchools" />
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-semibold text-gray-600">Elective limit</span>
+                                    <div class="w-24">
+                                        <TextInput v-model="curItem.elective_limit" type="number" min="0" placeholder="No limit" :disabled="!canManageSchools" />
+                                    </div>
+                                </div>
+                                <div class="flex-1"></div>
+                                <DefaultButton v-if="canManageSchools" label="Save changes" size="small" :icon="IconDeviceFloppy" :loading="curriculumForm.processing" @click="submitCurriculum" />
+                                <DefaultButton
+                                    v-if="canManageSchools"
+                                    label="Delete curriculum"
+                                    size="small"
+                                    :icon="IconTrash"
+                                    severity="danger"
+                                    outlined
+                                    @click="deleteCurriculumAndSubject({ button: 'curriculum', type: !curItem.id, curriculum: curKey })"
+                                />
+                            </div>
                             <div
                                 v-for="year in subjectDetail?.years"
                                 :key="year"
@@ -1252,7 +1218,7 @@
                                                             :key="index"
                                                         >
                                                             <div
-                                                                class="flex gap-2 items-center py-2"
+                                                                class="flex flex-wrap gap-2 items-center py-2"
                                                                 v-if="
                                                                     item
                                                                         .semester_array
@@ -1264,7 +1230,7 @@
                                                                 "
                                                             >
                                                                 <div
-                                                                    class="w-[20%]"
+                                                                    class="w-[14%] min-w-36"
                                                                 >
                                                                     <SelectInput
                                                                         v-model="
@@ -1282,7 +1248,7 @@
                                                                     ></SelectInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[40%]"
+                                                                    class="flex-1 min-w-56"
                                                                 >
                                                                     <TextInput
                                                                         v-model="
@@ -1297,7 +1263,7 @@
                                                                     </TextInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[20%]"
+                                                                    class="w-[13%] min-w-32"
                                                                 >
                                                                     <TextInput
                                                                         v-model="
@@ -1310,7 +1276,7 @@
                                                                     ></TextInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[10%]"
+                                                                    class="w-[7%] min-w-20"
                                                                 >
                                                                     <TextInput
                                                                         v-model="
@@ -1323,7 +1289,7 @@
                                                                     ></TextInput>
                                                                 </div>
                                                                 <div
-                                                                    class="w-[10%] pt-5 gap-2 justify-start flex items-end h-full"
+                                                                    class="order-last w-auto pt-5 gap-1 justify-start flex items-end h-full"
                                                                 >
                                                                     <DefaultButton
                                                                         v-if="
@@ -1393,6 +1359,12 @@
                                                                         "
                                                                     />
                                                                 </div>
+                                                                <div class="w-[17%] min-w-44">
+                                                                    <SelectMultiInput v-model="item.specialization_options" :disable="item.is_lock" label="Applies To" :options="specializationOptions" clearable placeholder="All students" />
+                                                                </div>
+                                                                <div class="w-[13%] min-w-36">
+                                                                    <SelectInput v-model="item.requirement_option" :disable="item.is_lock" label="Requirement" :options="requirementOptions" />
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <Divider
@@ -1425,6 +1397,13 @@
                         </TabPanel>
                     </TabPanels>
                 </Tabs>
+                <div v-else class="flex min-h-48 flex-col items-center justify-center gap-3 border-y border-gray-200 py-8 text-center">
+                    <div>
+                        <div class="text-sm font-semibold">No curriculum configured</div>
+                        <div class="text-xs text-gray-500">This program does not currently have a curriculum.</div>
+                    </div>
+                    <DefaultButton v-if="canManageSchools" label="Add curriculum" size="small" :icon="IconPlus" @click="addCurriculum" />
+                </div>
             </div>
         </template>
     </DefaultDialog>
@@ -1562,6 +1541,7 @@ import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
+import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
 import * as Tablericon from "@tabler/icons-vue";
 import { Head, router, usePage, useForm } from "@inertiajs/vue3";
 import {
@@ -1660,6 +1640,7 @@ const supportsGradeRanges = computed(() =>
 const courseForm = useForm({
     course: null,
     years: null,
+    specializations: [],
 });
 const semesterForm = useForm({
     semesterType: null,
@@ -1673,6 +1654,12 @@ const selectedProgram = ref(null);
 const curriculumForm = useForm({
     multi: [],
 });
+const activeCurriculumTab = ref(0);
+const requirementOptions = [
+    { id: "required", name: "Required" },
+    { id: "elective", name: "Elective" },
+];
+const specializationOptions = computed(() => props.subjectDetail?.specializations ?? []);
 
 const selectedGrade = ref();
 
@@ -1806,8 +1793,6 @@ const selectPrograms = (data) => {
                         page.props?.subjectDetail.curriculum[index],
                     );
                 }
-            } else {
-                addCurriculum();
             }
             subjectDialog.value = true;
         },
@@ -1825,9 +1810,11 @@ const addCurriculum = () => {
         semesterTypeId: selectedProgram.value.term_id,
         edit: false,
         yearLevel: null,
+        elective_limit: null,
         subjects: [],
         id: null,
     });
+    activeCurriculumTab.value = curriculumForm.multi.length - 1;
 
     curriculumForm.multi[curriculumForm.multi.length - 1].subjects.forEach(
         (cur, curKey) => {
@@ -1866,6 +1853,8 @@ const addSubject = (curriculumKey, year, semester) => {
             subject_class: null,
             subjectCode: null,
             unit: null,
+            specialization_options: [],
+            requirement_option: requirementOptions[0],
             year: year,
         }),
     );
@@ -1936,6 +1925,7 @@ const deleteCurriculumAndSubject = (res) => {
     } else {
         if (res.type) {
             curriculumForm.multi.splice(res.curriculum, 1);
+            activeCurriculumTab.value = Math.max(0, Math.min(res.curriculum, curriculumForm.multi.length - 1));
         } else {
             props.confirmRef.popupDialog(() => {
                 curriculumForm.delete(
@@ -1947,6 +1937,7 @@ const deleteCurriculumAndSubject = (res) => {
                         onSuccess: () => {
                             curriculumForm.clearErrors();
                             curriculumForm.multi.splice(res.curriculum, 1);
+                            activeCurriculumTab.value = Math.max(0, Math.min(res.curriculum, curriculumForm.multi.length - 1));
                             toast.add({
                                 severity: page.props?.flash.status,
                                 summary: page.props?.flash.title,

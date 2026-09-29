@@ -20,6 +20,7 @@ class ScholarTerm extends Model
         'verified_by',
         'verification_status',
         'rejection_reason',
+        'specialization_id',
     ];
 
     public function term()
@@ -40,6 +41,11 @@ class ScholarTerm extends Model
     public function schoolInfo()
     {
         return $this->belongsTo(ScholarSchoolInfos::class, 'scholar_school_id');
+    }
+
+    public function specialization()
+    {
+        return $this->belongsTo(SchoolCampusCourseSpecialization::class, 'specialization_id');
     }
 
     public function level()

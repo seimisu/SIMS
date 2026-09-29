@@ -6,23 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\ScholarRequest;
 use App\Imports\CheckScholarImport;
 use App\Imports\ScholarImport;
+use App\Models\ActivityLogs;
 use App\Models\ListPrograms;
 use App\Models\ListReferences;
 use App\Models\ListStatuses;
-use App\Models\ActivityLogs;
 use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
 use App\Models\LocationRegions;
+use App\Models\ScholarProfiles;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
 use App\Models\ScholarSchoolInfos;
-use App\Models\ScholarProfiles;
 use App\Models\ScholarTerm;
 use App\Models\ScholarUploadedFiles;
 use App\Models\ScholarUploadTemp;
-use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampusCourseCurriculums;
+use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\ScholarUploadedNotification;
@@ -30,8 +30,8 @@ use App\Notifications\ValidatedFilesNotification;
 use App\References\LocationClass;
 use App\Services\Academic\CampusGradeResolver;
 use App\Support\IdempotencyGuard;
-use App\Support\UploadedFileHash;
 use App\Support\SystemPermissions;
+use App\Support\UploadedFileHash;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -39,8 +39,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -611,6 +611,26 @@ class ScholarReviewController extends Controller
                         'is_deleted' => false,
                     ]
                 );
+            }
+
+            $schoolInfo = $termRecord->schoolInfo;
+            $electiveLimit = $schoolInfo?->curriculum?->elective_limit;
+
+            if ($schoolInfo && $electiveLimit !== null) {
+                $selectedElectives = ScholarSchoolGrades::query()
+                    ->join('scholar_term_records', 'scholar_term_records.id', '=', 'scholar_school_grades.term_record_id')
+                    ->join('school_campus_course_curriculum_subjects as curriculum_subjects', 'curriculum_subjects.id', '=', 'scholar_school_grades.subject_id')
+                    ->where('scholar_term_records.scholar_school_id', $schoolInfo->id)
+                    ->where('scholar_school_grades.is_deleted', false)
+                    ->where('curriculum_subjects.requirement_type', 'elective')
+                    ->distinct()
+                    ->count('scholar_school_grades.subject_id');
+
+                if ($selectedElectives > $electiveLimit) {
+                    throw ValidationException::withMessages([
+                        'subjects' => ["This program allows up to {$electiveLimit} elective subject(s) in total; {$selectedElectives} selected."],
+                    ]);
+                }
             }
 
             if (array_key_exists('scholarship_status', $data)) {
@@ -1494,19 +1514,19 @@ class ScholarReviewController extends Controller
         $barangay = trim((string) data_get($data, 'barangay', ''));
 
         if (! filled($region)) {
-            return $this->locationValidationResult("Region is required for location matching. Address Line is treated as free text.");
+            return $this->locationValidationResult('Region is required for location matching. Address Line is treated as free text.');
         }
 
         if (! filled($province)) {
-            return $this->locationValidationResult("Province is required for location matching. Address Line is treated as free text.");
+            return $this->locationValidationResult('Province is required for location matching. Address Line is treated as free text.');
         }
 
         if (! filled($municipality)) {
-            return $this->locationValidationResult("Municipality is required for location matching. Address Line is treated as free text.");
+            return $this->locationValidationResult('Municipality is required for location matching. Address Line is treated as free text.');
         }
 
         if (! filled($barangay)) {
-            return $this->locationValidationResult("Barangay is required for location matching. Address Line is treated as free text.");
+            return $this->locationValidationResult('Barangay is required for location matching. Address Line is treated as free text.');
         }
 
         $regionRecord = $this->matchedRegion($region);
