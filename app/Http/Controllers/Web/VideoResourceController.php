@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\ListReferences;
-use App\Models\LocationRegions;
 use App\Models\VideoResource;
 use App\Services\Notifications\RoleBellNotificationService;
-use App\Support\UploadedFileHash;
+use App\Support\LibraryAccess;
 use App\Support\SystemPermissions;
+use App\Support\UploadedFileHash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -25,6 +25,7 @@ class VideoResourceController extends Controller
         $regionalRegionCode = $permissions->shouldScopeToRegion($user)
             ? $permissions->regionCodeFor($user)
             : null;
+        $audienceOptions = app(LibraryAccess::class)->options($regionalRegionCode);
 
         return Inertia::render('Web/videoResourcePage', [
             'resources' => VideoResource::with('targets')
@@ -48,15 +49,8 @@ class VideoResourceController extends Controller
                     'targets' => $resource->targets,
                 ])
                 ->withQueryString(),
-            'regionOptions' => LocationRegions::where('is_active', true)
-                ->when($regionalRegionCode, fn ($query) => $query->where('code', $regionalRegionCode))
-                ->orderBy('region')
-                ->get()
-                ->map(fn ($region) => [
-                    'id' => $region->code,
-                    'name' => $region->region ?? $region->name,
-                ])
-                ->values(),
+            'regionOptions' => $audienceOptions['regions'],
+            'schoolOptions' => $audienceOptions['schools'],
             'scholarshipOptions' => ListReferences::where('is_active', true)
                 ->where('is_delete', false)
                 ->where('classification', 'Scholarship')
@@ -73,15 +67,7 @@ class VideoResourceController extends Controller
                 ->get(['id', 'name']),
             'targetingScope' => [
                 'is_region_locked' => (bool) $regionalRegionCode,
-                'region' => $regionalRegionCode
-                    ? LocationRegions::where('code', $regionalRegionCode)
-                        ->get()
-                        ->map(fn ($region) => [
-                            'id' => $region->code,
-                            'name' => $region->region ?? $region->name,
-                        ])
-                        ->first()
-                    : null,
+                'region' => $regionalRegionCode ? $audienceOptions['regions']->first() : null,
             ],
         ]);
     }
@@ -105,7 +91,7 @@ class VideoResourceController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        $this->syncTargets($resource, $this->scopedTargets($data['targets'] ?? []));
+        $this->syncTargets($resource, app(LibraryAccess::class)->authorizeTargets($data['targets'] ?? [], Auth::user()));
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'video_added',
             'New video added',
@@ -146,7 +132,7 @@ class VideoResourceController extends Controller
 
         $videoResource->update($payload);
 
-        $this->syncTargets($videoResource, $this->scopedTargets($data['targets'] ?? []));
+        $this->syncTargets($videoResource, app(LibraryAccess::class)->authorizeTargets($data['targets'] ?? [], Auth::user()));
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'video_updated',
             'Video updated',
@@ -179,29 +165,7 @@ class VideoResourceController extends Controller
         $resources = VideoResource::where('is_active', true)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
-            ->where(function ($query) use ($request) {
-                $query->whereHas('targets', fn ($target) => $target->where('target_type', 'all'));
-
-                $query->orWhere(function ($scoped) use ($request) {
-                    foreach (['region', 'scholarship_program', 'program', 'school'] as $type) {
-                        $value = $request->input($type);
-
-                        $scoped->where(function ($dimension) use ($type, $value) {
-                            $dimension->whereDoesntHave('targets', fn ($target) => $target->where('target_type', $type))
-                                ->orWhereHas('targets', function ($target) use ($type, $value) {
-                                    $target->where('target_type', $type)
-                                        ->where(function ($target) use ($value) {
-                                            $target->where('target_id', 'all');
-
-                                            if (filled($value)) {
-                                                $target->orWhere('target_id', (string) $value);
-                                            }
-                                        });
-                                });
-                        });
-                    }
-                });
-            })
+            ->tap(fn ($query) => app(LibraryAccess::class)->applyPublicVisibility($query, $request))
             ->latest('published_at')
             ->get()
             ->map(fn ($resource) => [
@@ -243,36 +207,6 @@ class VideoResourceController extends Controller
                 'target_type' => $target['target_type'],
                 'target_id' => $target['target_type'] === 'all' ? null : (string) $target['target_id'],
             ]));
-    }
-
-    private function scopedTargets(array $targets): array
-    {
-        $permissions = app(SystemPermissions::class);
-        $user = Auth::user();
-
-        if (! $permissions->shouldScopeToRegion($user)) {
-            return $targets;
-        }
-
-        $regionCode = $permissions->regionCodeFor($user);
-
-        return collect($targets)
-            ->reject(fn ($target) => ($target['target_type'] ?? null) === 'all')
-            ->reject(fn ($target) => ($target['target_type'] ?? null) === 'region')
-            ->prepend([
-                'target_type' => 'region',
-                'target_id' => $regionCode,
-            ])
-            ->when(
-                ! collect($targets)->contains(fn ($target) => ($target['target_type'] ?? null) === 'scholarship_program'),
-                fn ($collection) => $collection->push(['target_type' => 'scholarship_program', 'target_id' => 'all'])
-            )
-            ->when(
-                ! collect($targets)->contains(fn ($target) => ($target['target_type'] ?? null) === 'program'),
-                fn ($collection) => $collection->push(['target_type' => 'program', 'target_id' => 'all'])
-            )
-            ->values()
-            ->all();
     }
 
     private function thumbnailUrl(VideoResource $resource): ?string

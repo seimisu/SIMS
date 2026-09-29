@@ -70,38 +70,18 @@
                             </div>
 
                             <Divider />
-                            <div class="flex flex-col gap-3">
-                                <div class="text-sm font-semibold">Availability</div>
-                                <div class="flex items-center justify-between rounded-lg border px-3 py-2">
-                                    <span class="text-sm">Available to all</span>
-                                    <DefaultToggle
-                                        v-model="resourceForm.available_all"
-                                        :check-icon="IconCheck"
-                                        :un-check-icon="IconX"
-                                    />
-                                </div>
-                                <SelectMultiInput
-                                    v-model="resourceForm.regions"
-                                    label="Regions"
-                                    :options="page.props.regionOptions"
-                                    :disable="resourceForm.available_all || isRegionLocked"
-                                    filter
-                                />
-                                <SelectMultiInput
-                                    v-model="resourceForm.scholarships"
-                                    label="Scholarship Program"
-                                    :options="page.props.scholarshipOptions"
-                                    :disable="resourceForm.available_all"
-                                    filter
-                                />
-                                <SelectMultiInput
-                                    v-model="resourceForm.programs"
-                                    label="Program"
-                                    :options="page.props.programOptions"
-                                    :disable="resourceForm.available_all"
-                                    filter
-                                />
-                            </div>
+                            <LibraryAccessInput
+                                v-model:available-all="resourceForm.available_all"
+                                v-model:region-scopes="resourceForm.region_scopes"
+                                v-model:scholarships="resourceForm.scholarships"
+                                v-model:programs="resourceForm.programs"
+                                :region-options="page.props.regionOptions"
+                                :school-options="page.props.schoolOptions"
+                                :scholarship-options="page.props.scholarshipOptions"
+                                :program-options="page.props.programOptions"
+                                :region-locked="isRegionLocked"
+                                :locked-region="lockedRegion"
+                            />
                         </div>
                     </template>
                 </ToolbarModule>
@@ -221,8 +201,9 @@ import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
 import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
-import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
+import LibraryAccessInput from "../../Components/inputs/LibraryAccessInput.vue";
 import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
+import { buildLibraryTargets, libraryAccessFromTargets } from "../../Utils/libraryAccess";
 
 const page = usePage();
 const searchInput = ref(null);
@@ -235,7 +216,17 @@ const lockedRegion = computed(() => page.props.targetingScope?.region ?? page.pr
 const applyRegionalTargeting = () => {
     if (!isRegionLocked.value || !lockedRegion.value) return;
 
-    resourceForm.regions = [lockedRegion.value];
+    resourceForm.available_all = false;
+    const existing = resourceForm.region_scopes.find(
+        (scope) => String(scope.region.id) === String(lockedRegion.value.id),
+    );
+    resourceForm.region_scopes = [
+        existing ?? {
+            region: lockedRegion.value,
+            school_coverage: { id: "all", name: "All schools in this region" },
+            schools: [],
+        },
+    ];
 };
 
 const resourceForm = useForm({
@@ -247,49 +238,18 @@ const resourceForm = useForm({
     thumbnail: null,
     is_active: true,
     publish_now: true,
-    available_all: true,
-    regions: [],
+    available_all: !isRegionLocked.value,
+    region_scopes: [],
     scholarships: [],
     programs: [],
 });
 
-const targets = computed(() => {
-    if (isRegionLocked.value) {
-        return [
-            { target_type: "region", target_id: lockedRegion.value?.id },
-            ...(resourceForm.scholarships.length
-                ? resourceForm.scholarships.map((item) => ({
-                      target_type: "scholarship_program",
-                      target_id: item.id,
-                  }))
-                : [{ target_type: "scholarship_program", target_id: "all" }]),
-            ...(resourceForm.programs.length
-                ? resourceForm.programs.map((item) => ({
-                      target_type: "program",
-                      target_id: item.id,
-                  }))
-                : [{ target_type: "program", target_id: "all" }]),
-        ];
-    }
-
-    if (resourceForm.available_all) {
-        return [{ target_type: "all", target_id: null }];
-    }
-
-    const dimensionTargets = (type, values) =>
-        values.length
-            ? values.map((item) => ({
-                  target_type: type,
-                  target_id: item.id,
-              }))
-            : [{ target_type: type, target_id: "all" }];
-
-    return [
-        ...dimensionTargets("region", resourceForm.regions),
-        ...dimensionTargets("scholarship_program", resourceForm.scholarships),
-        ...dimensionTargets("program", resourceForm.programs),
-    ];
-});
+const targets = computed(() => buildLibraryTargets({
+    availableAll: resourceForm.available_all,
+    regionScopes: resourceForm.region_scopes,
+    scholarships: resourceForm.scholarships,
+    programs: resourceForm.programs,
+}));
 
 const thumbnailPreview = computed(() => {
     if (resourceForm.thumbnail) {
@@ -327,7 +287,7 @@ const openResourceForm = (row = null) => {
     resourceForm.clearErrors();
     resourceForm.is_active = true;
     resourceForm.publish_now = true;
-    resourceForm.available_all = true;
+    resourceForm.available_all = !isRegionLocked.value;
     applyRegionalTargeting();
 
     if (row) {
@@ -340,10 +300,12 @@ const openResourceForm = (row = null) => {
         resourceForm.thumbnail = null;
         resourceForm.is_active = row.is_active;
         resourceForm.publish_now = !!row.published_at;
-        resourceForm.available_all = isRegionLocked.value ? true : hasAll;
-        resourceForm.regions = isRegionLocked.value
-            ? [lockedRegion.value].filter(Boolean)
-            : mapTargets(row, "region", page.props.regionOptions);
+        resourceForm.available_all = isRegionLocked.value ? false : hasAll;
+        resourceForm.region_scopes = libraryAccessFromTargets(
+            row.targets,
+            page.props.regionOptions,
+            page.props.schoolOptions,
+        );
         resourceForm.scholarships = mapTargets(row, "scholarship_program", page.props.scholarshipOptions);
         resourceForm.programs = mapTargets(row, "program", page.props.programOptions);
     }
@@ -411,7 +373,7 @@ const deleteResource = (row) => {
 };
 
 const targetLabel = (target) => {
-    if (target.target_type === "all") return "All";
+    if (target.target_type === "all") return "Everyone";
     if (target.target_id === "all") {
         return {
             region: "All Regions",
@@ -422,11 +384,15 @@ const targetLabel = (target) => {
 
     const source = {
         region: page.props.regionOptions,
+        school: page.props.schoolOptions,
         scholarship_program: page.props.scholarshipOptions,
         program: page.props.programOptions,
     }[target.target_type] ?? [];
 
     const option = source.find((item) => String(item.id) === String(target.target_id));
-    return option?.name ?? `${target.target_type}: ${target.target_id}`;
+    if (!option) return `${target.target_type}: ${target.target_id}`;
+    return target.target_type === "region"
+        ? `All schools in ${option.name}`
+        : option.name;
 };
 </script>

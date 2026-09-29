@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\ListReferences;
-use App\Models\LocationRegions;
 use App\Services\Notifications\RoleBellNotificationService;
-use App\Support\UploadedFileHash;
+use App\Support\LibraryAccess;
 use App\Support\SystemPermissions;
+use App\Support\UploadedFileHash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -27,6 +27,7 @@ class DocumentController extends Controller
         $regionalRegionCode = $permissions->shouldScopeToRegion($user)
             ? $permissions->regionCodeFor($user)
             : null;
+        $audienceOptions = app(LibraryAccess::class)->options($regionalRegionCode);
 
         return Inertia::render('Web/documentPage', [
             'documents' => Document::with(['category:id,name', 'targets'])
@@ -54,15 +55,8 @@ class DocumentController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(['id', 'name']),
-            'regionOptions' => LocationRegions::where('is_active', true)
-                ->when($regionalRegionCode, fn ($query) => $query->where('code', $regionalRegionCode))
-                ->orderBy('region')
-                ->get()
-                ->map(fn ($region) => [
-                    'id' => $region->code,
-                    'name' => $region->region ?? $region->name,
-                ])
-                ->values(),
+            'regionOptions' => $audienceOptions['regions'],
+            'schoolOptions' => $audienceOptions['schools'],
             'scholarshipOptions' => ListReferences::where('is_active', true)
                 ->where('is_delete', false)
                 ->where('classification', 'Scholarship')
@@ -79,15 +73,7 @@ class DocumentController extends Controller
                 ->get(['id', 'name']),
             'targetingScope' => [
                 'is_region_locked' => (bool) $regionalRegionCode,
-                'region' => $regionalRegionCode
-                    ? LocationRegions::where('code', $regionalRegionCode)
-                        ->get()
-                        ->map(fn ($region) => [
-                            'id' => $region->code,
-                            'name' => $region->region ?? $region->name,
-                        ])
-                        ->first()
-                    : null,
+                'region' => $regionalRegionCode ? $audienceOptions['regions']->first() : null,
             ],
         ]);
     }
@@ -122,7 +108,7 @@ class DocumentController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
-        $this->syncTargets($document, $this->scopedTargets($data['targets'] ?? []));
+        $this->syncTargets($document, app(LibraryAccess::class)->authorizeTargets($data['targets'] ?? [], Auth::user()));
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'downloadable_added',
             'New downloadable added',
@@ -177,7 +163,7 @@ class DocumentController extends Controller
         }
 
         $document->update($payload);
-        $this->syncTargets($document, $this->scopedTargets($data['targets'] ?? []));
+        $this->syncTargets($document, app(LibraryAccess::class)->authorizeTargets($data['targets'] ?? [], Auth::user()));
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'downloadable_updated',
             'Downloadable updated',
@@ -265,29 +251,7 @@ class DocumentController extends Controller
             ->where('is_active', true)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
-            ->where(function ($query) use ($request) {
-                $query->whereHas('targets', fn ($target) => $target->where('target_type', 'all'));
-
-                $query->orWhere(function ($scoped) use ($request) {
-                    foreach (['region', 'scholarship_program', 'program', 'school'] as $type) {
-                        $value = $request->input($type);
-
-                        $scoped->where(function ($dimension) use ($type, $value) {
-                            $dimension->whereDoesntHave('targets', fn ($target) => $target->where('target_type', $type))
-                                ->orWhereHas('targets', function ($target) use ($type, $value) {
-                                    $target->where('target_type', $type)
-                                        ->where(function ($target) use ($value) {
-                                            $target->where('target_id', 'all');
-
-                                            if (filled($value)) {
-                                                $target->orWhere('target_id', (string) $value);
-                                            }
-                                        });
-                                });
-                        });
-                    }
-                });
-            })
+            ->tap(fn ($query) => app(LibraryAccess::class)->applyPublicVisibility($query, $request))
             ->latest('published_at')
             ->get()
             ->map(fn ($document) => [
@@ -351,35 +315,5 @@ class DocumentController extends Controller
                 'target_type' => $target['target_type'],
                 'target_id' => $target['target_type'] === 'all' ? null : (string) $target['target_id'],
             ]));
-    }
-
-    private function scopedTargets(array $targets): array
-    {
-        $permissions = app(SystemPermissions::class);
-        $user = Auth::user();
-
-        if (! $permissions->shouldScopeToRegion($user)) {
-            return $targets;
-        }
-
-        $regionCode = $permissions->regionCodeFor($user);
-
-        return collect($targets)
-            ->reject(fn ($target) => ($target['target_type'] ?? null) === 'all')
-            ->reject(fn ($target) => ($target['target_type'] ?? null) === 'region')
-            ->prepend([
-                'target_type' => 'region',
-                'target_id' => $regionCode,
-            ])
-            ->when(
-                ! collect($targets)->contains(fn ($target) => ($target['target_type'] ?? null) === 'scholarship_program'),
-                fn ($collection) => $collection->push(['target_type' => 'scholarship_program', 'target_id' => 'all'])
-            )
-            ->when(
-                ! collect($targets)->contains(fn ($target) => ($target['target_type'] ?? null) === 'program'),
-                fn ($collection) => $collection->push(['target_type' => 'program', 'target_id' => 'all'])
-            )
-            ->values()
-            ->all();
     }
 }
