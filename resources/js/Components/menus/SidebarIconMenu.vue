@@ -1,11 +1,11 @@
 <template>
     <TieredMenu
         :model="list"
-        class="flex-1 !bg-transparent !min-w-1 z-1000 !border-0"
+        class="z-1000 !min-w-0 flex-1 !border-0 !bg-transparent px-2"
         :pt="{
-            submenu: { class: '!min-w-[200px] dark:!bg-gray-600 !border-0' },
+            submenu: { class: '!min-w-[220px] !rounded-md !border-slate-200 !bg-white !p-1 !shadow-lg dark:!border-slate-700 dark:!bg-slate-900' },
             separator: {
-                class: 'my-2 !border-gray-400 dark:border-gray-600',
+                class: 'my-2 !border-slate-200 dark:!border-slate-700',
             },
         }"
     >
@@ -14,18 +14,19 @@
                 v-if="item.route"
                 :href="item.route"
                 :class="[
-                    'flex items-center gap-3 px-[0.7rem] py-[10px] rounded hover:text-blue-600 w-full dark:text-white',
+                    'flex min-h-10 w-full items-center rounded-md text-slate-600 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-100 dark:hover:bg-slate-600 dark:hover:text-white',
+                    item.subItem ? 'justify-start gap-3 px-3' : 'justify-center',
                     item.component === page.component
-                        ? ' text-blue-600 dark:!text-blue-400 font-semibold'
+                        ? 'bg-blue-600 !text-white shadow-sm'
                         : '',
                 ]"
                 v-tooltip.top="item.subItem ? '' : item.label"
             >
                 <span class="relative inline-flex">
                     <component
-                        :is="TablerIcons[item.icon]"
-                        :size="item.subItem ? '20px' : '23px'"
-                        :stroke-width="1.5"
+                        :is="TablerIcons[navigationIcon(item)]"
+                        :size="item.subItem ? '18px' : '20px'"
+                        :stroke-width="1.7"
                     />
                     <span
                         v-if="item.badgeDot"
@@ -38,16 +39,16 @@
                         {{ item.badge }}
                     </span>
                 </span>
-                <span class="text-[12px]" v-if="item.subItem">{{
+                <span class="text-xs" v-if="item.subItem">{{
                     item.label
                 }}</span>
             </Link>
             <a
                 v-ripple
                 :class="[
-                    'flex items-center py-[10px] px-[0.7rem] !bg-transparent hover:text-blue-600 cursor-pointer dark:text-white',
+                    'flex min-h-10 w-full cursor-pointer items-center justify-center rounded-md text-slate-600 transition-colors hover:!bg-white hover:text-slate-950 dark:text-slate-100 dark:hover:!bg-slate-600 dark:hover:text-white',
                     item.key == activeMenu
-                        ? ' text-blue-600 dark:!text-blue-400 font-semibold'
+                        ? '!bg-blue-600 !text-white shadow-sm'
                         : '',
                 ]"
                 v-else
@@ -55,9 +56,9 @@
             >
                 <span class="relative inline-flex">
                     <component
-                        :is="TablerIcons[item.icon]"
-                        :size="item.subItem ? '20px' : '23px'"
-                        :stroke-width="1.5"
+                        :is="TablerIcons[navigationIcon(item)]"
+                        :size="item.subItem ? '18px' : '20px'"
+                        :stroke-width="1.7"
                     />
                     <span
                         v-if="item.badgeDot"
@@ -79,6 +80,7 @@
 import { Link, usePage } from "@inertiajs/vue3";
 import * as TablerIcons from "@tabler/icons-vue";
 import { onBeforeMount, ref } from "vue";
+import { navigationIcon } from "../../Utils/navigationIcons";
 const page = usePage();
 const activeMenu = ref(null);
 const props = defineProps({
@@ -90,7 +92,7 @@ const props = defineProps({
 
 const getActiveRoute = () => {
     for (const child of props.list) {
-        const match = child.items.some(
+        const match = child.items?.some(
             (sub) => sub.component == page.component,
         );
 

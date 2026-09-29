@@ -4,32 +4,32 @@
         @click="toggle"
         size="small"
         variant="text"
-        class="text-white py-1 px-2 rounded-[20px] cursor-pointer"
+        class="cursor-pointer rounded-md px-2 py-1 text-white transition-colors hover:bg-white/10"
         unstyled
     >
         <div class="flex items-center gap-2">
             <Avatar
                 v-if="page.props.user.profile.avatar === null"
                 :label="page.props.user.email.charAt(0).toUpperCase()"
-                style="background-color: #dee9fc; color: #1a2551"
+                class="!h-9 !w-9 !bg-white/90 !text-blue-700"
                 shape="circle"
             />
 
             <Avatar
                 v-else
-                style="background-color: #dee9fc; color: #1a2551"
+                class="!h-9 !w-9 !bg-white/90 !text-blue-700"
                 shape="circle"
                 :image="page.props.user.profile.avatar_url"
             />
 
-            <div class="flex-1 text-left leading-none">
-                <div class="text-[12px] font-semibold leading-none">
+            <div class="hidden flex-1 text-left leading-none sm:block">
+                <div class="text-xs font-semibold leading-none text-white">
                     {{
                         page.props.user.profile.fullname ??
                         page.props.user.email
                     }}
                 </div>
-                <span class="text-[10px] leading-none capitalize">
+                <span class="mt-1 block text-[10px] leading-none capitalize text-blue-100">
                     {{ page.props.user.role_array.name }} (<span
                         class="uppercase"
                         >{{ page.props.user.profile.agency.slug }}</span
@@ -38,7 +38,7 @@
             </div>
         </div>
     </Button>
-    <div class="flex-col justify-center text-white">
+    <div class="flex-col justify-center">
         <Menu ref="menu" :model="items" class="!mt-2" :popup="true">
             <template #submenulabel="{ item }">
                 <span class="text-sm">{{ item.label }}</span>

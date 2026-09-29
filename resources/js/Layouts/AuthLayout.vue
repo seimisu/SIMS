@@ -4,41 +4,37 @@
             <aside
                 v-if="!isMobile"
                 :class="[
-                    'z-30 fixed md:block md:relative md:flex-shrink-0 flex flex-col transition-all duration-300 bg-slate-100 dark:bg-gray-700 m-3 h-min-screen rounded-[15px] shadow-sm py-4 ',
-                    sidebar ? 'w-60 ' : 'w-20 ',
+                    'z-30 fixed m-3 mr-0 h-[calc(100vh-1.5rem)] rounded-xl bg-slate-100 shadow-sm transition-[width] duration-200 dark:bg-slate-700 md:relative md:flex md:flex-shrink-0 flex-col',
+                    sidebar ? 'w-[272px]' : 'w-[72px]',
                 ]"
             >
                 <div
-                    :class="[
-                        'h-full w-full flex flex-col justify-between px-[1.2rem] ',
-                    ]"
+                    class="flex h-full min-h-0 w-full flex-col"
                 >
-                    <div class="flex gap-2 items-center top-0 sticky">
-                        <div class="flex items-center gap-2">
-                            <!-- <Image src="/images/seilogo.png" alt="Logo" v-show="sidebar" width="39" height="39" /> -->
-                            <Image
-                                src="/images/dostlogo.svg"
-                                alt="Logo"
-                                width="39"
-                                height="39"
-                            />
-                        </div>
-
-                        <div
-                            v-show="sidebar"
-                            class="font-semibold flex-1 text-blue-600 dark:!text-blue-400 leading-none"
-                        >
-                            SIMS
-                            <span
-                                class="block text-xs text-gray-500 uppercase"
-                                >{{ page.props.user.profile.agency.slug }}</span
-                            >
+                    <div
+                        :class="[
+                            'flex h-[72px] shrink-0 items-center',
+                            sidebar ? 'gap-3 px-5' : 'justify-center px-2',
+                        ]"
+                    >
+                        <Image
+                            src="/images/dostlogo.svg"
+                            alt="DOST logo"
+                            width="38"
+                            height="38"
+                            class="shrink-0"
+                        />
+                        <div v-show="sidebar" class="min-w-0 leading-tight">
+                            <div class="text-[15px] font-bold text-blue-600 dark:text-blue-300">SIMS</div>
+                            <div class="truncate text-[10px] font-medium uppercase text-slate-500 dark:text-slate-300">
+                                {{ page.props.user.profile.agency.slug }}
+                            </div>
                         </div>
                     </div>
 
                     <nav
                         :class="[
-                            'flex flex-col h-[80%] ',
+                            'flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden py-5',
                             !sidebar ? 'items-center' : '',
                         ]"
                     >
@@ -48,18 +44,18 @@
                         />
                         <SidebarLabelMenu
                             :list="page.props.menu"
-                            class="overflow-x-hidden"
+                            class="w-full px-2"
                             v-else
                         />
                     </nav>
-                    <div
-                        :class="[
-                            sidebar ? 'flex justify-center' : 'flex w-full',
-                        ]"
-                    ></div>
                 </div>
             </aside>
-            <Drawer v-model:visible="drawerMobile" v-else header="Drawer">
+            <Drawer
+                v-model:visible="drawerMobile"
+                v-else
+                header="Drawer"
+                class="!bg-slate-100 !text-slate-900 dark:!bg-slate-700 dark:!text-white"
+            >
                 <template #header>
                     <div class="flex gap-2 items-center top-0 sticky">
                         <div class="flex items-center gap-2">
@@ -90,17 +86,17 @@
             </Drawer>
         </Transition>
 
-        <div class="flex-1 flex flex-col w-full md:py-3 md:pr-3">
+        <div class="flex w-full min-w-0 flex-1 flex-col">
             <header
-                class="bg-blue-600 h-16 p-3 md:rounded-[15px] text-white w-full"
+                class="z-20 m-3 mb-0 h-16 shrink-0 rounded-xl bg-blue-600 px-3 text-white shadow-sm md:px-4"
             >
-                <div class="flex justify-between items-center w-full h-full">
+                <div class="flex h-full w-full items-center justify-between">
                     <div class="flex-1">
                         <DefaultButton
                             size="small"
                             v-if="!isMobile"
                             variant="text"
-                            class="!text-white hover:!bg-transparent"
+                            class="!h-9 !w-9 !text-white hover:!bg-white/10"
                             @click="toggleSidebar"
                             :icon="sidebar ? IconChevronLeft : IconChevronRight"
                             rounded
@@ -109,13 +105,13 @@
                             size="small"
                             v-else
                             variant="text"
-                            class="!text-white hover:!bg-transparent"
+                            class="!h-9 !w-9 !text-white hover:!bg-white/10"
                             @click="drawerMobile = !drawerMobile"
                             :icon="IconMenu2"
                             rounded
                         />
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 md:gap-2">
                         <DefaultToggle
                             v-model="isDark"
                             @update-value="toggleDark"
@@ -146,7 +142,7 @@
                         </OverlayBadge> -->
                         <Button
                             size="small"
-                            class="!w-10 !h-10 rounded-full! text-white! hover:bg-transparent! !p-0"
+                            class="!h-9 !w-9 rounded-md! !p-0 !text-white hover:!bg-white/10"
                             @click="toggleNotif"
                             text
                         >
@@ -401,7 +397,7 @@
                     </div>
                 </div>
             </header>
-            <main class="overflow-auto flex-1 p-2">
+            <main class="flex-1 overflow-auto p-3 md:p-4">
                 <slot />
             </main>
         </div>
