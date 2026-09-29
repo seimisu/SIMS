@@ -629,14 +629,18 @@
                                             v-model="personalInfo.course"
                                             uppercase
                                             :disable="!editBtn.info"
-                                            @update:model-value="renderCurriculum"
+                                            @update:model-value="
+                                                renderCurriculum
+                                            "
                                             :options="page.props?.courseOptions"
                                         />
                                         <SelectInput
                                             label="Curriculum"
                                             v-model="personalInfo.curriculum"
                                             :disable="!editBtn.info"
-                                            :options="page.props?.curriculumOptions"
+                                            :options="
+                                                page.props?.curriculumOptions
+                                            "
                                             clearable
                                         />
                                     </div>
@@ -746,16 +750,29 @@
                                 <section
                                     class="flex flex-col gap-2 border-t border-slate-200 pt-3"
                                 >
-                                    <div class="flex items-center justify-between gap-3">
+                                    <div
+                                        class="flex items-center justify-between gap-3"
+                                    >
                                         <h3
                                             class="text-xs font-semibold uppercase text-slate-500"
                                         >
                                             Other Information
                                         </h3>
                                         <DefaultButton
-                                            v-if="canRevealLandbank && landbankHasValues"
-                                            :icon="landbankRevealed ? TablerIcons.IconEyeOff : TablerIcons.IconEye"
-                                            :label="landbankRevealed ? 'Hide Landbank Details' : 'View Landbank Details'"
+                                            v-if="
+                                                canRevealLandbank &&
+                                                landbankHasValues
+                                            "
+                                            :icon="
+                                                landbankRevealed
+                                                    ? TablerIcons.IconEyeOff
+                                                    : TablerIcons.IconEye
+                                            "
+                                            :label="
+                                                landbankRevealed
+                                                    ? 'Hide Landbank Details'
+                                                    : 'View Landbank Details'
+                                            "
                                             size="small"
                                             severity="secondary"
                                             outlined
@@ -775,13 +792,19 @@
                                             v-model="personalInfo.acc_name"
                                             label="Landbank Account Name"
                                             capitalize
-                                            :disabled="!editBtn.info || !landbankRevealed"
+                                            :disabled="
+                                                !editBtn.info ||
+                                                !landbankRevealed
+                                            "
                                         />
                                         <TextInput
                                             v-model="personalInfo.acc_no"
                                             capitalize
                                             label="Landbank Account Number"
-                                            :disabled="!editBtn.info || !landbankRevealed"
+                                            :disabled="
+                                                !editBtn.info ||
+                                                !landbankRevealed
+                                            "
                                         />
                                     </div>
                                 </section>
@@ -836,9 +859,7 @@
                                     </template>
                                     <template #default>
                                         <div
-                                            v-if="
-                                                activityLogs.length
-                                            "
+                                            v-if="activityLogs.length"
                                             class="max-h-[22rem] overflow-y-auto p-4"
                                         >
                                             <Timeline
@@ -1227,10 +1248,14 @@
                                                     >
                                                         <a
                                                             v-if="
-                                                                isCorDocument(file)
+                                                                isCorDocument(
+                                                                    file,
+                                                                )
                                                             "
                                                             :href="
-                                                                scholarPortalFileUrl(file)
+                                                                scholarPortalFileUrl(
+                                                                    file,
+                                                                )
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
@@ -1239,10 +1264,14 @@
                                                         </a>
                                                         <a
                                                             v-if="
-                                                                isGradesProofDocument(file)
+                                                                isGradesProofDocument(
+                                                                    file,
+                                                                )
                                                             "
                                                             :href="
-                                                                scholarPortalFileUrl(file)
+                                                                scholarPortalFileUrl(
+                                                                    file,
+                                                                )
                                                             "
                                                             target="_blank"
                                                             class="rounded-lg bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/70"
@@ -1710,8 +1739,7 @@
                                                                     v-if="
                                                                         item
                                                                             .request
-                                                                            ?.is_drop
-                                                                        ||
+                                                                            ?.is_drop ||
                                                                         item.is_drop
                                                                     "
                                                                     class="text-slate-500 dark:text-gray-400"
@@ -1722,8 +1750,7 @@
                                                                     v-else-if="
                                                                         item
                                                                             .request
-                                                                            ?.is_failed
-                                                                        ||
+                                                                            ?.is_failed ||
                                                                         item
                                                                             .grade
                                                                             ?.is_failed
@@ -1736,8 +1763,7 @@
                                                                     v-else-if="
                                                                         item
                                                                             .grade
-                                                                            ?.is_withdrawn
-                                                                        ||
+                                                                            ?.is_withdrawn ||
                                                                         item.is_withdrawn
                                                                     "
                                                                     class="text-purple-600 dark:text-purple-300"
@@ -1748,8 +1774,7 @@
                                                                     v-else-if="
                                                                         item
                                                                             .request
-                                                                            ?.is_incomplete
-                                                                        ||
+                                                                            ?.is_incomplete ||
                                                                         item.is_incomplete
                                                                     "
                                                                     class="text-amber-600 dark:text-amber-300"
@@ -1760,10 +1785,8 @@
                                                                     v-else-if="
                                                                         item
                                                                             .grade
-                                                                            ?.is_active
-                                                                        ||
-                                                                        item.input_grade
-                                                                        ||
+                                                                            ?.is_active ||
+                                                                        item.input_grade ||
                                                                         item
                                                                             .request
                                                                             ?.grade
@@ -2249,7 +2272,7 @@
                                     <span
                                         class="text-sm font-medium text-slate-500 dark:text-gray-300"
                                     >
-                                        Total Financial Allowances
+                                        Total Credited Amount
                                     </span>
 
                                     <div
@@ -2266,14 +2289,14 @@
                                 >
                                     ₱{{
                                         page.props?.details?.financialAid
-                                            ?.approvedTotal
+                                            ?.creditedTotal
                                     }}
                                 </h2>
 
                                 <p
                                     class="text-xs text-slate-400 mt-1 dark:text-gray-400"
                                 >
-                                    Successfully received amount
+                                    Monthly stipends marked as credited
                                 </p>
                             </div>
 
@@ -2302,14 +2325,14 @@
                                 >
                                     ₱{{
                                         page.props?.details?.financialAid
-                                            ?.totalWithheld
+                                            ?.pendingTotal
                                     }}
                                 </h2>
 
                                 <p
                                     class="text-xs text-slate-400 mt-1 dark:text-gray-400"
                                 >
-                                    Outstanding scholarship balance
+                                    Monthly stipends awaiting credit
                                 </p>
                             </div>
                         </div>
@@ -2646,6 +2669,11 @@
                                                             >
                                                                 Amount
                                                             </th>
+                                                            <th
+                                                                class="text-sm font-semibold p-2 text-right"
+                                                            >
+                                                                Credit Status
+                                                            </th>
                                                         </tr>
                                                     </thead>
 
@@ -2670,12 +2698,35 @@
                                                                     item.amount
                                                                 }}
                                                             </td>
+                                                            <td
+                                                                class="text-right px-2"
+                                                            >
+                                                                <span
+                                                                    :class="[
+                                                                        'inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize',
+                                                                        item.creditStatus ===
+                                                                        'credited'
+                                                                            ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300'
+                                                                            : item.creditStatus ===
+                                                                                'pending'
+                                                                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                                                                              : 'bg-slate-100 text-slate-600 dark:bg-gray-700 dark:text-gray-300',
+                                                                    ]"
+                                                                >
+                                                                    {{
+                                                                        item.creditStatus ===
+                                                                        "not_tracked"
+                                                                            ? "Not tracked"
+                                                                            : item.creditStatus
+                                                                    }}
+                                                                </span>
+                                                            </td>
                                                         </tr>
                                                         <tr
                                                             class="border-t border-slate-200 dark:border-gray-700"
                                                         >
                                                             <td
-                                                                colspan="2"
+                                                                colspan="3"
                                                                 class="text-sm px-2 py-1 font-semibold bg-slate-50 text-slate-700 dark:bg-gray-900 dark:text-gray-100"
                                                             >
                                                                 <span>
@@ -2732,64 +2783,35 @@
 
                                         <div class="space-y-2.5">
                                             <div
+                                                v-for="(
+                                                    allowance, allowanceKey
+                                                ) in page.props?.details
+                                                    ?.financialAid
+                                                    ?.allowanceBreakdown || []"
+                                                :key="allowanceKey"
                                                 class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
-                                                <span>Clothing Allowance</span>
-
-                                                <span class="font-medium"
-                                                    >₱{{
+                                                <span>{{
+                                                    allowance.name
+                                                }}</span>
+                                                <span class="font-medium">
+                                                    ₱{{ allowance.amount }}
+                                                </span>
+                                            </div>
+                                            <div
+                                                v-if="
+                                                    !(
                                                         page.props?.details
                                                             ?.financialAid
-                                                            .clothing
-                                                    }}</span
-                                                >
-                                            </div>
-                                            <div
-                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
-                                            >
-                                                <span>Transportation</span>
-                                                <span class="font-medium"
-                                                    >₱0.00</span
-                                                >
-                                            </div>
-
-                                            <div
+                                                            ?.allowanceBreakdown ||
+                                                        []
+                                                    ).length
+                                                "
                                                 class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
                                             >
                                                 <span
-                                                    >Learning Materials &
-                                                    Connectivity Allowance</span
-                                                >
-                                                <span class="font-medium"
-                                                    >₱{{
-                                                        page.props?.details
-                                                            ?.financialAid
-                                                            .connectivity
-                                                    }}</span
-                                                >
-                                            </div>
-
-                                            <div
-                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
-                                            >
-                                                <span>Book Allowance</span>
-                                                <span class="font-medium"
-                                                    >₱0.00</span
-                                                >
-                                            </div>
-                                            <div
-                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
-                                            >
-                                                <span>Thesis Allowance</span>
-                                                <span class="font-medium"
-                                                    >₱0.00</span
-                                                >
-                                            </div>
-                                            <div
-                                                class="flex justify-between text-sm text-slate-600 dark:text-gray-300"
-                                            >
-                                                <span
-                                                    >Graduation Allowance</span
+                                                    >No recorded
+                                                    allowances</span
                                                 >
                                                 <span class="font-medium"
                                                     >₱0.00</span
@@ -2971,8 +2993,16 @@
 
                                                     <span class="text-red-500">
                                                         {{
-                                                            logValue(slotProps.item, 'previous', key) != ""
-                                                                ? logValue(slotProps.item, 'previous', key)
+                                                            logValue(
+                                                                slotProps.item,
+                                                                "previous",
+                                                                key,
+                                                            ) != ""
+                                                                ? logValue(
+                                                                      slotProps.item,
+                                                                      "previous",
+                                                                      key,
+                                                                  )
                                                                 : "Not Set"
                                                         }}
                                                     </span>
@@ -2986,8 +3016,16 @@
                                                         class="text-emerald-600 font-medium"
                                                     >
                                                         {{
-                                                            logValue(slotProps.item, 'changes', key) != ""
-                                                                ? logValue(slotProps.item, 'changes', key)
+                                                            logValue(
+                                                                slotProps.item,
+                                                                "changes",
+                                                                key,
+                                                            ) != ""
+                                                                ? logValue(
+                                                                      slotProps.item,
+                                                                      "changes",
+                                                                      key,
+                                                                  )
                                                                 : "Removed"
                                                         }}
                                                     </span>
@@ -3088,17 +3126,20 @@ const page = usePage();
 const canUpdateScholars = computed(() =>
     (page.props?.permissions ?? []).includes("scholars.update"),
 );
-const canRevealLandbank = computed(() =>
-    (page.props?.permissions ?? []).includes("scholars.landbank.view-sensitive") ||
-    [
-        "administrator",
-        "regional staff",
-        "regional supervisor",
-        "scholarship staff",
-        "scholarship coordinator",
-    ].includes(
-        String(page.props?.user?.role_array?.name ?? "").toLowerCase(),
-    ),
+const canRevealLandbank = computed(
+    () =>
+        (page.props?.permissions ?? []).includes(
+            "scholars.landbank.view-sensitive",
+        ) ||
+        [
+            "administrator",
+            "regional staff",
+            "regional supervisor",
+            "scholarship staff",
+            "scholarship coordinator",
+        ].includes(
+            String(page.props?.user?.role_array?.name ?? "").toLowerCase(),
+        ),
 );
 const opTransfer = ref(null);
 const opHistory = ref([]);
@@ -3390,8 +3431,10 @@ const academicSubjectRemarkClass = (row) => {
     const matchedGrade = academicMatchedGrade(row);
 
     if (row?.is_drop || matchedGrade?.is_drop) return "text-slate-500";
-    if (row?.is_withdrawn || matchedGrade?.is_withdrawn) return "text-purple-600";
-    if (row?.is_incomplete || matchedGrade?.is_incomplete) return "text-amber-600";
+    if (row?.is_withdrawn || matchedGrade?.is_withdrawn)
+        return "text-purple-600";
+    if (row?.is_incomplete || matchedGrade?.is_incomplete)
+        return "text-amber-600";
     if (matchedGrade?.is_failed) return "text-rose-600";
     if (row?.input_grade || matchedGrade?.id) return "text-green-600";
 
@@ -3419,7 +3462,8 @@ const academicMatchedGrade = (row) => {
 
     return (
         academicGradeOptions.value.find((grade) => {
-            if (grade?.is_drop || grade?.is_incomplete || grade?.is_withdrawn) return false;
+            if (grade?.is_drop || grade?.is_incomplete || grade?.is_withdrawn)
+                return false;
 
             const lower = Number(grade?.lower);
             const upper = Number(grade?.upper);
@@ -3589,7 +3633,9 @@ const revealLandbank = async () => {
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            throw new Error(payload.message || "Unable to reveal Landbank details.");
+            throw new Error(
+                payload.message || "Unable to reveal Landbank details.",
+            );
         }
 
         personalInfo.acc_name = payload.account_name ?? null;
@@ -4040,10 +4086,9 @@ const cancelEdit = () => {
             window.history.replaceState({}, "", url);
             personalInfo.school = page.props?.details.schoolInput ?? null;
             personalInfo.course = page.props?.details.courseInput ?? null;
-            personalInfo.curriculum =
-                page.props?.details.curriculumInput?.id
-                    ? page.props.details.curriculumInput
-                    : null;
+            personalInfo.curriculum = page.props?.details.curriculumInput?.id
+                ? page.props.details.curriculumInput
+                : null;
         },
     });
 };

@@ -4,6 +4,7 @@ namespace App\Services\Scholar\Management;
 
 use App\Models\Scholars;
 use App\Models\StudentDocument;
+use App\Services\Payroll\PayrollMonthlyCreditService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,8 @@ class ScholarManagementDetailsService
         $schoolInfo = $scholar->schoolInfo?->first();
         $payrolls = $scholar->payrolls;
         $allowances = $payrolls->flatMap->allowances;
+        $monthlyCreditService = app(PayrollMonthlyCreditService::class);
+        $creditTotals = $this->monthlyCreditTotals($payrolls, $monthlyCreditService);
 
         return [
             'id' => Hashids::encode($scholar->id),
@@ -103,12 +106,20 @@ class ScholarManagementDetailsService
             'termGrades' => $this->termGrades($scholar),
             'financialAid' => [
                 'grandTotal' => number_format($payrolls->sum('grand_total'), 2),
-                'approvedTotal' => number_format($payrolls->where('status', 'approved')->sum('grand_total'), 2),
-                'totalWithheld' => number_format($payrolls->sum('total_withheld'), 2),
+                'creditedTotal' => number_format($creditTotals['credited'] / 100, 2),
+                'pendingTotal' => number_format($creditTotals['pending'] / 100, 2),
                 'clothing' => number_format($allowances->filter(fn ($allowance) => $allowance->allowanceType?->code === 'clothing')->sum('amount'), 2),
                 'connectivity' => number_format($allowances->filter(fn ($allowance) => $allowance->allowanceType?->code === 'connectivity')->sum('amount'), 2),
                 'totalAllowances' => number_format($allowances->sum('amount'), 2),
-                'monthly' => $this->monthlyPayrolls($payrolls),
+                'allowanceBreakdown' => $allowances
+                    ->groupBy(fn ($allowance) => $allowance->allowanceType?->code ?? $allowance->classification ?? 'other')
+                    ->map(fn ($items, $code) => [
+                        'name' => $items->first()->allowanceType?->name ?? Str::headline($code),
+                        'amount' => number_format($items->sum('amount'), 2),
+                    ])
+                    ->sortBy('name')
+                    ->values(),
+                'monthly' => $this->monthlyPayrolls($payrolls, $monthlyCreditService),
             ],
         ];
     }
@@ -197,6 +208,7 @@ class ScholarManagementDetailsService
                         'logs',
                         'stipends',
                         'allowances.allowanceType',
+                        'batch.monthlyCredits',
                     ])
                     ->orderBy('created_at', 'desc'),
             ])
@@ -372,9 +384,9 @@ class ScholarManagementDetailsService
         });
     }
 
-    private function monthlyPayrolls($payrolls)
+    private function monthlyPayrolls($payrolls, PayrollMonthlyCreditService $monthlyCreditService)
     {
-        return $payrolls->map(function ($payroll) {
+        return $payrolls->map(function ($payroll) use ($monthlyCreditService) {
             return [
                 'period' => $payroll->period,
                 'status' => $payroll->status,
@@ -385,10 +397,13 @@ class ScholarManagementDetailsService
                     'created_at' => Carbon::parse($log->created_at)->format('F d, Y h:i A'),
                     'created_by' => $log->action_by,
                 ]),
-                'stipends' => $payroll->stipends->map(fn ($stipend) => [
-                    'month' => $stipend->month,
-                    'amount' => number_format($stipend->amount, 2),
-                ]),
+                'stipends' => $payroll->stipends->map(function ($stipend) use ($payroll, $monthlyCreditService) {
+                    return [
+                        'month' => $stipend->month,
+                        'amount' => number_format($stipend->amount, 2),
+                        'creditStatus' => $this->stipendCreditStatus($payroll, $stipend, $monthlyCreditService),
+                    ];
+                }),
                 'financial' => $payroll->allowances->map(fn ($allowance) => [
                     'code' => $allowance->allowanceType?->code,
                     'name' => $allowance->allowanceType?->name,
@@ -398,6 +413,35 @@ class ScholarManagementDetailsService
                 'totalStipends' => number_format($payroll->stipends->sum('amount'), 2),
             ];
         });
+    }
+
+    private function monthlyCreditTotals($payrolls, PayrollMonthlyCreditService $monthlyCreditService): array
+    {
+        $totals = ['credited' => 0, 'pending' => 0];
+
+        foreach ($payrolls as $payroll) {
+            foreach ($payroll->stipends as $stipend) {
+                $status = $this->stipendCreditStatus($payroll, $stipend, $monthlyCreditService);
+
+                if (array_key_exists($status, $totals)) {
+                    $totals[$status] += (int) round((float) $stipend->amount * 100);
+                }
+            }
+        }
+
+        return $totals;
+    }
+
+    private function stipendCreditStatus($payroll, $stipend, PayrollMonthlyCreditService $monthlyCreditService): string
+    {
+        $credit = $payroll->batch?->monthlyCredits
+            ->firstWhere('month_no', $stipend->month_no);
+
+        return $credit?->status ?? (
+            $payroll->batch && $monthlyCreditService->isCreditEligible($payroll->batch)
+                ? 'pending'
+                : 'not_tracked'
+        );
     }
 
     private function academicYearSortValue(?string $academicYear): int
