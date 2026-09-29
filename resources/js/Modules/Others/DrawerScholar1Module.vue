@@ -2758,6 +2758,17 @@
                                                                     allowance.amount
                                                                 }}
                                                             </td>
+                                                            <td
+                                                                class="text-right px-2"
+                                                            >
+                                                                <span
+                                                                    class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold capitalize text-green-700 dark:bg-green-500/15 dark:text-green-300"
+                                                                >
+                                                                    {{
+                                                                        allowance.creditStatus
+                                                                    }}
+                                                                </span>
+                                                            </td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

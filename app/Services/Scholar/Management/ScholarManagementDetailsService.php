@@ -397,18 +397,35 @@ class ScholarManagementDetailsService
                     'created_at' => Carbon::parse($log->created_at)->format('F d, Y h:i A'),
                     'created_by' => $log->action_by,
                 ]),
-                'stipends' => $payroll->stipends->map(function ($stipend) use ($payroll, $monthlyCreditService) {
-                    return [
-                        'month' => $stipend->month,
-                        'amount' => number_format($stipend->amount, 2),
-                        'creditStatus' => $this->stipendCreditStatus($payroll, $stipend, $monthlyCreditService),
-                    ];
-                }),
+                'stipends' => $payroll->stipends
+                    ->sortBy(function ($stipend) {
+                        if ($stipend->month_no) {
+                            return (int) $stipend->month_no;
+                        }
+
+                        return preg_match('/\d+/', (string) $stipend->month, $matches)
+                            ? (int) $matches[0]
+                            : PHP_INT_MAX;
+                    })
+                    ->values()
+                    ->map(function ($stipend) use ($payroll, $monthlyCreditService) {
+                        $monthNo = $stipend->month_no;
+                        if (! $monthNo && preg_match('/\d+/', (string) $stipend->month, $matches)) {
+                            $monthNo = (int) $matches[0];
+                        }
+
+                        return [
+                            'month' => $monthNo ? "Month {$monthNo}" : $stipend->month,
+                            'amount' => number_format($stipend->amount, 2),
+                            'creditStatus' => $this->stipendCreditStatus($payroll, $stipend, $monthlyCreditService),
+                        ];
+                    }),
                 'financial' => $payroll->allowances->map(fn ($allowance) => [
                     'code' => $allowance->allowanceType?->code,
                     'name' => $allowance->allowanceType?->name,
                     'description' => $allowance->allowanceType?->description,
                     'amount' => number_format($allowance->amount, 2),
+                    'creditStatus' => 'credited',
                 ]),
                 'totalStipends' => number_format($payroll->stipends->sum('amount'), 2),
             ];
