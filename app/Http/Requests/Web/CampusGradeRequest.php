@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Web;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CampusGradeRequest extends FormRequest
@@ -17,31 +18,31 @@ class CampusGradeRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         switch ($this->type) {
             case 'delete':
                 return [
-                    'isDelete' => ['boolean']
+                    'isDelete' => ['boolean'],
                 ];
                 break;
             case 'status':
                 return [
-                    'isActive' => ['boolean']
+                    'isActive' => ['boolean'],
                 ];
                 break;
             default:
                 return [
-                    'campusId' => ['nullable'],
+                    'campusId' => ['required', 'integer', 'exists:school_campuses,id'],
                     'grade' => ['required', 'string'],
                     'upper' => ['nullable', 'numeric', 'decimal:0,2'],
                     'lower' => ['nullable', 'numeric', 'decimal:0,2'],
                     'fail' => ['boolean'],
                     'drop' => ['boolean'],
                     'incomplete' => ['boolean'],
-                    'withdrawn' => ['boolean']
+                    'withdrawn' => ['boolean'],
                 ];
                 break;
         }

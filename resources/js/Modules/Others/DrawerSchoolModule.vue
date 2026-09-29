@@ -227,20 +227,6 @@
                     >
                 </Divider>
                 <div class="px-5 py-2 gap-2 flex flex-col">
-                    <Message
-                        severity="info"
-                        icon="pi pi-info-circle"
-                        v-if="
-                            page.props?.schoolDetail.grading_array.name ==
-                            'Percent Grading'
-                        "
-                    >
-                        <p class="text-xs">
-                            The grading system is disabled for this school
-                            because it uses percentage-based grading.
-                        </p>
-                    </Message>
-
                     <ToolbarModule
                         v-model="searchInput"
                         @deleteSearch="clearSearch"
@@ -268,7 +254,7 @@
                     >
                         <template #add1>
                             <DefaultButton
-                                v-if="canManageSchools"
+                                v-if="canManageSchools && supportsGradeRanges"
                                 :icon="IconReport"
                                 outlined
                                 @click="gradeSystemDialog = true"
@@ -441,16 +427,20 @@
                                 <TextInput
                                     v-model="gradeForm.lower"
                                     type="number"
-                                    step="0.01"
+                                    :step="isPercentGrading ? 1 : 0.01"
+                                    :min="isPercentGrading ? 0 : null"
+                                    :max="isPercentGrading ? 100 : null"
                                     label="Lower Limit"
-                                    placeholder="e.g. 1.00"
+                                    :placeholder="isPercentGrading ? 'e.g. 75' : 'e.g. 1.00'"
                                 ></TextInput>
                                 <TextInput
                                     v-model="gradeForm.upper"
                                     type="number"
-                                    step="0.01"
+                                    :step="isPercentGrading ? 1 : 0.01"
+                                    :min="isPercentGrading ? 0 : null"
+                                    :max="isPercentGrading ? 100 : null"
                                     label="Upper Limit"
-                                    placeholder="e.g. 2.99"
+                                    :placeholder="isPercentGrading ? 'e.g. 100' : 'e.g. 3.00'"
                                 ></TextInput>
                             </div>
                         </div>
@@ -1391,6 +1381,14 @@ const canManageSchools = computed(() =>
         "schools.curriculum.copy",
         "schools.curriculum.paste",
     ]),
+);
+const isPercentGrading = computed(
+    () => page.props?.schoolDetail?.grading_array?.name === "Percent Grading",
+);
+const supportsGradeRanges = computed(() =>
+    ["Transmutation", "Percent Grading"].includes(
+        page.props?.schoolDetail?.grading_array?.name,
+    ),
 );
 
 const props = defineProps({

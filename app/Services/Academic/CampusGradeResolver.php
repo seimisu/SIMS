@@ -2,7 +2,9 @@
 
 namespace App\Services\Academic;
 
+use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
+use App\Support\GradingSystem;
 use Illuminate\Validation\ValidationException;
 
 class CampusGradeResolver
@@ -14,6 +16,14 @@ class CampusGradeResolver
         bool $isDrop = false,
         bool $isWithdrawn = false
     ): ?SchoolCampusGrades {
+        $campus = SchoolCampuses::with('grading:id,name')->findOrFail($campusId);
+
+        if (! in_array($campus->grading?->name, GradingSystem::SUPPORTED, true)) {
+            throw ValidationException::withMessages([
+                'subjects' => ['The campus does not use a supported grading system.'],
+            ]);
+        }
+
         if (collect([$isIncomplete, $isDrop, $isWithdrawn])->filter()->count() > 1) {
             throw ValidationException::withMessages([
                 'subjects' => ['A subject can only have one special grade classification.'],
@@ -48,6 +58,19 @@ class CampusGradeResolver
         }
 
         $gradeValue = (float) $inputGrade;
+
+        if (GradingSystem::isPercent($campus->grading?->name) && ($gradeValue < 0 || $gradeValue > 100)) {
+            throw ValidationException::withMessages([
+                'subjects' => ["Percentage grade \"{$inputGrade}\" must be between 0 and 100."],
+            ]);
+        }
+
+        if (GradingSystem::isPercent($campus->grading?->name) && $gradeValue !== (float) (int) $gradeValue) {
+            throw ValidationException::withMessages([
+                'subjects' => ["Percentage grade \"{$inputGrade}\" must be a whole number."],
+            ]);
+        }
+
         $matches = $rules
             ->reject(fn ($rule) => $rule->is_drop || $rule->is_incomplete || $rule->is_withdrawn)
             ->filter(function ($rule) use ($gradeValue) {

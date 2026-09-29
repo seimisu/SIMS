@@ -11,6 +11,7 @@ use App\Models\Schools;
 use App\References\ListClass;
 use App\References\LocationClass;
 use App\Services\Notifications\RoleBellNotificationService;
+use App\Support\GradingSystem;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,7 +51,7 @@ class SchoolController extends Controller
             'classificationOption' => $ref->getRefs('option', null, null, 'Term Type'),
             'agencyOption' => $ref->getAgencies(false),
             'gradingOption' => collect($ref->getRefs('option', null, null, 'Grading System'))
-                ->filter(fn ($option) => ($option['name'] ?? null) === 'Transmutation')
+                ->filter(fn ($option) => in_array($option['name'] ?? null, GradingSystem::SUPPORTED, true))
                 ->values(),
             'courseOption' => $ref->getCourses('option'),
             'subClassOption' => $ref->getRefs('option', null, 'Subject', null),

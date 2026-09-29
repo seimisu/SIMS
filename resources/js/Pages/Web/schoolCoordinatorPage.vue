@@ -96,7 +96,7 @@
                             </Button>
                             <Button
                                 size="small"
-                                v-if="campus.gradeSystem == 'Transmutation'"
+                                v-if="supportsGradeRanges"
                                 class="rounded-lg!"
                                 @click="openGradeSystem"
                                 severity="secondary"
@@ -639,15 +639,19 @@
                                                     : false
                                             "
                                             v-model="gradeForm.lower"
+                                            :min="isPercentGrading ? 0 : null"
+                                            :max="isPercentGrading ? 100 : null"
                                             type="number"
-                                            step="0.01"
+                                            :step="isPercentGrading ? 1 : 0.01"
                                             label="Lower Limit"
-                                            placeholder="e.g. 1.00"
+                                            :placeholder="isPercentGrading ? 'e.g. 75' : 'e.g. 1.00'"
                                         ></TextInput>
                                         <TextInput
                                             v-model="gradeForm.upper"
+                                            :min="isPercentGrading ? 0 : null"
+                                            :max="isPercentGrading ? 100 : null"
                                             type="number"
-                                            step="0.01"
+                                            :step="isPercentGrading ? 1 : 0.01"
                                             :error="gradeForm?.errors?.upper"
                                             :error-mark="
                                                 gradeForm?.errors?.upper
@@ -655,7 +659,7 @@
                                                     : false
                                             "
                                             label="Upper Limit"
-                                            placeholder="e.g. 2.99"
+                                            :placeholder="isPercentGrading ? 'e.g. 100' : 'e.g. 3.00'"
                                         ></TextInput>
                                     </div>
                                 </div>
@@ -1644,6 +1648,14 @@ const canManageSchools = computed(() =>
         "schools.curriculum.copy",
         "schools.curriculum.paste",
     ]),
+);
+const isPercentGrading = computed(
+    () => props.campus?.gradeSystem === "Percent Grading",
+);
+const supportsGradeRanges = computed(() =>
+    ["Transmutation", "Percent Grading"].includes(
+        props.campus?.gradeSystem,
+    ),
 );
 const courseForm = useForm({
     course: null,
