@@ -168,13 +168,12 @@ class SchoolCoordinatorDashboardService
             'semesterDate' => $campus?->semesters()
                 ->where('is_delete', false)
                 ->where('is_active', true)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
+                ->where('status', 'open')
+                ->latest('opened_at')
                 ->get()
                 ->map(fn ($semester) => [
                     'name' => $semester->semester->name,
-                    'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
-                    'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                    'schoolYear' => $semester->school_year,
                     'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
                 ])->first(),
             'events' => [],

@@ -305,12 +305,12 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <div class="text-[10px] font-semibold uppercase text-slate-400">Active Semester</div>
+                                            <div class="text-[10px] font-semibold uppercase text-slate-400">Open Academic Period</div>
                                             <div v-if="campus.semester" class="mt-0.5 text-xs text-slate-700 dark:text-gray-300">
-                                                {{ campus.semester.start_date }} - {{ campus.semester.end_date }}
+                                                {{ campus.semester.acad_term?.name }} / AY {{ campus.semester.school_year }}
                                                 <span class="block text-slate-500 dark:text-gray-400">Submit by {{ campus.semester.submission_date }}</span>
                                             </div>
-                                            <div v-else class="mt-0.5 text-xs text-slate-400">No active semester</div>
+                                            <div v-else class="mt-0.5 text-xs text-slate-400">No open period</div>
                                         </div>
                                         <DefaultButton
                                             size="small"
@@ -553,7 +553,7 @@
                             <div
                                 class="flex justify-center font-semibold w-full"
                             >
-                                <div>Active Semester</div>
+                                <div>Open Academic Period</div>
                             </div>
                         </template>
                         <template #body="prop">
@@ -566,16 +566,10 @@
                             >
                                 <div class="flex items-center gap-1 text-xs">
                                     <IconPointFilled class="text-green-600" />
-                                    <span class="font-medium">{{
-                                        prop.data.semester.start_date
-                                    }}</span>
-
-                                    <IconArrowNarrowRight
-                                        class="text-gray-400"
-                                    />
-                                    <span class="font-medium">{{
-                                        prop.data.semester.end_date
-                                    }}</span>
+                                    <span class="font-medium">
+                                        {{ prop.data.semester.acad_term?.name }} / AY
+                                        {{ prop.data.semester.school_year }}
+                                    </span>
                                 </div>
                             </div>
                         </template>

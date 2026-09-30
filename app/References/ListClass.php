@@ -247,9 +247,10 @@ class ListClass
                         'campuses.grading',
                         'campuses.agency',
                         'campuses.semesters' => fn ($query) => $query
-                            ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
-                            ->whereDate('start_date', '<=', now())
-                            ->whereDate('end_date', '>=', now()),
+                            ->select('id', 'semester_id', 'campus_id', 'school_year', 'status', 'submission_date')
+                            ->with('semester:id,name')
+                            ->open()
+                            ->latest('opened_at'),
                         'campuses.coordinators' => fn ($query) => $query
                             ->select('id', 'school_id', 'email')
                             ->with('profile')
@@ -279,8 +280,8 @@ class ListClass
                             'agency' => $campus->agency?->name,
                             'semester' => $campus->semesters->first() ? [
                                 'acad_term' => $campus->semesters->first()->semester_array,
-                                'start_date' => Carbon::parse($campus->semesters->first()->start_date)->format('M Y'),
-                                'end_date' => Carbon::parse($campus->semesters->first()->end_date)->format('M Y'),
+                                'school_year' => $campus->semesters->first()->school_year,
+                                'status' => $campus->semesters->first()->status,
                                 'submission_date' => Carbon::parse($campus->semesters->first()->submission_date)->format('M d, Y'),
                             ] : null,
                         ])->values(),

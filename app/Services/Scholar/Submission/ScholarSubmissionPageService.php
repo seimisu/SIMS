@@ -9,6 +9,7 @@ use App\Models\LocationCity;
 use App\Models\LocationProvinces;
 use App\Models\LocationRegions;
 use App\Models\ScholarTerm;
+use App\Models\SchoolCampusSemesters;
 use App\Models\Scholars;
 use App\Models\StudentDocument;
 use App\Models\studentLandbankRequest;
@@ -270,26 +271,29 @@ class ScholarSubmissionPageService
             ->reject(fn ($status) => $status === 'No Submission')
             ->values();
 
-        return ScholarTerm::query()
-            ->with('term:id,name')
-            ->whereNotNull('academic_year')
-            ->whereNotNull('term_id')
-            ->when($submissionStatuses->isNotEmpty(), fn ($query) => $query->whereIn('verification_status', $submissionStatuses))
+        return SchoolCampusSemesters::query()
+            ->with('semester:id,name')
+            ->where('is_active', true)
+            ->where('is_delete', false)
             ->when($permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
-                $query->whereHas('schoolInfo.campus.address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
+                $query->whereHas('campus.address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
             })
-            ->whereHas('scholar', fn ($scholar) => $this->applyScholarRequestFilters($scholar, $request))
-            ->select('academic_year', 'term_id')
-            ->distinct()
-            ->orderByDesc('academic_year')
-            ->orderByDesc('term_id')
+            ->when($submissionStatuses->isNotEmpty(), function ($query) use ($submissionStatuses) {
+                $query->whereHas('termRecords', fn ($terms) => $terms->whereIn('verification_status', $submissionStatuses));
+            })
+            ->when($request->hasAny(['schools', 'programs', 'types', 'statuses']), function ($query) use ($request) {
+                $query->whereHas('termRecords.scholar', fn ($scholar) => $this->applyScholarRequestFilters($scholar, $request));
+            })
+            ->orderByDesc('school_year')
+            ->orderByDesc('semester_id')
             ->get()
-            ->map(fn ($term) => [
-                'id' => $term->academic_year.'-'.$term->term_id,
-                'academic_year' => $term->academic_year,
-                'term_id' => $term->term_id,
-                'term_name' => $term->term?->name,
-                'name' => trim(($term->term?->name ?? 'Term').' '.$term->academic_year),
+            ->unique(fn ($period) => $period->school_year.'-'.$period->semester_id)
+            ->map(fn ($period) => [
+                'id' => $period->school_year.'-'.$period->semester_id,
+                'academic_year' => $period->school_year,
+                'term_id' => $period->semester_id,
+                'term_name' => $period->semester?->name,
+                'name' => trim(($period->semester?->name ?? 'Term').' '.$period->school_year),
             ])
             ->values();
     }

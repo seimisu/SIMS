@@ -47,24 +47,24 @@ class SchoolCoordinatorController extends Controller
             'semesterDate' => $campus->semesters()
                 ->where('is_delete', false)
                 ->where('is_active', true)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
+                ->where('status', 'open')
+                ->latest('opened_at')
                 ->get()
                 ->map(fn ($semester) => [
                     'name' => $semester->semester->name,
-                    'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
-                    'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                    'schoolYear' => $semester->school_year,
                     'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
                 ])->first(),
             'activeDate' => Inertia::optional(
                 fn () => $campus->semesters()
                     ->where('is_delete', false)
                     ->where('is_active', true)
+                    ->orderByDesc('school_year')
                     ->get()
                     ->map(fn ($semester) => [
                         'name' => $semester->semester->name,
-                        'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
-                        'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                        'schoolYear' => $semester->school_year,
+                        'status' => $semester->status,
                         'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
                     ])
             ),
@@ -181,91 +181,7 @@ class SchoolCoordinatorController extends Controller
 
     public function updateSemester(Request $request)
     {
-
-        $campus_id = Auth::user()->school_id;
-        $campus = SchoolCampuses::findOrFail($campus_id);
-
-        $semester = $request->input('semester', []);
-
-        foreach ($semester as &$semesterData) {
-            $semesterData['startDate'] = Carbon::parse($semesterData['startDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
-            $semesterData['endDate'] = Carbon::parse($semesterData['endDate'])->setTimezone('Asia/Manila')->endOfMonth()->format('Y-m-d');
-            $semesterData['submissionDate'] = Carbon::parse($semesterData['submissionDate'])->setTimezone('Asia/Manila')->format('Y-m-d');
-        }
-
-        $request->merge([
-            'semester' => $semester,
-        ]);
-
-        $validatedData = $request->validate([
-            'semester' => ['required', 'array'],
-            'semester.*.semester_id' => ['required'],
-            'semester.*.startDate' => ['nullable', 'date'],
-            'semester.*.endDate' => ['nullable', 'date'],
-            'semester.*.submissionDate' => ['nullable', 'date'],
-        ]);
-
-        // foreach ($validatedData['semester'] as $semesterData) {
-
-        //     $semester = $campus->semesters()->findOrFail($semesterData['semester_id']);
-        //     $oldData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
-
-        //     $semester->update([
-        //         'start_date' => Carbon::parse($semesterData['startDate'])->format('Y-m-d'),
-        //         'end_date' => Carbon::parse($semesterData['endDate'])->format('Y-m-d'),
-        //         'submission_date' => Carbon::parse($semesterData['submissionDate'])->format('Y-m-d'),
-        //     ]);
-
-        //     $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date']);
-
-        //     AuditLogs::create([
-        //         'user_id' => Auth::id(),
-        //         'old_data' => $oldData,
-        //         'new_data' => $newData,
-        //         'action' => "Updated semester {$semester->name}",
-        //     ]);
-
-        // }
-        $activeSemesterIds = collect($validatedData['semester'])->pluck('semester_id')->all();
-
-        $campus->semesters()
-            ->whereNotIn('semester_id', $activeSemesterIds)
-            ->update([
-                'is_active' => false,
-            ]);
-
-        foreach ($validatedData['semester'] as $key => $value) {
-
-            $semester = $campus->semesters()->updateOrCreate([
-                'semester_id' => $value['semester_id'],
-            ], [
-                'start_date' => $value['startDate'] ?? null,
-                'end_date' => $value['endDate'] ?? null,
-                'submission_date' => $value['submissionDate'] ?? null,
-                'is_active' => true,
-            ]);
-
-            $newData = Arr::only($semester->toArray(), ['start_date', 'end_date', 'submission_date', ListReferences::find($value['semester_id'])->name]);
-
-            if ($semester->wasRecentlyCreated || $semester->wasChanged()) {
-                AuditLogs::create([
-                    'user_id' => Auth::id(),
-                    'old_data' => null,
-                    'new_data' => $newData,
-                    'action' => 'Updated semester '.ListReferences::find($value['semester_id'])->name,
-                ]);
-            }
-        }
-
-        IdempotencyGuard::forSeconds("coordinator-semester-notification:{$campus->id}", 60, fn () => Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new UpdateSemesterCoordinatorNotification(Auth::user()->profile->fullname, $campus->generated_name)));
-
-        return redirect()->back()->with([
-            'flash' => [
-                'status' => 'success',
-                'title' => 'Semester Updated',
-                'message' => 'The semester dates have been successfully updated.',
-            ],
-        ]);
+        abort(403, 'Academic periods are managed by regional staff from the Schools page.');
     }
 
     public function createGrade(Request $request, CampusGradeRuleValidator $validator)

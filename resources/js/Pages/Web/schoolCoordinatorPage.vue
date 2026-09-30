@@ -40,8 +40,7 @@
                                 <span
                                     class="font-medium text-emerald-900 dark:text-emerald-100"
                                 >
-                                    {{ semesterDate?.startDate }} –
-                                    {{ semesterDate?.endDate }}
+                                    AY {{ semesterDate?.schoolYear }}
                                 </span>
                             </div>
                         </div>
@@ -88,8 +87,8 @@
                         <div class="flex items-center gap-2">
                             <Button
                                 size="small"
-                                class="rounded-lg!"
                                 @click="openSemester"
+                                class="hidden"
                                 severity="secondary"
                             >
                                 <div><IconCalendarWeek size="20" /></div>

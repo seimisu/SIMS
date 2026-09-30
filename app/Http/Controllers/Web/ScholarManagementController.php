@@ -50,6 +50,7 @@ class ScholarManagementController extends Controller
         $yearOptions = $options['yearOptions'];
         $transferCourseOptions = $options['transferCourseOptions'];
         $termOptions = $options['termOptions'];
+        $academicPeriodOptions = $options['academicPeriodOptions'];
         $subjectOptions = $options['subjectOptions'];
         $gradeOptions = $options['gradeOptions'];
         $schoolOptions = $options['schoolOptions'];
@@ -95,6 +96,7 @@ class ScholarManagementController extends Controller
                 'yearOptions' => $yearOptions,
                 'transferCourseOptions' => $transferCourseOptions,
                 'termOptions' => $termOptions,
+                'academicPeriodOptions' => $academicPeriodOptions,
                 'subjectOptions' => $subjectOptions,
                 'gradeOptions' => $gradeOptions,
                 'schoolOptions' => $schoolOptions,

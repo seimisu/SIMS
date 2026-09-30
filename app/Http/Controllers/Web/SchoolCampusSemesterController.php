@@ -4,84 +4,64 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\SchoolCampusSemesterRequest;
+use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusSemesters;
-use Carbon\Carbon;
+use App\Services\Academic\CampusAcademicPeriodService;
+use App\Support\SystemPermissions;
 use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Http\Request;
 
 class SchoolCampusSemesterController extends Controller
 {
-    public function store(SchoolCampusSemesterRequest $request)
+    public function store(
+        SchoolCampusSemesterRequest $request,
+        CampusAcademicPeriodService $periods,
+        SystemPermissions $permissions
+    )
     {
         $data = $request->validated();
-
-
-
-
-        foreach ($data['semester'] as $key => $semester) {
-
-
-
-
-            SchoolCampusSemesters::updateOrCreate([
-                'campus_id' => $data['campusId'],
-                'semester_id' => $semester['semesterId'],
-            ], [
-                'start_date' => Carbon::parse($data['semester'][$key]['startDateFormatted'])->startOfMonth()->format('Y-m-d'),
-                'end_date' => Carbon::parse($data['semester'][$key]['endDateFormatted'])->startOfMonth()->format('Y-m-d'),
-                'submission_date' => Carbon::parse($data['semester'][$key]['submissionDateFormatted'])->format('Y-m-d'),
-                'is_active' => true,
-                'created_by' => Auth::user()->profile->fullname,
-            ]);
-        }
+        $campus = SchoolCampuses::with('address')->findOrFail($data['campusId']);
+        $this->authorizeCampus($campus, $permissions);
+        $periods->create($campus, $data, Auth::id());
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Semesters Added',
-            'message' => 'Semesters successfully added to the campus.',
+            'title' => $data['status'] === 'open' ? 'Academic Period Opened' : 'Academic Period Saved',
+            'message' => 'The campus academic period was created successfully.',
         ]);
     }
 
-    public function update(SchoolCampusSemesterRequest $request, $id, $type)
+    public function update(
+        Request $request,
+        $id,
+        $type,
+        CampusAcademicPeriodService $periods,
+        SystemPermissions $permissions
+    )
     {
-
-
-        $data = $request->validated();
-
-
-
-        if ($data['semester'] == null) {
-            return redirect()->back()->with('flash', [
-                'status' => 'info',
-                'title'  => 'No Semesters Added',
-                'message' => 'No semesters were added to update.',
-            ]);
-        }
-
-        foreach ($data['semester'] as $semester) {
-
-            $find = SchoolCampusSemesters::find($semester['id']);
-            if ($find) {
-                $fields = [
-                    'start_date' => Carbon::parse($semester['startDateFormatted'])->format('Y-m-d'),
-                    'end_date' => Carbon::parse($semester['endDateFormatted'])->format('Y-m-d'),
-                    'submission_date' => Carbon::parse($semester['submissionDateFormatted'])->format('Y-m-d'),
-                    'updated_by' => Auth::user()->profile->fullname,
-                ];
-                $find->fill($fields);
-
-                if ($find->isDirty()) {
-                    $find->save();
-                }
-            }
-        }
-
+        abort_unless($type === 'status', 404);
+        $data = $request->validate(['status' => ['required', 'in:open,closed']]);
+        $period = SchoolCampusSemesters::with('campus.address')->findOrFail($id);
+        $this->authorizeCampus($period->campus, $permissions);
+        $periods->changeStatus($period, $data['status'], Auth::id());
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Semesters Updated',
-            'message' => 'Semesters successfully updated for the campus.',
+            'title' => $data['status'] === 'open' ? 'Academic Period Opened' : 'Academic Period Closed',
+            'message' => 'The academic period status was updated successfully.',
         ]);
+    }
+
+    private function authorizeCampus(SchoolCampuses $campus, SystemPermissions $permissions): void
+    {
+        $user = Auth::user();
+        if (! $permissions->shouldScopeToRegion($user)) {
+            return;
+        }
+
+        abort_unless(
+            (string) $campus->address?->region_code === (string) $permissions->regionCodeFor($user),
+            403
+        );
     }
 }

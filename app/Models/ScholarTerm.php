@@ -16,6 +16,7 @@ class ScholarTerm extends Model
         'level_id',
         'academic_year',
         'scholar_school_id',
+        'campus_semester_id',
         'term_type_id',
         'verified_by',
         'verification_status',
@@ -41,6 +42,11 @@ class ScholarTerm extends Model
     public function schoolInfo()
     {
         return $this->belongsTo(ScholarSchoolInfos::class, 'scholar_school_id');
+    }
+
+    public function campusSemester()
+    {
+        return $this->belongsTo(SchoolCampusSemesters::class, 'campus_semester_id');
     }
 
     public function specialization()
