@@ -1,14 +1,30 @@
 <template>
     <Head title="Courses" />
     <AuthLayout>
-        <div class="flex flex-col w-full h-full gap-10">
-            <div class="flex">
-                <HeaderModule
-                    title="Course Management"
-                    description="Manage the complete list of courses, update course information, track availability, and maintain accurate records."
-                />
+        <div class="courses-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                            <IconBook2 :size="21" stroke-width="1.8" />
+                        </div>
+                        <HeaderModule
+                            title="Course Management"
+                            description="Manage course names, categories, abbreviations, and availability."
+                        />
+                    </div>
+                    <DefaultButton
+                        size="small"
+                        label="Create Course"
+                        severity="secondary"
+                        outlined
+                        :icon="IconCirclePlusFilled"
+                        class="self-start xl:self-auto"
+                        @click="toggleModal({ type: 'create' })"
+                    />
+                </div>
             </div>
-            <div class="flex-1 flex flex-col gap-2">
+            <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
                 <ToolbarModule
                     v-model="searchInput"
                     @deleteSearch="clearSearch"
@@ -25,6 +41,7 @@
                     :message-errors="courseForm.errors"
                     @buttonOpenModal="toggleModal({ type: 'create' })"
                     message-type="error"
+                    :button-visible="false"
                     ref="toolbarRef"
                 >
                     <template #form>
@@ -55,30 +72,23 @@
                     }"
                     @paginate="loadPage"
                 >
-                    <Column
-                        field="name"
-                        header="Name"
-                        class="capitalize w-[40%]"
-                    >
-                    </Column>
-                    <Column
-                        field="field"
-                        header="Category"
-                        class="capitalize w-[30%]"
-                    >
-                    </Column>
-                    <Column field="abbreviation">
-                        <template #header>
-                            <div class="w-full flex justify-center">
-                                <p class="font-semibold">Abbreviation</p>
+                    <Column header="Course" class="w-[40%]">
+                        <template #body="props">
+                            <div class="min-w-60 py-1">
+                                <div class="text-sm font-semibold capitalize text-slate-800 dark:text-gray-100">
+                                    {{ props.data.name }}
+                                </div>
+                                <div class="mt-0.5 text-xs uppercase text-slate-500 dark:text-gray-400">
+                                    {{ props.data.abbreviation || "No abbreviation" }}
+                                </div>
                             </div>
                         </template>
+                    </Column>
+                    <Column header="Category" class="w-[35%]">
                         <template #body="props">
-                            <div
-                                class="flex items-center justify-center uppercase font-semibold"
-                            >
-                                <div>{{ props.data.abbreviation }}</div>
-                            </div>
+                            <span class="text-sm capitalize text-slate-700 dark:text-gray-300">
+                                {{ props.data.field || "Uncategorized" }}
+                            </span>
                         </template>
                     </Column>
                     <Column field="status" class="w-[5%]">
@@ -101,7 +111,7 @@
                                 />
                                 <div
                                     v-else
-                                    v-tooltip.top="'Cant deactive this role.'"
+                                    v-tooltip.top="'This course cannot be deactivated.'"
                                 >
                                     <IconLock size="18" />
                                 </div>
@@ -160,6 +170,7 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
@@ -174,6 +185,8 @@ import {
     IconX,
     IconPencilCog,
     IconTrash,
+    IconBook2,
+    IconCirclePlusFilled,
 } from "@tabler/icons-vue";
 
 const page = usePage();
@@ -304,7 +317,7 @@ const clearSearch = () => {
 const autoSearch = (event) => {
     setTimeout(() => {
         if (!event.trim().length) {
-            suggestions.value = [...countries.value];
+            suggestions.value = [...page.props.categories];
         } else {
             suggestions.value = page.props.categories.filter((search) => {
                 return search.name.toLowerCase().includes(event.toLowerCase());
@@ -337,3 +350,15 @@ watch(
     },
 );
 </script>
+
+<style scoped>
+:global(.dark .courses-page .p-datatable-header-cell),
+:global(.dark .courses-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.courses-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+</style>

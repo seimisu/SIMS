@@ -2,25 +2,41 @@
     <Head title="Downloadables" />
     <AuthLayout>
         <DefaultConfirmDialog ref="confirmRef" />
-        <div class="flex flex-col w-full h-full gap-4">
-            <div class="flex">
-                <HeaderModule
-                    title="Downloadables"
-                    description="Manage downloadable files, categories, and audience availability."
-                />
+        <div class="downloadables-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                            <IconFileDownload :size="21" stroke-width="1.8" />
+                        </div>
+                        <HeaderModule
+                            title="Downloadables"
+                            description="Manage downloadable files, categories, and audience availability."
+                        />
+                    </div>
+                    <DefaultButton
+                        size="small"
+                        severity="secondary"
+                        outlined
+                        :label="activeTab === 'documents' ? 'Upload Downloadable' : 'Create Category'"
+                        :icon="activeTab === 'documents' ? IconFileUpload : IconCategory"
+                        class="self-start xl:self-auto"
+                        @click="activeTab === 'documents' ? openDocumentForm() : openCategoryForm()"
+                    />
+                </div>
             </div>
 
-            <div class="flex-1 flex flex-col gap-3">
-                <div class="flex items-center gap-2 pt-1">
+            <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
+                <div class="flex items-center gap-1 border-b border-slate-200 dark:border-gray-700">
                     <button
                         v-for="tab in tabs"
                         :key="tab.value"
                         type="button"
                         :class="[
-                            'rounded-lg px-4 py-2 text-sm font-semibold transition',
+                            'border-b-2 px-4 py-2 text-sm font-semibold transition-colors',
                             activeTab === tab.value
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'bg-slate-100 text-gray-600 hover:bg-slate-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600',
+                                ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-300'
+                                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-100',
                         ]"
                         @click="activeTab = tab.value"
                     >
@@ -40,6 +56,7 @@
                                 :message-has-errors="documentForm.hasErrors"
                                 :message-errors="documentForm.errors"
                                 message-type="error"
+                                :button-visible="false"
                                 @deleteSearch="clearSearch"
                                 @buttonOpenModal="openDocumentForm()"
                                 @saveForm="saveDocument"
@@ -112,9 +129,9 @@
                             >
                                 <Column field="title" header="Downloadable" class="font-semibold">
                                     <template #body="props">
-                                        <div class="flex flex-col">
-                                            <span>{{ props.data.title }}</span>
-                                            <span class="text-xs text-gray-500">{{ props.data.original_filename }}</span>
+                                        <div class="min-w-60 py-1">
+                                            <span class="block text-sm font-semibold text-slate-800 dark:text-gray-100">{{ props.data.title }}</span>
+                                            <span class="block truncate text-xs text-slate-500 dark:text-gray-400">{{ props.data.original_filename }}</span>
                                         </div>
                                     </template>
                                 </Column>
@@ -201,6 +218,7 @@
                                 :message-has-errors="categoryForm.hasErrors"
                                 :message-errors="categoryForm.errors"
                                 message-type="error"
+                                :button-visible="false"
                                 @deleteSearch="clearCategorySearch"
                                 @buttonOpenModal="openCategoryForm()"
                                 @saveForm="saveCategory"
@@ -281,11 +299,13 @@ import {
     IconCategory,
     IconCheck,
     IconFileUpload,
+    IconFileDownload,
     IconX,
 } from "@tabler/icons-vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
@@ -593,3 +613,15 @@ const targetLabel = (target) => {
         : option.name;
 };
 </script>
+
+<style scoped>
+:global(.dark .downloadables-page .p-datatable-header-cell),
+:global(.dark .downloadables-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.downloadables-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+</style>

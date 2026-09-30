@@ -1,12 +1,17 @@
 <template>
     <Head title="Cashier Deposit" />
     <AuthLayout>
-        <div class="flex h-full min-h-0 w-full flex-col gap-5 overflow-hidden">
-            <div class="shrink-0">
-                <HeaderModule
-                    title="Cashier Deposit"
-                    description="Deposit approved financial assistance batches by monthly release."
-                />
+        <div class="deposit-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex min-w-0 items-start gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                        <IconBuildingBank :size="21" stroke-width="1.8" />
+                    </div>
+                    <HeaderModule
+                        title="Cashier Deposit"
+                        description="Process approved monthly assistance deposits and track recipient releases."
+                    />
+                </div>
             </div>
 
             <DefaultSelectionTable
@@ -22,12 +27,7 @@
                 @paginate="loadPage"
             >
                 <template #header>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <InputText
-                            v-model="searchInput"
-                            placeholder="Search batch, region, term, or year"
-                            class="!text-sm w-full md:w-80"
-                        />
+                    <ManagementFilterBar v-model="searchInput" search-placeholder="Search batch, region, term, or year">
                         <SelectInput
                             v-model="filterRegion"
                             :options="page.props.filterOptions?.regions ?? []"
@@ -62,10 +62,11 @@
                             severity="secondary"
                             :icon="IconFilterOff"
                             tooltip="Clear filters"
+                            outlined
                             :disabled="!hasFilters"
                             @click="clearFilters"
                         />
-                    </div>
+                    </ManagementFilterBar>
                 </template>
 
                 <Column header="Batch">
@@ -100,7 +101,7 @@
                             <div
                                 v-for="credit in props.data.credits"
                                 :key="credit.month_no"
-                                class="rounded border border-slate-200 bg-white p-2 dark:border-gray-600 dark:bg-gray-900"
+                                class="rounded-md border border-slate-200 bg-slate-50 p-2.5 dark:border-gray-700 dark:bg-gray-800/70"
                             >
                                 <div class="flex items-center justify-between gap-2">
                                     <div class="text-xs font-semibold text-slate-700 dark:text-gray-100">
@@ -116,14 +117,13 @@
                                     </span>
                                 </div>
                                 <div
-                                    v-if="credit.status === 'credited'"
-                                    class="mt-2 text-[11px] leading-4 text-slate-500 dark:text-gray-400"
+                                    v-if="credit.recipient_count > 0"
+                                    class="mt-2 text-[11px] leading-4 text-slate-500 dark:text-gray-300"
                                 >
-                                    {{ credit.credited_by || "Cashier" }}
-                                    <span v-if="credit.credited_at"> | {{ credit.credited_at }}</span>
+                                    {{ credit.progress_label }} deposited
                                 </div>
                                 <DefaultButton
-                                    v-else
+                                    v-if="credit.status !== 'credited'"
                                     size="small"
                                     label="Deposit"
                                     severity="success"
@@ -142,8 +142,8 @@
         <Dialog
             v-model:visible="creditDialog"
             modal
-            header="Confirm Deposit"
-            :style="{ width: '30rem' }"
+            header="Select Scholars for Deposit"
+            :style="{ width: 'min(72rem, 96vw)' }"
             :pt="{
                 root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
                 header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
@@ -151,10 +151,7 @@
                 footer: 'dark:!border-gray-700 dark:!bg-gray-900',
             }"
         >
-            <div class="flex flex-col gap-3 text-sm text-slate-700 dark:text-gray-200">
-                <div>
-                    Mark this monthly release as deposit?
-                </div>
+            <div class="flex max-h-[70vh] flex-col gap-3 text-sm text-slate-700 dark:text-gray-200">
                 <div class="rounded border border-slate-200 bg-slate-50 p-3 dark:border-gray-600 dark:bg-gray-800">
                     <div class="font-semibold text-slate-800 dark:text-gray-100">
                         {{ selectedCreditBatch?.name }}
@@ -166,6 +163,41 @@
                         {{ selectedCredit?.label }}
                     </div>
                 </div>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <InputText v-model="recipientSearch" placeholder="Search scholar or account number" class="w-full !text-sm md:w-80" />
+                    <div class="flex items-center gap-2">
+                        <DefaultButton size="small" label="Select Pending" severity="secondary" outlined @click="selectAllPending" />
+                        <DefaultButton size="small" label="Clear" severity="secondary" outlined @click="clearPendingSelection" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 rounded border border-slate-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-900 md:grid-cols-4">
+                    <div><div class="text-xs text-slate-500 dark:text-gray-400">Selected</div><div class="font-semibold">{{ selectedPendingCount }} / {{ pendingRecipientCount }}</div></div>
+                    <div><div class="text-xs text-slate-500 dark:text-gray-400">Already deposited</div><div class="font-semibold">{{ creditedRecipientCount }}</div></div>
+                    <div><div class="text-xs text-slate-500 dark:text-gray-400">Deposit amount</div><div class="font-semibold text-emerald-700 dark:text-emerald-300">{{ formatMoney(selectedAmount) }}</div></div>
+                    <div><div class="text-xs text-slate-500 dark:text-gray-400">Remaining after deposit</div><div class="font-semibold">{{ remainingAfterDeposit }}</div></div>
+                </div>
+                <div v-if="recipientLoading" class="py-10 text-center text-slate-500 dark:text-gray-400">Loading scholars...</div>
+                <div v-else class="min-h-0 overflow-auto rounded border border-slate-200 dark:border-gray-700">
+                    <table class="w-full min-w-[780px] text-left text-xs">
+                        <thead class="sticky top-0 bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-200">
+                            <tr><th class="w-12 p-2"></th><th class="p-2">Scholar</th><th class="p-2">Account</th><th class="p-2 text-right">Amount</th><th class="p-2">Status / Remarks</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-gray-700">
+                            <tr v-for="recipient in filteredRecipients" :key="recipient.id" class="bg-white dark:bg-gray-900">
+                                <td class="p-2 text-center"><input v-if="recipient.status !== 'credited'" v-model="recipient.selected" type="checkbox" class="h-4 w-4 accent-blue-600" /></td>
+                                <td class="p-2"><div class="font-semibold text-slate-800 dark:text-gray-100">{{ recipient.name }}</div><div class="text-slate-500 dark:text-gray-400">{{ recipient.spas_no }}</div></td>
+                                <td class="p-2 text-slate-600 dark:text-gray-300">{{ recipient.account_no || '-' }}</td>
+                                <td class="p-2 text-right font-semibold">{{ formatMoney(recipient.amount) }}</td>
+                                <td class="p-2">
+                                    <span v-if="recipient.status === 'credited'" class="text-emerald-700 dark:text-emerald-300">Deposited<span v-if="recipient.credited_at"> | {{ recipient.credited_at }}</span></span>
+                                    <Textarea v-else-if="!recipient.selected" v-model="recipient.remarks" rows="2" autoResize fluid placeholder="Required reason for not depositing" class="!text-xs" />
+                                    <span v-else class="text-blue-600 dark:text-blue-300">Selected for deposit</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-if="selectionError" class="text-xs font-medium text-red-600 dark:text-red-300">{{ selectionError }}</div>
             </div>
 
             <template #footer>
@@ -183,6 +215,7 @@
                     severity="success"
                     :icon="IconCashBanknote"
                     :loading="creditForm.processing"
+                    :disabled="recipientLoading || creditForm.processing"
                     @click="confirmCreditMonth"
                 />
             </template>
@@ -198,8 +231,10 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
+import ManagementFilterBar from "../../Components/inputs/ManagementFilterBar.vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
-import { IconCashBanknote, IconFilterOff } from "@tabler/icons-vue";
+import axios from "axios";
+import { IconBuildingBank, IconCashBanknote, IconFilterOff } from "@tabler/icons-vue";
 import { computed, ref, watch } from "vue";
 import { route } from "ziggy-js";
 
@@ -220,32 +255,55 @@ const creditingKey = ref(null);
 const creditDialog = ref(false);
 const selectedCreditBatch = ref(null);
 const selectedCredit = ref(null);
+const depositRecipients = ref([]);
+const recipientSearch = ref("");
+const recipientLoading = ref(false);
+const selectionError = ref("");
 const creditForm = useForm({
-    remarks: null,
+    recipients: [],
 });
 
 const statusLabel = (status) =>
     ({
         pending: "Pending",
+        partial: "Partial",
         credited: "Deposit",
     })[status] ?? status;
 
 const creditStatusClass = (status) =>
     status === "credited"
         ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-        : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
+        : status === "partial"
+            ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+            : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
 
 const creditKey = (batch, credit) => `${batch.id}-${credit.month_no}`;
 const hasFilters = computed(() =>
     Boolean(searchInput.value || filterRegion.value || filterTerm.value || filterSchoolYear.value || filterCreditStatus.value),
 );
 
-const openCreditDialog = (batch, credit) => {
+const openCreditDialog = async (batch, credit) => {
     if (!batch?.id || !credit?.month_no) return;
 
     selectedCreditBatch.value = batch;
     selectedCredit.value = credit;
     creditDialog.value = true;
+    recipientLoading.value = true;
+    selectionError.value = "";
+    recipientSearch.value = "";
+
+    try {
+        const response = await axios.get(route("cashier.credits.recipients", { id: batch.id, month: credit.month_no }));
+        depositRecipients.value = response.data.recipients.map((recipient) => ({
+            ...recipient,
+            selected: recipient.status !== "credited",
+            remarks: recipient.remarks ?? "",
+        }));
+    } catch (error) {
+        selectionError.value = error.response?.data?.message ?? "Unable to load payroll recipients.";
+    } finally {
+        recipientLoading.value = false;
+    }
 };
 
 const closeCreditDialog = () => {
@@ -254,7 +312,24 @@ const closeCreditDialog = () => {
     creditDialog.value = false;
     selectedCreditBatch.value = null;
     selectedCredit.value = null;
+    depositRecipients.value = [];
 };
+
+const filteredRecipients = computed(() => {
+    const search = recipientSearch.value.trim().toLowerCase();
+    if (!search) return depositRecipients.value;
+    return depositRecipients.value.filter((recipient) =>
+        [recipient.name, recipient.spas_no, recipient.account_no].some((value) => String(value ?? "").toLowerCase().includes(search)),
+    );
+});
+const pendingRecipientCount = computed(() => depositRecipients.value.filter((recipient) => recipient.status !== "credited").length);
+const creditedRecipientCount = computed(() => depositRecipients.value.filter((recipient) => recipient.status === "credited").length);
+const selectedPendingCount = computed(() => depositRecipients.value.filter((recipient) => recipient.status !== "credited" && recipient.selected).length);
+const selectedAmount = computed(() => depositRecipients.value.filter((recipient) => recipient.status !== "credited" && recipient.selected).reduce((sum, recipient) => sum + Number(recipient.amount || 0), 0));
+const remainingAfterDeposit = computed(() => pendingRecipientCount.value - selectedPendingCount.value);
+const formatMoney = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(Number(value || 0));
+const selectAllPending = () => depositRecipients.value.forEach((recipient) => { if (recipient.status !== "credited") recipient.selected = true; });
+const clearPendingSelection = () => depositRecipients.value.forEach((recipient) => { if (recipient.status !== "credited") recipient.selected = false; });
 
 const confirmCreditMonth = () => {
     const batch = selectedCreditBatch.value;
@@ -262,8 +337,20 @@ const confirmCreditMonth = () => {
 
     if (!batch?.id || !credit?.month_no) return;
 
+    const pending = depositRecipients.value.filter((recipient) => recipient.status !== "credited");
+    if (!pending.some((recipient) => recipient.selected)) {
+        selectionError.value = "Select at least one scholar to deposit.";
+        return;
+    }
+    const missingRemark = pending.find((recipient) => !recipient.selected && !recipient.remarks?.trim());
+    if (missingRemark) {
+        selectionError.value = `Enter remarks for ${missingRemark.name}.`;
+        return;
+    }
+
+    selectionError.value = "";
     creditingKey.value = creditKey(batch, credit);
-    creditForm.remarks = null;
+    creditForm.recipients = pending.map(({ id, selected, remarks }) => ({ id, selected, remarks }));
     creditForm.put(
         route("cashier.credits.update", {
             id: batch.id,
@@ -341,10 +428,21 @@ watch(
 <style scoped>
 :deep(.p-datatable-header) {
     border-bottom: 0 !important;
-    padding-bottom: 0.75rem;
+    padding: 0 0 0.75rem !important;
+    background: transparent !important;
 }
 
 :deep(.p-datatable-table-container) {
     border-top: 0 !important;
+}
+
+:global(.dark .deposit-page .p-datatable-header-cell),
+:global(.dark .deposit-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.deposit-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
 }
 </style>

@@ -159,6 +159,7 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
     Route::put('stipends/recipients/{id}/mark-for-removal', [PayrollController::class, 'markRecipientForRemoval'])->middleware('throttle:state-actions')->name('stipends.recipients.mark-for-removal');
     Route::put('stipends/recipients/{id}/cancel-removal', [PayrollController::class, 'cancelRecipientForRemoval'])->middleware('throttle:state-actions')->name('stipends.recipients.cancel-removal');
     Route::put('cashier/credits/{id}/months/{month}', [CashierCreditController::class, 'update'])->middleware('throttle:writes')->name('cashier.credits.update');
+    Route::get('cashier/credits/{id}/months/{month}/recipients', [CashierCreditController::class, 'recipients'])->name('cashier.credits.recipients');
     Route::post('stipends/import-historical/preview', [PayrollController::class, 'previewHistorical'])->middleware('throttle:uploads')->name('stipends.import-historical.preview');
     Route::post('stipends/import-historical', [PayrollController::class, 'importHistorical'])->middleware('throttle:uploads')->name('stipends.import-historical');
     Route::put('stipends/{id}/payroll', [PayrollController::class, 'savePayroll'])->middleware('throttle:writes')->name('stipends.payroll.update');

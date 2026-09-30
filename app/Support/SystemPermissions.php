@@ -200,6 +200,7 @@ class SystemPermissions
         'geolocation.store' => 'geolocation.upload',
         'stipends' => 'payroll.view',
         'cashier.credits' => 'payroll.credits.view',
+        'cashier.credits.recipients' => 'payroll.credits.view',
         'stipends.import-historical.preview' => 'payroll.update',
         'stipends.import-historical' => 'payroll.update',
         'stipends.payroll.update' => 'payroll.update',

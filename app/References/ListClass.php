@@ -218,68 +218,73 @@ class ListClass
                 break;
             default:
 
-                return
-                    SchoolCampuses::select('id', 'school_id', 'term_id', 'grading_id', 'agency_id', 'name', 'generated_name', 'is_main')->where([
-                        'is_delete' => false,
-                        'is_active' => true,
-                    ])
-                        ->when(Auth::check() && app(SystemPermissions::class)->shouldScopeToRegion(Auth::user()), function ($query) {
-                            $query->whereHas('address', function ($q) {
-                                $q->where('region_code', app(SystemPermissions::class)->regionCodeFor(Auth::user()));
+                $scopeCampuses = function ($query) {
+                    $query->where('is_delete', false)
+                        ->where('is_active', true)
+                        ->when(Auth::check() && app(SystemPermissions::class)->shouldScopeToRegion(Auth::user()), function ($campusQuery) {
+                            $campusQuery->whereHas('address', function ($addressQuery) {
+                                $addressQuery->where('region_code', app(SystemPermissions::class)->regionCodeFor(Auth::user()));
                             });
-                        })
-                        ->when($search, function ($query) {
-                        $search = strtolower(request('search'));
-                        $query->whereHas('school', function ($q) use ($search) {
-                            $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                        });
+                };
+
+                return Schools::query()
+                    ->where('is_delete', false)
+                    ->where('is_active', true)
+                    ->whereHas('campuses', $scopeCampuses)
+                    ->when($search, function ($query) use ($search) {
+                        $search = strtolower($search);
+                        $query->where(function ($schoolQuery) use ($search) {
+                            $schoolQuery->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
                                 ->orWhereRaw('LOWER(shortcut) LIKE ?', ["%{$search}%"]);
                         });
                     })
-                        ->orderBy('id', 'desc')
-                        ->orderBy('school_id', 'asc')
-                        ->orderBy('is_main', 'desc')
-                        ->orderBy('agency_id', 'asc')
-                        ->with([
-                            'school:id,name,reference_id,shortcut,photo',
-                            'address:id,campus_id,municipality_code,barangay_code,region_code',
-                            'term',
-                            'grading',
-                            'agency',
-                            'semesters' => fn ($q) => $q
-                                ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
-                                ->whereDate('start_date', '<=', now())
-                                ->whereDate('end_date', '>=', now()),
-                            'coordinators' => fn ($q) => $q->select('id', 'school_id', 'email')->with(['profile'])->where('is_active', true),
-                        ])
-                        ->paginate(10)
-                        ->through(fn ($q) => [
-                            'id' => $q->id,
-                            'name' => $q->name,
-                            'generated_name' => $q->generated_name,
-                            'is_main' => $q->is_main,
-                            'school' => [
-                                'id' => $q->school?->id,
-                                'name' => $q->school?->name,
-                                'shortcut' => $q->school?->shortcut,
-                                'photo' => $q->school?->photo,
-                                'reference' => $q->school?->reference_array,
-                            ],
+                    ->with([
+                        'reference',
+                        'campuses' => fn ($query) => $scopeCampuses($query->orderByDesc('is_main')->orderBy('agency_id')->orderBy('id')),
+                        'campuses.address:id,campus_id,municipality_code,barangay_code,region_code',
+                        'campuses.term',
+                        'campuses.grading',
+                        'campuses.agency',
+                        'campuses.semesters' => fn ($query) => $query
+                            ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
+                            ->whereDate('start_date', '<=', now())
+                            ->whereDate('end_date', '>=', now()),
+                        'campuses.coordinators' => fn ($query) => $query
+                            ->select('id', 'school_id', 'email')
+                            ->with('profile')
+                            ->where('is_active', true),
+                    ])
+                    ->orderBy('name')
+                    ->paginate(10)
+                    ->through(fn ($school) => [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'shortcut' => $school->shortcut,
+                        'photo' => $school->photo,
+                        'reference' => $school->reference_array,
+                        'campuses' => $school->campuses->map(fn ($campus) => [
+                            'id' => $campus->id,
+                            'name' => $campus->name,
+                            'generated_name' => $campus->generated_name,
+                            'is_main' => $campus->is_main,
                             'address' => [
-                                'region' => $q->address?->region_array,
-                                'municipality' => $q->address?->municipality_array,
-                                'barangay' => $q->address?->barangay_array,
+                                'region' => $campus->address?->region_array,
+                                'municipality' => $campus->address?->municipality_array,
+                                'barangay' => $campus->address?->barangay_array,
                             ],
-                            'coordinators' => $q->coordinators->pluck('profile.fullname'),
-                            'term' => $q->term?->name,
-                            'grading' => $q->grading?->name,
-                            'agency' => $q->agency?->name,
-                            'semester' => $q->semesters->first() ? [
-                                'acad_term' => $q->semesters->first()->semester_array,
-                                'start_date' => Carbon::parse($q->semesters->first()->start_date)->format('M Y'),
-                                'end_date' => Carbon::parse($q->semesters->first()->end_date)->format('M Y'),
-                                'submission_date' => Carbon::parse($q->semesters->first()->submission_date)->format('M d, Y'),
+                            'coordinators' => $campus->coordinators->pluck('profile.fullname'),
+                            'term' => $campus->term?->name,
+                            'grading' => $campus->grading?->name,
+                            'agency' => $campus->agency?->name,
+                            'semester' => $campus->semesters->first() ? [
+                                'acad_term' => $campus->semesters->first()->semester_array,
+                                'start_date' => Carbon::parse($campus->semesters->first()->start_date)->format('M Y'),
+                                'end_date' => Carbon::parse($campus->semesters->first()->end_date)->format('M Y'),
+                                'submission_date' => Carbon::parse($campus->semesters->first()->submission_date)->format('M d, Y'),
                             ] : null,
-                        ]);
+                        ])->values(),
+                    ]);
                 break;
                 // if (Auth::user()->role_array['name'] == 'regional staff') {
                 //     return

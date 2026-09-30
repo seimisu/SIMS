@@ -35,7 +35,7 @@ class CashierDashboardService
 
         $creditRows = $approvedBatches->flatMap(fn ($batch) => $credits->rowsForBatch($batch));
         $creditedRows = $creditRows->where('status', 'credited');
-        $pendingRows = $creditRows->where('status', 'pending');
+        $pendingRows = $creditRows->whereIn('status', ['pending', 'partial']);
         $recentBatches = $approvedBatches
             ->take(6)
             ->map(fn ($batch) => [
@@ -62,7 +62,7 @@ class CashierDashboardService
                 ->count(),
             'pending' => $creditRows
                 ->where('month_no', $month)
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'partial'])
                 ->count(),
         ]);
 

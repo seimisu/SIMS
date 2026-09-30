@@ -1,24 +1,19 @@
 <template>
-    <div class="flex items-center justify-between">
-        <div class="flex-1 flex items-center gap-2">
-            <IconTextInput
-                :icon="IconSearch"
-                placeholder="Search keywords..."
-                v-model="modelValue"
-                :class="['w-64 lg:w-96', hideSearch ? '!hidden' : '']"
-            />
+    <ManagementFilterBar
+        v-model="modelValue"
+        :searchable="!hideSearch"
+        search-placeholder="Search keywords"
+    >
             <DefaultButton
-                rounded
                 size="small"
                 severity="secondary"
                 :icon="IconX"
                 v-show="modelValue"
                 @click="triggerDelete"
                 :icon-size="18"
+                outlined
+                tooltip="Clear search"
             />
-        </div>
-
-        <div class="flex items-center gap-2">
             <slot name="add2"></slot>
             <slot name="add1"></slot>
             <DefaultButton
@@ -27,11 +22,9 @@
                 :label="buttonLabel"
                 size="small"
                 @click="triggerOpenModal"
-                class-name="w-30  !rounded-xl"
-                raised
+                class-name="!rounded-md"
             />
-        </div>
-    </div>
+    </ManagementFilterBar>
     <DefaultDialog
         v-model:visible="modal"
         :icon="dialogIcon"
@@ -56,10 +49,10 @@
     </DefaultDialog>
 </template>
 <script setup>
-import { IconCirclePlusFilled, IconSearch, IconX } from "@tabler/icons-vue";
+import { IconCirclePlusFilled, IconX } from "@tabler/icons-vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
-import IconTextInput from "../../Components/inputs/IconTextInput.vue";
+import ManagementFilterBar from "../../Components/inputs/ManagementFilterBar.vue";
 import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
 import { ref } from "vue";
 

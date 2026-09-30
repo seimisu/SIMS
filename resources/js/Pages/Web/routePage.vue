@@ -1,16 +1,18 @@
 <template>
     <Head title="Routes" />
     <AuthLayout>
-        <div class="flex flex-col w-full h-full gap-10">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <HeaderModule
-                    title="Menu Management"
-                    description="Create, organize, and manage navigation menus in the system."
-                    class="flex-1"
-                />
+        <div class="routes-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500"><IconRoute :size="21" stroke-width="1.8" /></div>
+                        <HeaderModule title="Navigation Settings" description="Create, organize, and manage system navigation menus." />
+                    </div>
+                    <DefaultButton size="small" label="Create Navigation" severity="secondary" outlined :icon="IconCirclePlusFilled" class="self-start xl:self-auto" @click="toggleModal({ type: 'create' })" />
+                </div>
             </div>
 
-            <div class="flex-1 flex flex-col gap-2">
+            <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
                 <ToolbarModule
                     v-model="searchInput"
                     @deleteSearch="clearSearch"
@@ -27,6 +29,7 @@
                     :message-errors="routeForm.errors"
                     @buttonOpenModal="toggleModal({ type: 'create' })"
                     message-type="error"
+                    :button-visible="false"
                     ref="toolbarRef"
                 >
                     <template #form>
@@ -217,12 +220,15 @@ import {
     IconX,
     IconPencilCog,
     IconTrash,
+    IconCirclePlusFilled,
+    IconRoute,
 } from "@tabler/icons-vue";
 import * as TablerIcons from "@tabler/icons-vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import DefaultTreeTable from "../../Components/tables/DefaultTreeTable.vue";
@@ -374,3 +380,15 @@ watch(
     }
 );
 </script>
+
+<style scoped>
+:global(.dark .routes-page .p-treetable-header-cell),
+:global(.dark .routes-page .p-treetable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.routes-page .p-treetable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+</style>

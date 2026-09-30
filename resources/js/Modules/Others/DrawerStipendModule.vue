@@ -149,7 +149,8 @@
                                     <div
                                         v-for="credit in monthlyCredits"
                                         :key="credit.month_no"
-                                        class="flex min-w-0 flex-col gap-2 rounded border border-slate-200 bg-white p-2 dark:border-gray-600 dark:bg-gray-900"
+                                        class="flex min-w-0 cursor-pointer flex-col gap-2 rounded border border-slate-200 bg-white p-2 transition hover:border-blue-300 hover:bg-blue-50/40 dark:border-gray-600 dark:bg-gray-900 dark:hover:border-blue-700 dark:hover:bg-gray-800"
+                                        @click="openDepositInfo(credit)"
                                     >
                                         <div class="flex items-start justify-between gap-2">
                                             <div class="min-w-0">
@@ -170,11 +171,10 @@
                                             </span>
                                         </div>
                                         <div
-                                            v-if="credit.status === 'credited'"
+                                            v-if="credit.recipient_count > 0"
                                             class="text-[11px] leading-4 text-slate-500 dark:text-gray-400"
                                         >
-                                            {{ credit.credited_by || "Cashier" }}
-                                            <span v-if="credit.credited_at"> | {{ credit.credited_at }}</span>
+                                            {{ credit.progress_label }} deposited
                                         </div>
                                     </div>
                                 </div>
@@ -608,6 +608,43 @@
     </Drawer>
 
     <Dialog
+        v-model:visible="depositInfoDialog"
+        modal
+        :header="`${selectedDepositCredit?.label ?? 'Month'} Deposit Information`"
+        :style="{ width: 'min(68rem, 96vw)' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
+    >
+        <div class="space-y-3 text-sm text-slate-700 dark:text-gray-200">
+            <div class="grid grid-cols-2 gap-2 rounded border border-slate-200 bg-slate-50 p-3 dark:border-gray-700 dark:bg-gray-800 md:grid-cols-4">
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Deposited</div><div class="font-semibold">{{ depositInfoSummary.credited }} / {{ depositInfoSummary.total }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Pending</div><div class="font-semibold">{{ depositInfoSummary.pending }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Deposited amount</div><div class="font-semibold">PHP {{ formatMoney(depositInfoSummary.credited_amount) }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Payroll amount</div><div class="font-semibold">PHP {{ formatMoney(depositInfoSummary.total_amount) }}</div></div>
+            </div>
+            <div v-if="depositInfoLoading" class="py-10 text-center text-slate-500 dark:text-gray-400">Loading deposit information...</div>
+            <div v-else class="max-h-[55vh] overflow-auto rounded border border-slate-200 dark:border-gray-700">
+                <table class="w-full min-w-[760px] text-left text-xs">
+                    <thead class="sticky top-0 bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-200"><tr><th class="p-2">Scholar</th><th class="p-2">Account</th><th class="p-2 text-right">Amount</th><th class="p-2">Status</th><th class="p-2">Remarks / Deposit Info</th></tr></thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-gray-700">
+                        <tr v-for="recipient in depositInfoRecipients" :key="recipient.id" class="bg-white dark:bg-gray-900">
+                            <td class="p-2"><div class="font-semibold text-slate-800 dark:text-gray-100">{{ recipient.name }}</div><div class="text-slate-500 dark:text-gray-400">{{ recipient.spas_no }}</div></td>
+                            <td class="p-2">{{ recipient.account_no || '-' }}</td><td class="p-2 text-right font-semibold">{{ formatMoney(recipient.amount) }}</td>
+                            <td class="p-2"><span :class="recipient.status === 'credited' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'">{{ recipient.status === 'credited' ? 'Deposited' : 'Pending' }}</span></td>
+                            <td class="p-2 text-slate-500 dark:text-gray-400"><template v-if="recipient.status === 'credited'">{{ recipient.credited_by || 'Cashier' }}<span v-if="recipient.credited_at"> | {{ recipient.credited_at }}</span></template><template v-else>{{ recipient.remarks || 'No remarks provided' }}</template></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </Dialog>
+
+    <Dialog
         v-model:visible="rejectDialog"
         modal
         header="Return Payroll"
@@ -918,6 +955,7 @@ import {
     IconX,
 } from "@tabler/icons-vue";
 import { router, useForm, usePage } from "@inertiajs/vue3";
+import axios from "axios";
 import { computed, nextTick, ref, watch } from "vue";
 import { route } from "ziggy-js";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
@@ -947,6 +985,11 @@ const removalReasonDialog = ref(false);
 const removalReasonTarget = ref(null);
 const markingForRemovalId = ref(null);
 const savingPayroll = ref(false);
+const depositInfoDialog = ref(false);
+const depositInfoLoading = ref(false);
+const selectedDepositCredit = ref(null);
+const depositInfoRecipients = ref([]);
+const depositInfoSummary = ref({ total: 0, credited: 0, pending: 0, total_amount: 0, credited_amount: 0 });
 
 const details = computed(() => page.props.details);
 const activityLogs = computed(() => details.value?.activity_logs ?? []);
@@ -1047,6 +1090,7 @@ const statusLabel = (status) =>
     ({
         draft: "Draft",
         pending: "Pending",
+        partial: "Partial",
         submitted: "Submitted",
         approved: "Approved",
         rejected: "Rejected",
@@ -1083,7 +1127,25 @@ const showMonthlyCredits = computed(() =>
 const creditStatusClass = (status) =>
     status === "credited"
         ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-        : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
+        : status === "partial"
+            ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+            : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
+
+const openDepositInfo = async (credit) => {
+    if (!details.value?.id || !credit?.month_no) return;
+    selectedDepositCredit.value = credit;
+    depositInfoDialog.value = true;
+    depositInfoLoading.value = true;
+    depositInfoRecipients.value = [];
+
+    try {
+        const response = await axios.get(route("cashier.credits.recipients", { id: details.value.id, month: credit.month_no }));
+        depositInfoRecipients.value = response.data.recipients ?? [];
+        depositInfoSummary.value = response.data.summary ?? depositInfoSummary.value;
+    } finally {
+        depositInfoLoading.value = false;
+    }
+};
 
 const syncPayrollRows = () => {
     payrollRows.value = (page.props.payrollRecipients ?? []).map((row) => ({
