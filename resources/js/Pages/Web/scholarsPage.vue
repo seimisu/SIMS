@@ -308,7 +308,7 @@
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Progress Status</div>
+                            <div class="font-semibold">Scholar Status</div>
                         </div>
                     </template>
                     <template #body="props">

@@ -182,7 +182,7 @@ class SchoolCoordinatorDashboardService
                 'dateRange' => $ranges,
             ],
             'card' => [
-                'active' => Scholars::whereIn('academic_status', [
+                'active' => Scholars::whereScholarStatusIn([
                     'NEW',
                     'ONGOING',
                 ])
@@ -208,7 +208,7 @@ class SchoolCoordinatorDashboardService
                                 //     break;
                         }
                     })->count(),
-                'graduated' => Scholars::where('academic_status', 'GRADUATED')
+                'graduated' => Scholars::whereScholarStatus('GRADUATED')
                     ->whereHas('schoolInfo', function ($schoolInfo) use ($campusId) {
                         $schoolInfo->where('campus_id', $campusId);
                     })
@@ -231,7 +231,7 @@ class SchoolCoordinatorDashboardService
                                 //     break;
                         }
                     })->count(),
-                'issue' => Scholars::whereNotIn('academic_status', [
+                'issue' => Scholars::whereScholarStatusNotIn([
                     'GRADUATED',
                     'NEW',
                     'ONGOING',
@@ -260,7 +260,7 @@ class SchoolCoordinatorDashboardService
                                 //     break;
                         }
                     })->count(),
-                'terminated' => Scholars::where('academic_status', 'TERMINATED')
+                'terminated' => Scholars::whereScholarStatus('TERMINATED')
                     ->whereHas('schoolInfo', function ($schoolInfo) use ($campusId) {
                         $schoolInfo->where('campus_id', $campusId);
                     })

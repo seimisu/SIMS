@@ -5,6 +5,7 @@ namespace App\Services\Scholar\Management;
 use App\Models\ActivityLogs;
 use App\Models\ListStatuses;
 use App\Models\Scholars;
+use App\Support\ScholarStatuses;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -23,10 +24,10 @@ class ScholarManagementUpdateService
             : null;
 
         $statusName = data_get($data, 'status.name') ?? data_get($data, 'status.id');
-        $status = $this->progressStatus($statusName);
+        $status = $this->scholarStatus($statusName);
 
         if (filled($statusName) && ! $status) {
-            throw new \InvalidArgumentException("Status '{$statusName}' was not found as an active progress status.");
+            throw new \InvalidArgumentException("Status '{$statusName}' was not found as an active scholar status.");
         }
 
         $scholar->update([
@@ -202,16 +203,12 @@ class ScholarManagementUpdateService
         ]);
     }
 
-    private function progressStatus(?string $statusName): ?ListStatuses
+    private function scholarStatus(?string $statusName): ?ListStatuses
     {
         if (! filled($statusName)) {
             return null;
         }
 
-        return ListStatuses::where('type', 'progress')
-            ->where('is_active', true)
-            ->where('is_delete', false)
-            ->whereRaw('UPPER(name) = ?', [Str::upper(trim($statusName))])
-            ->first();
+        return ScholarStatuses::find($statusName);
     }
 }

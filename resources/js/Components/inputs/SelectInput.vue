@@ -28,15 +28,24 @@
                 },
                 option: {
                     class: [
-                        '!text-sm dark:!text-gray-400 hover:!text-gray-700',
+                        '!text-sm dark:!text-gray-300 hover:!text-gray-700 dark:hover:!bg-gray-700 dark:hover:!text-white',
                         capitalize ? 'capitalize' : '',
                     ],
                 },
                 overlay: {
                     class: 'dark:!bg-gray-800  dark:!border-gray-700 ',
                 },
+                dropdown: {
+                    class: 'dark:!text-gray-300',
+                },
+                clearIcon: {
+                    class: 'dark:!text-gray-400 dark:hover:!text-gray-200',
+                },
+                filterInput: {
+                    class: 'dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
+                },
                 emptyMessage: {
-                    class: '!text-sm',
+                    class: '!text-sm dark:!text-gray-400',
                 },
             }"
         >

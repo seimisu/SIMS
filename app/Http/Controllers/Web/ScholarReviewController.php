@@ -10,6 +10,7 @@ use App\Models\ActivityLogs;
 use App\Models\ListPrograms;
 use App\Models\ListReferences;
 use App\Models\ListStatuses;
+use App\Support\ScholarStatuses;
 use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
@@ -656,7 +657,7 @@ class ScholarReviewController extends Controller
 
                 if ($normalizedStatus === 'TERMINATED') {
                     Scholars::whereKey($termRecord->scholar_id)->update([
-                        'academic_status' => 'TERMINATED',
+                        ...ScholarStatuses::attributes('terminated'),
                         'updated_at' => now(),
                     ]);
                 }
@@ -943,7 +944,7 @@ class ScholarReviewController extends Controller
                     throw new Exception("Row {$data->row_number}: validated row no longer matches current school, course, curriculum, or address records.");
                 }
 
-                $status = $this->progressStatus($data['status'] ?? null);
+                $status = $this->scholarStatus($data['status'] ?? null);
 
                 $scholars = Scholars::create([
                     'spas_no' => trim($data['spas_no']) ?? null,
@@ -1146,9 +1147,9 @@ class ScholarReviewController extends Controller
             $lookupCache,
             'statuses',
             $data['status'],
-            fn () => $this->progressStatus($data['status']) !== null
+            fn () => $this->scholarStatus($data['status']) !== null
         )) {
-            $errors[] = "Status '{$data['status']}' was not found as an active progress status.";
+            $errors[] = "Status '{$data['status']}' was not found as an active scholar status.";
         }
 
         if (filled($data['scholarship_type'] ?? null) && ! $this->cachedLookupExists(
@@ -1488,17 +1489,13 @@ class ScholarReviewController extends Controller
         return $lookupCache[$bucket][$key];
     }
 
-    private function progressStatus(?string $statusName): ?ListStatuses
+    private function scholarStatus(?string $statusName): ?ListStatuses
     {
         if (! filled($statusName)) {
             return null;
         }
 
-        return ListStatuses::where('type', 'progress')
-            ->where('is_active', true)
-            ->where('is_delete', false)
-            ->whereRaw('UPPER(name) = ?', [Str::upper(trim($statusName))])
-            ->first();
+        return ScholarStatuses::find($statusName);
     }
 
     private function matchedAddress($data): ?array

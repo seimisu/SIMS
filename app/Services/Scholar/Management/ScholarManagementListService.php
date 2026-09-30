@@ -85,7 +85,10 @@ class ScholarManagementListService
                     ->values()
                     ->all();
 
-                $q->whereIn(DB::raw('UPPER(academic_status)'), $statuses);
+                $q->whereHas('status', function ($query) use ($statuses) {
+                    $query->where('type', 'scholar')
+                        ->whereIn(DB::raw('UPPER(name)'), $statuses);
+                });
             })
             ->when($monitoringAcademicYear && $monitoringTermId && $monitoringSubmissionStatus !== 'all', function ($q) use ($monitoringAcademicYear, $monitoringTermId, $monitoringSubmissionStatus) {
                 if ($monitoringSubmissionStatus === 'No Submission') {
@@ -115,8 +118,8 @@ class ScholarManagementListService
                 $monitoringTermRecord = $monitoringTerms->get($q->id);
                 $latestTermRecord = $latestTerms->get($q->id);
                 $schoolInfo = $q->schoolInfo?->first();
-                $progressStatus = Str::upper($q->academic_status ?: 'NEW');
-                $progressStatusOption = $academicStatusOptions->firstWhere('name', $progressStatus);
+                $scholarStatus = Str::upper($q->status?->name ?: $q->academic_status ?: 'NEW');
+                $scholarStatusOption = $academicStatusOptions->firstWhere('name', $scholarStatus);
 
                 return [
                     'id' => Hashids::encode($q->id),
@@ -136,7 +139,7 @@ class ScholarManagementListService
                     'type' => $q->type?->name,
                     'subProgram' => $q->program?->name,
                     'mainProgram' => $q->mainProgram?->name,
-                    'status' => $this->academicStatusMeta($progressStatus, $progressStatusOption),
+                    'status' => $this->academicStatusMeta($scholarStatus, $scholarStatusOption),
                     'submissionStatus' => $this->submissionStatusMeta($monitoringTermRecord?->verification_status),
                     'scholarshipStatus' => $monitoringTermRecord ? $processStatuses->get($monitoringTermRecord->id) : null,
                     'term' => $latestTermRecord?->toArray(),

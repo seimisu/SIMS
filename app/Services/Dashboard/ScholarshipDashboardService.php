@@ -191,7 +191,7 @@ class ScholarshipDashboardService
                     'month' => $asOfMonth,
                     'label' => $asOfDate->format('F Y'),
                     'year' => $asOfYear,
-                    'active' => Scholars::whereNotIn('academic_status', [
+                    'active' => Scholars::whereScholarStatusNotIn([
                             'GRADUATED',
                             'TERMINATED',
                             'WITHDRAWN',
@@ -210,22 +210,22 @@ class ScholarshipDashboardService
                         ->whereNotNull('award_year')
                         ->where('award_year', '<=', $asOfYear)
                         ->count(),
-                    'graduated' => Scholars::where('academic_status', 'GRADUATED')
+                    'graduated' => Scholars::whereScholarStatus('GRADUATED')
                         ->whereNotNull('activated_at')
                         ->whereNotNull('award_year')
                         ->where('award_year', '<=', $asOfYear)
                         ->count(),
                 ],
                 'card' => [
-                    'active' => Scholars::whereNotIn('academic_status', [
+                    'active' => Scholars::whereScholarStatusNotIn([
                         'GRADUATED',
                         'TERMINATED',
                         'WITHDRAWN',
                     ])->count(),
                     'undergraduate' => Scholars::where('type_id', 28)->count(),
                     'jlss' => Scholars::where('type_id', 29)->count(),
-                    'graduated' => Scholars::where('academic_status', 'GRADUATED')->count(),
-                    'issue' => Scholars::whereNotIn('academic_status', [
+                    'graduated' => Scholars::whereScholarStatus('GRADUATED')->count(),
+                    'issue' => Scholars::whereScholarStatusNotIn([
                         'GRADUATED',
                         'NEW',
                         'ONGOING',
@@ -249,7 +249,7 @@ class ScholarshipDashboardService
                                 //     break;
                         }
                     })->count(),
-                    'terminated' => Scholars::where('academic_status', 'TERMINATED')->when($request->filled('filter'), function ($query) use ($request) {
+                    'terminated' => Scholars::whereScholarStatus('TERMINATED')->when($request->filled('filter'), function ($query) use ($request) {
                         switch ($request->input('filter')) {
                             case 'year':
                                 $query->whereYear('activated_at', now()->year);

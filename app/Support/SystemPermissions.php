@@ -84,7 +84,7 @@ class SystemPermissions
             'scholars.landbank.view-sensitive',
             'payroll.view',
             'payroll.export',
-            'payroll.approve',
+            'payroll.verify',
             'payroll.return',
             'payroll.recipients.manage-removal',
             'documents.view',
@@ -198,12 +198,17 @@ class SystemPermissions
         'landbank.request' => 'landbank-requests.view',
 
         'geolocation.store' => 'geolocation.upload',
+        'stipends' => 'payroll.view',
+        'cashier.credits' => 'payroll.credits.view',
+        'stipends.import-historical.preview' => 'payroll.update',
+        'stipends.import-historical' => 'payroll.update',
         'stipends.payroll.update' => 'payroll.update',
         'stipends.recipients.mark-for-removal' => 'payroll.recipients.manage-removal',
         'stipends.recipients.cancel-removal' => 'payroll.recipients.manage-removal',
         'cashier.credits.update' => 'payroll.credits.update',
         'stipends.export' => 'payroll.export',
         'stipends.update' => 'payroll.view',
+        'stipends.destroy' => 'payroll.delete',
 
         'documents.store' => 'documents.create',
         'documents.update' => 'documents.update',
@@ -232,6 +237,10 @@ class SystemPermissions
         'payroll.update' => [
             'label' => 'Payroll - Edit',
             'description' => 'Allows editing draft and returned payroll records.',
+        ],
+        'payroll.verify' => [
+            'label' => 'Payroll - Verify',
+            'description' => 'Allows scholarship staff to forward reviewed payroll to the scholarship coordinator.',
         ],
         'payroll.return' => [
             'label' => 'Payroll - Reject',
@@ -492,7 +501,8 @@ class SystemPermissions
             'canEdit' => $this->canEditPayroll($user, $batch, $status),
             'canSubmit' => $this->canSubmitPayroll($user, $batch, $status),
             'canReview' => $this->canReviewPayroll($user, $status),
-            'canApprove' => $this->can($user, 'payroll.approve') && $this->canReviewPayroll($user, $status),
+            'canVerify' => $this->canVerifyPayroll($user, $status),
+            'canApprove' => $this->canApprovePayroll($user, $status),
             'canReject' => $this->can($user, 'payroll.return') && $this->canReviewPayroll($user, $status),
             'canViewGeneratedExcel' => $canViewGeneratedExcel,
             'canDelete' => false,
@@ -517,12 +527,35 @@ class SystemPermissions
 
     public function canReviewPayroll(User $user, string $status): bool
     {
-        return (
+        $hasReviewPermission = (
             $this->can($user, 'payroll.approve')
+            || $this->can($user, 'payroll.verify')
             || $this->can($user, 'payroll.return')
             || $this->can($user, 'payroll.recipients.manage-removal')
-        )
+        );
+
+        if (! $hasReviewPermission) {
+            return false;
+        }
+
+        if ($this->isAdministrator($user)) {
+            return in_array($status, ['submitted_payroll', 'verified_payroll'], true);
+        }
+
+        return ($this->hasRole($user, 'scholarship staff') && $status === 'submitted_payroll')
+            || ($this->hasRole($user, 'scholarship coordinator') && $status === 'verified_payroll');
+    }
+
+    public function canVerifyPayroll(User $user, string $status): bool
+    {
+        return $this->can($user, 'payroll.verify')
             && $status === 'submitted_payroll';
+    }
+
+    public function canApprovePayroll(User $user, string $status): bool
+    {
+        return $this->can($user, 'payroll.approve')
+            && $status === 'verified_payroll';
     }
 
     private function canAccessPayrollRegion(User $user, object $batch): bool

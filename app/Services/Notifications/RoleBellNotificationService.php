@@ -3,8 +3,8 @@
 namespace App\Services\Notifications;
 
 use App\Models\ListAgencies;
-use App\Models\ScholarTerm;
 use App\Models\Scholars;
+use App\Models\ScholarTerm;
 use App\Models\studentLandbankRequest;
 use App\Models\StudentProfileRequest;
 use App\Models\User;
@@ -68,7 +68,12 @@ class RoleBellNotificationService
 
     public function notifyScholarshipStaff(string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId): void
     {
-        $this->notifyUsers($this->scholarshipUsers(), compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
+        $this->notifyUsers($this->scholarshipStaffUsers(), compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
+    }
+
+    public function notifyScholarshipCoordinators(string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId): void
+    {
+        $this->notifyUsers($this->scholarshipCoordinatorUsers(), compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
     }
 
     public function notifyRegionalPayrollResult(string $region, string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId): void
@@ -160,6 +165,20 @@ class RoleBellNotificationService
     {
         return User::with('role')
             ->whereHas('role', fn ($role) => $role->whereRaw('LOWER(name) IN (?, ?)', ['scholarship staff', 'scholarship coordinator']))
+            ->get();
+    }
+
+    private function scholarshipStaffUsers(): EloquentCollection
+    {
+        return User::with('role')
+            ->whereHas('role', fn ($role) => $role->whereRaw('LOWER(name) = ?', ['scholarship staff']))
+            ->get();
+    }
+
+    private function scholarshipCoordinatorUsers(): EloquentCollection
+    {
+        return User::with('role')
+            ->whereHas('role', fn ($role) => $role->whereRaw('LOWER(name) = ?', ['scholarship coordinator']))
             ->get();
     }
 

@@ -24,6 +24,10 @@ class ScholarLandbankRequestService
             ];
         }
 
+        if ($type === 'accept' && $scholar->isBlockedFromServices()) {
+            return $this->ineligibleResponse();
+        }
+
         if ($type === 'accept') {
             $this->approve($scholar, $data);
         } else {
@@ -50,6 +54,15 @@ class ScholarLandbankRequestService
             'message' => $type === 'accept'
                 ? 'The Landbank change request has been approved.'
                 : 'The Landbank change request has been rejected.',
+        ];
+    }
+
+    private function ineligibleResponse(): array
+    {
+        return [
+            'status' => 'error',
+            'title' => 'Scholar ineligible',
+            'message' => 'The scholar status does not allow Landbank change requests.',
         ];
     }
 

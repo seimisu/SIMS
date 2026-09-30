@@ -5,6 +5,7 @@ namespace App\Services\Payroll;
 use App\Models\Batches;
 use App\Models\ListStatuses;
 use App\Models\Scholars;
+use App\Support\ScholarStatuses;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -37,8 +38,8 @@ class PayrollScholarEligibilityService
 
     public function canJoinPayroll(Scholars $scholar): bool
     {
-        $eligibleStatusNames = ['NEW', 'ONGOING', 'GRADUATING'];
-        $eligibleStatusIds = ListStatuses::where('type', 'progress')
+        $eligibleStatusNames = ScholarStatuses::ELIGIBLE_FOR_PAYROLL;
+        $eligibleStatusIds = ListStatuses::where('type', 'scholar')
             ->whereIn(DB::raw('UPPER(name)'), $eligibleStatusNames)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)

@@ -62,10 +62,11 @@ class RegionalDashboardService
             $payrollLabels = [
                 'draft' => 'Draft',
                 'submitted_payroll' => 'Submitted',
+                'verified_payroll' => 'For Verification',
                 'rejected_payroll' => 'Returned',
                 'approved_payroll' => 'Approved',
             ];
-            $payrollSummary = collect(['draft', 'submitted_payroll', 'rejected_payroll', 'approved_payroll'])
+            $payrollSummary = collect(['draft', 'submitted_payroll', 'verified_payroll', 'rejected_payroll', 'approved_payroll'])
                 ->mapWithKeys(fn ($status) => [$status => $payrollBatches->filter(fn ($batch) => $payrollStatus($batch) === $status)->count()]);
             $payrollQueue = $payrollBatches
                 ->filter(fn ($batch) => in_array($payrollStatus($batch), ['draft', 'rejected_payroll'], true))

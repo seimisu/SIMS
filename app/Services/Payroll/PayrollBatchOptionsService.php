@@ -51,6 +51,7 @@ class PayrollBatchOptionsService
         return [
             ['id' => 'draft', 'name' => 'Draft'],
             ['id' => 'submitted_payroll', 'name' => 'Submitted Payroll'],
+            ['id' => 'verified_payroll', 'name' => 'For Verification'],
             ['id' => 'rejected_payroll', 'name' => 'Returned Payroll'],
             ['id' => 'approved_payroll', 'name' => 'Approved Payroll'],
         ];

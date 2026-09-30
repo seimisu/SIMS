@@ -196,7 +196,6 @@ Route::middleware(['auth', 'web', 'permission'])->group(function () {
 });
 Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('cashier/credits', [CashierCreditController::class, 'index'])->name('cashier.credits');
     Route::get('roles', [RoleController::class, 'index'])->name('roles');
     Route::get('routes', [RouteController::class, 'index'])->name('routes');
     Route::get('users', [UserController::class, 'index'])->name('users');
@@ -215,10 +214,14 @@ Route::middleware(['auth', 'web', 'role'])->group(function () {
     Route::get('scholar-landbank-requests', [ScholarSubmissionController::class, 'landbankRequests'])->name('scholar-landbank-requests');
     Route::get('programs', [programController::class, 'index'])->name('programs');
     Route::get('events', [eventController::class, 'index'])->name('events');
-    Route::get('stipends', [PayrollController::class, 'index'])->name('stipends');
     Route::get('documents', [DocumentController::class, 'index'])->name('documents');
     Route::get('schoolCoordinator', [SchoolCoordinatorController::class, 'index'])->name('schoolCoordinator');
     Route::get('video-resources', [VideoResourceController::class, 'index'])->name('video-resources');
     Route::get('geolocation', [GeolocationController::class, 'index']);
     Route::get('scholar-review', [ScholarReviewController::class, 'index'])->name('review');
+});
+
+Route::middleware(['auth', 'web', 'permission'])->group(function () {
+    Route::get('cashier/credits', [CashierCreditController::class, 'index'])->name('cashier.credits');
+    Route::get('stipends', [PayrollController::class, 'index'])->name('stipends');
 });

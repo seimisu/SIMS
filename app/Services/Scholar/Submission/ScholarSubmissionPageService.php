@@ -317,7 +317,13 @@ class ScholarSubmissionPageService
 
     private function standingOptions()
     {
-        $options = ListStatuses::whereIn('type', ['standing', 'ongoing'])
+        return ListStatuses::where(function ($query) {
+                $query->where('type', 'standing')
+                    ->orWhere(function ($query) {
+                        $query->where('type', 'scholar')
+                            ->whereRaw("UPPER(name) = 'TERMINATED'");
+                    });
+            })
             ->where('is_active', true)
             ->where('is_delete', false)
             ->orderBy('id')
@@ -326,13 +332,6 @@ class ScholarSubmissionPageService
                 'id' => Str::upper($status->name),
                 'name' => Str::upper($status->name),
             ])
-            ->values();
-
-        return $options
-            ->concat([
-                ['id' => 'TERMINATED', 'name' => 'TERMINATED'],
-            ])
-            ->unique(fn ($status) => Str::upper($status['name']))
             ->values();
     }
 

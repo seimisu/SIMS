@@ -2,8 +2,8 @@
 
 namespace App\Services\Payroll;
 
-use App\Models\BatchRecipients;
 use App\Models\Batches;
+use App\Models\BatchRecipients;
 use App\Models\PayrollBatchActivityLog;
 use App\Support\SystemPermissions;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +53,7 @@ class PayrollActivityService
                 'scholar_moved_from_returned_payroll',
                 'payroll_saved',
                 'payroll_submitted',
+                'payroll_verified',
                 'payroll_returned',
                 'payroll_month_credited',
                 'scholar_removed',
@@ -60,6 +61,7 @@ class PayrollActivityService
         } elseif ($permissions->isScholarshipReviewer($user)) {
             $query->whereIn('action', [
                 'payroll_submitted',
+                'payroll_verified',
                 'payroll_returned',
                 'payroll_approved',
                 'scholar_marked_for_removal',
@@ -83,6 +85,7 @@ class PayrollActivityService
             'scholars_added' => 'Scholars added',
             'payroll_saved' => 'Payroll saved',
             'payroll_submitted' => 'Payroll submitted',
+            'payroll_verified' => 'Payroll verified by scholarship staff',
             'payroll_approved' => 'Payroll approved',
             'payroll_imported' => 'Historical payroll imported',
             'payroll_returned' => 'Payroll returned',

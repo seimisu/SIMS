@@ -7,9 +7,7 @@ use App\Services\Notifications\RoleBellNotificationService;
 
 class PayrollNotificationService
 {
-    public function __construct(private readonly RoleBellNotificationService $notifications)
-    {
-    }
+    public function __construct(private readonly RoleBellNotificationService $notifications) {}
 
     public function sendStatusChange(Batches $batch, string $status): void
     {
@@ -20,6 +18,17 @@ class PayrollNotificationService
                 'payroll_submitted',
                 'Payroll submitted',
                 "{$batchName} was submitted for review.",
+                '/stipends',
+                'batches',
+                $batch->id
+            );
+        }
+
+        if ($status === 'verified_payroll') {
+            $this->notifications->notifyScholarshipCoordinators(
+                'payroll_verified',
+                'Payroll ready for final verification',
+                "{$batchName} was verified by scholarship staff.",
                 '/stipends',
                 'batches',
                 $batch->id

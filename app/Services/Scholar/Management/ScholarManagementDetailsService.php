@@ -55,10 +55,10 @@ class ScholarManagementDetailsService
                 $scholar?->profile?->mname,
                 $scholar?->profile?->suffix,
             ])->filter()->implode(' ')),
-            'academic_status' => Str::upper($scholar?->academic_status ?? 'NEW'),
+            'academic_status' => Str::upper($scholar?->status?->name ?? $scholar?->academic_status ?? 'NEW'),
             'status' => [
-                'id' => Str::upper($scholar?->academic_status ?? 'NEW'),
-                'name' => Str::upper($scholar?->academic_status ?? 'NEW'),
+                'id' => Str::upper($scholar?->status?->name ?? $scholar?->academic_status ?? 'NEW'),
+                'name' => Str::upper($scholar?->status?->name ?? $scholar?->academic_status ?? 'NEW'),
             ],
             'address' => [
                 'address' => $scholar?->address?->address,

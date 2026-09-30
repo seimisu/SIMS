@@ -29,6 +29,10 @@ class ScholarProfileRequestService
             ];
         }
 
+        if ($type === 'accept' && $scholar->isBlockedFromServices()) {
+            return $this->ineligibleResponse();
+        }
+
         if ($type === 'accept') {
             $this->approve($scholar, $data);
         } else {
@@ -55,6 +59,15 @@ class ScholarProfileRequestService
             'message' => $type === 'accept'
                 ? 'The scholar information change request has been approved.'
                 : 'The scholar information change request has been rejected.',
+        ];
+    }
+
+    private function ineligibleResponse(): array
+    {
+        return [
+            'status' => 'error',
+            'title' => 'Scholar ineligible',
+            'message' => 'The scholar status does not allow profile change requests.',
         ];
     }
 

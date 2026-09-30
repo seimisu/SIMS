@@ -154,7 +154,7 @@ class ScholarManagementOptionsService
     private function academicStatusOptions()
     {
         return ListStatuses::with('color:id,background_color,text_color')
-            ->where('type', 'progress')
+            ->where('type', 'scholar')
             ->where('is_active', true)
             ->where('is_delete', false)
             ->orderBy('id')

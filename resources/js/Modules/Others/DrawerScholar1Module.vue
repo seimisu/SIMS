@@ -681,7 +681,7 @@
                                             format-date="yy"
                                         />
                                         <SelectInput
-                                            label="Progress Status"
+                                            label="Scholar Status"
                                             v-model="personalInfo.status"
                                             :disable="!editBtn.info"
                                             class="capitalize"
