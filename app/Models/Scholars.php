@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Scholars extends Model
 {
@@ -60,6 +62,38 @@ class Scholars extends Model
     public function status()
     {
         return $this->belongsTo(ListStatuses::class, 'status_id');
+    }
+
+    public function scopeWhereScholarStatus($query, string $status)
+    {
+        return $query->whereHas('status', fn ($statusQuery) => $statusQuery
+            ->where('type', 'scholar')
+            ->whereRaw('UPPER(name) = ?', [Str::upper(trim($status))]));
+    }
+
+    public function scopeWhereScholarStatusIn($query, array $statuses)
+    {
+        $names = collect($statuses)->map(fn ($status) => Str::upper(trim($status)))->all();
+
+        return $query->whereHas('status', fn ($statusQuery) => $statusQuery
+            ->where('type', 'scholar')
+            ->whereIn(DB::raw('UPPER(name)'), $names));
+    }
+
+    public function scopeWhereScholarStatusNotIn($query, array $statuses)
+    {
+        $names = collect($statuses)->map(fn ($status) => Str::upper(trim($status)))->all();
+
+        return $query->whereHas('status', fn ($statusQuery) => $statusQuery
+            ->where('type', 'scholar')
+            ->whereNotIn(DB::raw('UPPER(name)'), $names));
+    }
+
+    public function isBlockedFromServices(): bool
+    {
+        return \App\Support\ScholarStatuses::blocksServices(
+            $this->status?->name ?? $this->academic_status
+        );
     }
 
     public function program()

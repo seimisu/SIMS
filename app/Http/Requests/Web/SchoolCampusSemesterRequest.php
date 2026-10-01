@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Web;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SchoolCampusSemesterRequest extends FormRequest
 {
@@ -23,24 +24,31 @@ class SchoolCampusSemesterRequest extends FormRequest
     {
         return [
             'campusId' => ['required', 'exists:school_campuses,id'],
-            'semester' => ['array'],
-            'semester.*.id' => ['nullable'],
-            'semester.*.semesterId' => ['required'],
-            'semester.*.startDate' => ['required', 'date'],
-            'semester.*.endDate' => ['required', 'date'],
-            'semester.*.submissionDate' => ['required', 'date'],
-            'semester.*.startDateFormatted' => ['nullable', 'string'],
-            'semester.*.endDateFormatted' => ['nullable', 'string'],
-            'semester.*.submissionDateFormatted' => ['nullable', 'string'],
+            'semesterId' => ['required', 'exists:list_references,id'],
+            'schoolYear' => [
+                'required',
+                'regex:/^(\d{4})-(\d{4})$/',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    [$start, $end] = array_map('intval', explode('-', $value));
+                    if ($end !== $start + 1) {
+                        $fail('The academic year must contain consecutive years, for example 2026-2027.');
+                    }
+                },
+                Rule::unique('school_campus_semesters', 'school_year')
+                    ->where(fn ($query) => $query
+                        ->where('campus_id', $this->input('campusId'))
+                        ->where('semester_id', $this->input('semesterId'))
+                        ->where('is_delete', false)),
+            ],
+            'submissionDate' => ['required', 'date'],
+            'status' => ['required', Rule::in(['draft', 'open'])],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'semesters.*.startDate.required' => 'Each semester must have a start date.',
-            'semesters.*.endDate.required' => 'Each semester must have an end date.',
-            'semesters.*.submissionDate.required' => 'Each semester must have an suubmission date.',
+            'schoolYear.regex' => 'Use the academic year format YYYY-YYYY, for example 2026-2027.',
         ];
     }
 
@@ -48,10 +56,9 @@ class SchoolCampusSemesterRequest extends FormRequest
     {
         return [
             'campusId' => 'campus',
-            'semester.*.semesterId' => 'semester',
-            'semester.*.startDate' =>  'start date',
-            'semester.*.endDate' => 'end date',
-            'semester.*.submissionDate' => 'submission date',
+            'semesterId' => 'semester',
+            'schoolYear' => 'academic year',
+            'submissionDate' => 'submission deadline',
         ];
     }
 }

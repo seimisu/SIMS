@@ -2,30 +2,40 @@
 
     <Head title="Review" />
     <AuthLayout>
-        <div class="flex flex-col w-full h-full gap-5">
-            <div class="flex flex-col lg:flex-row items-center space-x-0 gap-4">
-                <HeaderModule title="Scholar Import Review"
-                    description="Review uploaded scholar Excel files, check validation issues, and publish fully valid import batches." />
-                <div class="flex items-center gap-2">
-                    <DefaultButton size="small" label="Import Excel" :icon="IconPlus"
-                        @click="dialogUploadScholar = true" class-name="!rounded-xl !text-sm !px-4" raised />
+        <div class="import-review-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="flex shrink-0 flex-col gap-4 border-b border-slate-200 pb-4 dark:border-gray-700 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex min-w-0 items-start gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                        <IconFileSpreadsheet :size="21" stroke-width="1.8" />
+                    </div>
+                    <HeaderModule title="Scholar Import Review"
+                        description="Review validation results and publish eligible scholar import batches." />
                 </div>
+                <DefaultButton
+                    size="small"
+                    label="Import Excel"
+                    severity="secondary"
+                    outlined
+                    :icon="IconPlus"
+                    class="self-start lg:self-auto"
+                    @click="dialogUploadScholar = true"
+                />
             </div>
-            <div class="flex-1 flex flex-col gap-2">
+            <div class="flex min-h-0 flex-1 flex-col gap-2">
                 <DefaultSelectionTable :items="page.props.files.data" :pagination="{
                     total: page.props.files.total,
                     perPage: page.props.files.per_page,
                     currentPage: page.props.files.current_page,
-                }" @selected="selectScholar" :loading="loading.table" @paginate="loadPage">
+                }" class="min-h-0 flex-1" scrollable scroll-height="flex" @selected="selectScholar" :loading="loading.table" @paginate="loadPage">
                     <Column header="Filename">
                         <template #body="props">
-                            <div class="flex items-start justify-between gap-3">
+                            <div class="flex min-w-52 items-start justify-between gap-3 py-1">
                                 <div class="flex flex-col">
-                                    <div class="font-medium text-gray-800">
+                                    <div class="font-medium text-gray-800 dark:text-gray-100">
                                         {{ props.data.filename }}
                                     </div>
 
-                                    <div class="text-xs text-gray-400">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
                                         Uploaded file
                                     </div>
                                 </div>
@@ -35,8 +45,8 @@
                     <Column header="Regional Office">
                         <template #body="props">
                             <div class="flex items-center">
-                                <span class="px-3 py-1 text-xs font-medium rounded-full
-                       bg-indigo-50 text-indigo-600 border border-indigo-200">
+                                <span class="rounded-full border px-2.5 py-1 text-xs font-medium
+                       bg-indigo-50 text-indigo-600 border border-indigo-200 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">
                                     {{ props.data.region_office ?? 'N/A' }}
                                 </span>
                             </div>
@@ -45,9 +55,8 @@
                     <Column header="Created By">
                         <template #body="props">
                             <div class="flex items-center justify-between gap-3">
-                                <!-- Creator Info -->
                                 <div class="flex flex-col">
-                                    <div class="text-sm font-medium text-gray-800">
+                                    <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
                                         {{ props.data.created_by }}
                                     </div>
 
@@ -63,7 +72,7 @@
                     <Column>
                         <template #header>
                             <div class="flex w-full justify-center">
-                                <div class="font-semibold text-gray-700">
+                                <div class="font-semibold text-gray-700 dark:text-gray-200">
                                     Status
                                 </div>
                             </div>
@@ -71,28 +80,26 @@
 
                         <template #body="props">
                             <div class="flex w-full justify-center">
-                                <!-- Pending -->
                                 <div v-if="props.data.status === 'pending'"
-                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs font-medium capitalize">
+                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs font-medium capitalize dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-200">
                                     <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
                                     Pending
                                 </div>
 
                                 <div v-else-if="props.data.status === 'Needs Correction'"
-                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-medium dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
                                     <span class="w-2 h-2 rounded-full bg-red-500"></span>
                                     Needs Correction
                                 </div>
 
                                 <div v-else-if="props.data.status === 'Ready'"
-                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium">
+                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-xs font-medium dark:border-green-700 dark:bg-green-900/30 dark:text-green-200">
                                     <span class="w-2 h-2 rounded-full bg-green-500"></span>
                                     Ready
                                 </div>
 
-                                <!-- Completed -->
                                 <div v-else-if="props.data.status === 'Completed'"
-                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+                                    class="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
                                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                                     Completed
                                 </div>
@@ -102,7 +109,7 @@
                     <Column>
                         <template #header>
                             <div class="flex w-full justify-center">
-                                <div class="font-semibold text-gray-700">
+                                <div class="font-semibold text-gray-700 dark:text-gray-200">
                                     Actions
                                 </div>
                             </div>
@@ -110,14 +117,14 @@
                         <template #body="props">
                             <div class="flex justify-center gap-2" @click.stop>
                                 <a :href="props.data.file_url" download
-                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-600 transition hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-900/50"
                                     title="Download uploaded file">
                                     <IconDownload size="16" />
                                 </a>
                                 <button
                                     v-if="(props.data.status || '').toLowerCase() !== 'completed'"
                                     type="button"
-                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
+                                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-200 dark:hover:bg-rose-900/50"
                                     title="Delete import batch"
                                     @click.stop="deleteBatch(props.data)"
                                 >
@@ -144,6 +151,7 @@ import DrawerScholarVerificationModule from "../../Modules/Others/DrawerScholarV
 import {
     IconCalendar,
     IconDownload,
+    IconFileSpreadsheet,
     IconPlus,
     IconTrash,
 
@@ -227,3 +235,15 @@ const deleteBatch = (file) => {
     );
 };
 </script>
+
+<style scoped>
+:global(.dark .import-review-page .p-datatable-header-cell),
+:global(.dark .import-review-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.import-review-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+</style>

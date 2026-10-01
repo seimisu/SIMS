@@ -3,10 +3,10 @@
         v-model:visible="modelValue"
         position="full"
         :pt="{
-            root: 'dark:!bg-gray-900 dark:!text-gray-100',
-            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
-            content: '!p-3 dark:!bg-gray-900 dark:!text-gray-100',
-            footer: 'dark:!bg-gray-900',
+            root: '!bg-white !text-slate-800 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 !bg-white border-gray-300 border-dashed !text-slate-800 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-3 !bg-white !text-slate-800 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: '!bg-white dark:!bg-gray-900',
         }"
     >
         <template #header>
@@ -28,8 +28,30 @@
 
         <template #default>
             <div class="flex flex-col w-full h-full gap-3">
+                <div class="grid shrink-0 grid-cols-4 overflow-hidden rounded border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <div
+                        v-for="(step, index) in workflowSteps"
+                        :key="step.status"
+                        class="flex min-w-0 items-center gap-2 border-r border-slate-200 px-3 py-2 last:border-r-0 dark:border-gray-700"
+                    >
+                        <span
+                            :class="[
+                                index <= workflowStage ? 'bg-blue-600 text-white dark:bg-blue-500' : 'bg-slate-100 text-slate-400 dark:bg-gray-700 dark:text-gray-400',
+                                'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold',
+                            ]"
+                        >
+                            {{ index + 1 }}
+                        </span>
+                        <span
+                            :class="index <= workflowStage ? 'text-slate-700 dark:text-gray-100' : 'text-slate-400 dark:text-gray-500'"
+                            class="min-w-0 truncate text-[11px] font-medium"
+                        >
+                            {{ step.label }}
+                        </span>
+                    </div>
+                </div>
                 <Tabs v-model:value="activeTab" class="flex-1 flex flex-col min-h-0 compact-payroll-tabs">
-                    <TabList class="!mb-2 dark:!bg-gray-800">
+                    <TabList class="!mb-2 !bg-white dark:!bg-gray-900">
                         <Tab value="payroll">
                             <span class="inline-flex items-center gap-1.5">
                                 <IconFileSpreadsheet :size="15" />
@@ -44,7 +66,7 @@
                         </Tab>
                     </TabList>
 
-                    <TabPanels class="flex-1 min-h-0 !px-0 dark:!bg-gray-900">
+                    <TabPanels class="flex-1 min-h-0 !bg-white !px-0 dark:!bg-gray-900">
                         <TabPanel value="payroll" class="h-full">
                             <div class="flex flex-col h-full gap-2">
                                 <div class="flex items-center justify-between gap-2">
@@ -127,7 +149,8 @@
                                     <div
                                         v-for="credit in monthlyCredits"
                                         :key="credit.month_no"
-                                        class="flex min-w-0 flex-col gap-2 rounded border border-slate-200 bg-white p-2 dark:border-gray-600 dark:bg-gray-900"
+                                        class="flex min-w-0 cursor-pointer flex-col gap-2 rounded border border-slate-200 bg-white p-2 transition hover:border-blue-300 hover:bg-blue-50/40 dark:border-gray-600 dark:bg-gray-900 dark:hover:border-blue-700 dark:hover:bg-gray-800"
+                                        @click="openDepositInfo(credit)"
                                     >
                                         <div class="flex items-start justify-between gap-2">
                                             <div class="min-w-0">
@@ -148,11 +171,10 @@
                                             </span>
                                         </div>
                                         <div
-                                            v-if="credit.status === 'credited'"
+                                            v-if="credit.recipient_count > 0"
                                             class="text-[11px] leading-4 text-slate-500 dark:text-gray-400"
                                         >
-                                            {{ credit.credited_by || "Cashier" }}
-                                            <span v-if="credit.credited_at"> | {{ credit.credited_at }}</span>
+                                            {{ credit.progress_label }} deposited
                                         </div>
                                     </div>
                                 </div>
@@ -302,8 +324,8 @@
                                                                 tooltip="View remarks"
                                                                 :class-name="
                                                                     row.is_moved_from_returned_payroll
-                                                                        ? '!text-amber-600 hover:!bg-amber-50'
-                                                                        : '!text-amber-600 hover:!bg-amber-50'
+                                                                        ? '!text-amber-600 hover:!bg-amber-50 dark:!text-amber-300 dark:hover:!bg-amber-900/30'
+                                                                        : '!text-amber-600 hover:!bg-amber-50 dark:!text-amber-300 dark:hover:!bg-amber-900/30'
                                                                 "
                                                                 @click="openRemovalReasonDialog(row)"
                                                             />
@@ -488,7 +510,7 @@
                                         </div>
                                     </div>
                                     <div
-                                        v-if="batchPermissions.canReject || batchPermissions.canApprove"
+                                        v-if="batchPermissions.canReject || batchPermissions.canVerify || batchPermissions.canApprove"
                                         class="flex flex-col items-end gap-2 lg:pl-3"
                                     >
                                         <div class="flex flex-wrap justify-end gap-2">
@@ -501,6 +523,16 @@
                                                 :icon="IconX"
                                                 :loading="statusForm.processing"
                                                 @click="openRejectDialog"
+                                            />
+                                            <DefaultButton
+                                                v-if="batchPermissions.canVerify"
+                                                size="small"
+                                                label="Verify Payroll"
+                                                severity="success"
+                                                :icon="IconChecks"
+                                                :loading="statusForm.processing"
+                                                :disabled="statusForm.processing || hasMarkedRecipientsForRemoval"
+                                                @click="updateBatchStatus('verified_payroll')"
                                             />
                                             <DefaultButton
                                                 v-if="batchPermissions.canApprove"
@@ -576,10 +608,55 @@
     </Drawer>
 
     <Dialog
+        v-model:visible="depositInfoDialog"
+        modal
+        :header="`${selectedDepositCredit?.label ?? 'Month'} Deposit Information`"
+        :style="{ width: 'min(68rem, 96vw)' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
+    >
+        <div class="space-y-3 text-sm text-slate-700 dark:text-gray-200">
+            <div class="grid grid-cols-2 gap-2 rounded border border-slate-200 bg-slate-50 p-3 dark:border-gray-700 dark:bg-gray-800 md:grid-cols-4">
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Deposited</div><div class="font-semibold">{{ depositInfoSummary.credited }} / {{ depositInfoSummary.total }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Pending</div><div class="font-semibold">{{ depositInfoSummary.pending }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Deposited amount</div><div class="font-semibold">PHP {{ formatMoney(depositInfoSummary.credited_amount) }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Payroll amount</div><div class="font-semibold">PHP {{ formatMoney(depositInfoSummary.total_amount) }}</div></div>
+            </div>
+            <div v-if="depositInfoLoading" class="py-10 text-center text-slate-500 dark:text-gray-400">Loading deposit information...</div>
+            <div v-else class="max-h-[55vh] overflow-auto rounded border border-slate-200 dark:border-gray-700">
+                <table class="w-full min-w-[760px] text-left text-xs">
+                    <thead class="sticky top-0 bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-200"><tr><th class="p-2">Scholar</th><th class="p-2">Account</th><th class="p-2 text-right">Amount</th><th class="p-2">Status</th><th class="p-2">Remarks / Deposit Info</th></tr></thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-gray-700">
+                        <tr v-for="recipient in depositInfoRecipients" :key="recipient.id" class="bg-white dark:bg-gray-900">
+                            <td class="p-2"><div class="font-semibold text-slate-800 dark:text-gray-100">{{ recipient.name }}</div><div class="text-slate-500 dark:text-gray-400">{{ recipient.spas_no }}</div></td>
+                            <td class="p-2">{{ recipient.account_no || '-' }}</td><td class="p-2 text-right font-semibold">{{ formatMoney(recipient.amount) }}</td>
+                            <td class="p-2"><span :class="recipient.status === 'credited' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'">{{ recipient.status === 'credited' ? 'Deposited' : 'Pending' }}</span></td>
+                            <td class="p-2 text-slate-500 dark:text-gray-400"><template v-if="recipient.status === 'credited'">{{ recipient.credited_by || 'Cashier' }}<span v-if="recipient.credited_at"> | {{ recipient.credited_at }}</span></template><template v-else>{{ recipient.remarks || 'No remarks provided' }}</template></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </Dialog>
+
+    <Dialog
         v-model:visible="rejectDialog"
         modal
         header="Return Payroll"
         :style="{ width: '32rem' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
     >
         <div class="flex flex-col gap-2">
             <label class="text-sm font-medium" for="reject-remarks">Remarks</label>
@@ -621,9 +698,12 @@
         header="Removal Remarks"
         class="w-[92vw] max-w-[480px]"
         :pt="{
-            header: '!px-5 !pt-4 !pb-2',
-            content: '!px-5 !py-2',
-            footer: '!px-5 !pt-2 !pb-4',
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: '!px-5 !pt-4 !pb-2 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: '!px-5 !py-2 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: '!px-5 !pt-2 !pb-4 dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
         }"
     >
         <div v-if="removalReasonTarget" class="space-y-3 text-sm text-slate-700 dark:text-gray-200">
@@ -640,8 +720,8 @@
             <div
                 :class="[
                     removalReasonTarget.is_moved_from_returned_payroll
-                        ? 'border-amber-200 bg-amber-50 text-amber-900'
-                        : 'border-amber-200 bg-amber-50 text-amber-900',
+                        ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                        : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
                     'rounded border px-3 py-2 text-sm',
                 ]"
             >
@@ -681,9 +761,12 @@
         header="For Removal"
         :style="{ width: '32rem' }"
         :pt="{
-            header: '!px-5 !pt-4 !pb-2',
-            content: '!px-5 !py-2',
-            footer: '!px-5 !pt-2 !pb-4',
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: '!px-5 !pt-4 !pb-2 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: '!px-5 !py-2 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: '!px-5 !pt-2 !pb-4 dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
         }"
     >
         <div class="flex flex-col gap-3">
@@ -872,6 +955,7 @@ import {
     IconX,
 } from "@tabler/icons-vue";
 import { router, useForm, usePage } from "@inertiajs/vue3";
+import axios from "axios";
 import { computed, nextTick, ref, watch } from "vue";
 import { route } from "ziggy-js";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
@@ -901,6 +985,11 @@ const removalReasonDialog = ref(false);
 const removalReasonTarget = ref(null);
 const markingForRemovalId = ref(null);
 const savingPayroll = ref(false);
+const depositInfoDialog = ref(false);
+const depositInfoLoading = ref(false);
+const selectedDepositCredit = ref(null);
+const depositInfoRecipients = ref([]);
+const depositInfoSummary = ref({ total: 0, credited: 0, pending: 0, total_amount: 0, credited_amount: 0 });
 
 const details = computed(() => page.props.details);
 const activityLogs = computed(() => details.value?.activity_logs ?? []);
@@ -918,6 +1007,7 @@ const hasPayrollFooter = computed(() =>
     hasGeneratedExcelFile.value ||
     hasReturnRemarks.value ||
     batchPermissions.value.canReject ||
+    batchPermissions.value.canVerify ||
     batchPermissions.value.canApprove,
 );
 const payrollForm = useForm({
@@ -940,6 +1030,7 @@ const batchPermissions = computed(
             canEdit: false,
             canSubmit: false,
             canReview: false,
+            canVerify: false,
             canApprove: false,
             canReject: false,
             canViewGeneratedExcel: false,
@@ -955,7 +1046,7 @@ const canExportPayroll = computed(() =>
 const canMarkRecipientsForRemoval = computed(
     () =>
         batchPermissions.value.canReject &&
-        details.value?.status === "submitted_payroll",
+        ["submitted_payroll", "verified_payroll"].includes(details.value?.status),
 );
 const showRecipientActionColumn = computed(
     () => canMarkRecipientsForRemoval.value || movedPayrollRows.value.length > 0,
@@ -977,6 +1068,10 @@ const statusMeta = computed(() => {
             label: "Submitted Payroll",
             class: "bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800",
         },
+        verified_payroll: {
+            label: "For Verification",
+            class: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800",
+        },
         rejected_payroll: {
             label: "Returned Payroll",
             class: "bg-red-50 text-red-600 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800",
@@ -995,15 +1090,30 @@ const statusLabel = (status) =>
     ({
         draft: "Draft",
         pending: "Pending",
+        partial: "Partial",
         submitted: "Submitted",
         approved: "Approved",
         rejected: "Rejected",
         for_removal: "For Removal",
         submitted_payroll: "Submitted Payroll",
+        verified_payroll: "For Verification",
         rejected_payroll: "Returned Payroll",
         approved_payroll: "Approved Payroll",
         for_removal_from_payroll: "For Removal",
     })[status] ?? status;
+
+const workflowSteps = [
+    { status: "draft", label: "Preparation" },
+    { status: "submitted_payroll", label: "Staff Review" },
+    { status: "verified_payroll", label: "Coordinator" },
+    { status: "approved_payroll", label: "Approved" },
+];
+const workflowStage = computed(() => {
+    const status = details.value?.status ?? "draft";
+    const stage = workflowSteps.findIndex((step) => step.status === status);
+
+    return stage >= 0 ? stage : 0;
+});
 
 const fixedAllowanceLimits = computed(() => page.props.allowanceLimits ?? {});
 const signatoryOptions = computed(() => page.props.signatoryOptions ?? []);
@@ -1017,7 +1127,25 @@ const showMonthlyCredits = computed(() =>
 const creditStatusClass = (status) =>
     status === "credited"
         ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-        : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
+        : status === "partial"
+            ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+            : "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300";
+
+const openDepositInfo = async (credit) => {
+    if (!details.value?.id || !credit?.month_no) return;
+    selectedDepositCredit.value = credit;
+    depositInfoDialog.value = true;
+    depositInfoLoading.value = true;
+    depositInfoRecipients.value = [];
+
+    try {
+        const response = await axios.get(route("cashier.credits.recipients", { id: details.value.id, month: credit.month_no }));
+        depositInfoRecipients.value = response.data.recipients ?? [];
+        depositInfoSummary.value = response.data.summary ?? depositInfoSummary.value;
+    } finally {
+        depositInfoLoading.value = false;
+    }
+};
 
 const syncPayrollRows = () => {
     payrollRows.value = (page.props.payrollRecipients ?? []).map((row) => ({
@@ -1403,48 +1531,64 @@ watch(
     gap: 0.25rem;
 }
 
-:global(.dark) :deep(.compact-payroll-tabs .p-tablist),
-:global(.dark) :deep(.compact-payroll-tabs .p-tablist-tab-list),
-:global(.dark) :deep(.compact-payroll-tabs .p-tabpanels),
-:global(.dark) :deep(.compact-payroll-tabs .p-tabpanel),
-:global(.dark) :deep(.compact-payroll-tabs .p-tab) {
+:global(.dark .compact-payroll-tabs .p-tablist),
+:global(.dark .compact-payroll-tabs .p-tablist-tab-list),
+:global(.dark .compact-payroll-tabs .p-tabpanels),
+:global(.dark .compact-payroll-tabs .p-tabpanel),
+:global(.dark .compact-payroll-tabs .p-tab) {
     background: #111827 !important;
     color: #d1d5db !important;
     border-color: #374151 !important;
 }
 
-:global(.dark) :deep(.compact-payroll-tabs .p-tab-active) {
+:global(.dark .compact-payroll-tabs .p-tab-active) {
     color: #60a5fa !important;
 }
 
-:global(.dark) :deep(.p-drawer),
-:global(.dark) :deep(.p-drawer-content),
-:global(.dark) :deep(.p-drawer-header) {
+:global(.dark .p-drawer),
+:global(.dark .p-drawer-content),
+:global(.dark .p-drawer-header) {
     background: #111827 !important;
     color: #f3f4f6 !important;
 }
 
-:global(.dark) :deep(.p-dialog),
-:global(.dark) :deep(.p-dialog-header),
-:global(.dark) :deep(.p-dialog-content),
-:global(.dark) :deep(.p-dialog-footer) {
+:global(.dark .p-dialog),
+:global(.dark .p-dialog-header),
+:global(.dark .p-dialog-content),
+:global(.dark .p-dialog-footer) {
     background: #1f2937 !important;
     color: #f3f4f6 !important;
 }
 
-:global(.dark) :deep(.p-inputtext),
-:global(.dark) :deep(.p-select),
-:global(.dark) :deep(.p-multiselect),
-:global(.dark) :deep(.p-inputnumber-input),
-:global(.dark) :deep(.p-textarea) {
+:global(.dark .p-inputtext),
+:global(.dark .p-select),
+:global(.dark .p-multiselect),
+:global(.dark .p-inputnumber-input),
+:global(.dark .p-textarea) {
     background: #374151 !important;
     border-color: #4b5563 !important;
     color: #f3f4f6 !important;
 }
 
-:global(.dark) :deep(table th),
-:global(.dark) :deep(table td) {
+:global(.dark table th),
+:global(.dark table td) {
     border-color: #4b5563 !important;
+}
+
+:global(.dark table tbody tr:not(.bg-amber-50\/50)) {
+    background: #111827;
+    color: #e5e7eb;
+}
+
+:global(.dark .p-inputnumber-button) {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+}
+
+:global(.dark .p-inputnumber-button:hover) {
+    background: #4b5563 !important;
+    color: #ffffff !important;
 }
 
 :deep(.compact-payroll-tabs .p-tab) {

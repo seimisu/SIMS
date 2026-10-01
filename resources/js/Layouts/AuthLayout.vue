@@ -478,6 +478,7 @@ const toggleSidebar = () => {
 };
 
 function applyTheme() {
+    document.documentElement.classList.remove("dark-mode");
     document.documentElement.classList.toggle("dark", isDark.value);
 }
 

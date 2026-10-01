@@ -1,12 +1,19 @@
 <template>
     <Head title="Landbank Requests" />
     <AuthLayout>
-        <div class="flex h-full w-full flex-col gap-4">
-            <HeaderModule
-                class="!flex-none shrink-0"
-                title="Landbank Requests"
-                description="Review scholar Landbank account update requests."
-            />
+        <div class="landbank-requests-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex min-w-0 items-start gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                        <IconBuildingBank :size="21" stroke-width="1.8" />
+                    </div>
+                    <HeaderModule
+                        class="!flex-none shrink-0"
+                        title="Landbank Requests"
+                        description="Review and process scholar Landbank account update requests."
+                    />
+                </div>
+            </div>
 
             <DefaultSelectionTable
                 class="min-h-0 flex-1"
@@ -19,17 +26,11 @@
                 @paginate="loadPage"
             >
                 <template #header>
-                    <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-start">
-                        <IconTextInput
-                            v-model="searchInput"
-                            :icon="IconSearch"
-                            placeholder="Search SPAS or scholar"
-                            class="w-full sm:w-72"
-                        />
-                        <DefaultButton :icon="filterSchool ? IconFilterFilled : IconFilter" label="Schools" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'school')" />
-                        <DefaultButton :icon="filterProgram ? IconFilterFilled : IconFilter" label="Programs" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'program')" />
-                        <DefaultButton :icon="filterType ? IconFilterFilled : IconFilter" label="Types" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'type')" />
-                        <DefaultButton :icon="filterStatus ? IconFilterFilled : IconFilter" label="Status" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'status')" />
+                    <ManagementFilterBar v-model="searchInput" search-placeholder="Search SPAS or scholar">
+                        <DefaultButton :icon="filterSchool ? IconFilterFilled : IconFilter" label="Schools" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'school')" />
+                        <DefaultButton :icon="filterProgram ? IconFilterFilled : IconFilter" label="Programs" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'program')" />
+                        <DefaultButton :icon="filterType ? IconFilterFilled : IconFilter" label="Types" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'type')" />
+                        <DefaultButton :icon="filterStatus ? IconFilterFilled : IconFilter" label="Status" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'status')" />
                         <Popover ref="opSchool">
                             <div class="flex gap-3">
                                 <div class="w-60">
@@ -74,7 +75,7 @@
                                 </div>
                             </div>
                         </Popover>
-                    </div>
+                    </ManagementFilterBar>
                 </template>
 
                 <Column header="Scholar">
@@ -112,13 +113,13 @@
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
-import IconTextInput from "../../Components/inputs/IconTextInput.vue";
+import ManagementFilterBar from "../../Components/inputs/ManagementFilterBar.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DialogScholarLandbankRequest from "../../Modules/Others/DialogScholarLandbankRequest.vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
-import { IconFilter, IconFilterFilled, IconSearch } from "@tabler/icons-vue";
+import { IconBuildingBank, IconFilter, IconFilterFilled } from "@tabler/icons-vue";
 import { route } from "ziggy-js";
 
 const page = usePage();
@@ -219,3 +220,15 @@ watch(
     },
 );
 </script>
+
+<style scoped>
+:global(.dark .landbank-requests-page .p-datatable-header-cell),
+:global(.dark .landbank-requests-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.landbank-requests-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+</style>

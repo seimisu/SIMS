@@ -14,6 +14,7 @@ class PayrollStatusService
         return match ($batchStatus) {
             'rejected_payroll' => 'REJECTED',
             'submitted_payroll' => 'SUBMITTED',
+            'verified_payroll' => 'SUBMITTED',
             'approved_payroll' => 'APPROVED',
             default => 'DRAFT',
         };
@@ -112,6 +113,7 @@ class PayrollStatusService
     {
         return match ($batchStatus) {
             'submitted_payroll' => 'submitted',
+            'verified_payroll' => 'submitted',
             'approved_payroll' => 'approved',
             'rejected_payroll' => 'rejected',
             default => 'pending',

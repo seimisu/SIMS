@@ -661,57 +661,75 @@
 
     <DefaultDialog
         v-model:visible="semesterDialog"
-        :icon="IconBook2"
-        width-set="lg:!w-[35%]"
+        :icon="IconCalendarWeek"
+        width-set="lg:!w-[45%]"
         :loading="semesterForm.processing"
         @submit-form="submitForm('semesters')"
         message-type="error"
-        title="Semester Management"
-        description="Manage the academic semesters offered by the institution, including start and end dates."
+        title="Academic Periods"
+        description="Open the academic periods scholars may use when creating their term records."
+        button-label="Create Period"
     >
         <template #forms>
-            <div class="pt-5 px-3 gap-5 flex flex-col">
-                <div
-                    v-for="(semester, index) in page.props?.semesterOption"
-                    :key="index"
-                >
+            <div class="flex flex-col gap-4 px-3 pt-5">
+                <div v-if="page.props?.schoolDetail?.semesters?.length" class="flex flex-col gap-2">
+                    <div class="text-xs font-semibold uppercase text-slate-500 dark:text-gray-400">Configured periods</div>
                     <div
-                        :class="[
-                            'text-xs flex items-center rounded-2xl font-semibold px-2 gap-1 py-1 ',
-                            randomColor(index),
-                        ]"
+                        v-for="period in page.props.schoolDetail.semesters"
+                        :key="period.id"
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 dark:border-gray-700"
                     >
-                        <IconGridDots size="15" />
                         <div>
-                            {{ semesterForm.semester[index]?.name }}
+                            <div class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                {{ period.semester_array?.name }} / AY {{ period.school_year }}
+                            </div>
+                            <div class="text-xs text-slate-500 dark:text-gray-400">
+                                Submission deadline: {{ period.submission_date || "Not set" }}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span :class="periodStatusClass(period.status)">{{ period.status || "draft" }}</span>
+                            <DefaultButton
+                                v-if="period.status !== 'open'"
+                                size="small"
+                                label="Open"
+                                severity="success"
+                                outlined
+                                @click="changePeriodStatus(period, 'open')"
+                            />
+                            <DefaultButton
+                                v-else
+                                size="small"
+                                label="Close"
+                                severity="secondary"
+                                outlined
+                                @click="changePeriodStatus(period, 'closed')"
+                            />
                         </div>
                     </div>
-
-                    <div class="flex items-center gap-3 my-3">
-                        <DatePickerInput
-                            label="Start Date"
-                            v-model="semesterForm.semester[index].startDate"
-                            view="month"
-                            format-date="M yy"
-                        >
-                        </DatePickerInput>
-
-                        <DatePickerInput
-                            label="End Date"
-                            v-model="semesterForm.semester[index].endDate"
-                            view="month"
-                            format-date="M yy"
-                        >
-                        </DatePickerInput>
-                        <DatePickerInput
-                            label="Submission Date"
-                            v-model="
-                                semesterForm.semester[index].submissionDate
-                            "
-                        >
-                        </DatePickerInput>
-                    </div>
                 </div>
+
+                <Divider />
+                <SelectInput
+                    v-model="semesterForm.semester"
+                    label="Semester"
+                    :options="page.props?.semesterOption ?? []"
+                    clearable
+                />
+                <TextInput
+                    v-model="semesterForm.schoolYear"
+                    label="Academic Year"
+                    placeholder="2026-2027"
+                />
+                <DatePickerInput
+                    v-model="semesterForm.submissionDate"
+                    label="Submission Deadline"
+                />
+                <SelectInput
+                    v-model="semesterForm.status"
+                    label="Initial Status"
+                    :options="periodStatusOptions"
+                />
             </div>
         </template>
         <template #message>
@@ -1452,10 +1470,25 @@ const recentUpdateSubject = (res) => {
 };
 
 const semesterForm = useForm({
-    type: "create",
     campusId: null,
-    semester: [],
+    semester: null,
+    semesterId: null,
+    schoolYear: null,
+    submissionDate: null,
+    status: { id: "draft", name: "Draft" },
 });
+const periodStatusOptions = [
+    { id: "draft", name: "Draft" },
+    { id: "open", name: "Open immediately" },
+];
+const periodStatusClass = (status) => [
+    "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase",
+    status === "open"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+        : status === "closed"
+            ? "border-slate-300 bg-slate-100 text-slate-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+            : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+];
 
 const curriculumForm = useForm({
     multi: [],
@@ -1928,76 +1961,21 @@ const submitForm = (res) => {
         }
     } else if (res == "semesters") {
         semesterForm.campusId = props.id;
-
-        if (semesterForm.type == "edit") {
-            semesterForm.semester.forEach((element) => {
-                if (element.startDate) {
-                    const d = new Date(element.startDate);
-                    const year = d.getFullYear();
-                    const month = String(d.getMonth() + 1).padStart(2, "0"); // +1 because JS months start at 0
-                    element.startDateFormatted = `${year}-${month}-01`;
-                }
-
-                if (element.endDate) {
-                    const d2 = new Date(element.endDate);
-                    const year2 = d2.getFullYear();
-                    const month2 = String(d2.getMonth() + 1).padStart(2, "0");
-                    element.endDateFormatted = `${year2}-${month2}-01`;
-                }
-
-                if (element.submissionDate) {
-                    const d2 = new Date(element.submissionDate);
-
-                    const year = d2.getFullYear();
-                    const month = String(d2.getMonth() + 1).padStart(2, "0");
-                    const day = String(d2.getDate()).padStart(2, "0");
-                    console.log(`${year}-${month}-${day}`);
-                    element.submissionDateFormatted = `${year}-${month}-${day}`;
-                }
+        semesterForm
+            .transform((data) => ({
+                ...data,
+                semesterId: data.semester?.id ?? null,
+                status: data.status?.id ?? data.status,
+            }))
+            .post(route("campus.semester.store"), {
+            preserveScroll: true,
+            onSuccess: () => {
+                semesterForm.reset();
+                semesterForm.status = { id: "draft", name: "Draft" };
+                semesterForm.clearErrors();
+                toastRef.value.show(page.props.flash);
+            },
             });
-            semesterForm.put(
-                route("campus.semester.update", {
-                    id: props.id,
-                    type: "form",
-                }),
-                {
-                    onSuccess: () => {
-                        semesterForm.clearErrors();
-                        toastRef.value.show(page.props.flash);
-                    },
-                },
-            );
-        } else {
-            semesterForm.semester.forEach((element) => {
-                if (element.startDate) {
-                    const d = new Date(element.startDate);
-                    const year = d.getFullYear();
-                    const month = String(d.getMonth() + 1).padStart(2, "0");
-                    element.startDateFormatted = `${year}-${month}-01`;
-                }
-
-                if (element.endDate) {
-                    const d2 = new Date(element.endDate);
-                    const year2 = d2.getFullYear();
-                    const month2 = String(d2.getMonth() + 1).padStart(2, "0");
-                    element.endDateFormatted = `${year2}-${month2}-01`;
-                }
-
-                if (element.submissionDate) {
-                    const d2 = new Date(element.submissionDate);
-                    const year2 = d2.getFullYear();
-                    const month2 = String(d2.getMonth() + 1).padStart(2, "0");
-                    element.submissionDateFormatted = `${year2}-${month2}-01`;
-                }
-            });
-
-            semesterForm.post(route("campus.semester.store"), {
-                onSuccess: () => {
-                    semesterForm.clearErrors();
-                    toastRef.value.show(page.props.flash);
-                },
-            });
-        }
     } else {
         gradeForm.campusId = props.id;
         if (!gradeForm.id) {
@@ -2149,46 +2127,14 @@ watch(
     },
 );
 
-watch(
-    () => page.props?.semesterOption,
-    (val) => {
-        semesterForm.semester = [];
-        if (!page.props?.semesterOption) {
-            return;
-        }
-
-        if (page.props?.schoolDetail?.semesters.length > 0) {
-            semesterForm.type = "edit";
-            page.props?.schoolDetail?.semesters.forEach((element) => {
-                semesterForm.semester.push({
-                    id: element.id,
-                    semesterId: element.semester_array.id,
-                    name: element.semester_array.name,
-                    startDate: new Date(element.start_date),
-                    startDateFormatted: new Date(element.start_date),
-                    endDate: new Date(element.end_date),
-                    endDateFormatted: new Date(element.end_date),
-                    submissionDate: new Date(element.submission_date),
-                    submissionDateFormatted: new Date(element.submission_date),
-                });
-            });
-            semesterForm.semester.sort((a, b) => a.name.localeCompare(b.name));
-        } else {
-            semesterForm.type = "create";
-            val.forEach((element) => {
-                semesterForm.semester.push({
-                    id: null,
-                    semesterId: element.id,
-                    name: element.name,
-                    startDate: null,
-                    startDateFormatted: null,
-                    endDate: null,
-                    endDateFormatted: null,
-                    submissionDate: null,
-                    submissionDateFormatted: null,
-                });
-            });
-        }
-    },
-);
+const changePeriodStatus = (period, status) => {
+    router.put(
+        route("campus.semester.update", { id: period.id, type: "status" }),
+        { status },
+        {
+            preserveScroll: true,
+            onSuccess: () => toastRef.value.show(page.props.flash),
+        },
+    );
+};
 </script>

@@ -62,10 +62,11 @@ class RegionalDashboardService
             $payrollLabels = [
                 'draft' => 'Draft',
                 'submitted_payroll' => 'Submitted',
+                'verified_payroll' => 'For Verification',
                 'rejected_payroll' => 'Returned',
                 'approved_payroll' => 'Approved',
             ];
-            $payrollSummary = collect(['draft', 'submitted_payroll', 'rejected_payroll', 'approved_payroll'])
+            $payrollSummary = collect(['draft', 'submitted_payroll', 'verified_payroll', 'rejected_payroll', 'approved_payroll'])
                 ->mapWithKeys(fn ($status) => [$status => $payrollBatches->filter(fn ($batch) => $payrollStatus($batch) === $status)->count()]);
             $payrollQueue = $payrollBatches
                 ->filter(fn ($batch) => in_array($payrollStatus($batch), ['draft', 'rejected_payroll'], true))
@@ -187,9 +188,9 @@ class RegionalDashboardService
                             ->where('is_delete', false),
                         'address',
                         'semesters' => fn ($q) => $q
-                            ->select('id', 'semester_id', 'campus_id', 'start_date', 'end_date', 'submission_date')
-                            ->whereDate('start_date', '<=', now())
-                            ->whereDate('end_date', '>=', now()),
+                            ->select('id', 'semester_id', 'campus_id', 'school_year', 'status', 'submission_date')
+                            ->open()
+                            ->latest('opened_at'),
                     ])
                     ->withCount('courses')
                     ->get()
@@ -208,8 +209,7 @@ class RegionalDashboardService
                             'grading_status' => $campus->grades()->exists(),
                             'semesters' => $campus->semesters->isNotEmpty()
                                 ? [
-                                    'start_date' => Carbon::parse($campus->semesters[0]->start_date)->format('M Y'),
-                                    'end_date' => Carbon::parse($campus->semesters[0]->end_date)->format('M Y'),
+                                    'school_year' => $campus->semesters[0]->school_year,
                                     'type' => $campus->semesters[0]->semester_array,
                                     'submission_date' => Carbon::parse($campus->semesters[0]->submission_date)->format('M d, Y'),
                                 ]
@@ -253,7 +253,7 @@ class RegionalDashboardService
                         ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
                             $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
                         })
-                        ->whereHas('semesters', fn ($q) => $q->whereDate('start_date', '<=', now())->whereDate('end_date', '>=', now()))
+                        ->whereHas('semesters', fn ($q) => $q->open())
                         ->count(),
                 ],
                 'timeline' => [

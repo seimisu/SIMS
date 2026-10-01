@@ -1,14 +1,17 @@
 <template>
     <Head title="Roles" />
     <AuthLayout>
-        <div class="flex flex-col w-full h-full gap-10">
-            <div class="flex">
-                <HeaderModule
-                    title="Role Management"
-                    description="Manage user roles, permissions, and access levels."
-                />
+        <div class="roles-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500"><IconShieldCog :size="21" stroke-width="1.8" /></div>
+                        <HeaderModule title="Role Management" description="Manage user roles, permissions, and access levels." />
+                    </div>
+                    <DefaultButton size="small" label="Create Role" severity="secondary" outlined :icon="IconCirclePlusFilled" class="self-start xl:self-auto" @click="toggleModal({ type: 'create' })" />
+                </div>
             </div>
-            <div class="flex-1 flex flex-col gap-2">
+            <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
                 <ToolbarModule
                     v-model="searchInput"
                     @deleteSearch="clearSearch"
@@ -23,6 +26,7 @@
                     :message-errors="roleForm.errors"
                     @buttonOpenModal="toggleModal({ type: 'create' })"
                     message-type="error"
+                    :button-visible="false"
                     ref="toolbarRef"
                 >
                     <template #form>
@@ -273,6 +277,7 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
@@ -285,6 +290,7 @@ import {
     IconX,
     IconPencilCog,
     IconTrash,
+    IconCirclePlusFilled,
 } from "@tabler/icons-vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
 import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
@@ -477,3 +483,15 @@ watch(
     }
 );
 </script>
+
+<style scoped>
+:global(.dark .roles-page .p-datatable-header-cell),
+:global(.dark .roles-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.roles-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+</style>

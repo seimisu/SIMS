@@ -2,15 +2,31 @@
     <Head title="Video Library" />
     <AuthLayout>
         <DefaultConfirmDialog ref="confirmRef" />
-        <div class="flex flex-col w-full h-full gap-4">
-            <div class="flex">
-                <HeaderModule
-                    title="Video Library"
-                    description="Manage video links, previews, and audience availability."
-                />
+        <div class="video-library-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                            <IconVideo :size="21" stroke-width="1.8" />
+                        </div>
+                        <HeaderModule
+                            title="Video Library"
+                            description="Manage video links, previews, and audience availability."
+                        />
+                    </div>
+                    <DefaultButton
+                        size="small"
+                        label="Create Video"
+                        severity="secondary"
+                        outlined
+                        :icon="IconCirclePlusFilled"
+                        class="self-start xl:self-auto"
+                        @click="openResourceForm()"
+                    />
+                </div>
             </div>
 
-            <div class="flex-1 flex flex-col gap-3">
+            <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
                 <ToolbarModule
                     v-model="searchInput"
                     button-label="Create"
@@ -22,6 +38,7 @@
                     :message-has-errors="resourceForm.hasErrors"
                     :message-errors="resourceForm.errors"
                     message-type="error"
+                    :button-visible="false"
                     @deleteSearch="clearSearch"
                     @buttonOpenModal="openResourceForm()"
                     @saveForm="saveResource"
@@ -97,7 +114,7 @@
                 >
                     <Column header="Preview" class="w-[9rem]">
                         <template #body="props">
-                            <div class="h-16 w-28 overflow-hidden rounded-lg bg-slate-100">
+                            <div class="h-16 w-28 overflow-hidden rounded-md border border-slate-200 bg-slate-100 dark:border-gray-700 dark:bg-gray-800">
                                 <img
                                     v-if="props.data.thumbnail_url"
                                     :src="props.data.thumbnail_url"
@@ -112,8 +129,8 @@
                     </Column>
                     <Column field="title" header="Title" class="font-semibold">
                         <template #body="props">
-                            <div class="flex flex-col">
-                                <span>{{ props.data.title }}</span>
+                            <div class="min-w-60 py-1">
+                                <span class="block text-sm font-semibold text-slate-800 dark:text-gray-100">{{ props.data.title }}</span>
                                 <a
                                     :href="props.data.video_url"
                                     target="_blank"
@@ -194,10 +211,11 @@
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import { route } from "ziggy-js";
-import { IconCheck, IconVideo, IconX } from "@tabler/icons-vue";
+import { IconCheck, IconCirclePlusFilled, IconVideo, IconX } from "@tabler/icons-vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
@@ -396,3 +414,15 @@ const targetLabel = (target) => {
         : option.name;
 };
 </script>
+
+<style scoped>
+:global(.dark .video-library-page .p-datatable-header-cell),
+:global(.dark .video-library-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.video-library-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+</style>

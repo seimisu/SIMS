@@ -1,28 +1,29 @@
 <template>
     <Head title="Cities" />
     <AuthLayout>
-        <div class="flex flex-col w-full h-full gap-10">
-            <div class="flex">
-                <HeaderModule
-                    title="List of cities"
-                    description="Cities information and management"
-                />
+        <div class="locations-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3"><div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"><IconMapPin :size="21" /></div><HeaderModule title="Cities and Municipalities" description="Manage cities, municipalities, districts, and province assignments." /></div>
+                    <DefaultButton size="small" label="Create Location" severity="secondary" outlined :icon="IconCirclePlusFilled" class="self-start xl:self-auto" @click="toggleModal({ type: 'create' })" />
+                </div>
             </div>
-            <div class="flex-1 flex flex-col gap-2">
+            <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
                 <ToolbarModule
                     v-model="searchInput"
                     @deleteSearch="clearSearch"
                     @saveForm="submitForm"
                     button-label="Create"
-                    :dialog-title="!citiesForm.id ? 'Create Role' : 'Edit Role'"
-                    dialog-description="Define a new role and configure its access permissions."
+                    :dialog-title="!citiesForm.id ? 'Create City or Municipality' : 'Edit City or Municipality'"
+                    dialog-description="Enter the location details and assign its province."
                     :dialog-button-loading="citiesForm.processing"
-                    :dialog-icon="IconUserCog"
+                    :dialog-icon="IconMapPin"
                     dialog-button-label="Save"
                     :message-has-errors="citiesForm.hasErrors"
                     :message-errors="citiesForm.errors"
                     @buttonOpenModal="toggleModal({ type: 'create' })"
                     message-type="error"
+                    :button-visible="false"
                     ref="toolbarRef"
                 >
                     <template #form>
@@ -215,16 +216,18 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import { computed, ref, watch } from "vue";
 import {
     IconCheck,
     IconLock,
-    IconUserCog,
     IconX,
     IconPencilCog,
     IconTrash,
+    IconCirclePlusFilled,
+    IconMapPin,
 } from "@tabler/icons-vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
 import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";

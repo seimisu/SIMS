@@ -1,30 +1,34 @@
 <template>
-    <Head title="Provinces" />
+    <Head title="Programs" />
     <AuthLayout>
-        <div class="flex flex-col w-full h-full gap-10">
-            <div class="flex">
-                <HeaderModule
-                    title="List of Provinces"
-                    description="Province information and management"
-                />
+        <div class="programs-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"><IconCertificate :size="21" /></div>
+                        <HeaderModule title="Programs" description="Manage scholarship programs, types, and program classifications." />
+                    </div>
+                    <DefaultButton size="small" label="Create Program" severity="secondary" outlined :icon="IconCirclePlusFilled" class="self-start xl:self-auto" @click="toggleModal({ type: 'create' })" />
+                </div>
             </div>
-            <div class="flex-1 flex flex-col gap-2">
+            <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
                 <ToolbarModule
                     v-model="searchInput"
                     @deleteSearch="clearSearch"
                     @saveForm="submitForm"
                     button-label="Create"
                     :dialog-title="
-                        !programForm.id ? 'Create Role' : 'Edit Role'
+                        !programForm.id ? 'Create Program' : 'Edit Program'
                     "
-                    dialog-description="Define a new role and configure its access permissions."
+                    dialog-description="Define the program name, scholarship, type, and classification."
                     :dialog-button-loading="programForm.processing"
-                    :dialog-icon="IconUserCog"
+                    :dialog-icon="IconCertificate"
                     dialog-button-label="Save"
                     :message-has-errors="programForm.hasErrors"
                     :message-errors="programForm.errors"
                     @buttonOpenModal="toggleModal({ type: 'create' })"
                     message-type="error"
+                    :button-visible="false"
                     ref="toolbarRef"
                 >
                     <template #form>
@@ -58,7 +62,7 @@
                                         Make this Sub Program?
                                     </div>
                                     <DefaultToggle
-                                        v-model="programForm.isActive"
+                                        v-model="programForm.isSub"
                                         :check-icon="IconCheck"
                                         :un-check-icon="IconX"
                                     />
@@ -184,16 +188,18 @@ import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import DefaultTable from "../../Components/tables/DefaultTable.vue";
 import ToolbarModule from "../../Modules/Others/ToolbarModule.vue";
+import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import DefaultToggle from "../../Components/toggleswitches/DefaultToggle.vue";
 import { computed, ref, watch } from "vue";
 import {
     IconCheck,
     IconLock,
-    IconUserCog,
     IconX,
     IconPencilCog,
     IconTrash,
+    IconCertificate,
+    IconCirclePlusFilled,
 } from "@tabler/icons-vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
 import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
@@ -254,9 +260,10 @@ const toggleModal = (res) => {
     if (res.type == "edit") {
         programForm.id = res.data.id;
         programForm.name = res.data.name;
-        programForm.oldName = res.data.old_name;
-        programForm.code = res.data.code;
-        programForm.region = res.data.region_array;
+        programForm.description = res.data.others;
+        programForm.scholarship = res.data.program_array;
+        programForm.type = res.data.type_array;
+        programForm.isSub = Boolean(res.data.is_sub);
     }
 
     toolbarRef.value.openModal();
@@ -343,3 +350,9 @@ watch(
     },
 );
 </script>
+
+<style scoped>
+:global(.dark .programs-page .p-datatable-header-cell),
+:global(.dark .programs-page .p-datatable-column-header-content) { color: #e5e7eb !important; }
+:global(.programs-page .p-datatable-tbody > tr > td) { padding-top: 0.65rem; padding-bottom: 0.65rem; }
+</style>

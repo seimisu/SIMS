@@ -11,6 +11,7 @@ use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,39 @@ use Vinkla\Hashids\Facades\Hashids;
 
 class CashierCreditController extends Controller
 {
+    public function recipients(string $id, int $month): JsonResponse
+    {
+        abort_unless($month >= 1 && $month <= 5, 404);
+        abort_unless(app(SystemPermissions::class)->can(Auth::user(), 'payroll.credits.view'), 403);
+
+        $batch = Batches::findOrFail(Hashids::decode($id)[0] ?? 0);
+        abort_unless(app(PayrollStatusService::class)->currentBatchStatus($batch) === 'approved_payroll', 422);
+
+        $service = app(PayrollMonthlyCreditService::class);
+        abort_unless($service->isCreditEligible($batch), 422);
+
+        $recipients = $service->recipientRowsForMonth($batch, $month);
+
+        return response()->json([
+            'batch' => [
+                'id' => $id,
+                'name' => $batch->name,
+                'region' => $batch->region,
+                'term' => $batch->academic_term,
+                'school_year' => $batch->school_year,
+            ],
+            'month' => $month,
+            'recipients' => $recipients,
+            'summary' => [
+                'total' => $recipients->count(),
+                'credited' => $recipients->where('status', 'credited')->count(),
+                'pending' => $recipients->where('status', 'pending')->count(),
+                'total_amount' => $recipients->sum('amount'),
+                'credited_amount' => $recipients->where('status', 'credited')->sum('amount'),
+            ],
+        ]);
+    }
+
     public function index(Request $request): Response
     {
         $permissions = app(SystemPermissions::class);
@@ -89,7 +123,7 @@ class CashierCreditController extends Controller
                 ->when($creditStatus === 'pending', function ($query) {
                     $query->where(function ($query) {
                         $query->whereDoesntHave('monthlyCredits')
-                            ->orWhereHas('monthlyCredits', fn ($credits) => $credits->where('status', 'pending'));
+                            ->orWhereHas('monthlyCredits', fn ($credits) => $credits->whereIn('status', ['pending', 'partial']));
                     });
                 })
                 ->when($creditStatus === 'credited', function ($query) {
@@ -146,8 +180,19 @@ class CashierCreditController extends Controller
         }
 
         $data = $request->validate([
-            'remarks' => ['nullable', 'string', 'max:2000'],
+            'recipients' => ['required', 'array', 'min:1'],
+            'recipients.*.id' => ['required', 'string'],
+            'recipients.*.selected' => ['required', 'boolean'],
+            'recipients.*.remarks' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        foreach ($data['recipients'] as $index => $recipient) {
+            if (! $recipient['selected'] && blank($recipient['remarks'] ?? null)) {
+                return redirect()->back()->withErrors([
+                    "recipients.{$index}.remarks" => 'Remarks are required for scholars not selected for deposit.',
+                ]);
+            }
+        }
 
         $monthlyCredits = app(PayrollMonthlyCreditService::class);
 
@@ -170,23 +215,27 @@ class CashierCreditController extends Controller
         }
 
         $credit = DB::transaction(function () use ($batch, $month, $data) {
-            $credit = app(PayrollMonthlyCreditService::class)->credit(
+            $credit = app(PayrollMonthlyCreditService::class)->creditSelected(
                 $batch,
                 $month,
                 Auth::id(),
-                $data['remarks'] ?? null
+                $data['recipients']
             );
+
+            $totalRecipients = app(PayrollMonthlyCreditService::class)
+                ->recipientRowsForMonth($batch, $month)
+                ->count();
 
             app(PayrollActivityService::class)->log(
                 $batch,
                 'payroll_month_credited',
                 oldStatus: 'pending',
-                newStatus: 'credited',
-                remarks: $data['remarks'] ?? null,
+                newStatus: $credit->status,
                 metadata: [
                     'month_no' => $month,
                     'amount' => (float) $credit->amount,
                     'recipient_count' => $credit->recipient_count,
+                    'total_recipient_count' => $totalRecipients,
                 ]
             );
 
@@ -197,7 +246,7 @@ class CashierCreditController extends Controller
             (string) $batch->region,
             "payroll_month_{$credit->month_no}_credited",
             'Payroll month deposit',
-            "{$batch->name} Month {$credit->month_no} was marked as deposit.",
+            "{$batch->name} Month {$credit->month_no}: {$credit->recipient_count} scholar(s) deposited.",
             '/stipends',
             'payroll_batch_monthly_credits',
             $credit->id
@@ -205,8 +254,8 @@ class CashierCreditController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Month deposit',
-            'message' => "Month {$credit->month_no} was marked as deposit.",
+            'title' => $credit->status === 'credited' ? 'Month deposit complete' : 'Partial month deposit',
+            'message' => "Month {$credit->month_no}: {$credit->recipient_count} scholar(s) deposited.",
         ]);
     }
 

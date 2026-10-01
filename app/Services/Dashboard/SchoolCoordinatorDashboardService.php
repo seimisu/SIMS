@@ -168,13 +168,12 @@ class SchoolCoordinatorDashboardService
             'semesterDate' => $campus?->semesters()
                 ->where('is_delete', false)
                 ->where('is_active', true)
-                ->where('start_date', '<=', now())
-                ->where('end_date', '>=', now())
+                ->where('status', 'open')
+                ->latest('opened_at')
                 ->get()
                 ->map(fn ($semester) => [
                     'name' => $semester->semester->name,
-                    'startDate' => Carbon::parse($semester->start_date)->setTimezone('Asia/Manila')->format('M Y'),
-                    'endDate' => Carbon::parse($semester->end_date)->setTimezone('Asia/Manila')->format('M Y'),
+                    'schoolYear' => $semester->school_year,
                     'submissionDate' => Carbon::parse($semester->submission_date)->setTimezone('Asia/Manila')->format('M d, Y'),
                 ])->first(),
             'events' => [],
@@ -182,7 +181,7 @@ class SchoolCoordinatorDashboardService
                 'dateRange' => $ranges,
             ],
             'card' => [
-                'active' => Scholars::whereIn('academic_status', [
+                'active' => Scholars::whereScholarStatusIn([
                     'NEW',
                     'ONGOING',
                 ])
@@ -208,7 +207,7 @@ class SchoolCoordinatorDashboardService
                                 //     break;
                         }
                     })->count(),
-                'graduated' => Scholars::where('academic_status', 'GRADUATED')
+                'graduated' => Scholars::whereScholarStatus('GRADUATED')
                     ->whereHas('schoolInfo', function ($schoolInfo) use ($campusId) {
                         $schoolInfo->where('campus_id', $campusId);
                     })
@@ -231,7 +230,7 @@ class SchoolCoordinatorDashboardService
                                 //     break;
                         }
                     })->count(),
-                'issue' => Scholars::whereNotIn('academic_status', [
+                'issue' => Scholars::whereScholarStatusNotIn([
                     'GRADUATED',
                     'NEW',
                     'ONGOING',
@@ -260,7 +259,7 @@ class SchoolCoordinatorDashboardService
                                 //     break;
                         }
                     })->count(),
-                'terminated' => Scholars::where('academic_status', 'TERMINATED')
+                'terminated' => Scholars::whereScholarStatus('TERMINATED')
                     ->whereHas('schoolInfo', function ($schoolInfo) use ($campusId) {
                         $schoolInfo->where('campus_id', $campusId);
                     })

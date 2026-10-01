@@ -12,6 +12,7 @@ use App\Models\SchoolCampusCourseCurriculumSubjects;
 use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusGrades;
+use App\Services\Academic\ScholarAcademicPeriodService;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -124,6 +125,7 @@ class ScholarManagementOptionsService
                 'yearOptions' => Inertia::optional(fn () => $this->yearOptions()),
                 'transferCourseOptions' => [],
                 'termOptions' => null,
+                'academicPeriodOptions' => null,
                 'subjectOptions' => null,
                 'gradeOptions' => null,
                 'schoolOptions' => Inertia::optional(fn () => $this->schoolOptions($permissions, $user)),
@@ -141,6 +143,7 @@ class ScholarManagementOptionsService
             'yearOptions' => $this->yearOptions(),
             'transferCourseOptions' => $this->courseOptions($request, 'tcampus'),
             'termOptions' => $this->termOptions($selectedScholar),
+            'academicPeriodOptions' => app(ScholarAcademicPeriodService::class)->availableFor($selectedScholar),
             'subjectOptions' => $this->subjectOptions($selectedScholar),
             'gradeOptions' => $this->gradeOptions($selectedScholar),
             'schoolOptions' => $this->schoolOptions($permissions, $user),
@@ -154,7 +157,7 @@ class ScholarManagementOptionsService
     private function academicStatusOptions()
     {
         return ListStatuses::with('color:id,background_color,text_color')
-            ->where('type', 'progress')
+            ->where('type', 'scholar')
             ->where('is_active', true)
             ->where('is_delete', false)
             ->orderBy('id')

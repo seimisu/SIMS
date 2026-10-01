@@ -372,7 +372,7 @@ class HistoricalPayrollImportService
 
         if ($scholarshipStatus === 'TERMINATED') {
             $scholar->update([
-                'academic_status' => 'TERMINATED',
+                ...\App\Support\ScholarStatuses::attributes('terminated'),
                 'updated_at' => now(),
             ]);
         }

@@ -1,12 +1,31 @@
 <template>
     <Head title="Financial Assistance" />
     <AuthLayout>
-        <div class="flex h-full min-h-0 w-full flex-col gap-5 overflow-hidden">
-            <div class="shrink-0">
-                <HeaderModule
-                    title="Financial Assistance"
-                    description="Review auto-created payroll batches, submit signed payroll files, and monitor processing remarks."
-                />
+        <div class="financial-assistance-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                            <IconBuildingBank :size="21" stroke-width="1.8" />
+                        </div>
+                        <HeaderModule
+                            class="dark:text-gray-100"
+                            title="Financial Assistance"
+                            description="Manage payroll preparation, review, approval, and deposit progress."
+                        />
+                    </div>
+
+                    <DefaultButton
+                        v-if="canImportHistoricalPayroll"
+                        size="small"
+                        label="Import Historical"
+                        severity="secondary"
+                        outlined
+                        :icon="IconFileImport"
+                        class="self-start xl:self-auto"
+                        @click="openHistoricalImportDialog"
+                    />
+                </div>
             </div>
 
             <div class="flex min-h-0 flex-1 flex-col gap-3">
@@ -24,12 +43,7 @@
                     @paginate="loadPage"
                 >
                     <template #header>
-                        <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-start">
-                            <InputText
-                                v-model="searchInput"
-                                placeholder="Search file name or region"
-                                class="!text-sm lg:w-72"
-                            />
+                        <ManagementFilterBar v-model="searchInput" search-placeholder="Search payroll or region">
                             <SelectInput
                                 v-model="filterRegion"
                                 :options="page.props.agencyOption ?? []"
@@ -38,28 +52,28 @@
                                 filter
                                 capitalize
                                 :disable="isRegionLocked"
-                                class="lg:w-48"
+                                class="w-full sm:w-44"
                             />
                             <SelectInput
                                 v-model="filterTerm"
                                 :options="page.props.termOptions ?? []"
                                 placeholder="Semester"
                                 clearable
-                                class="lg:w-44"
+                                class="w-full sm:w-40"
                             />
                             <SelectInput
                                 v-model="filterAcademicYear"
                                 :options="page.props.academicYearOptions ?? []"
                                 placeholder="Academic Year"
                                 clearable
-                                class="lg:w-44"
+                                class="w-full sm:w-44"
                             />
                             <SelectInput
                                 v-model="filterStatus"
                                 :options="page.props.statusOptions ?? []"
                                 placeholder="Status"
                                 clearable
-                                class="lg:w-48"
+                                class="w-full sm:w-40"
                             />
                             <DefaultButton
                                 size="small"
@@ -67,34 +81,26 @@
                                 :icon="IconFilterOff"
                                 tooltip="Clear filters"
                                 :disabled="!hasBatchFilters"
+                                class="justify-self-start xl:justify-self-end"
                                 @click="clearBatchFilters"
                             />
-                            <DefaultButton
-                                v-if="canImportHistoricalPayroll"
-                                size="small"
-                                label="Import Historical"
-                                severity="secondary"
-                                outlined
-                                :icon="IconFileImport"
-                                class-name="!border-slate-300 !bg-slate-100 !text-slate-700 hover:!bg-slate-200 dark:!border-gray-600 dark:!bg-gray-800 dark:!text-gray-200 dark:hover:!bg-gray-700"
-                                @click="openHistoricalImportDialog"
-                            />
-                        </div>
+                        </ManagementFilterBar>
                     </template>
 
                     <Column header="File Name">
                         <template #body="props">
-                            <div class="flex min-w-64 items-center gap-2">
-                                <IconFileInvoice size="23" stroke-width="1.5" class="shrink-0 text-slate-500 dark:text-gray-400" />
-                                <div class="truncate text-sm font-medium text-slate-700 dark:text-gray-200">
-                                    {{ props.data.name }}
+                            <div class="flex min-w-64 items-center gap-3 py-1">
+                                <div class="flex size-8 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-50 text-slate-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                    <IconFileInvoice size="18" stroke-width="1.6" />
                                 </div>
-                                <span
-                                    v-if="props.data.is_historical"
-                                    class="shrink-0 rounded border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-600 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
-                                >
-                                    Historical
-                                </span>
+                                <div class="min-w-0">
+                                    <div class="truncate text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                        {{ props.data.name }}
+                                    </div>
+                                    <div v-if="props.data.is_historical" class="mt-0.5 text-[11px] font-medium text-violet-600 dark:text-violet-300">
+                                        Historical record
+                                    </div>
+                                </div>
                             </div>
                         </template>
                     </Column>
@@ -121,11 +127,11 @@
                                 <div
                                     :class="[
                                         batchStatusMeta(props.data.status).class,
-                                        'flex items-center gap-1 rounded-2xl border px-3 py-0.5',
+                                        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium',
                                     ]"
                                 >
-                                    <IconDotsCircleHorizontal size="18" />
-                                    <div class="text-xs">
+                                    <span class="size-1.5 rounded-full bg-current opacity-80"></span>
+                                    <div class="text-[11px]">
                                         {{ batchStatusMeta(props.data.status).label }}
                                     </div>
                                 </div>
@@ -136,7 +142,7 @@
                         <template #body="props">
                             <button
                                 type="button"
-                                class="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
+                                class="inline-flex min-w-16 items-center justify-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
                                 :class="{ 'cursor-not-allowed opacity-60': !hasMonthlyCredits(props.data) }"
                                 :disabled="!hasMonthlyCredits(props.data)"
                                 v-tooltip.top="hasMonthlyCredits(props.data) ? 'View monthly deposit' : 'No monthly deposit yet'"
@@ -164,7 +170,18 @@
                         </template>
                     </Column>
                 </DefaultSelectionTable>
-                <Menu ref="actionMenu" :model="actionMenuItems" :popup="true">
+                <Menu
+                    ref="actionMenu"
+                    :model="actionMenuItems"
+                    :popup="true"
+                    :pt="{
+                        root: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
+                        list: 'dark:!bg-gray-800',
+                        itemContent: 'dark:hover:!bg-gray-700',
+                        itemLink: 'dark:!text-gray-100',
+                        itemLabel: 'dark:!text-gray-100',
+                    }"
+                >
                     <template #item="{ item, props: itemProps }">
                         <a
                             v-ripple
@@ -192,10 +209,10 @@
         v-model:visible="historicalPreviewDrawer"
         position="full"
         :pt="{
-            root: 'dark:!bg-gray-900 dark:!text-gray-100',
-            header: 'border-b-1 border-gray-300 border-dashed dark:!border-gray-600 dark:!bg-gray-900 dark:!text-gray-100',
-            content: '!p-3 dark:!bg-gray-900 dark:!text-gray-100',
-            footer: 'dark:!bg-gray-900',
+            root: '!bg-white !text-slate-800 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'border-b-1 !bg-white border-gray-300 border-dashed !text-slate-800 dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            content: '!p-3 !bg-white !text-slate-800 dark:!bg-gray-900 dark:!text-gray-100',
+            footer: '!bg-white dark:!bg-gray-900',
         }"
     >
         <template #header>
@@ -213,7 +230,7 @@
         <template #default>
             <div class="flex h-full w-full flex-col gap-3">
                 <Tabs value="payroll" class="compact-payroll-tabs flex min-h-0 flex-1 flex-col">
-                    <TabList class="!mb-2 dark:!bg-gray-800">
+                    <TabList class="!mb-2 !bg-white dark:!bg-gray-900">
                         <Tab value="payroll">
                             <span class="inline-flex items-center gap-1.5">
                                 <IconFileSpreadsheet :size="15" />
@@ -222,7 +239,7 @@
                         </Tab>
                     </TabList>
 
-                    <TabPanels class="min-h-0 flex-1 !px-0 dark:!bg-gray-900">
+                    <TabPanels class="min-h-0 flex-1 !bg-white !px-0 dark:!bg-gray-900">
                         <TabPanel value="payroll" class="h-full">
                             <div class="flex h-full flex-col gap-2">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -412,7 +429,20 @@
         </template>
     </Dialog>
 
-    <Dialog v-model:visible="remarksDialog" modal header="Payroll Remarks" :style="{ width: '28rem' }">
+    <Dialog
+        v-model:visible="remarksDialog"
+        modal
+        header="Payroll Remarks"
+        :style="{ width: '28rem' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
+    >
         <div class="flex flex-col gap-2">
             <div class="text-sm font-semibold text-slate-700 dark:text-gray-200">
                 {{ selectedActionBatch?.name ?? "Payroll batch" }}
@@ -441,8 +471,10 @@
         :pt="{
             root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
             header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
             content: 'dark:!bg-gray-900 dark:!text-gray-100',
             footer: 'dark:!border-gray-700 dark:!bg-gray-900',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
         }"
     >
         <div class="flex flex-col gap-3">
@@ -459,11 +491,12 @@
                 <div
                     v-for="credit in selectedMonthlyCredits"
                     :key="credit.month_no"
+                    @click="openCreditRecipients(credit)"
                     :class="[
                         credit.status === 'credited'
                             ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/30'
                             : 'border-slate-200 bg-slate-50 dark:border-gray-600 dark:bg-gray-800',
-                        'flex min-h-32 min-w-0 flex-col gap-3 rounded border p-3',
+                        'flex min-h-32 min-w-0 cursor-pointer flex-col gap-3 rounded border p-3 transition hover:border-blue-300 dark:hover:border-blue-700',
                     ]"
                 >
                     <div class="flex items-start justify-between gap-2">
@@ -482,13 +515,10 @@
                         </span>
                     </div>
                     <div
-                        v-if="credit.status === 'credited'"
+                        v-if="credit.recipient_count > 0"
                         class="mt-auto flex flex-col gap-1 text-[11px] leading-4 text-slate-500 dark:text-gray-400"
                     >
-                        <span class="font-medium text-slate-600 dark:text-gray-300">
-                            {{ credit.credited_by || "Cashier" }}
-                        </span>
-                        <span v-if="credit.credited_at">{{ credit.credited_at }}</span>
+                        <span class="font-medium text-slate-600 dark:text-gray-300">{{ credit.progress_label }} deposited</span>
                     </div>
                 </div>
             </div>
@@ -503,6 +533,43 @@
                 @click="creditDialog = false"
             />
         </template>
+    </Dialog>
+
+    <Dialog
+        v-model:visible="creditRecipientsDialog"
+        modal
+        :header="`${selectedCreditMonth?.label ?? 'Month'} Deposit Information`"
+        :style="{ width: 'min(68rem, 96vw)' }"
+        :pt="{
+            root: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            header: 'dark:!border-gray-700 dark:!bg-gray-900 dark:!text-gray-100',
+            title: 'dark:!text-gray-100',
+            content: 'dark:!bg-gray-900 dark:!text-gray-100',
+            closeButton: 'dark:!text-gray-300 dark:hover:!bg-gray-800 dark:hover:!text-white',
+        }"
+    >
+        <div class="space-y-3 text-sm text-slate-700 dark:text-gray-200">
+            <div class="grid grid-cols-2 gap-2 rounded border border-slate-200 bg-slate-50 p-3 dark:border-gray-700 dark:bg-gray-800 md:grid-cols-4">
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Deposited</div><div class="font-semibold">{{ creditRecipientSummary.credited }} / {{ creditRecipientSummary.total }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Pending</div><div class="font-semibold">{{ creditRecipientSummary.pending }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Deposited amount</div><div class="font-semibold">PHP {{ formatMoney(creditRecipientSummary.credited_amount) }}</div></div>
+                <div><div class="text-xs text-slate-500 dark:text-gray-400">Payroll amount</div><div class="font-semibold">PHP {{ formatMoney(creditRecipientSummary.total_amount) }}</div></div>
+            </div>
+            <div v-if="creditRecipientsLoading" class="py-10 text-center text-slate-500 dark:text-gray-400">Loading deposit information...</div>
+            <div v-else class="max-h-[55vh] overflow-auto rounded border border-slate-200 dark:border-gray-700">
+                <table class="w-full min-w-[760px] text-left text-xs">
+                    <thead class="sticky top-0 bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-200"><tr><th class="p-2">Scholar</th><th class="p-2">Account</th><th class="p-2 text-right">Amount</th><th class="p-2">Status</th><th class="p-2">Remarks / Deposit Info</th></tr></thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-gray-700">
+                        <tr v-for="recipient in creditRecipientRows" :key="recipient.id" class="bg-white dark:bg-gray-900">
+                            <td class="p-2"><div class="font-semibold text-slate-800 dark:text-gray-100">{{ recipient.name }}</div><div class="text-slate-500 dark:text-gray-400">{{ recipient.spas_no }}</div></td>
+                            <td class="p-2">{{ recipient.account_no || '-' }}</td><td class="p-2 text-right font-semibold">{{ formatMoney(recipient.amount) }}</td>
+                            <td class="p-2"><span :class="recipient.status === 'credited' ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'">{{ recipient.status === 'credited' ? 'Deposited' : 'Pending' }}</span></td>
+                            <td class="p-2 text-slate-500 dark:text-gray-400"><template v-if="recipient.status === 'credited'">{{ recipient.credited_by || 'Cashier' }}<span v-if="recipient.credited_at"> | {{ recipient.credited_at }}</span></template><template v-else>{{ recipient.remarks || 'No remarks provided' }}</template></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </Dialog>
 
     <Dialog
@@ -571,6 +638,7 @@
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import SelectInput from "../../Components/inputs/SelectInput.vue";
+import ManagementFilterBar from "../../Components/inputs/ManagementFilterBar.vue";
 import DefaultToast from "../../Components/messages/DefaultToast.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
@@ -578,7 +646,7 @@ import DrawerStipendModule from "../../Modules/Others/DrawerStipendModule.vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import {
-    IconDotsCircleHorizontal,
+    IconBuildingBank,
     IconDotsVertical,
     IconEye,
     IconFileImport,
@@ -610,6 +678,11 @@ const selectedActionBatch = ref(null);
 const remarksDialog = ref(false);
 const creditDialog = ref(false);
 const selectedCreditBatch = ref(null);
+const creditRecipientsDialog = ref(false);
+const creditRecipientsLoading = ref(false);
+const selectedCreditMonth = ref(null);
+const creditRecipientRows = ref([]);
+const creditRecipientSummary = ref({ total: 0, credited: 0, pending: 0, total_amount: 0, credited_amount: 0 });
 const historicalImportDialog = ref(false);
 const historicalImportFile = ref(null);
 const historicalImportInput = ref(null);
@@ -732,6 +805,15 @@ const hasBatchFilters = computed(() =>
             filterStatus.value,
     ),
 );
+const activeFilterCount = computed(() =>
+    [
+        searchInput.value,
+        !isRegionLocked.value && filterRegion.value,
+        filterTerm.value,
+        filterAcademicYear.value,
+        filterStatus.value,
+    ].filter(Boolean).length,
+);
 
 const selectedAcademicYear = (value) => value?.name ?? value;
 const canSubmitBatch = (batch) =>
@@ -742,12 +824,34 @@ const selectedMonthlyCredits = computed(() => selectedCreditBatch.value?.monthly
 const creditStatusLabel = (status) =>
     ({
         pending: "Pending",
+        partial: "Partial",
         credited: "Deposit",
     })[status] ?? status;
 const creditStatusClass = (status) =>
     status === "credited"
         ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-        : "border-slate-200 bg-white text-slate-600 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300";
+        : status === "partial"
+            ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+            : "border-slate-200 bg-white text-slate-600 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300";
+
+const openCreditRecipients = async (credit) => {
+    if (!selectedCreditBatch.value?.id || !credit?.month_no) return;
+    selectedCreditMonth.value = credit;
+    creditRecipientsDialog.value = true;
+    creditRecipientsLoading.value = true;
+    creditRecipientRows.value = [];
+
+    try {
+        const response = await axios.get(route("cashier.credits.recipients", {
+            id: selectedCreditBatch.value.id,
+            month: credit.month_no,
+        }));
+        creditRecipientRows.value = response.data.recipients ?? [];
+        creditRecipientSummary.value = response.data.summary ?? creditRecipientSummary.value;
+    } finally {
+        creditRecipientsLoading.value = false;
+    }
+};
 const batchStatusMeta = (status) =>
     ({
         draft: {
@@ -757,6 +861,10 @@ const batchStatusMeta = (status) =>
         submitted_payroll: {
             label: "Submitted Payroll",
             class: "bg-blue-50 text-blue-500 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800",
+        },
+        verified_payroll: {
+            label: "For Verification",
+            class: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800",
         },
         rejected_payroll: {
             label: "Returned Payroll",
@@ -1114,6 +1222,90 @@ watch(
 <style scoped>
 :deep(.p-datatable-header) {
     border-bottom: 0;
-    padding: 0.5rem 0 0.75rem;
+    padding: 0 0 0.75rem;
+    background: transparent;
+}
+
+:deep(.p-datatable-table-container) {
+    border-radius: 0.5rem !important;
+}
+
+:deep(.p-datatable-thead > tr > th) {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    background: #f8fafc !important;
+    color: #64748b;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+}
+
+:deep(.p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+
+:global(.dark .financial-assistance-page .p-datatable),
+:global(.dark .financial-assistance-page .p-datatable-header),
+:global(.dark .financial-assistance-page .p-datatable-table-container),
+:global(.dark .financial-assistance-page .p-datatable-table),
+:global(.dark .financial-assistance-page .p-datatable-tbody > tr),
+:global(.dark .financial-assistance-page .p-datatable-tbody > tr > td) {
+    background: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+:global(.dark .financial-assistance-page .p-datatable-thead > tr > th) {
+    background: #111827 !important;
+    color: #d1d5db !important;
+    border-color: #374151 !important;
+}
+
+:global(.dark .financial-assistance-page .p-datatable-tbody > tr:hover > td),
+:global(.dark .financial-assistance-page .p-datatable-tbody > tr.p-highlight > td),
+:global(.dark .financial-assistance-page .p-datatable-tbody > tr.p-datatable-row-selected > td) {
+    background: #374151 !important;
+    color: #ffffff !important;
+}
+
+:global(.dark .financial-assistance-page .p-paginator),
+:global(.dark .financial-assistance-page .p-datatable-paginator-bottom) {
+    background: #1f2937 !important;
+    color: #d1d5db !important;
+    border-color: #374151 !important;
+}
+
+:global(.dark .financial-assistance-page .p-paginator button) {
+    color: #d1d5db !important;
+}
+
+:global(.dark .financial-assistance-page .p-paginator button:hover) {
+    background: #374151 !important;
+    color: #ffffff !important;
+}
+
+:global(.dark .financial-assistance-page .p-paginator-page-selected) {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+:global(.dark .financial-assistance-page .p-inputtext) {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f3f4f6 !important;
+}
+
+:global(.dark .financial-assistance-page .p-inputtext::placeholder) {
+    color: #9ca3af !important;
+}
+
+:global(.dark .compact-payroll-tabs table th),
+:global(.dark .compact-payroll-tabs table td) {
+    border-color: #4b5563 !important;
+}
+
+:global(.dark .compact-payroll-tabs tbody tr) {
+    background: #111827;
+    color: #e5e7eb;
 }
 </style>

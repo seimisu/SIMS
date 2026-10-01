@@ -5,7 +5,6 @@ namespace App\Imports;
 use App\Models\ListCourse;
 use App\Models\ListPrograms;
 use App\Models\ListReferences;
-use App\Models\ListStatuses;
 use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
@@ -16,6 +15,7 @@ use App\Models\ScholarSchoolGrades;
 use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampuses;
 use Carbon\Carbon;
+use App\Support\ScholarStatuses;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -60,16 +60,16 @@ class ScholarImport implements OnEachRow, WithHeadingRow, WithStartRow, SkipsEmp
         $data = $row->toArray();
 
         DB::transaction(function () use ($data, $row) {
+            $status = ScholarStatuses::find($data['status'] ?? null)
+                ?? ScholarStatuses::find('ongoing');
 
             $scholars = Scholars::create([
                 'spas_no'     => trim($data['spas_no']) ?? null,
                 'type_id'     =>  ListReferences::where('name', trim($data['scholarship_type']))->value('id') ?? null,
                 'program_id'  => ListPrograms::where('name', trim($data['scholarship_subprogram']))->value('id') ?? null,
                 'category_id' =>  ListReferences::where('name', trim($data['scholarship_program']))->value('id') ?? null,
-                'status_id'   => ListStatuses::where('name', trim($data['status']))->value('id') ?? null,
-                'academic_status' => in_array(trim($data['status'] ?? ''), ['Ongoing', 'Graduating', 'Graduated', 'LOA', 'Terminated'], true)
-                    ? trim($data['status'])
-                    : 'Ongoing',
+                'status_id' => $status->id,
+                'academic_status' => strtoupper($status->name),
                 'created_by'  => Auth::user()->profile->fullname,
                 'award_year' => $data['year_award']
             ]);

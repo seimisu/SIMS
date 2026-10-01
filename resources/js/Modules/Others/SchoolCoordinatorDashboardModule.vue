@@ -484,8 +484,7 @@
                                     </div>
                                 </div>
                                 <span class="text-sm font-medium text-center">
-                                    {{ page.props.semesterDate?.startDate }} -
-                                    {{ page.props.semesterDate?.endDate }}
+                                    AY {{ page.props.semesterDate?.schoolYear }}
                                 </span>
                             </div>
                             <div

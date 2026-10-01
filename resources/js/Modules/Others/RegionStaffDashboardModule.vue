@@ -512,6 +512,7 @@ function statusClass(status) {
     const classes = {
         draft: "rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-gray-800 dark:text-gray-200",
         submitted_payroll: "rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+        verified_payroll: "rounded bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
         rejected_payroll: "rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300",
         approved_payroll: "rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
     };

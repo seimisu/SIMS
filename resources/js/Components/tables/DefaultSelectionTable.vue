@@ -174,30 +174,28 @@ function onRowSelected(event) {
     background-color: transparent !important;
 }
 
-:global(.dark) ::v-deep(.p-datatable),
-:global(.dark) ::v-deep(.p-datatable-table),
-:global(.dark) ::v-deep(.p-datatable-thead > tr > th),
-:global(.dark) ::v-deep(.p-datatable-tbody > tr),
-:global(.dark) ::v-deep(.p-datatable-tbody > tr > td),
-:global(.dark) ::v-deep(.p-datatable-header),
-:global(.dark) ::v-deep(.p-datatable-table-container) {
+:global(.dark .p-datatable),
+:global(.dark .p-datatable-table),
+:global(.dark .p-datatable-thead > tr > th),
+:global(.dark .p-datatable-tbody > tr),
+:global(.dark .p-datatable-tbody > tr > td),
+:global(.dark .p-datatable-header),
+:global(.dark .p-datatable-table-container) {
     background: #1f2937 !important;
     color: #f3f4f6 !important;
 }
 
-:global(.dark) ::v-deep(.p-datatable-thead > tr > th),
-:global(.dark) ::v-deep(.p-datatable-tbody > tr > td) {
+:global(.dark .p-datatable-thead > tr > th),
+:global(.dark .p-datatable-tbody > tr > td) {
     border-color: #374151 !important;
 }
 
-:global(.dark) ::v-deep(.p-datatable-tbody > tr:hover > td) {
+:global(.dark .p-datatable-tbody > tr:hover > td) {
     background: #374151 !important;
 }
 
-::v-deep(.p-datatable-column-header-content) {
-    &:where(.dark, .dark *) {
-        color: #d1d1d1;
-    }
+:global(.dark .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
 }
 ::v-deep(.p-datatable-mask.p-overlay-mask) {
     background-color: #ffffff71 !important;

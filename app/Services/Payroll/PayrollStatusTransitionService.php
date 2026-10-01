@@ -13,8 +13,7 @@ class PayrollStatusTransitionService
         private readonly PayrollRecipientService $recipients,
         private readonly PayrollRevisionService $revisions,
         private readonly PayrollStatusService $statuses
-    ) {
-    }
+    ) {}
 
     public function transition(
         Batches $batch,
@@ -37,6 +36,7 @@ class PayrollStatusTransitionService
             $batch,
             match ($newStatus) {
                 'submitted_payroll' => 'payroll_submitted',
+                'verified_payroll' => 'payroll_verified',
                 'approved_payroll' => 'payroll_approved',
                 'rejected_payroll' => 'payroll_returned',
             },

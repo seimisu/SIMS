@@ -253,6 +253,9 @@ class PayrollController extends Controller
     {
         $user = Auth::user();
         $permissions = $this->permissions();
+
+        abort_unless($permissions->can($user, 'payroll.view'), 403, 'Unauthorized');
+
         $batchRegion = $this->inputArrayValue($request->input('region'));
         $batchTerm = $request->input('term_id');
         $batchTermName = $request->input('term_name');
@@ -330,7 +333,7 @@ class PayrollController extends Controller
                     $query->where('status', $batchStatus);
                 })
                 ->when($permissions->isScholarshipReviewer($user), function ($query) {
-                    $query->whereIn('status', ['submitted_payroll', 'rejected_payroll', 'approved_payroll']);
+                    $query->whereIn('status', ['submitted_payroll', 'verified_payroll', 'rejected_payroll', 'approved_payroll']);
                 })
                 ->with([
                     'latestLog',
@@ -837,7 +840,7 @@ class PayrollController extends Controller
 
         $batchId = Hashids::decode($id)[0] ?? 0;
         $data = $request->validate([
-            'status' => ['required', 'in:submitted_payroll,rejected_payroll,approved_payroll'],
+            'status' => ['required', 'in:submitted_payroll,verified_payroll,rejected_payroll,approved_payroll'],
             'remarks' => ['required_if:status,rejected_payroll', 'nullable', 'string'],
             'payroll_file' => ['required_if:status,submitted_payroll', 'nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
         ]);
@@ -847,8 +850,8 @@ class PayrollController extends Controller
         $permissions = $this->permissions();
         $isAllowed = match ($data['status']) {
             'submitted_payroll' => $permissions->canSubmitPayroll(Auth::user(), $batch, $latestStatus),
-            'approved_payroll' => $permissions->can(Auth::user(), 'payroll.approve')
-                && $permissions->canReviewPayroll(Auth::user(), $latestStatus),
+            'verified_payroll' => $permissions->canVerifyPayroll(Auth::user(), $latestStatus),
+            'approved_payroll' => $permissions->canApprovePayroll(Auth::user(), $latestStatus),
             'rejected_payroll' => $permissions->can(Auth::user(), 'payroll.return')
                 && $permissions->canReviewPayroll(Auth::user(), $latestStatus),
             default => false,
@@ -879,7 +882,7 @@ class PayrollController extends Controller
         }
 
         if (
-            $data['status'] === 'approved_payroll'
+            in_array($data['status'], ['verified_payroll', 'approved_payroll'], true)
             && BatchRecipients::where('batch_id', $batch->id)
                 ->where(function ($query) {
                     $query->where('is_for_removal_from_payroll', true)
@@ -953,6 +956,10 @@ class PayrollController extends Controller
             'approved_payroll' => [
                 'title' => 'Payroll approved',
                 'message' => 'The payroll batch was successfully approved.',
+            ],
+            'verified_payroll' => [
+                'title' => 'Payroll verified',
+                'message' => 'The payroll batch was forwarded to the scholarship coordinator for final verification.',
             ],
             'rejected_payroll' => [
                 'title' => 'Payroll rejected',

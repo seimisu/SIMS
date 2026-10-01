@@ -59,7 +59,7 @@ class programController extends Controller
             'is_sub' => $data['isSub'] ?? false,
             'is_delete' => false,
         ], [
-            'description' => $data['description'] ?? null,
+            'others' => $data['description'] ?? null,
             'created_by' =>  Auth::user()->profile->fullname
         ]);
 
@@ -97,7 +97,7 @@ class programController extends Controller
         if ($type == 'form') {
             $find->update([
                 'name' => $data['name'],
-                'description' => $data['description'] ?? null,
+                'others' => $data['description'] ?? null,
                 'program_id' => $data['scholarship']['id'] ?? null,
                 'type_id' => $data['type']['id'] ?? null,
                 'is_sub' => $data['isSub'] ?? false,

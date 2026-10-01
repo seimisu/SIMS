@@ -5,6 +5,7 @@ namespace App\Services\Scholar\Management;
 use App\Http\Controllers\Web\PayrollController;
 use App\Models\Scholars;
 use App\Models\ScholarTerm;
+use App\Support\ScholarStatuses;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -21,6 +22,14 @@ class ScholarGradeRequestService
                 'status' => 'info',
                 'title' => 'Already processed',
                 'message' => 'This grade request was already reviewed.',
+            ];
+        }
+
+        if ($type === 'accept' && $terms->contains(fn ($term) => $term->scholar?->isBlockedFromServices())) {
+            return [
+                'status' => 'error',
+                'title' => 'Scholar ineligible',
+                'message' => 'The scholar status does not allow report submissions.',
             ];
         }
 
@@ -103,7 +112,7 @@ class ScholarGradeRequestService
 
             if ($scholarshipStatus === 'TERMINATED') {
                 Scholars::whereKey($term->scholar_id)->update([
-                    'academic_status' => 'TERMINATED',
+                    ...ScholarStatuses::attributes('terminated'),
                     'updated_at' => now(),
                 ]);
             }
@@ -150,7 +159,7 @@ class ScholarGradeRequestService
 
     private function terms(array $data)
     {
-        return ScholarTerm::with('scholar:id,spas_no')
+        return ScholarTerm::with('scholar.status:id,name,type')
             ->whereIn('id', collect($data)->pluck('id'))
             ->where('verification_status', 'submitted')
             ->get();

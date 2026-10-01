@@ -1,21 +1,19 @@
 <template>
     <Head title="Scholars" />
     <AuthLayout>
-        <div class="flex flex-col w-full h-full gap-5">
-            <div class="flex flex-col lg:flex-row items-center space-x-0 gap-4">
-                <HeaderModule
-                    title="Scholar Management"
-                    description="Comprehensive records of all scholars, including profile details, program assignments, and status monitoring."
-                />
-            </div>
-            <div class="w-full flex items-end justify-between">
-                <div class="flex items-center gap-2">
-                    <IconTextInput
-                        :icon="TablerIcons.IconUserSearch"
-                        placeholder="Search by name or SPAS No..."
-                        v-model="searchInput"
-                        class="w-64 lg:w-96"
+        <div class="scholars-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex min-w-0 items-start gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                        <IconUsers :size="21" stroke-width="1.8" />
+                    </div>
+                    <HeaderModule
+                        title="Scholar Management"
+                        description="Manage scholar records, academic assignments, account access, and current status."
                     />
+                </div>
+            </div>
+            <ManagementFilterBar v-model="searchInput" search-placeholder="Search name or SPAS number">
                     <div>
                         <DefaultButton
                             :icon="
@@ -24,7 +22,7 @@
                                     : TablerIcons.IconFilter
                             "
                             label="Schools"
-                            class-name="w-30  !rounded-xl"
+                            class-name="!rounded-md"
                             size="small"
                             severity="secondary"
                             @click="toggleOpSchool"
@@ -71,7 +69,7 @@
                                     : TablerIcons.IconFilter
                             "
                             label="Programs"
-                            class-name="w-30  !rounded-xl"
+                            class-name="!rounded-md"
                             size="small"
                             severity="secondary"
                             @click="toggleopProgram"
@@ -117,7 +115,7 @@
                                     : TablerIcons.IconFilter
                             "
                             label="Types"
-                            class-name=" !rounded-xl"
+                            class-name="!rounded-md"
                             size="small"
                             severity="secondary"
                             @click="toggleopSub"
@@ -163,7 +161,7 @@
                                     : TablerIcons.IconFilter
                             "
                             label="Status"
-                            class-name=" !rounded-xl"
+                            class-name="!rounded-md"
                             size="small"
                             severity="secondary"
                             @click="toggleopStatus"
@@ -201,9 +199,18 @@
                             </div>
                         </Popover>
                     </div>
-                </div>
-            </div>
+                    <DefaultButton
+                        :icon="TablerIcons.IconFilterOff"
+                        tooltip="Clear all filters"
+                        size="small"
+                        severity="secondary"
+                        outlined
+                        :disabled="!activeFilterCount"
+                        @click="clearAllFilters"
+                    />
+            </ManagementFilterBar>
             <DefaultSelectionTable
+                class="min-h-0 flex-1"
                 :items="page.props.scholars.data"
                 :pagination="{
                     total: page.props.scholars.total,
@@ -213,10 +220,12 @@
                 @selected="toggleScholarDetails"
                 :loading="loading.table"
                 @paginate="loadPage"
+                scrollable
+                scroll-height="flex"
             >
                 <Column header="Scholars">
                     <template #body="props">
-                        <div class="flex items-center gap-2">
+                        <div class="flex min-w-64 items-center gap-3 py-1">
                             <div class="">
                                 <Avatar
                                     :label="
@@ -228,7 +237,7 @@
                                         background-color: #dee9fc;
                                         color: #1a2551;
                                     "
-                                    class="!w-[40px] !h-[40px] !rounded-xl"
+                                    class="!h-9 !w-9 !rounded-md"
                                     :image="
                                         props.data.photo == null
                                             ? null
@@ -239,13 +248,13 @@
                             <div class="flex-1 flex flex-col">
                                 <div
                                     :class="[
-                                        'text-xs flex items-center text-blue-600',
+                                        'flex items-center text-[11px] font-medium text-blue-600 dark:text-blue-300',
                                     ]"
                                 >
                                     <div># {{ props.data.spas_no }}</div>
                                 </div>
                                 <div class="flex gap-1 items-center">
-                                    <div class="font-medium uppercase">
+                                    <div class="truncate text-sm font-semibold uppercase text-slate-800 dark:text-gray-100">
                                         {{ props.data.fullname }}
                                     </div>
                                     <div
@@ -264,20 +273,20 @@
                 </Column>
                 <Column header="School/Course">
                     <template #body="props">
-                        <div class="flex flex-col">
-                            <div class="text-xs text-gray-400 font-light">
-                                {{ props.data.course }}
+                        <div class="flex min-w-64 flex-col gap-0.5 py-1">
+                            <div class="text-xs text-slate-500 dark:text-gray-400">
+                                {{ props.data.course || "Course not assigned" }}
                             </div>
-                            <div class="">
-                                {{ props.data.school }}
+                            <div class="truncate text-sm font-medium text-slate-700 dark:text-gray-200">
+                                {{ props.data.school || "School not assigned" }}
                             </div>
                         </div>
                     </template>
                 </Column>
                 <Column header="Region">
                     <template #body="props">
-                        <div class="uppercase text-xs font-medium">
-                            {{ props.data.agency }}
+                        <div class="text-xs font-semibold uppercase text-slate-600 dark:text-gray-300">
+                            {{ props.data.agency || "-" }}
                         </div>
                     </template>
                 </Column>
@@ -288,8 +297,8 @@
                         </div>
                     </template>
                     <template #body="props">
-                        <div class="text-center text-xs font-medium">
-                            {{ props.data.type }}
+                        <div class="text-center text-xs font-medium text-slate-700 dark:text-gray-200">
+                            {{ props.data.type || "-" }}
                         </div>
                     </template>
                 </Column>
@@ -300,21 +309,21 @@
                         </div>
                     </template>
                     <template #body="props">
-                        <div class="text-center text-xs font-medium">
-                            {{ props.data.subProgram }}
+                        <div class="text-center text-xs font-medium text-slate-700 dark:text-gray-200">
+                            {{ props.data.subProgram || "-" }}
                         </div>
                     </template>
                 </Column>
                 <Column>
                     <template #header>
                         <div class="flex justify-center w-full font-semibold">
-                            <div class="font-semibold">Progress Status</div>
+                            <div class="font-semibold">Scholar Status</div>
                         </div>
                     </template>
                     <template #body="props">
                         <div class="flex items-center justify-center">
                             <span
-                                class="flex text-xs items-center py-1 px-3 border rounded-2xl gap-0.5"
+                                class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium"
                                 :class="[
                                     props.data.status.tcolor,
                                     props.data.status.bcolor,
@@ -409,17 +418,17 @@
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import DrawerScholar1Module from "../../Modules/Others/DrawerScholar1Module.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
+import ManagementFilterBar from "../../Components/inputs/ManagementFilterBar.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
-import IconTextInput from "../../Components/inputs/IconTextInput.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import * as TablerIcons from "@tabler/icons-vue";
 
 import { computed, reactive, ref, watch } from "vue";
 import {
-    IconLineDashed,
-    IconSettings,
     IconRosetteDiscountCheckFilled,
+    IconSettings,
+    IconUsers,
 } from "@tabler/icons-vue";
 import { Head, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "primevue";
@@ -446,6 +455,14 @@ const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
 const DEBOUNCE_MS = 600;
+const hasSelection = (value) => Array.isArray(value) ? value.length > 0 : Boolean(value);
+const activeFilterCount = computed(() => [
+    searchInput.value,
+    hasSelection(filterSchool.value),
+    hasSelection(filterProgram.value),
+    hasSelection(filterSub.value),
+    hasSelection(filterStatus.value),
+].filter(Boolean).length);
 
 const scheduleLoadPage = (pageNumber = 1) => {
     clearTimeout(timerBounce.value);
@@ -638,6 +655,15 @@ const statusFilterClear = (event) => {
     scheduleLoadPage();
 };
 
+const clearAllFilters = () => {
+    searchInput.value = null;
+    filterSchool.value = null;
+    filterProgram.value = null;
+    filterSub.value = null;
+    filterStatus.value = null;
+    scheduleLoadPage(1);
+};
+
 const toggleRequest = (event) => {
     scheduleLoadPage();
 };
@@ -651,3 +677,16 @@ watch(
     },
 );
 </script>
+
+<style scoped>
+:global(.dark .scholars-page .p-datatable-header-cell),
+:global(.dark .scholars-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+
+:global(.scholars-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+
+</style>

@@ -152,12 +152,16 @@ class HandleInertiaRequests extends Middleware
                 ->count();
         }
 
-        if ($permissions->isScholarshipReviewer($user)) {
+        if ($permissions->hasRole($user, 'scholarship staff')) {
             return Batches::where('status', 'submitted_payroll')->count();
         }
 
+        if ($permissions->hasRole($user, 'scholarship coordinator')) {
+            return Batches::where('status', 'verified_payroll')->count();
+        }
+
         if ($permissions->isAdministrator($user)) {
-            return Batches::whereIn('status', ['draft', 'rejected_payroll', 'submitted_payroll'])->count();
+            return Batches::whereIn('status', ['draft', 'rejected_payroll', 'submitted_payroll', 'verified_payroll'])->count();
         }
 
         return 0;

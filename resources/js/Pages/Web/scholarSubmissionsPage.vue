@@ -1,16 +1,24 @@
 <template>
     <Head title="Grade Submissions" />
     <AuthLayout>
-        <div class="flex h-full w-full flex-col gap-4">
-            <HeaderModule
-                class="!flex-none shrink-0"
-                title="Grade Submissions"
-                description="Monitor scholar grade submissions by academic year and semester."
-            />
+        <div class="submissions-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
+            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+                <div class="flex min-w-0 items-start gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                        <IconClipboardCheck :size="21" stroke-width="1.8" />
+                    </div>
+                    <HeaderModule
+                        class="!flex-none shrink-0"
+                        title="Grade Submissions"
+                        description="Monitor and review scholar grade submissions by academic period."
+                    />
+                </div>
+            </div>
 
             <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
                 <aside class="min-h-0 border-r border-slate-200 pr-3 dark:border-gray-700">
-                    <div class="mb-2 text-xs font-semibold uppercase text-slate-500 dark:text-gray-400">
+                    <div class="mb-2 flex items-center gap-2 px-1 text-xs font-semibold uppercase text-slate-500 dark:text-gray-400">
+                        <IconCalendarStats :size="15" />
                         Semesters
                     </div>
                     <div class="flex max-h-full flex-col gap-1 overflow-y-auto">
@@ -43,21 +51,11 @@
                     @paginate="loadPage"
                 >
                     <template #header>
-                        <div class="flex flex-col gap-2">
-                            <div class="flex flex-col gap-2 lg:flex-row lg:items-center">
-                                <IconTextInput
-                                    v-model="searchInput"
-                                    :icon="IconSearch"
-                                    placeholder="Search SPAS or scholar"
-                                    class="w-full lg:w-72"
-                                />
-                                <div class="flex flex-wrap gap-2">
-                                    <DefaultButton :icon="filterSchool ? IconFilterFilled : IconFilter" label="Schools" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'school')" />
-                                    <DefaultButton :icon="filterProgram ? IconFilterFilled : IconFilter" label="Programs" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'program')" />
-                                    <DefaultButton :icon="filterType ? IconFilterFilled : IconFilter" label="Types" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'type')" />
-                                    <DefaultButton :icon="filterStatus ? IconFilterFilled : IconFilter" label="Status" class-name="!rounded-xl" size="small" severity="secondary" @click="toggleFilter($event, 'status')" />
-                                </div>
-                            </div>
+                        <ManagementFilterBar v-model="searchInput" search-placeholder="Search SPAS or scholar">
+                                    <DefaultButton :icon="filterSchool ? IconFilterFilled : IconFilter" label="Schools" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'school')" />
+                                    <DefaultButton :icon="filterProgram ? IconFilterFilled : IconFilter" label="Programs" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'program')" />
+                                    <DefaultButton :icon="filterType ? IconFilterFilled : IconFilter" label="Types" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'type')" />
+                                    <DefaultButton :icon="filterStatus ? IconFilterFilled : IconFilter" label="Status" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'status')" />
                             <Popover ref="opSchool">
                                 <div class="flex gap-3">
                                     <div class="w-60">
@@ -102,7 +100,7 @@
                                     </div>
                                 </div>
                             </Popover>
-                        </div>
+                        </ManagementFilterBar>
                     </template>
 
                     <Column header="Scholar">
@@ -153,13 +151,13 @@
 import AuthLayout from "../../Layouts/AuthLayout.vue";
 import DefaultSelectionTable from "../../Components/tables/DefaultSelectionTable.vue";
 import HeaderModule from "../../Modules/Others/HeaderModule.vue";
-import IconTextInput from "../../Components/inputs/IconTextInput.vue";
+import ManagementFilterBar from "../../Components/inputs/ManagementFilterBar.vue";
 import SelectMultiInput from "../../Components/inputs/SelectMultiInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
-import { IconFilter, IconFilterFilled, IconSearch } from "@tabler/icons-vue";
+import { IconCalendarStats, IconClipboardCheck, IconFilter, IconFilterFilled } from "@tabler/icons-vue";
 import { route } from "ziggy-js";
 
 const page = usePage();
@@ -283,6 +281,12 @@ watch(
 :deep(.p-datatable-header) {
     border-bottom: 0;
     padding: 0.5rem 0 0.75rem;
+    background: transparent;
+}
+
+:global(.dark .submissions-page .p-datatable-header-cell),
+:global(.dark .submissions-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
 }
 
 :deep(.p-datatable *),
