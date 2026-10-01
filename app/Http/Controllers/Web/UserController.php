@@ -31,7 +31,7 @@ class UserController extends Controller
                 });
             })
             ->with(['role', 'profile', 'school'])
-            ->orderBy('id')
+            ->orderBy('id', 'desc')
             ->paginate(10);
 
         // Add avatar URL to each user
