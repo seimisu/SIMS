@@ -453,13 +453,20 @@ class ScholarSubmissionPageService
 
         $terms = collect([$currentTerm]);
 
-        $previousTerm = $currentTerm
-            ? ScholarTerm::where('scholar_id', $scholar->id)
-                ->whereKeyNot($currentTerm->id)
-                ->latest('created_at')
-                ->latest('id')
-                ->first()
-            : null;
+        // Match the portal's submission checks when selecting the COG term.
+        $previousTerms = ScholarTerm::where('scholar_id', $scholar->id)
+            ->where('is_current', false)
+            ->whereNull('deleted_at');
+        $previousTerm = (clone $previousTerms)
+            ->where('academic_year', $currentTerm->academic_year)
+            ->where('term_id', '<', $currentTerm->term_id)
+            ->orderByDesc('term_id')
+            ->first()
+            ?? $previousTerms
+                ->where('academic_year', '<', $currentTerm->academic_year)
+                ->orderByDesc('academic_year')
+                ->orderByDesc('term_id')
+                ->first();
 
         return $terms
             ->when(

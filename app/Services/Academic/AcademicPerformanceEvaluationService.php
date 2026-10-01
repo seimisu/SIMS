@@ -24,7 +24,7 @@ class AcademicPerformanceEvaluationService
     {
         $term->loadMissing([
             'term:id,name',
-            'schoolInfo.course:id,years',
+            'schoolInfo.course:id,course_id,years',
             'subjects.subject:id,curriculum_id,year,unit,subject_class,name,subject_code',
             'subjects.grade:id,grade,is_drop,is_withdrawn,is_failed,is_incomplete',
         ]);
