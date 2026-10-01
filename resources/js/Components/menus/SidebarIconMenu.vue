@@ -3,10 +3,13 @@
         :model="list"
         class="z-1000 !min-w-0 flex-1 !border-0 !bg-transparent px-2"
         :pt="{
-            submenu: { class: '!min-w-[220px] !rounded-md !border-slate-200 !bg-white !p-1 !shadow-lg dark:!border-slate-700 dark:!bg-slate-900' },
+            submenu: {
+                class: '!min-w-[220px] !rounded-md !border-slate-200 !bg-white !p-1 !shadow-lg dark:!border-slate-700 dark:!bg-slate-900',
+            },
             separator: {
                 class: 'my-2 !border-slate-200 dark:!border-slate-700',
             },
+            itemContent: 'bg-transparent!',
         }"
     >
         <template #item="{ item }">
@@ -15,7 +18,9 @@
                 :href="item.route"
                 :class="[
                     'flex min-h-10 w-full items-center rounded-md text-slate-600 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-100 dark:hover:bg-slate-600 dark:hover:text-white',
-                    item.subItem ? 'justify-start gap-3 px-3' : 'justify-center',
+                    item.subItem
+                        ? 'justify-start gap-3 px-3'
+                        : 'justify-center',
                     item.component === page.component
                         ? 'bg-blue-600 !text-white shadow-sm'
                         : '',

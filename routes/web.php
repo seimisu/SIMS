@@ -19,11 +19,13 @@ use App\Http\Controllers\Web\LocationCityController;
 use App\Http\Controllers\Web\LocationProvinceController;
 use App\Http\Controllers\Web\LocationRegionController;
 use App\Http\Controllers\Web\NotificationController;
+use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\Web\programController;
 use App\Http\Controllers\Web\ReferenceController;
 use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\RouteController;
 use App\Http\Controllers\Web\ScholarManagementController;
+use App\Http\Controllers\Web\ScholarPortalDocumentController;
 use App\Http\Controllers\Web\ScholarReviewController;
 use App\Http\Controllers\Web\ScholarSubmissionController;
 use App\Http\Controllers\Web\SchoolCampusCurriculumController;
@@ -31,9 +33,7 @@ use App\Http\Controllers\Web\SchoolCampusInfoController;
 use App\Http\Controllers\Web\SchoolCampusSemesterController;
 use App\Http\Controllers\Web\SchoolController;
 use App\Http\Controllers\Web\SchoolCoordinatorController;
-use App\Http\Controllers\Web\ScholarPortalDocumentController;
 use App\Http\Controllers\Web\StatusController;
-use App\Http\Controllers\Web\PayrollController;
 use App\Http\Controllers\Web\UserController;
 use App\Http\Controllers\Web\UserProfileController;
 use App\Http\Controllers\Web\VideoResourceController;
@@ -50,9 +50,10 @@ Route::get('documents/{document}/download', [DocumentController::class, 'downloa
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
-    Route::post('login', [LoginController::class, 'store'])->middleware('throttle:auth-submit')->name('login.store');
-    Route::post('otp/request', [OtpRequestController::class, 'create'])->middleware('throttle:otp-submit')->name('otp.check');
-    Route::post('otp/login', [OtpRequestController::class, 'store'])->middleware('throttle:auth-submit')->name('otp.store');
+    Route::get('two-factor-challenge', [LoginController::class, 'twoFactorChallenge'])->name('two-factor.login');
+    Route::post('login', [LoginController::class, 'store'])->name('login.store');
+    Route::post('otp/request', [OtpRequestController::class, 'create'])->name('otp.check');
+    Route::post('otp/login', [OtpRequestController::class, 'store'])->name('otp.store');
     Route::get('/activate/{token}', [ActivationController::class, 'show'])->name('activation.show');
     Route::post('/activate/{id}', [ActivationController::class, 'update'])->middleware('throttle:auth-submit')->name('activation.update');
     Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->middleware('throttle:password-reset-submit')->name('password.store');
@@ -63,7 +64,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'web'])->group(function () {
     Route::get('/profile', [UserProfileController::class, 'index'])->name('profile');
     Route::put('/profile/update', [UserProfileController::class, 'update'])->middleware('throttle:writes')->name('profile.update');
-    Route::post('/profile/photo',[UserProfileController::class, 'updatePhoto'])->middleware('throttle:uploads')->name('profile.photo.update');
+    Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->middleware('throttle:uploads')->name('profile.photo.update');
     Route::get('scholar-documents/{document}/preview', [ScholarPortalDocumentController::class, 'preview'])->middleware('throttle:downloads')->name('scholar-documents.preview');
     Route::get('scholar-documents/{document}/download', [ScholarPortalDocumentController::class, 'download'])->middleware('throttle:downloads')->name('scholar-documents.download');
 });

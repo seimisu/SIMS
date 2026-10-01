@@ -2,6 +2,7 @@
 
 namespace App\Services\Scholar\Management;
 
+use App\Models\PayrollBatchMonthlyCredit;
 use App\Models\Scholars;
 use App\Models\StudentDocument;
 use App\Services\Payroll\PayrollMonthlyCreditService;
@@ -24,6 +25,7 @@ class ScholarManagementDetailsService
 
         $schoolInfo = $scholar->schoolInfo?->first();
         $payrolls = $scholar->payrolls;
+
         $allowances = $payrolls->flatMap->allowances;
         $monthlyCreditService = app(PayrollMonthlyCreditService::class);
         $creditTotals = $this->monthlyCreditTotals($payrolls, $monthlyCreditService);

@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class LoginRequest extends FormRequest
 {
@@ -41,7 +42,7 @@ class LoginRequest extends FormRequest
         }
     }
 
-    public function authenticate(): void
+    public function authenticate(): bool
     {
 
         $this->ensureIsNotRateLimited();
@@ -75,7 +76,7 @@ class LoginRequest extends FormRequest
 
 
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! Hash::check($this->input('password'), $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -83,9 +84,20 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-
-
         RateLimiter::clear($this->throttleKey());
+
+        if ($user->two_factor_secret) {
+            $this->session()->put([
+                'login.id' => $user->getKey(),
+                'login.remember' => $this->boolean('remember'),
+            ]);
+
+            return true;
+        }
+
+        Auth::login($user, $this->boolean('remember'));
+
+        return false;
     }
 
 

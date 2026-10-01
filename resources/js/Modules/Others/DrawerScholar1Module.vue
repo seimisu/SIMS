@@ -719,11 +719,11 @@
                                     </div>
 
                                     <div class="">
-                                        <h3
-                                            class="text-xs font-semibold uppercase text-slate-500"
+                                        <span
+                                            class="text-xs font-semibold uppercase text-slate-500 bg-blue-50 rounded-lg p-1"
                                         >
                                             Current Address
-                                        </h3>
+                                        </span>
                                         <TextInput
                                             v-model="
                                                 personalInfo.addressCurrent
