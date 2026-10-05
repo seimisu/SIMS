@@ -7,8 +7,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"><!--[if mso]>
 <xml><w:WordDocument xmlns:w="urn:schemas-microsoft-com:office:word"><w:DontUseAdvancedTypographyReadingMail/></w:WordDocument>
 <o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml>
-<![endif]--><!--[if !mso]><!-->
-	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900" rel="stylesheet" type="text/css"><!--<![endif]-->
+<![endif]-->
 	<style>
 		* {
 			box-sizing: border-box;
@@ -17,6 +16,24 @@
 		body {
 			margin: 0;
 			padding: 0;
+			font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+		}
+
+		.row-content {
+			max-width: 500px !important;
+		}
+
+		.row-3 .row-content,
+		.row-4 .row-content {
+			background-color: #0b5fa5 !important;
+		}
+
+		.row-3 .row-content {
+			border-radius: 12px 12px 0 0 !important;
+		}
+
+		.row-4 .row-content {
+			border-radius: 0 0 12px 12px !important;
 		}
 
 		a[x-apple-data-detectors] {
@@ -81,9 +98,36 @@
 				width: 100% !important;
 			}
 
+			.row-content .mobile-padding {
+				padding-left: 20px !important;
+				padding-right: 20px !important;
+			}
+
+			.mobile-heading {
+				font-size: 27px !important;
+				line-height: 1.2 !important;
+			}
+
+			.mobile-icon {
+				font-size: 38px !important;
+				line-height: 1.2 !important;
+			}
+
 			.stack .column {
 				width: 100%;
 				display: block;
+			}
+
+			.brand-header .column {
+				display: table-cell !important;
+			}
+
+			.brand-header .column:first-child {
+				width: 72px !important;
+			}
+
+			.brand-header .column:last-child {
+				width: auto !important;
 			}
 
 			.mobile_hide {
@@ -103,8 +147,8 @@
 	</style><!--[if mso ]><style>sup, sub { font-size: 100% !important; } sup { mso-text-raise:10% } sub { mso-text-raise:-10% }</style> <![endif]-->
 </head>
 
-<body class="body" style="background-color: #005fed; margin: 0; padding: 0; -webkit-text-size-adjust: none; text-size-adjust: none;">
-	<table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #005fed;">
+<body class="body" style="background-color: #f1f5f9; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; -webkit-text-size-adjust: none; text-size-adjust: none;">
+	<table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f1f5f9;">
 		<tbody>
 			<tr>
 				<td>
@@ -125,11 +169,11 @@
 							</tr>
 						</tbody>
 					</table>
-					<table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #005fed;">
+					<table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f1f5f9;">
 						<tbody>
 							<tr>
 								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; border-radius: 15px 15px 0 0; color: #000000; width: 500px; margin: 0 auto;" width="500">
+									<table class="row-content stack brand-header" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; border-radius: 15px 15px 0 0; color: #000000; width: 500px; margin: 0 auto;" width="500">
 										<tbody>
 											<tr>
 												<td class="column column-1" width="16.666666666666668%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top;">
@@ -137,7 +181,7 @@
 														<tr>
 															<td class="pad">
 																<div class="alignment" align="center">
-																	<div style="max-width: 53.333px;"><img src="https://0281a691f7.imgdist.com/pub/bfra/osrnrce7/y1p/gcw/nue/seilogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="53.333" alt title height="auto"></div>
+																	<div style="max-width: 53.333px;"><img src="https://0281a691f7.imgdist.com/pub/bfra/osrnrce7/y1p/gcw/nue/seilogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="53.333" alt="Science Education Institute logo" title="Science Education Institute" height="auto"></div>
 																</div>
 															</td>
 														</tr>
@@ -147,21 +191,21 @@
 													<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="padding-top:10px;text-align:center;width:100%;">
-																<h3 style="margin: 0; color: #005fed; direction: ltr; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 18px;"><span class="tinyMce-placeholder" style="word-break: break-word;">Department Of Science and Technology<br></span></h3>
+																<h3 style="margin: 0; color: #005fed; direction: ltr; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: normal; line-height: 1.4; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 18px;"><span class="tinyMce-placeholder" style="word-break: break-word;">Department of Science and Technology<br></span></h3>
 															</td>
 														</tr>
 													</table>
 													<table class="heading_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="text-align:center;width:100%;">
-																<h3 style="margin: 0; color: #63676e; direction: ltr; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 18px;"><span class="tinyMce-placeholder" style="word-break: break-word;">Science Education Institute<br></span></h3>
+																<h3 style="margin: 0; color: #526174; direction: ltr; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: normal; line-height: 1.4; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 18px;"><span class="tinyMce-placeholder" style="word-break: break-word;">Science Education Institute<br></span></h3>
 															</td>
 														</tr>
 													</table>
 													<table class="paragraph_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
 														<tr>
 															<td class="pad" style="padding-bottom:10px;">
-																<div style="color:#101112;direction:ltr;font-family:'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:1.2;text-align:left;mso-line-height-alt:19px;">
+																<div style="color:#17324d;direction:ltr;font-family:'Segoe UI', Arial, Helvetica, sans-serif;font-size:13px;font-weight:600;letter-spacing:0px;line-height:1.4;text-align:left;mso-line-height-alt:19px;">
 																	<p style="margin: 0;"><strong>Science and Technology Scholarship Division</strong></p>
 																</div>
 															</td>
@@ -186,7 +230,7 @@
 													<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="text-align:center;width:100%;">
-																<h1 style="margin: 0; color: #7747FF; direction: ltr; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; font-size: 54px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 65px;"><span class="tinyMce-placeholder" style="word-break: break-word;">🎉</span></h1>
+																<h1 aria-hidden="true" class="mobile-icon" style="margin: 0; color: #ffd166; direction: ltr; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 40px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 48px;"><span class="tinyMce-placeholder" style="word-break: break-word;">🎉</span></h1>
 															</td>
 														</tr>
 													</table>
@@ -209,7 +253,7 @@
 													<table class="heading_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad">
-																<h1 style="margin: 0; color: #005fed; direction: ltr; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; font-size: 38px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 46px;"><span class="tinyMce-placeholder" style="word-break: break-word;">Welcome to SIMS</span></h1>
+																<h1 class="mobile-heading" style="margin: 0; color: #ffffff; direction: ltr; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 38px;"><span class="tinyMce-placeholder" style="word-break: break-word;">Welcome to SIMS</span></h1>
 															</td>
 														</tr>
 													</table>
@@ -231,9 +275,9 @@
 												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; vertical-align: top;">
 													<table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
 														<tr>
-															<td class="pad" style="padding-bottom:10px;padding-left:30px;padding-right:30px;padding-top:10px;">
-																<div style="color:#323537;direction:ltr;font-family:'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;font-size:14px;font-weight:400;letter-spacing:0px;line-height:1.8;text-align:justify;mso-line-height-alt:25px;">
-																	<p style="margin: 0;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;We are thrilled to inform you that you are now officially a member of the <strong>SIMS</strong> ( Scholars Information Management System) family. Your journey with us marks the beginning of meaningful collaboration and growth, and we’re excited to see the great contributions you'll bring to the team.</p>
+															<td class="pad mobile-padding" style="padding-bottom:10px;padding-left:30px;padding-right:30px;padding-top:10px;">
+																<div style="color:#334155;direction:ltr;font-family:'Segoe UI', Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:1.65;text-align:left;mso-line-height-alt:26px;">
+																	<p style="margin: 0;">We are pleased to welcome you to the <strong>Scholars Information Management System (SIMS)</strong>. Your account is ready, and we look forward to supporting your scholarship journey.</p>
 																</div>
 															</td>
 														</tr>
@@ -257,7 +301,7 @@
 													<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="text-align:center;width:100%;">
-																<h1 style="margin: 0; color: #005fed; direction: ltr; font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif; font-size: 22px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 26px;">Your registered account</h1>
+																<h2 style="margin: 0; color: #17324d; direction: ltr; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; letter-spacing: normal; line-height: 1.4; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 26px;">Activate your account</h2>
 															</td>
 														</tr>
 													</table>
@@ -281,13 +325,15 @@
 														<tr>
 															<td class="pad" style="text-align:center;width:100%;">
 																   <a href="{{ $url }}"
-                                                                   style="background-color:#4137ff;
-                                                                          color:#ffffff;
-                                                                          padding:12px 24px;
+																    style="background-color:#ffd166;
+																          color:#17324d;
+																	    padding:14px 28px;
                                                                           text-decoration:none;
-                                                                          border-radius:6px;
+																	    border-radius:4px;
                                                                           display:inline-block;
-                                                                          font-weight:600;">
+																	    font-family:'Segoe UI', Arial, Helvetica, sans-serif;
+																	    font-size:15px;
+																	    font-weight:600;">
                                                                     Activate Account
                                                                 </a>
 															</td>
@@ -312,7 +358,7 @@
 													<table class="paragraph_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
 														<tr>
 															<td class="pad">
-																<div style="color:#323537;direction:ltr;font-family:'Montserrat', 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;font-size:14px;font-weight:400;letter-spacing:0px;line-height:1.2;text-align:left;mso-line-height-alt:17px;">
+																<div style="color:#526174;direction:ltr;font-family:'Segoe UI', Arial, Helvetica, sans-serif;font-size:14px;font-weight:400;letter-spacing:0px;line-height:1.5;text-align:left;mso-line-height-alt:21px;">
 																	<p style="margin: 0;">Best regards,<br><strong>SIMS administrator</strong></p>
 																</div>
 															</td>

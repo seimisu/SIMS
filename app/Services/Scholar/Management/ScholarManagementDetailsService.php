@@ -24,6 +24,7 @@ class ScholarManagementDetailsService
 
         $schoolInfo = $scholar->schoolInfo?->first();
         $payrolls = $scholar->payrolls;
+
         $allowances = $payrolls->flatMap->allowances;
         $monthlyCreditService = app(PayrollMonthlyCreditService::class);
         $creditTotals = $this->monthlyCreditTotals($payrolls, $monthlyCreditService);
@@ -425,7 +426,7 @@ class ScholarManagementDetailsService
                     'name' => $allowance->allowanceType?->name,
                     'description' => $allowance->allowanceType?->description,
                     'amount' => number_format($allowance->amount, 2),
-                    'creditStatus' => 'credited',
+
                 ]),
                 'totalStipends' => number_format($payroll->stipends->sum('amount'), 2),
             ];

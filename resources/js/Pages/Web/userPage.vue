@@ -182,6 +182,7 @@
                                     :check-icon="IconCheck"
                                     :un-check-icon="IconX"
                                     v-model="props.data.is_active"
+                                    :disabled="!props.data.is_verified"
                                     @update-value="
                                         updateStatus(
                                             props.data.is_active,

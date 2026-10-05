@@ -18,201 +18,218 @@
         <template #default>
             <div class="flex flex-col lg:flex-row w-full my-5 gap-3 h-full">
                 <div
-                    class="lg:flex-2 flex flex-col bg-white p-2 rounded-2xl dark:bg-gray-800 dark:text-gray-100"
+                    class="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:flex-2 flex min-w-0 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                 >
                     <div class="flex-1">
-                        <div class="flex gap-2 items-center">
+                        <div class="flex min-w-0 items-center gap-3">
                             <div class="">
                                 <Avatar
                                     v-if="
                                         page.props?.details?.profile?.photo ==
                                         null
                                     "
-                                    class="!w-[9rem] !h-[9rem] !rounded-xl !text-5xl !bg-slate-300 dark:!bg-gray-700 dark:!text-gray-200"
+                                    class="!h-35 !w-35 shrink-0 !rounded-xl !text-5xl !bg-slate-300 dark:!bg-gray-700 dark:!text-gray-200"
                                 >
-                                    <IconUserFilled :size="80" />
+                                    <IconUserFilled :size="68" />
                                 </Avatar>
 
                                 <Avatar
                                     v-else
                                     :image="page.props.details?.profile?.photo"
-                                    class="!w-[9rem] !h-[9rem] !bg-white shadow p-1 !rounded-xl dark:!bg-gray-700"
+                                    class="!h-35 !w-35 shrink-0 !bg-white p-1 shadow !rounded-xl dark:!bg-gray-700"
                                 />
                             </div>
-                            <div class="flex-1 flex flex-col">
-                                <div class="flex flex-col gap-2">
-                                    <div class="">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex min-w-0 flex-col gap-2">
+                                    <div>
                                         <div
-                                            class="text-xs font-light text-gray-400 leading-none"
+                                            class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                         >
-                                            SPAS NO.
+                                            SPAS NO
                                         </div>
                                         <div
-                                            class="flex items-center text-sm gap-1"
+                                            class="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-200"
                                         >
-                                            <div
-                                                v-tooltip.top="'Copy'"
-                                                class="w-fit"
-                                            >
-                                                <IconCopy
-                                                    :size="15"
-                                                    class="cursor-pointer"
-                                                />
-                                            </div>
-                                            <div class="">
+                                            <IconHash :size="14" />
+                                            <span class="break-all font-mono">
                                                 {{
                                                     page.props.details?.spas_no
                                                 }}
-                                            </div>
+                                            </span>
                                         </div>
                                     </div>
                                     <div>
                                         <div
-                                            class="text-xs font-light text-gray-400 leading-none"
+                                            class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                         >
-                                            NAME
+                                            Scholar
                                         </div>
 
                                         <div
-                                            class="flex items-center text-sm gap-1"
+                                            class="mt-1 break-words text-base font-semibold leading-tight text-slate-800 dark:text-gray-100"
                                         >
-                                            <div
-                                                v-tooltip.top="'Copy'"
-                                                class="w-fit"
-                                            >
-                                                <IconUser
-                                                    :size="15"
-                                                    class="cursor-pointer"
-                                                />
-                                            </div>
-                                            <div
-                                                class="font-medium text-gray-600 text-sm uppercase dark:text-gray-100"
-                                            >
-                                                {{
-                                                    page.props.details?.fullname
-                                                }}
-                                            </div>
+                                            {{ page.props.details?.fullname }}
                                         </div>
                                     </div>
                                     <div>
                                         <div
-                                            class="text-xs font-light text-gray-400 leading-none"
+                                            class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                         >
-                                            EMAIL
+                                            Email
                                         </div>
                                         <div
-                                            class="flex items-center text-sm gap-1"
+                                            class="mt-1 break-all text-xs text-slate-600 dark:text-gray-300"
                                         >
-                                            <div
-                                                v-tooltip.top="'Copy'"
-                                                class="w-fit"
-                                            >
-                                                <IconAt
-                                                    :size="15"
-                                                    class="cursor-pointer"
-                                                />
-                                            </div>
-                                            <div
-                                                class="font-medium text-gray-600 text-sm dark:text-gray-100"
-                                            >
-                                                {{ page.props.details?.email }}
-                                            </div>
+                                            {{ page.props.details?.email }}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <Divider align="left">
-                            <span class="text-xs font-medium"
-                                >Scholar Details</span
+                            <span
+                                class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                >Scholar Overview</span
                             >
                         </Divider>
                     </div>
 
                     <div class="flex-3 flex flex-col">
-                        <div class="flex items-center justify-center">
+                        <div class="w-full">
                             <div
-                                class="bg-slate-50 flex gap-7 rounded-2xl py-2 px-10 dark:bg-gray-900 dark:text-gray-100"
+                                class="grid w-full grid-cols-3 gap-2 rounded-lg bg-slate-50 p-3 dark:bg-gray-900 dark:text-gray-100"
                             >
-                                <div
-                                    class="flex flex-col items-center justify-center"
-                                >
-                                    <div>
-                                        {{ page.props?.details?.type.name }}
+                                <div class="min-w-0 text-center">
+                                    <div
+                                        class="break-words text-sm font-semibold"
+                                    >
+                                        {{
+                                            page.props?.details?.type?.name ??
+                                            "Not set"
+                                        }}
                                     </div>
                                     <div
-                                        class="text-xs text-gray-400 dark:text-gray-500"
+                                        class="mt-1 text-[10px] font-medium uppercase text-gray-400 dark:text-gray-500"
                                     >
                                         Type
                                     </div>
                                 </div>
-                                <div
-                                    class="flex flex-col items-center justify-center"
-                                >
-                                    <div>
-                                        {{ page.props?.details?.program.name }}
+                                <div class="min-w-0 text-center">
+                                    <div
+                                        class="break-words text-sm font-semibold"
+                                    >
+                                        {{
+                                            page.props?.details?.program
+                                                ?.name ?? "Not set"
+                                        }}
                                     </div>
                                     <div
-                                        class="text-xs text-gray-400 dark:text-gray-500"
+                                        class="mt-1 text-[10px] font-medium uppercase text-gray-400 dark:text-gray-500"
                                     >
                                         Program
                                     </div>
                                 </div>
-                                <div
-                                    class="flex flex-col items-center justify-center"
-                                >
-                                    <div>
-                                        {{ page.props?.details?.awardYear }}
+                                <div class="min-w-0 text-center">
+                                    <div
+                                        class="break-words text-sm font-semibold"
+                                    >
+                                        {{
+                                            page.props?.details?.awardYear ??
+                                            "Not set"
+                                        }}
                                     </div>
                                     <div
-                                        class="text-xs text-gray-400 dark:text-gray-500"
+                                        class="mt-1 text-[10px] font-medium uppercase text-gray-400 dark:text-gray-500"
                                     >
                                         Award Year
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-5 flex flex-col gap-3">
-                            <div class="flex items-center gap-2">
+                        <div class="mt-4 flex flex-col gap-3">
+                            <div
+                                class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                            >
+                                Current Placement
+                            </div>
+                            <div class="flex min-w-0 items-start gap-3">
                                 <Avatar
-                                    class="rounded-full border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
+                                    class="rounded-lg border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
                                     size="small"
                                 >
-                                    <IconMapPin :size="20" stroke-width="2" />
+                                    <IconMapPin :size="18" stroke-width="2" />
                                 </Avatar>
-                                <div class="text-sm">
-                                    {{ scholarLocationDisplay }}
+                                <div class="min-w-0 flex-1">
+                                    <div
+                                        class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                    >
+                                        Location
+                                    </div>
+                                    <div
+                                        class="break-words text-sm leading-5 text-slate-800 dark:text-gray-100"
+                                    >
+                                        {{ scholarLocationDisplay }}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex min-w-0 items-start gap-3">
                                 <Avatar
-                                    class="rounded-full border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
+                                    class="rounded-lg border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
                                     size="small"
                                 >
-                                    <IconSchool :size="20" stroke-width="2" />
+                                    <IconSchool :size="18" stroke-width="2" />
                                 </Avatar>
-                                <div class="text-sm">
-                                    {{ page.props?.details?.course }}
+                                <div class="min-w-0 flex-1">
+                                    <div
+                                        class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                    >
+                                        Course
+                                    </div>
+                                    <div
+                                        class="break-words text-sm leading-5 text-slate-800 dark:text-gray-100"
+                                    >
+                                        {{
+                                            page.props?.details?.course ??
+                                            "Not assigned"
+                                        }}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex min-w-0 items-start gap-3">
                                 <Avatar
-                                    class="rounded-full border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
+                                    class="rounded-lg border !bg-blue-50 !text-blue-500 dark:!border-blue-800 dark:!bg-blue-950/50 dark:!text-blue-300"
                                     size="small"
                                 >
                                     <IconBuildingEstate
-                                        :size="20"
+                                        :size="18"
                                         stroke-width="2"
                                     />
                                 </Avatar>
-                                <div class="text-sm">
-                                    {{ page.props?.details?.school }}
+                                <div class="min-w-0 flex-1">
+                                    <div
+                                        class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                    >
+                                        School
+                                    </div>
+                                    <div
+                                        class="break-words text-sm leading-5 text-slate-800 dark:text-gray-100"
+                                    >
+                                        {{
+                                            page.props?.details?.school ??
+                                            "Not assigned"
+                                        }}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-col items-start gap-1">
+                                <div
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                >
+                                    Scholar Status
+                                </div>
                                 <div
                                     :class="[
-                                        'rounded-full border p-[5px]',
+                                        'inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase',
                                         academicStatusDisplay.bcolor,
                                         academicStatusDisplay.tcolor,
                                     ]"
@@ -223,17 +240,42 @@
                                                 academicStatusDisplay.icon
                                             ]
                                         "
-                                        :size="20"
+                                        :size="16"
                                         :stroke="2"
                                     />
+                                    <span class="break-words">
+                                        {{ academicStatusDisplay.name }}
+                                    </span>
                                 </div>
-                                <div class="text-sm uppercase">
-                                    {{ academicStatusDisplay.name }}
+                            </div>
+                            <div
+                                class="flex flex-col items-start gap-1"
+                                v-if="
+                                    page.props.details?.financialAid?.monthly
+                                        ?.length > 0
+                                "
+                            >
+                                <div
+                                    class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                >
+                                    Current Financial semester
+                                </div>
+                                <div
+                                    class="flex items-center justify-between w-full"
+                                >
+                                    <span
+                                        class="inline-flex max-w-full items-center gap-2 rounded-full text-slate-600 border px-3 py-1 text-xs font-semibold uppercase"
+                                        >{{
+                                            page.props.details?.financialAid
+                                                ?.monthly[0]?.period
+                                        }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                         <Divider align="left">
-                            <span class="text-xs font-medium"
+                            <span
+                                class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                 >Scholar Menu</span
                             >
                         </Divider>
@@ -256,6 +298,7 @@
                                             : 'dark:text-gray-200',
                                     ]"
                                     @click="changeMenu(item)"
+                                    v-if="!item.disabled"
                                 >
                                     <component
                                         :is="TablerIcons[item.icon]"
@@ -278,6 +321,27 @@
                                         class="ml-auto !text-xs"
                                         :value="item.status"
                                     />
+                                </a>
+                                <a
+                                    v-else
+                                    v-ripple
+                                    class="text-gray-400 flex items-center gap-2 px-3 py-2 cursor-not-allowed justify-between"
+                                >
+                                    <div class="flex items-center gap-2">
+                                        <component
+                                            :is="TablerIcons[item.icon]"
+                                            :size="18"
+                                        ></component>
+                                        <span class="!text-xs">{{
+                                            item.label
+                                        }}</span>
+                                    </div>
+
+                                    <div
+                                        class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300"
+                                    >
+                                        No Record Yet
+                                    </div>
                                 </a>
                             </template>
                         </Menu>
@@ -309,194 +373,6 @@
                                     </h3>
                                 </div>
                                 <div class="flex w-full justify-end gap-2">
-                                    <!-- <div>
-                                        <DefaultButton
-                                            :icon="TablerIcons.IconTransfer"
-                                            @click="opTransfer.toggle($event)"
-                                            outlined
-                                            severity="secondary"
-                                            label="Transfer School/Course"
-                                            size="small"
-                                            class-name="!rounded-xl !px-3"
-                                            rounded
-                                        />
-                                        <Popover ref="opTransfer">
-                                            <div
-                                                class="w-100 flex flex-col text-sm"
-                                            >
-                                                <div
-                                                    class="flex items-start p-3 shadow border border-blue-300 text-blue-500 rounded-xl bg-blue-50 gap-1"
-                                                >
-                                                    <div>
-                                                        <IconExclamationCircleFilled
-                                                            :size="20"
-                                                        />
-                                                    </div>
-
-                                                    <p
-                                                        class="text-xs leading-5 text-justify"
-                                                    >
-                                                        Update the scholar's
-                                                        school and course
-                                                        information based on the
-                                                        approved transfer
-                                                        request. Ensure that all
-                                                        changes are accurate
-                                                        before saving.
-                                                    </p>
-                                                </div>
-                                                <Tabs :value="transferTab">
-                                                    <TabList>
-                                                        <Tab value="school">
-                                                            <div
-                                                                class="flex items-center gap-2"
-                                                            >
-                                                                <IconSchool />
-                                                                <div>
-                                                                    School
-                                                                </div>
-                                                            </div>
-                                                        </Tab>
-                                                        <Tab value="course">
-                                                            <div
-                                                                class="flex items-center gap-2"
-                                                            >
-                                                                <IconBook2 />
-                                                                <div>
-                                                                    Course
-                                                                </div>
-                                                            </div></Tab
-                                                        >
-                                                    </TabList>
-                                                    <TabPanels
-                                                        :pt="{
-                                                            root: {
-                                                                class: '!p-0 !pt-3',
-                                                            },
-                                                        }"
-                                                    >
-                                                        <TabPanel
-                                                            value="school"
-                                                        >
-                                                            <div
-                                                                class="flex flex-col gap-3"
-                                                            >
-                                                                <SelectInput
-                                                                    label="School"
-                                                                    :error-mark="
-                                                                        transferInfo
-                                                                            .errors
-                                                                            .school !=
-                                                                        null
-                                                                            ? true
-                                                                            : false
-                                                                    "
-                                                                    v-model="
-                                                                        transferInfo.school
-                                                                    "
-                                                                    @update:model-value="
-                                                                        rendertCourse
-                                                                    "
-                                                                    :options="
-                                                                        page
-                                                                            .props
-                                                                            ?.schoolOptions
-                                                                    "
-                                                                ></SelectInput>
-                                                                <SelectInput
-                                                                    label="Course"
-                                                                    v-model="
-                                                                        transferInfo.course
-                                                                    "
-                                                                    :loading="
-                                                                        loading.transferCourse
-                                                                    "
-                                                                    :disable="
-                                                                        transferInfo.school !=
-                                                                        null
-                                                                            ? false
-                                                                            : true
-                                                                    "
-                                                                    :options="
-                                                                        page
-                                                                            .props
-                                                                            ?.transferCourseOptions
-                                                                    "
-                                                                ></SelectInput>
-
-                                                                <DefaultButton
-                                                                    :icon="
-                                                                        TablerIcons.IconTransfer
-                                                                    "
-                                                                    @click="
-                                                                        transferSubmit
-                                                                    "
-                                                                    raised
-                                                                    :loading="
-                                                                        loading.transferSubmit
-                                                                    "
-                                                                    label="Transfer"
-                                                                    size="small"
-                                                                    class-name="!rounded-xl !px-5"
-                                                                />
-                                                            </div>
-                                                        </TabPanel>
-                                                        <TabPanel
-                                                            value="course"
-                                                        >
-                                                            <p class="m-0">
-                                                                Sed ut
-                                                                perspiciatis
-                                                                unde omnis iste
-                                                                natus error sit
-                                                                voluptatem
-                                                                accusantium
-                                                                doloremque
-                                                                laudantium,
-                                                                totam rem
-                                                                aperiam, eaque
-                                                                ipsa quae ab
-                                                                illo inventore
-                                                                veritatis et
-                                                                quasi architecto
-                                                                beatae vitae
-                                                                dicta sunt
-                                                                explicabo. Nemo
-                                                                enim ipsam
-                                                                voluptatem quia
-                                                                voluptas sit
-                                                                aspernatur aut
-                                                                odit aut fugit,
-                                                                sed quia
-                                                                consequuntur
-                                                                magni dolores
-                                                                eos qui ratione
-                                                                voluptatem sequi
-                                                                nesciunt.
-                                                                Consectetur,
-                                                                adipisci velit,
-                                                                sed quia non
-                                                                numquam eius
-                                                                modi.
-                                                            </p>
-                                                        </TabPanel>
-                                                    </TabPanels>
-                                                </Tabs>
-                                            </div>
-                                        </Popover>
-                                    </div> -->
-
-                                    <!-- <DefaultButton
-                                        :icon="TablerIcons.IconCreditCard"
-                                        @click="storePersonalInfo"
-                                        outlined
-                                        severity="secondary"
-                                        label="View Landbank Details"
-                                        size="small"
-                                        rounded
-                                        class-name="!rounded-xl !px-5"
-                                    />
-                                    <Divider layout="vertical" /> -->
                                     <DefaultButton
                                         :icon="TablerIcons.IconUserEdit"
                                         label="Edit Details"
@@ -628,7 +504,10 @@
                                             label="Course"
                                             v-model="personalInfo.course"
                                             uppercase
-                                            :disable="!editBtn.info"
+                                            :disable="
+                                                !editBtn.info || loading.course
+                                            "
+                                            :loading="loading.course"
                                             @update:model-value="
                                                 renderCurriculum
                                             "
@@ -637,7 +516,15 @@
                                         <SelectInput
                                             label="Curriculum"
                                             v-model="personalInfo.curriculum"
-                                            :disable="!editBtn.info"
+                                            :disable="
+                                                !editBtn.info ||
+                                                loading.course ||
+                                                loading.curriculum
+                                            "
+                                            :loading="
+                                                loading.curriculum ||
+                                                loading.course
+                                            "
                                             :options="
                                                 page.props?.curriculumOptions
                                             "
@@ -719,11 +606,11 @@
                                     </div>
 
                                     <div class="">
-                                        <h3
-                                            class="text-xs font-semibold uppercase text-slate-500"
+                                        <span
+                                            class="text-xs font-semibold uppercase text-slate-500 bg-blue-50 rounded-lg p-1"
                                         >
                                             Current Address
-                                        </h3>
+                                        </span>
                                         <TextInput
                                             v-model="
                                                 personalInfo.addressCurrent
@@ -845,8 +732,9 @@
                                                     <p
                                                         class="text-xs text-gray-500 dark:text-gray-400"
                                                     >
-                                                        Personal record edit
-                                                        history
+                                                        Changes to this
+                                                        scholar's personal
+                                                        record
                                                     </p>
                                                 </div>
                                             </div>
@@ -860,7 +748,7 @@
                                     <template #default>
                                         <div
                                             v-if="activityLogs.length"
-                                            class="max-h-[22rem] overflow-y-auto p-4"
+                                            class="max-h-[22rem] overflow-y-auto px-3 py-2"
                                         >
                                             <Timeline
                                                 :value="activityLogs"
@@ -868,14 +756,13 @@
                                                 class="p-1"
                                                 :pt="{
                                                     eventOpposite: '!hidden',
-                                                    eventSeparator:
-                                                        '!min-w-[3rem]',
+                                                    eventSeparator: '!min-w-10',
                                                 }"
                                             >
                                                 <template #marker="slotProps">
                                                     <div
                                                         :class="[
-                                                            'w-10 h-10 rounded-2xl border flex items-center justify-center shadow-sm dark:bg-gray-800',
+                                                            'flex h-8 w-8 items-center justify-center rounded-full border dark:bg-gray-800',
                                                             {
                                                                 'bg-blue-50 border-blue-200 dark:border-blue-800':
                                                                     slotProps
@@ -940,15 +827,15 @@
 
                                                 <template #content="slotProps">
                                                     <div
-                                                        class="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                                                        class="flex flex-col gap-2 border-b border-slate-100 py-3 last:border-0 dark:border-gray-700"
                                                     >
                                                         <div
                                                             class="flex flex-col"
                                                         >
                                                             <div
-                                                                class="text-sm font-medium text-gray-800 dark:text-gray-100"
+                                                                class="text-sm font-semibold capitalize text-slate-800 dark:text-gray-100"
                                                             >
-                                                                Updated User
+                                                                Updated
                                                                 {{
                                                                     slotProps
                                                                         .item
@@ -956,10 +843,10 @@
                                                                 }}
                                                             </div>
                                                             <div
-                                                                class="text-sm flex gap-4 items-center text-gray-400 dark:text-gray-500"
+                                                                class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-gray-400"
                                                             >
                                                                 <div
-                                                                    class="flex gap-1 items-center"
+                                                                    class="inline-flex items-center gap-1.5"
                                                                 >
                                                                     <IconUserCircle
                                                                         :size="
@@ -975,7 +862,7 @@
                                                                     </div>
                                                                 </div>
                                                                 <div
-                                                                    class="flex gap-1 items-center"
+                                                                    class="inline-flex items-center gap-1.5"
                                                                 >
                                                                     <IconCalendarFilled
                                                                         :size="
@@ -1003,7 +890,7 @@
                                                                 class="flex flex-wrap items-center gap-2 py-0.5"
                                                             >
                                                                 <span
-                                                                    class="min-w-36 capitalize text-gray-700 dark:text-gray-300"
+                                                                    class="min-w-36 capitalize text-xs font-medium text-slate-500 dark:text-gray-400"
                                                                 >
                                                                     {{
                                                                         key.replaceAll(
@@ -1014,14 +901,20 @@
                                                                 </span>
 
                                                                 <span
-                                                                    class="text-red-500 dark:text-red-300"
+                                                                    class="text-sm text-slate-500 line-through decoration-slate-300 dark:text-gray-400"
                                                                 >
                                                                     {{
                                                                         slotProps
                                                                             .item
                                                                             .previous?.[
                                                                             key
-                                                                        ] != ""
+                                                                        ] !=
+                                                                            null &&
+                                                                        slotProps
+                                                                            .item
+                                                                            .previous[
+                                                                            key
+                                                                        ] !== ""
                                                                             ? slotProps
                                                                                   .item
                                                                                   .previous?.[
@@ -1041,7 +934,9 @@
                                                                 >
                                                                     {{
                                                                         value !=
-                                                                        ""
+                                                                            null &&
+                                                                        value !==
+                                                                            ""
                                                                             ? value
                                                                             : "Removed"
                                                                     }}
@@ -1054,9 +949,16 @@
                                         </div>
                                         <div
                                             v-else
-                                            class="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                                            class="flex items-center gap-3 px-4 py-8 text-sm text-slate-500 dark:text-gray-400"
                                         >
-                                            No personal record activity yet.
+                                            <IconHistory
+                                                :size="20"
+                                                class="shrink-0 text-slate-400"
+                                            />
+                                            <span>
+                                                No personal record changes have
+                                                been logged yet.
+                                            </span>
                                         </div>
                                     </template>
                                 </Panel>
@@ -2761,13 +2663,11 @@
                                                             <td
                                                                 class="text-right px-2"
                                                             >
-                                                                <span
-                                                                    class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold capitalize text-green-700 dark:bg-green-500/15 dark:text-green-300"
+                                                                <div
+                                                                    class="text-xs text-gray-300"
                                                                 >
-                                                                    {{
-                                                                        allowance.creditStatus
-                                                                    }}
-                                                                </span>
+                                                                    --------
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -3099,6 +2999,7 @@ import {
     IconWood,
     IconAt,
     IconMapPin,
+    IconHash,
     IconUser,
     IconSchool,
     IconBuildingEstate,
@@ -3187,6 +3088,7 @@ const loading = ref({
     validateReject: false,
     validateGrade: false,
     course: false,
+    curriculum: false,
     transferCourse: false,
     transferSubmit: false,
     revealLandbank: false,
@@ -3262,6 +3164,7 @@ const tabs = ref([
         label: "Academic Records",
         icon: "IconScript",
         key: 2,
+        disabled: page.props.details?.termGrades?.length === 0,
     },
     {
         separator: true,
@@ -3270,6 +3173,7 @@ const tabs = ref([
         label: "Financial Assistance Records",
         icon: "IconCoins",
         key: 3,
+        disabled: page.props.details?.financialAid?.monthly?.length === 0,
     },
 ]);
 
@@ -3998,6 +3902,7 @@ watch(
 );
 
 const renderCourse = (event) => {
+    loading.value.course = true;
     router.reload({
         only: ["courseOptions", "curriculumOptions"],
         data: { campus: event.name },
@@ -4007,10 +3912,14 @@ const renderCourse = (event) => {
         onSuccess: () => {
             personalInfo.curriculum = null;
         },
+        onFinish: () => {
+            loading.value.course = false;
+        },
     });
 };
 
 const renderCurriculum = (event) => {
+    loading.value.curriculum = true;
     router.reload({
         only: ["curriculumOptions"],
         data: {
@@ -4022,6 +3931,9 @@ const renderCurriculum = (event) => {
         showProgress: true,
         onSuccess: () => {
             personalInfo.curriculum = null;
+        },
+        onFinish: () => {
+            loading.value.curriculum = false;
         },
     });
 };
@@ -4086,7 +3998,7 @@ const cancelEdit = () => {
     editBtn.value.info = false;
 
     router.reload({
-        only: ["courseOptions", "curriculumOptions"],
+        only: ["details", "courseOptions", "curriculumOptions"],
         data: { campus: page.props?.details.schoolInput.name },
         preserveState: true,
         preserveScroll: true,

@@ -1,10 +1,16 @@
 <template>
     <Head title="Scholars" />
     <AuthLayout>
-        <div class="scholars-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
-            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+        <div
+            class="scholars-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100"
+        >
+            <div
+                class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700"
+            >
                 <div class="flex min-w-0 items-start gap-3">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                    <div
+                        class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500"
+                    >
                         <IconUsers :size="21" stroke-width="1.8" />
                     </div>
                     <HeaderModule
@@ -13,201 +19,190 @@
                     />
                 </div>
             </div>
-            <ManagementFilterBar v-model="searchInput" search-placeholder="Search name or SPAS number">
-                    <div>
-                        <DefaultButton
-                            :icon="
-                                filterSchool != null
-                                    ? TablerIcons.IconFilterFilled
-                                    : TablerIcons.IconFilter
-                            "
-                            label="Schools"
-                            class-name="!rounded-md"
-                            size="small"
-                            severity="secondary"
-                            @click="toggleOpSchool"
-                        />
-                        <Popover ref="opSchool">
-                            <div
-                                class="gap-3 flex"
-                                v-if="page.props?.schoolFilter"
-                            >
-                                <div class="flex-1 w-60">
-                                    <SelectMultiInput
-                                        filter
-                                        v-model="filterSchool"
-                                        :options="page.props?.schoolFilter"
-                                        capitalize
-                                    ></SelectMultiInput>
-                                </div>
-
-                                <div
-                                    class="flex justify-end items-center gap-2"
-                                >
-                                    <DefaultButton
-                                        @click="schoolFilterClear"
-                                        label="Clear"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                        severity="secondary"
-                                    />
-                                    <DefaultButton
-                                        @click="schoolFilter"
-                                        label="Filter"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                    />
-                                </div>
-                            </div>
-                        </Popover>
-                    </div>
-                    <div>
-                        <DefaultButton
-                            :icon="
-                                filterProgram != null
-                                    ? TablerIcons.IconFilterFilled
-                                    : TablerIcons.IconFilter
-                            "
-                            label="Programs"
-                            class-name="!rounded-md"
-                            size="small"
-                            severity="secondary"
-                            @click="toggleopProgram"
-                        />
-                        <Popover ref="opProgram">
-                            <div
-                                class="gap-3 flex"
-                                v-if="page.props?.programFilter"
-                            >
-                                <div class="flex-1 w-60">
-                                    <SelectMultiInput
-                                        v-model="filterProgram"
-                                        :options="page.props?.programFilter"
-                                        capitalize
-                                    ></SelectMultiInput>
-                                </div>
-
-                                <div
-                                    class="flex justify-end items-center gap-2"
-                                >
-                                    <DefaultButton
-                                        @click="programFilterClear"
-                                        label="Clear"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                        severity="secondary"
-                                    />
-                                    <DefaultButton
-                                        @click="programFilter"
-                                        label="Filter"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                    />
-                                </div>
-                            </div>
-                        </Popover>
-                    </div>
-                    <div>
-                        <DefaultButton
-                            :icon="
-                                filterSub != null
-                                    ? TablerIcons.IconFilterFilled
-                                    : TablerIcons.IconFilter
-                            "
-                            label="Types"
-                            class-name="!rounded-md"
-                            size="small"
-                            severity="secondary"
-                            @click="toggleopSub"
-                        />
-                        <Popover ref="opSub">
-                            <div
-                                class="gap-3 flex"
-                                v-if="page.props?.scholarTypeFilter"
-                            >
-                                <div class="flex-1 w-60">
-                                    <SelectMultiInput
-                                        v-model="filterSub"
-                                        :options="page.props?.scholarTypeFilter"
-                                        capitalize
-                                    ></SelectMultiInput>
-                                </div>
-
-                                <div
-                                    class="flex justify-end items-center gap-2"
-                                >
-                                    <DefaultButton
-                                        @click="subFilterClear"
-                                        label="Clear"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                        severity="secondary"
-                                    />
-                                    <DefaultButton
-                                        @click="subFilter"
-                                        label="Filter"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                    />
-                                </div>
-                            </div>
-                        </Popover>
-                    </div>
-                    <div>
-                        <DefaultButton
-                            :icon="
-                                filterStatus != null
-                                    ? TablerIcons.IconFilterFilled
-                                    : TablerIcons.IconFilter
-                            "
-                            label="Status"
-                            class-name="!rounded-md"
-                            size="small"
-                            severity="secondary"
-                            @click="toggleopStatus"
-                        />
-                        <Popover ref="opStatus">
-                            <div
-                                class="gap-3 flex"
-                                v-if="page.props?.statusFilter"
-                            >
-                                <div class="flex-1 w-60">
-                                    <SelectMultiInput
-                                        v-model="filterStatus"
-                                        :options="page.props?.statusFilter"
-                                        capitalize
-                                    ></SelectMultiInput>
-                                </div>
-
-                                <div
-                                    class="flex justify-end items-center gap-2"
-                                >
-                                    <DefaultButton
-                                        @click="statusFilterClear"
-                                        label="Clear"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                        severity="secondary"
-                                    />
-                                    <DefaultButton
-                                        @click="statusFilter"
-                                        label="Filter"
-                                        class-name="w-20 !rounded-xl"
-                                        size="small"
-                                    />
-                                </div>
-                            </div>
-                        </Popover>
-                    </div>
+            <ManagementFilterBar
+                v-model="searchInput"
+                search-placeholder="Search name or SPAS number"
+            >
+                <div>
                     <DefaultButton
-                        :icon="TablerIcons.IconFilterOff"
-                        tooltip="Clear all filters"
+                        :icon="
+                            filterSchool != null
+                                ? TablerIcons.IconFilterFilled
+                                : TablerIcons.IconFilter
+                        "
+                        label="Schools"
+                        class-name="!rounded-md"
                         size="small"
                         severity="secondary"
-                        outlined
-                        :disabled="!activeFilterCount"
-                        @click="clearAllFilters"
+                        @click="toggleOpSchool"
                     />
+                    <Popover ref="opSchool">
+                        <div class="gap-3 flex" v-if="page.props?.schoolFilter">
+                            <div class="flex-1 w-60">
+                                <SelectMultiInput
+                                    filter
+                                    v-model="filterSchool"
+                                    :options="page.props?.schoolFilter"
+                                    capitalize
+                                ></SelectMultiInput>
+                            </div>
+
+                            <div class="flex justify-end items-center gap-2">
+                                <DefaultButton
+                                    @click="schoolFilterClear"
+                                    label="Clear"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                    severity="secondary"
+                                />
+                                <DefaultButton
+                                    @click="schoolFilter"
+                                    label="Filter"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                />
+                            </div>
+                        </div>
+                    </Popover>
+                </div>
+                <div>
+                    <DefaultButton
+                        :icon="
+                            filterProgram != null
+                                ? TablerIcons.IconFilterFilled
+                                : TablerIcons.IconFilter
+                        "
+                        label="Programs"
+                        class-name="!rounded-md"
+                        size="small"
+                        severity="secondary"
+                        @click="toggleopProgram"
+                    />
+                    <Popover ref="opProgram">
+                        <div
+                            class="gap-3 flex"
+                            v-if="page.props?.programFilter"
+                        >
+                            <div class="flex-1 w-60">
+                                <SelectMultiInput
+                                    v-model="filterProgram"
+                                    :options="page.props?.programFilter"
+                                    capitalize
+                                ></SelectMultiInput>
+                            </div>
+
+                            <div class="flex justify-end items-center gap-2">
+                                <DefaultButton
+                                    @click="programFilterClear"
+                                    label="Clear"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                    severity="secondary"
+                                />
+                                <DefaultButton
+                                    @click="programFilter"
+                                    label="Filter"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                />
+                            </div>
+                        </div>
+                    </Popover>
+                </div>
+                <div>
+                    <DefaultButton
+                        :icon="
+                            filterSub != null
+                                ? TablerIcons.IconFilterFilled
+                                : TablerIcons.IconFilter
+                        "
+                        label="Types"
+                        class-name="!rounded-md"
+                        size="small"
+                        severity="secondary"
+                        @click="toggleopSub"
+                    />
+                    <Popover ref="opSub">
+                        <div
+                            class="gap-3 flex"
+                            v-if="page.props?.scholarTypeFilter"
+                        >
+                            <div class="flex-1 w-60">
+                                <SelectMultiInput
+                                    v-model="filterSub"
+                                    :options="page.props?.scholarTypeFilter"
+                                    capitalize
+                                ></SelectMultiInput>
+                            </div>
+
+                            <div class="flex justify-end items-center gap-2">
+                                <DefaultButton
+                                    @click="subFilterClear"
+                                    label="Clear"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                    severity="secondary"
+                                />
+                                <DefaultButton
+                                    @click="subFilter"
+                                    label="Filter"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                />
+                            </div>
+                        </div>
+                    </Popover>
+                </div>
+                <div>
+                    <DefaultButton
+                        :icon="
+                            filterStatus != null
+                                ? TablerIcons.IconFilterFilled
+                                : TablerIcons.IconFilter
+                        "
+                        label="Status"
+                        class-name="!rounded-md"
+                        size="small"
+                        severity="secondary"
+                        @click="toggleopStatus"
+                    />
+                    <Popover ref="opStatus">
+                        <div class="gap-3 flex" v-if="page.props?.statusFilter">
+                            <div class="flex-1 w-60">
+                                <SelectMultiInput
+                                    v-model="filterStatus"
+                                    :options="page.props?.statusFilter"
+                                    capitalize
+                                ></SelectMultiInput>
+                            </div>
+
+                            <div class="flex justify-end items-center gap-2">
+                                <DefaultButton
+                                    @click="statusFilterClear"
+                                    label="Clear"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                    severity="secondary"
+                                />
+                                <DefaultButton
+                                    @click="statusFilter"
+                                    label="Filter"
+                                    class-name="w-20 !rounded-xl"
+                                    size="small"
+                                />
+                            </div>
+                        </div>
+                    </Popover>
+                </div>
+                <DefaultButton
+                    :icon="TablerIcons.IconFilterOff"
+                    tooltip="Clear all filters"
+                    size="small"
+                    severity="secondary"
+                    outlined
+                    :disabled="!activeFilterCount"
+                    @click="clearAllFilters"
+                />
             </ManagementFilterBar>
             <DefaultSelectionTable
                 class="min-h-0 flex-1"
@@ -254,7 +249,9 @@
                                     <div># {{ props.data.spas_no }}</div>
                                 </div>
                                 <div class="flex gap-1 items-center">
-                                    <div class="truncate text-sm font-semibold uppercase text-slate-800 dark:text-gray-100">
+                                    <div
+                                        class="truncate text-sm font-semibold uppercase text-slate-800 dark:text-gray-100"
+                                    >
                                         {{ props.data.fullname }}
                                     </div>
                                     <div
@@ -274,10 +271,14 @@
                 <Column header="School/Course">
                     <template #body="props">
                         <div class="flex min-w-64 flex-col gap-0.5 py-1">
-                            <div class="text-xs text-slate-500 dark:text-gray-400">
+                            <div
+                                class="text-xs text-slate-500 dark:text-gray-400"
+                            >
                                 {{ props.data.course || "Course not assigned" }}
                             </div>
-                            <div class="truncate text-sm font-medium text-slate-700 dark:text-gray-200">
+                            <div
+                                class="truncate text-sm font-medium text-slate-700 dark:text-gray-200"
+                            >
                                 {{ props.data.school || "School not assigned" }}
                             </div>
                         </div>
@@ -285,7 +286,9 @@
                 </Column>
                 <Column header="Region">
                     <template #body="props">
-                        <div class="text-xs font-semibold uppercase text-slate-600 dark:text-gray-300">
+                        <div
+                            class="text-xs font-semibold uppercase text-slate-600 dark:text-gray-300"
+                        >
                             {{ props.data.agency || "-" }}
                         </div>
                     </template>
@@ -297,7 +300,9 @@
                         </div>
                     </template>
                     <template #body="props">
-                        <div class="text-center text-xs font-medium text-slate-700 dark:text-gray-200">
+                        <div
+                            class="text-center text-xs font-medium text-slate-700 dark:text-gray-200"
+                        >
                             {{ props.data.type || "-" }}
                         </div>
                     </template>
@@ -309,7 +314,9 @@
                         </div>
                     </template>
                     <template #body="props">
-                        <div class="text-center text-xs font-medium text-slate-700 dark:text-gray-200">
+                        <div
+                            class="text-center text-xs font-medium text-slate-700 dark:text-gray-200"
+                        >
                             {{ props.data.subProgram || "-" }}
                         </div>
                     </template>
@@ -455,14 +462,18 @@ const selectedRow = ref(null);
 const searchInput = ref(page.props?.filterSearch ?? null);
 const timerBounce = ref(null);
 const DEBOUNCE_MS = 600;
-const hasSelection = (value) => Array.isArray(value) ? value.length > 0 : Boolean(value);
-const activeFilterCount = computed(() => [
-    searchInput.value,
-    hasSelection(filterSchool.value),
-    hasSelection(filterProgram.value),
-    hasSelection(filterSub.value),
-    hasSelection(filterStatus.value),
-].filter(Boolean).length);
+const hasSelection = (value) =>
+    Array.isArray(value) ? value.length > 0 : Boolean(value);
+const activeFilterCount = computed(
+    () =>
+        [
+            searchInput.value,
+            hasSelection(filterSchool.value),
+            hasSelection(filterProgram.value),
+            hasSelection(filterSub.value),
+            hasSelection(filterStatus.value),
+        ].filter(Boolean).length,
+);
 
 const scheduleLoadPage = (pageNumber = 1) => {
     clearTimeout(timerBounce.value);
@@ -688,5 +699,4 @@ watch(
     padding-top: 0.65rem;
     padding-bottom: 0.65rem;
 }
-
 </style>

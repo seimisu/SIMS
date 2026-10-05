@@ -78,4 +78,9 @@ class BatchRecipients extends Model
     {
         return $this->hasMany(RecipientAllowance::class, 'recipient_id');
     }
+
+    public function credits()
+    {
+        return $this->hasMany(PayrollBatchMonthlyCredit::class, 'batch_id', 'batch_id');
+    }
 }
