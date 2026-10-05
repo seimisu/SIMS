@@ -20,7 +20,7 @@
                 <div
                     class="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:flex-2 flex min-w-0 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                 >
-                        <div class="flex-1">
+                    <div class="flex-1">
                         <div class="flex min-w-0 items-center gap-3">
                             <div class="">
                                 <Avatar
@@ -908,8 +908,13 @@
                                                                             .item
                                                                             .previous?.[
                                                                             key
-                                                                        ] != null &&
-                                                                        slotProps.item.previous[key] !== ""
+                                                                        ] !=
+                                                                            null &&
+                                                                        slotProps
+                                                                            .item
+                                                                            .previous[
+                                                                            key
+                                                                        ] !== ""
                                                                             ? slotProps
                                                                                   .item
                                                                                   .previous?.[
@@ -928,7 +933,10 @@
                                                                     class="font-medium text-emerald-600 dark:text-emerald-300"
                                                                 >
                                                                     {{
-                                                                        value != null && value !== ""
+                                                                        value !=
+                                                                            null &&
+                                                                        value !==
+                                                                            ""
                                                                             ? value
                                                                             : "Removed"
                                                                     }}
@@ -948,7 +956,8 @@
                                                 class="shrink-0 text-slate-400"
                                             />
                                             <span>
-                                                No personal record changes have been logged yet.
+                                                No personal record changes have
+                                                been logged yet.
                                             </span>
                                         </div>
                                     </template>
