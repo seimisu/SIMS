@@ -2,11 +2,19 @@
     <Head title="Downloadables" />
     <AuthLayout>
         <DefaultConfirmDialog ref="confirmRef" />
-        <div class="downloadables-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
-            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
-                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div
+            class="downloadables-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100"
+        >
+            <div
+                class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700"
+            >
+                <div
+                    class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+                >
                     <div class="flex min-w-0 items-start gap-3">
-                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                        <div
+                            class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500"
+                        >
                             <IconFileDownload :size="21" stroke-width="1.8" />
                         </div>
                         <HeaderModule
@@ -18,16 +26,30 @@
                         size="small"
                         severity="secondary"
                         outlined
-                        :label="activeTab === 'documents' ? 'Upload Downloadable' : 'Create Category'"
-                        :icon="activeTab === 'documents' ? IconFileUpload : IconCategory"
+                        :label="
+                            activeTab === 'documents'
+                                ? 'Upload Downloadable'
+                                : 'Create Category'
+                        "
+                        :icon="
+                            activeTab === 'documents'
+                                ? IconFileUpload
+                                : IconCategory
+                        "
                         class="self-start xl:self-auto"
-                        @click="activeTab === 'documents' ? openDocumentForm() : openCategoryForm()"
+                        @click="
+                            activeTab === 'documents'
+                                ? openDocumentForm()
+                                : openCategoryForm()
+                        "
                     />
                 </div>
             </div>
 
             <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
-                <div class="flex items-center gap-1 border-b border-slate-200 dark:border-gray-700">
+                <div
+                    class="flex items-center gap-1 border-b border-slate-200 dark:border-gray-700"
+                >
                     <button
                         v-for="tab in tabs"
                         :key="tab.value"
@@ -44,248 +66,344 @@
                     </button>
                 </div>
 
-                <div v-show="activeTab === 'documents'" class="flex flex-col gap-3">
-                            <ToolbarModule
-                                v-model="searchInput"
-                                button-label="Upload"
-                                :dialog-title="documentForm.id ? 'Edit Downloadable' : 'Upload Downloadable'"
-                                dialog-description="Set the file details and who can download it."
-                                dialog-button-label="Save"
-                                :dialog-icon="IconFileUpload"
-                                :dialog-button-loading="documentForm.processing"
-                                :message-has-errors="documentForm.hasErrors"
-                                :message-errors="documentForm.errors"
-                                message-type="error"
-                                :button-visible="false"
-                                @deleteSearch="clearSearch"
-                                @buttonOpenModal="openDocumentForm()"
-                                @saveForm="saveDocument"
-                                ref="documentToolbarRef"
-                            >
-                                <template #form>
-                                    <div class="flex flex-col gap-3 mt-5">
-                                        <TextInput v-model="documentForm.title" label="Downloadable Name" />
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-medium">Description</span>
-                                            <Textarea v-model="documentForm.description" rows="3" autoResize fluid />
-                                        </div>
-                                        <SelectInput
-                                            v-model="documentForm.category"
-                                            label="Category"
-                                            :options="page.props.categoryOptions"
-                                            :clearable="true"
-                                        />
-                                        <UploadInput
-                                            ref="uploadRef"
-                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
-                                            :progress="progressUpload"
-                                            @select-files="handleFile"
-                                            @remove-file="clearFile"
-                                        />
-                                        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                                            <div class="flex items-center justify-between rounded-lg border px-3 py-2">
-                                                <span class="text-sm font-medium">Active</span>
-                                                <DefaultToggle
-                                                    v-model="documentForm.is_active"
-                                                    :check-icon="IconCheck"
-                                                    :un-check-icon="IconX"
-                                                />
-                                            </div>
-                                            <div class="flex items-center justify-between rounded-lg border px-3 py-2">
-                                                <span class="text-sm font-medium">Published</span>
-                                                <DefaultToggle
-                                                    v-model="documentForm.publish_now"
-                                                    :check-icon="IconCheck"
-                                                    :un-check-icon="IconX"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <Divider />
-                                        <LibraryAccessInput
-                                            v-model:available-all="documentForm.available_all"
-                                            v-model:region-scopes="documentForm.region_scopes"
-                                            v-model:scholarships="documentForm.scholarships"
-                                            v-model:programs="documentForm.programs"
-                                            :region-options="page.props.regionOptions"
-                                            :school-options="page.props.schoolOptions"
-                                            :scholarship-options="page.props.scholarshipOptions"
-                                            :program-options="page.props.programOptions"
-                                            :region-locked="isRegionLocked"
-                                            :locked-region="lockedRegion"
+                <div
+                    v-show="activeTab === 'documents'"
+                    class="flex flex-col gap-3"
+                >
+                    <ToolbarModule
+                        v-model="searchInput"
+                        button-label="Upload"
+                        :dialog-title="
+                            documentForm.id
+                                ? 'Edit Downloadable'
+                                : 'Upload Downloadable'
+                        "
+                        dialog-description="Set the file details and who can download it."
+                        dialog-button-label="Save"
+                        :dialog-icon="IconFileUpload"
+                        :dialog-button-loading="documentForm.processing"
+                        :dialog-button-disabled="documentForm.processing"
+                        message-type="error"
+                        :button-visible="false"
+                        @deleteSearch="clearSearch"
+                        @buttonOpenModal="openDocumentForm()"
+                        @saveForm="saveDocument"
+                        ref="documentToolbarRef"
+                    >
+                        <template #form>
+                            <div class="flex flex-col gap-3 mt-5">
+                                <TextInput
+                                    v-model="documentForm.title"
+                                    label="Downloadable Name"
+                                />
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium"
+                                        >Description</span
+                                    >
+                                    <Textarea
+                                        v-model="documentForm.description"
+                                        rows="3"
+                                        autoResize
+                                        fluid
+                                    />
+                                </div>
+                                <SelectInput
+                                    v-model="documentForm.category"
+                                    label="Category"
+                                    :options="page.props.categoryOptions"
+                                    :clearable="true"
+                                />
+                                <UploadInput
+                                    ref="uploadRef"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
+                                    :progress="progressUpload"
+                                    @select-files="handleFile"
+                                    @remove-file="clearFile"
+                                />
+                                <div
+                                    class="grid grid-cols-1 gap-3 lg:grid-cols-2"
+                                >
+                                    <div
+                                        class="flex items-center justify-between rounded-lg border px-3 py-2"
+                                    >
+                                        <span class="text-sm font-medium"
+                                            >Active</span
+                                        >
+                                        <DefaultToggle
+                                            v-model="documentForm.is_active"
+                                            :check-icon="IconCheck"
+                                            :un-check-icon="IconX"
                                         />
                                     </div>
-                                </template>
-                            </ToolbarModule>
+                                    <div
+                                        class="flex items-center justify-between rounded-lg border px-3 py-2"
+                                    >
+                                        <span class="text-sm font-medium"
+                                            >Published</span
+                                        >
+                                        <DefaultToggle
+                                            v-model="documentForm.publish_now"
+                                            :check-icon="IconCheck"
+                                            :un-check-icon="IconX"
+                                        />
+                                    </div>
+                                </div>
 
-                            <DefaultTable
-                                :items="page.props.documents.data"
-                                :pagination="{
-                                    total: page.props.documents.total,
-                                    perPage: page.props.documents.per_page,
-                                    currentPage: page.props.documents.current_page,
-                                }"
-                                @paginate="loadPage"
-                            >
-                                <Column field="title" header="Downloadable" class="font-semibold">
-                                    <template #body="props">
-                                        <div class="min-w-60 py-1">
-                                            <span class="block text-sm font-semibold text-slate-800 dark:text-gray-100">{{ props.data.title }}</span>
-                                            <span class="block truncate text-xs text-slate-500 dark:text-gray-400">{{ props.data.original_filename }}</span>
-                                        </div>
-                                    </template>
-                                </Column>
-                                <Column field="category.name" header="Category">
-                                    <template #body="props">
-                                        {{ props.data.category?.name ?? "-" }}
-                                    </template>
-                                </Column>
-                                <Column header="Availability">
-                                    <template #body="props">
-                                        <div class="flex flex-wrap gap-1">
-                                            <Tag
-                                                v-for="target in props.data.targets"
-                                                :key="`${target.target_type}-${target.target_id}`"
-                                                severity="info"
-                                                :value="targetLabel(target)"
-                                            />
-                                        </div>
-                                    </template>
-                                </Column>
-                                <Column header="Status" class="w-[10%]">
-                                    <template #body="props">
-                                        <Tag
-                                            :severity="props.data.is_active ? 'success' : 'danger'"
-                                            :value="props.data.is_active ? 'Active' : 'Inactive'"
-                                        />
-                                    </template>
-                                </Column>
-                                <Column header="Published" class="w-[10%]">
-                                    <template #body="props">
-                                        <Tag
-                                            :severity="props.data.published_at ? 'success' : 'warn'"
-                                            :value="props.data.published_at ? 'Published' : 'Draft'"
-                                        />
-                                    </template>
-                                </Column>
-                                <Column class="w-[8%]">
-                                    <template #body="props">
-                                        <div class="flex justify-end gap-1">
-                                            <Button
-                                                text
-                                                rounded
-                                                size="small"
-                                                severity="secondary"
-                                                icon="pi pi-download"
-                                                as="a"
-                                                :href="route('documents.download', props.data.id)"
-                                                target="_blank"
-                                            />
-                                            <Button
-                                                text
-                                                rounded
-                                                size="small"
-                                                severity="secondary"
-                                                icon="pi pi-pencil"
-                                                @click="openDocumentForm(props.data)"
-                                            />
-                                            <Button
-                                                text
-                                                rounded
-                                                size="small"
-                                                severity="danger"
-                                                icon="pi pi-trash"
-                                                @click="deleteDocument(props.data)"
-                                            />
-                                        </div>
-                                    </template>
-                                </Column>
-                            </DefaultTable>
-                        </div>
+                                <Divider />
+                                <LibraryAccessInput
+                                    v-model:available-all="
+                                        documentForm.available_all
+                                    "
+                                    v-model:region-scopes="
+                                        documentForm.region_scopes
+                                    "
+                                    v-model:scholarships="
+                                        documentForm.scholarships
+                                    "
+                                    v-model:programs="documentForm.programs"
+                                    :region-options="page.props.regionOptions"
+                                    :school-options="page.props.schoolOptions"
+                                    :scholarship-options="
+                                        page.props.scholarshipOptions
+                                    "
+                                    :program-options="page.props.programOptions"
+                                    :region-locked="isRegionLocked"
+                                    :locked-region="lockedRegion"
+                                />
+                            </div>
+                        </template>
+                    </ToolbarModule>
+
+                    <DefaultTable
+                        :items="page.props.documents.data"
+                        :pagination="{
+                            total: page.props.documents.total,
+                            perPage: page.props.documents.per_page,
+                            currentPage: page.props.documents.current_page,
+                        }"
+                        @paginate="loadPage"
+                    >
+                        <Column
+                            field="title"
+                            header="Downloadable"
+                            class="font-semibold"
+                        >
+                            <template #body="props">
+                                <div class="min-w-60 py-1">
+                                    <span
+                                        class="block text-sm font-semibold text-slate-800 dark:text-gray-100"
+                                        >{{ props.data.title }}</span
+                                    >
+                                    <span
+                                        class="block truncate text-xs text-slate-500 dark:text-gray-400"
+                                        >{{
+                                            props.data.original_filename
+                                        }}</span
+                                    >
+                                </div>
+                            </template>
+                        </Column>
+                        <Column field="category.name" header="Category">
+                            <template #body="props">
+                                {{ props.data.category?.name ?? "-" }}
+                            </template>
+                        </Column>
+                        <Column header="Availability">
+                            <template #body="props">
+                                <div class="flex flex-wrap gap-1">
+                                    <Tag
+                                        v-for="target in props.data.targets"
+                                        :key="`${target.target_type}-${target.target_id}`"
+                                        severity="info"
+                                        :value="targetLabel(target)"
+                                    />
+                                </div>
+                            </template>
+                        </Column>
+                        <Column header="Status" class="w-[10%]">
+                            <template #body="props">
+                                <Tag
+                                    :severity="
+                                        props.data.is_active
+                                            ? 'success'
+                                            : 'danger'
+                                    "
+                                    :value="
+                                        props.data.is_active
+                                            ? 'Active'
+                                            : 'Inactive'
+                                    "
+                                />
+                            </template>
+                        </Column>
+                        <Column header="Published" class="w-[10%]">
+                            <template #body="props">
+                                <Tag
+                                    :severity="
+                                        props.data.published_at
+                                            ? 'success'
+                                            : 'warn'
+                                    "
+                                    :value="
+                                        props.data.published_at
+                                            ? 'Published'
+                                            : 'Draft'
+                                    "
+                                />
+                            </template>
+                        </Column>
+                        <Column class="w-[8%]">
+                            <template #body="props">
+                                <div class="flex justify-end gap-1">
+                                    <Button
+                                        text
+                                        rounded
+                                        size="small"
+                                        severity="secondary"
+                                        icon="pi pi-download"
+                                        as="a"
+                                        :href="
+                                            route(
+                                                'documents.download',
+                                                props.data.id,
+                                            )
+                                        "
+                                        target="_blank"
+                                    />
+                                    <Button
+                                        text
+                                        rounded
+                                        size="small"
+                                        severity="secondary"
+                                        icon="pi pi-pencil"
+                                        @click="openDocumentForm(props.data)"
+                                    />
+                                    <Button
+                                        text
+                                        rounded
+                                        size="small"
+                                        severity="danger"
+                                        icon="pi pi-trash"
+                                        @click="deleteDocument(props.data)"
+                                    />
+                                </div>
+                            </template>
+                        </Column>
+                    </DefaultTable>
+                </div>
 
                 <div
                     v-show="activeTab === 'categories'"
                     class="flex flex-col gap-3"
                 >
-                            <ToolbarModule
-                                v-model="categorySearchInput"
-                                button-label="Create"
-                                :dialog-title="categoryForm.id ? 'Edit Category' : 'Create Category'"
-                                dialog-description="Organize downloadable files by category."
-                                dialog-button-label="Save"
-                                :dialog-icon="IconCategory"
-                                :dialog-button-loading="categoryForm.processing"
-                                :message-has-errors="categoryForm.hasErrors"
-                                :message-errors="categoryForm.errors"
-                                message-type="error"
-                                :button-visible="false"
-                                @deleteSearch="clearCategorySearch"
-                                @buttonOpenModal="openCategoryForm()"
-                                @saveForm="saveCategory"
-                                ref="categoryToolbarRef"
-                            >
-                                <template #form>
-                                    <div class="flex flex-col gap-3 mt-5">
-                                <TextInput v-model="categoryForm.name" label="Name" />
+                    <ToolbarModule
+                        v-model="categorySearchInput"
+                        button-label="Create"
+                        :dialog-title="
+                            categoryForm.id
+                                ? 'Edit Category'
+                                : 'Create Category'
+                        "
+                        dialog-description="Organize downloadable files by category."
+                        dialog-button-label="Save"
+                        :dialog-icon="IconCategory"
+                        :dialog-button-loading="categoryForm.processing"
+                        :dialog-button-disabled="categoryForm.processing"
+                        message-type="error"
+                        :button-visible="false"
+                        @deleteSearch="clearCategorySearch"
+                        @buttonOpenModal="openCategoryForm()"
+                        @saveForm="saveCategory"
+                        ref="categoryToolbarRef"
+                    >
+                        <template #form>
+                            <div class="flex flex-col gap-3 mt-5">
+                                <TextInput
+                                    v-model="categoryForm.name"
+                                    label="Name"
+                                />
                                 <div class="flex flex-col">
-                                    <span class="text-sm font-medium">Description</span>
-                                    <Textarea v-model="categoryForm.description" rows="3" autoResize fluid />
+                                    <span class="text-sm font-medium"
+                                        >Description</span
+                                    >
+                                    <Textarea
+                                        v-model="categoryForm.description"
+                                        rows="3"
+                                        autoResize
+                                        fluid
+                                    />
                                 </div>
-                                <div class="flex items-center justify-between rounded-lg border px-3 py-2">
-                                    <span class="text-sm font-medium">Active</span>
+                                <div
+                                    class="flex items-center justify-between rounded-lg border px-3 py-2"
+                                >
+                                    <span class="text-sm font-medium"
+                                        >Active</span
+                                    >
                                     <DefaultToggle
                                         v-model="categoryForm.is_active"
                                         :check-icon="IconCheck"
                                         :un-check-icon="IconX"
                                     />
                                 </div>
-                                    </div>
-                                </template>
-                            </ToolbarModule>
+                            </div>
+                        </template>
+                    </ToolbarModule>
 
-                            <DefaultTable
-                                :items="page.props.categories.data"
-                                :pagination="{
-                                    total: page.props.categories.total,
-                                    perPage: page.props.categories.per_page,
-                                    currentPage: page.props.categories.current_page,
-                                }"
-                                @paginate="loadPage"
-                            >
-                                <Column field="name" header="Category" class="font-semibold" />
-                                <Column field="description" header="Description" />
-                                <Column header="Status" class="w-[10%]">
-                                    <template #body="props">
-                                        <Tag
-                                            :severity="props.data.is_active ? 'success' : 'danger'"
-                                            :value="props.data.is_active ? 'Active' : 'Inactive'"
-                                        />
-                                    </template>
-                                </Column>
-                                <Column class="w-[8%]">
-                                    <template #body="props">
-                                        <div class="flex justify-end gap-1">
-                                            <Button
-                                                text
-                                                rounded
-                                                size="small"
-                                                severity="secondary"
-                                                icon="pi pi-pencil"
-                                                @click="openCategoryForm(props.data)"
-                                            />
-                                            <Button
-                                                text
-                                                rounded
-                                                size="small"
-                                                severity="danger"
-                                                icon="pi pi-trash"
-                                                @click="deleteCategory(props.data)"
-                                            />
-                                        </div>
-                                    </template>
-                                </Column>
-                            </DefaultTable>
-                        </div>
+                    <DefaultTable
+                        :items="page.props.categories.data"
+                        :pagination="{
+                            total: page.props.categories.total,
+                            perPage: page.props.categories.per_page,
+                            currentPage: page.props.categories.current_page,
+                        }"
+                        @paginate="loadPage"
+                    >
+                        <Column
+                            field="name"
+                            header="Category"
+                            class="font-semibold"
+                        />
+                        <Column field="description" header="Description" />
+                        <Column header="Status" class="w-[10%]">
+                            <template #body="props">
+                                <Tag
+                                    :severity="
+                                        props.data.is_active
+                                            ? 'success'
+                                            : 'danger'
+                                    "
+                                    :value="
+                                        props.data.is_active
+                                            ? 'Active'
+                                            : 'Inactive'
+                                    "
+                                />
+                            </template>
+                        </Column>
+                        <Column class="w-[8%]">
+                            <template #body="props">
+                                <div class="flex justify-end gap-1">
+                                    <Button
+                                        text
+                                        rounded
+                                        size="small"
+                                        severity="secondary"
+                                        icon="pi pi-pencil"
+                                        @click="openCategoryForm(props.data)"
+                                    />
+                                    <Button
+                                        text
+                                        rounded
+                                        size="small"
+                                        severity="danger"
+                                        icon="pi pi-trash"
+                                        @click="deleteCategory(props.data)"
+                                    />
+                                </div>
+                            </template>
+                        </Column>
+                    </DefaultTable>
+                </div>
             </div>
         </div>
     </AuthLayout>
@@ -294,6 +412,7 @@
 <script setup>
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
+import { useToast } from "primevue/usetoast";
 import { route } from "ziggy-js";
 import {
     IconCategory,
@@ -313,9 +432,13 @@ import SelectInput from "../../Components/inputs/SelectInput.vue";
 import LibraryAccessInput from "../../Components/inputs/LibraryAccessInput.vue";
 import UploadInput from "../../Components/inputs/UploadInput.vue";
 import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
-import { buildLibraryTargets, libraryAccessFromTargets } from "../../Utils/libraryAccess";
+import {
+    buildLibraryTargets,
+    libraryAccessFromTargets,
+} from "../../Utils/libraryAccess";
 
 const page = usePage();
+const toast = useToast();
 const searchInput = ref(null);
 const categorySearchInput = ref(null);
 const searchTimer = ref(null);
@@ -329,8 +452,15 @@ const tabs = [
     { label: "Downloadables", value: "documents" },
     { label: "Categories", value: "categories" },
 ];
-const isRegionLocked = computed(() => Boolean(page.props.targetingScope?.is_region_locked));
-const lockedRegion = computed(() => page.props.targetingScope?.region ?? page.props.regionOptions?.[0] ?? null);
+const isRegionLocked = computed(() =>
+    Boolean(page.props.targetingScope?.is_region_locked),
+);
+const lockedRegion = computed(
+    () =>
+        page.props.targetingScope?.region ??
+        page.props.regionOptions?.[0] ??
+        null,
+);
 
 const applyRegionalTargeting = () => {
     if (!isRegionLocked.value || !lockedRegion.value) return;
@@ -369,12 +499,52 @@ const categoryForm = useForm({
     is_active: true,
 });
 
-const targets = computed(() => buildLibraryTargets({
-    availableAll: documentForm.available_all,
-    regionScopes: documentForm.region_scopes,
-    scholarships: documentForm.scholarships,
-    programs: documentForm.programs,
-}));
+const showMutationSuccess = (responsePage, action) => {
+    const flash = responsePage.props.flash ?? {};
+    const validSeverities = ["success", "info", "warn", "error"];
+
+    toast.add({
+        severity: validSeverities.includes(flash.status)
+            ? flash.status
+            : "success",
+        summary: flash.title ?? "Success",
+        detail: flash.message ?? `${action} completed successfully.`,
+        life: 4000,
+    });
+};
+
+const showMutationError = (action, errors = null) => {
+    const detail = Object.values(errors ?? {})
+        .flat()
+        .find((message) => typeof message === "string" && message.trim());
+
+    toast.add({
+        severity: "error",
+        summary: `${action} failed`,
+        detail:
+            detail ?? `Unable to ${action.toLowerCase()}. Please try again.`,
+        life: 5000,
+    });
+};
+
+const mutationCallbacks = (action, onSuccess = null) => ({
+    onSuccess: (responsePage) => {
+        showMutationSuccess(responsePage, action);
+        onSuccess?.();
+    },
+    onError: (errors) => showMutationError(action, errors),
+    onHttpException: () => showMutationError(action),
+    onNetworkError: () => showMutationError(action),
+});
+
+const targets = computed(() =>
+    buildLibraryTargets({
+        availableAll: documentForm.available_all,
+        regionScopes: documentForm.region_scopes,
+        scholarships: documentForm.scholarships,
+        programs: documentForm.programs,
+    }),
+);
 
 watch(searchInput, () => {
     clearTimeout(searchTimer.value);
@@ -432,7 +602,9 @@ const openDocumentForm = (row = null) => {
     applyRegionalTargeting();
 
     if (row) {
-        const hasAll = row.targets?.some((target) => target.target_type === "all");
+        const hasAll = row.targets?.some(
+            (target) => target.target_type === "all",
+        );
         documentForm.id = row.id;
         documentForm.title = row.title;
         documentForm.description = row.description;
@@ -447,8 +619,16 @@ const openDocumentForm = (row = null) => {
             page.props.regionOptions,
             page.props.schoolOptions,
         );
-        documentForm.scholarships = mapTargets(row, "scholarship_program", page.props.scholarshipOptions);
-        documentForm.programs = mapTargets(row, "program", page.props.programOptions);
+        documentForm.scholarships = mapTargets(
+            row,
+            "scholarship_program",
+            page.props.scholarshipOptions,
+        );
+        documentForm.programs = mapTargets(
+            row,
+            "program",
+            page.props.programOptions,
+        );
     }
 
     applyRegionalTargeting();
@@ -475,17 +655,26 @@ const clearFile = () => {
 };
 
 const saveDocument = () => {
-    const payload = {
-        title: documentForm.title,
-        description: documentForm.description,
-        category_id: documentForm.category?.id ?? null,
-        file: documentForm.file,
-        is_active: documentForm.is_active,
-        publish_now: documentForm.publish_now,
+    const isUpdating = Boolean(documentForm.id);
+    const action = isUpdating ? "Update downloadable" : "Create downloadable";
+
+    documentForm.transform((data) => ({
+        title: data.title,
+        description: data.description,
+        category_id: data.category?.id ?? null,
+        file: data.file,
+        is_active: data.is_active,
+        publish_now: data.publish_now,
         targets: targets.value,
-    };
+        ...(isUpdating ? { _method: "put" } : {}),
+    }));
 
     const options = {
+        ...mutationCallbacks(action, () => {
+            documentToolbarRef.value.closeModal();
+            uploadRef.value?.clear();
+            documentForm.reset();
+        }),
         forceFormData: true,
         preserveScroll: true,
         onProgress: (event) => {
@@ -493,34 +682,30 @@ const saveDocument = () => {
                 progressUpload.value = (event.loaded / event.total) * 97;
             }
         },
-        onSuccess: () => {
-            documentToolbarRef.value.closeModal();
-            uploadRef.value?.clear();
-            documentForm.reset();
-        },
     };
 
-    if (documentForm.id) {
-        router.post(route("documents.update", documentForm.id), {
-            ...payload,
-            _method: "put",
-        }, options);
-        return;
-    }
-
-    router.post(route("documents.store"), payload, options);
+    documentForm.post(
+        isUpdating
+            ? route("documents.update", documentForm.id)
+            : route("documents.store"),
+        options,
+    );
 };
 
 const deleteDocument = (row) => {
-    confirmRef.value.popupDialog(() => {
-        router.delete(route("documents.destroy", row.id), {
-            preserveScroll: true,
-        });
-    }, {
-        header: "Delete Downloadable",
-        message: `Delete "${row.title}"?`,
-        icon: "pi pi-trash",
-    });
+    confirmRef.value.popupDialog(
+        () => {
+            router.delete(route("documents.destroy", row.id), {
+                preserveScroll: true,
+                ...mutationCallbacks("Delete downloadable"),
+            });
+        },
+        {
+            header: "Delete Downloadable",
+            message: `Delete "${row.title}"?`,
+            icon: "pi pi-trash",
+        },
+    );
 };
 
 const saveCategory = () => {
@@ -531,23 +716,27 @@ const saveCategory = () => {
     };
 
     if (categoryForm.id) {
-        categoryForm.transform(() => payload).put(route("document-categories.update", categoryForm.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                categoryToolbarRef.value.closeModal();
-                resetCategoryForm();
-            },
-        });
+        categoryForm
+            .transform(() => payload)
+            .put(route("document-categories.update", categoryForm.id), {
+                preserveScroll: true,
+                ...mutationCallbacks("Update category", () => {
+                    categoryToolbarRef.value.closeModal();
+                    resetCategoryForm();
+                }),
+            });
         return;
     }
 
-    categoryForm.transform(() => payload).post(route("document-categories.store"), {
-        preserveScroll: true,
-        onSuccess: () => {
-            categoryToolbarRef.value.closeModal();
-            resetCategoryForm();
-        },
-    });
+    categoryForm
+        .transform(() => payload)
+        .post(route("document-categories.store"), {
+            preserveScroll: true,
+            ...mutationCallbacks("Create category", () => {
+                categoryToolbarRef.value.closeModal();
+                resetCategoryForm();
+            }),
+        });
 };
 
 const openCategoryForm = (row = null) => {
@@ -578,35 +767,44 @@ const resetCategoryForm = () => {
 };
 
 const deleteCategory = (row) => {
-    confirmRef.value.popupDialog(() => {
-        router.delete(route("document-categories.destroy", row.id), {
-            preserveScroll: true,
-        });
-    }, {
-        header: "Delete Category",
-        message: `Delete "${row.name}"?`,
-        icon: "pi pi-trash",
-    });
+    confirmRef.value.popupDialog(
+        () => {
+            router.delete(route("document-categories.destroy", row.id), {
+                preserveScroll: true,
+                ...mutationCallbacks("Delete category"),
+            });
+        },
+        {
+            header: "Delete Category",
+            message: `Delete "${row.name}"?`,
+            icon: "pi pi-trash",
+        },
+    );
 };
 
 const targetLabel = (target) => {
     if (target.target_type === "all") return "Everyone";
     if (target.target_id === "all") {
-        return {
-            region: "All Regions",
-            scholarship_program: "All Scholarship Programs",
-            program: "All Programs",
-        }[target.target_type] ?? "All";
+        return (
+            {
+                region: "All Regions",
+                scholarship_program: "All Scholarship Programs",
+                program: "All Programs",
+            }[target.target_type] ?? "All"
+        );
     }
 
-    const source = {
-        region: page.props.regionOptions,
-        school: page.props.schoolOptions,
-        scholarship_program: page.props.scholarshipOptions,
-        program: page.props.programOptions,
-    }[target.target_type] ?? [];
+    const source =
+        {
+            region: page.props.regionOptions,
+            school: page.props.schoolOptions,
+            scholarship_program: page.props.scholarshipOptions,
+            program: page.props.programOptions,
+        }[target.target_type] ?? [];
 
-    const option = source.find((item) => String(item.id) === String(target.target_id));
+    const option = source.find(
+        (item) => String(item.id) === String(target.target_id),
+    );
     if (!option) return `${target.target_type}: ${target.target_id}`;
     return target.target_type === "region"
         ? `All schools in ${option.name}`
