@@ -2,7 +2,6 @@
 
 namespace App\Services\Scholar\Management;
 
-use App\Models\PayrollBatchMonthlyCredit;
 use App\Models\Scholars;
 use App\Models\StudentDocument;
 use App\Services\Payroll\PayrollMonthlyCreditService;
@@ -427,7 +426,7 @@ class ScholarManagementDetailsService
                     'name' => $allowance->allowanceType?->name,
                     'description' => $allowance->allowanceType?->description,
                     'amount' => number_format($allowance->amount, 2),
-                    'creditStatus' => 'credited',
+
                 ]),
                 'totalStipends' => number_format($payroll->stipends->sum('amount'), 2),
             ];
