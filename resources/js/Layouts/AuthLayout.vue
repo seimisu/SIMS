@@ -8,9 +8,7 @@
                     sidebar ? 'w-[272px]' : 'w-[72px]',
                 ]"
             >
-                <div
-                    class="flex h-full min-h-0 w-full flex-col"
-                >
+                <div class="flex h-full min-h-0 w-full flex-col">
                     <div
                         :class="[
                             'flex h-[72px] shrink-0 items-center',
@@ -25,8 +23,14 @@
                             class="shrink-0"
                         />
                         <div v-show="sidebar" class="min-w-0 leading-tight">
-                            <div class="text-[15px] font-bold text-blue-600 dark:text-blue-300">SIMS</div>
-                            <div class="truncate text-[10px] font-medium uppercase text-slate-500 dark:text-slate-300">
+                            <div
+                                class="text-[15px] font-bold text-blue-600 dark:text-blue-300"
+                            >
+                                SIMS
+                            </div>
+                            <div
+                                class="truncate text-[10px] font-medium uppercase text-slate-500 dark:text-slate-300"
+                            >
                                 {{ page.props.user.profile.agency.slug }}
                             </div>
                         </div>
@@ -34,7 +38,7 @@
 
                     <nav
                         :class="[
-                            'flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden py-5',
+                            'flex min-h-0 flex-1 flex-col  py-5',
                             !sidebar ? 'items-center' : '',
                         ]"
                     >
@@ -44,7 +48,7 @@
                         />
                         <SidebarLabelMenu
                             :list="page.props.menu"
-                            class="w-full px-2"
+                            class="w-full px-2 overflow-auto"
                             v-else
                         />
                     </nav>
