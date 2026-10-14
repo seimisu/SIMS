@@ -115,7 +115,8 @@ class DocumentController extends Controller
             "{$document->title} was added to the document library.",
             '/documents',
             'documents',
-            $document->id
+            $document->id,
+            Auth::id()
         );
 
         return back()->with('flash', [
@@ -170,7 +171,8 @@ class DocumentController extends Controller
             "{$document->title} was updated in the document library.",
             '/documents',
             'documents',
-            $document->id
+            $document->id,
+            Auth::id()
         );
 
         return back()->with('flash', [

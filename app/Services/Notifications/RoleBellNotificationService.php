@@ -86,14 +86,17 @@ class RoleBellNotificationService
         $this->notifyUsers($this->cashierUsers(), compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
     }
 
-    public function notifyRegionalAndScholarshipStaff(string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId): void
+    public function notifyRegionalAndScholarshipStaff(string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId, int|string|null $excludeUserId = null): void
     {
         $users = $this->regionalUsers()
             ->merge($this->scholarshipUsers())
-            ->unique('id')
-            ->values();
+            ->unique('id');
 
-        $this->notifyUsers($users, compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
+        if ($excludeUserId !== null) {
+            $users = $users->reject(fn ($user) => (string) $user->id === (string) $excludeUserId);
+        }
+
+        $this->notifyUsers($users->values(), compact('type', 'title', 'message', 'url', 'sourceTable', 'sourceId'));
     }
 
     private function notifyRegionalUsersForScholar(?Scholars $scholar, string $type, string $title, string $message, string $url, string $sourceTable, int|string $sourceId): void

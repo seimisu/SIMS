@@ -1,10 +1,16 @@
 <template>
     <Head title="Grade Submissions" />
     <AuthLayout>
-        <div class="submissions-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
-            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
+        <div
+            class="submissions-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100"
+        >
+            <div
+                class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700"
+            >
                 <div class="flex min-w-0 items-start gap-3">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500">
+                    <div
+                        class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white shadow-sm dark:bg-blue-500"
+                    >
                         <IconClipboardCheck :size="21" stroke-width="1.8" />
                     </div>
                     <HeaderModule
@@ -15,9 +21,15 @@
                 </div>
             </div>
 
-            <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
-                <aside class="min-h-0 border-r border-slate-200 pr-3 dark:border-gray-700">
-                    <div class="mb-2 flex items-center gap-2 px-1 text-xs font-semibold uppercase text-slate-500 dark:text-gray-400">
+            <div
+                class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]"
+            >
+                <aside
+                    class="min-h-0 border-r border-slate-200 pr-3 dark:border-gray-700"
+                >
+                    <div
+                        class="mb-2 flex items-center gap-2 px-1 text-xs font-semibold uppercase text-slate-500 dark:text-gray-400"
+                    >
                         <IconCalendarStats :size="15" />
                         Semesters
                     </div>
@@ -34,8 +46,12 @@
                             ]"
                             @click="selectSemester(semester)"
                         >
-                            <span class="block font-semibold">{{ semester.term_name }}</span>
-                            <span class="block text-xs opacity-75">{{ semester.academic_year }}</span>
+                            <span class="block font-semibold">{{
+                                semester.term_name
+                            }}</span>
+                            <span class="block text-xs opacity-75">{{
+                                semester.academic_year
+                            }}</span>
                         </button>
                     </div>
                 </aside>
@@ -44,6 +60,7 @@
                     class="min-h-0"
                     :items="rows.data ?? []"
                     :pagination="pagination"
+                    data-key="scholar_id"
                     scrollable
                     scroll-height="flex"
                     clickable
@@ -51,52 +68,167 @@
                     @paginate="loadPage"
                 >
                     <template #header>
-                        <ManagementFilterBar v-model="searchInput" search-placeholder="Search SPAS or scholar">
-                                    <DefaultButton :icon="filterSchool ? IconFilterFilled : IconFilter" label="Schools" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'school')" />
-                                    <DefaultButton :icon="filterProgram ? IconFilterFilled : IconFilter" label="Programs" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'program')" />
-                                    <DefaultButton :icon="filterType ? IconFilterFilled : IconFilter" label="Types" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'type')" />
-                                    <DefaultButton :icon="filterStatus ? IconFilterFilled : IconFilter" label="Status" class-name="!rounded-md" size="small" severity="secondary" @click="toggleFilter($event, 'status')" />
+                        <ManagementFilterBar
+                            v-model="searchInput"
+                            search-placeholder="Search SPAS or scholar"
+                        >
+                            <DefaultButton
+                                :icon="
+                                    filterSchool ? IconFilterFilled : IconFilter
+                                "
+                                label="Schools"
+                                class-name="!rounded-md"
+                                size="small"
+                                severity="secondary"
+                                @click="toggleFilter($event, 'school')"
+                            />
+                            <DefaultButton
+                                :icon="
+                                    filterProgram
+                                        ? IconFilterFilled
+                                        : IconFilter
+                                "
+                                label="Programs"
+                                class-name="!rounded-md"
+                                size="small"
+                                severity="secondary"
+                                @click="toggleFilter($event, 'program')"
+                            />
+                            <DefaultButton
+                                :icon="
+                                    filterType ? IconFilterFilled : IconFilter
+                                "
+                                label="Types"
+                                class-name="!rounded-md"
+                                size="small"
+                                severity="secondary"
+                                @click="toggleFilter($event, 'type')"
+                            />
+                            <DefaultButton
+                                :icon="
+                                    filterStatus ? IconFilterFilled : IconFilter
+                                "
+                                label="Status"
+                                class-name="!rounded-md"
+                                size="small"
+                                severity="secondary"
+                                @click="toggleFilter($event, 'status')"
+                            />
                             <Popover ref="opSchool">
                                 <div class="flex gap-3">
                                     <div class="w-60">
-                                        <SelectMultiInput v-model="filterSchool" :options="page.props.schoolFilter" filter capitalize />
+                                        <SelectMultiInput
+                                            v-model="filterSchool"
+                                            :options="page.props.schoolFilter"
+                                            filter
+                                            capitalize
+                                        />
                                     </div>
-                                    <div class="flex items-center justify-end gap-2">
-                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('school')" />
-                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('school')" />
+                                    <div
+                                        class="flex items-center justify-end gap-2"
+                                    >
+                                        <DefaultButton
+                                            label="Clear"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            severity="secondary"
+                                            @click="clearFilter('school')"
+                                        />
+                                        <DefaultButton
+                                            label="Filter"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            @click="applyFilter('school')"
+                                        />
                                     </div>
                                 </div>
                             </Popover>
                             <Popover ref="opProgram">
                                 <div class="flex gap-3">
                                     <div class="w-60">
-                                        <SelectMultiInput v-model="filterProgram" :options="page.props.programFilter" filter capitalize />
+                                        <SelectMultiInput
+                                            v-model="filterProgram"
+                                            :options="page.props.programFilter"
+                                            filter
+                                            capitalize
+                                        />
                                     </div>
-                                    <div class="flex items-center justify-end gap-2">
-                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('program')" />
-                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('program')" />
+                                    <div
+                                        class="flex items-center justify-end gap-2"
+                                    >
+                                        <DefaultButton
+                                            label="Clear"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            severity="secondary"
+                                            @click="clearFilter('program')"
+                                        />
+                                        <DefaultButton
+                                            label="Filter"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            @click="applyFilter('program')"
+                                        />
                                     </div>
                                 </div>
                             </Popover>
                             <Popover ref="opType">
                                 <div class="flex gap-3">
                                     <div class="w-60">
-                                        <SelectMultiInput v-model="filterType" :options="page.props.scholarTypeFilter" filter capitalize />
+                                        <SelectMultiInput
+                                            v-model="filterType"
+                                            :options="
+                                                page.props.scholarTypeFilter
+                                            "
+                                            filter
+                                            capitalize
+                                        />
                                     </div>
-                                    <div class="flex items-center justify-end gap-2">
-                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('type')" />
-                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('type')" />
+                                    <div
+                                        class="flex items-center justify-end gap-2"
+                                    >
+                                        <DefaultButton
+                                            label="Clear"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            severity="secondary"
+                                            @click="clearFilter('type')"
+                                        />
+                                        <DefaultButton
+                                            label="Filter"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            @click="applyFilter('type')"
+                                        />
                                     </div>
                                 </div>
                             </Popover>
                             <Popover ref="opStatus">
                                 <div class="flex gap-3">
                                     <div class="w-60">
-                                        <SelectMultiInput v-model="filterStatus" :options="page.props.statusFilter" filter capitalize />
+                                        <SelectMultiInput
+                                            v-model="filterStatus"
+                                            :options="page.props.statusFilter"
+                                            filter
+                                            capitalize
+                                        />
                                     </div>
-                                    <div class="flex items-center justify-end gap-2">
-                                        <DefaultButton label="Clear" class-name="w-20 !rounded-xl" size="small" severity="secondary" @click="clearFilter('status')" />
-                                        <DefaultButton label="Filter" class-name="w-20 !rounded-xl" size="small" @click="applyFilter('status')" />
+                                    <div
+                                        class="flex items-center justify-end gap-2"
+                                    >
+                                        <DefaultButton
+                                            label="Clear"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            severity="secondary"
+                                            @click="clearFilter('status')"
+                                        />
+                                        <DefaultButton
+                                            label="Filter"
+                                            class-name="w-20 !rounded-xl"
+                                            size="small"
+                                            @click="applyFilter('status')"
+                                        />
                                     </div>
                                 </div>
                             </Popover>
@@ -106,10 +238,18 @@
                     <Column header="Scholar">
                         <template #body="props">
                             <div class="min-w-56">
-                                <div class="text-sm font-semibold uppercase text-slate-700 dark:text-gray-200">
-                                    {{ props.data.fullname || "Unnamed Scholar" }}
+                                <div
+                                    class="text-sm font-semibold uppercase text-slate-700 dark:text-gray-200"
+                                >
+                                    {{
+                                        props.data.fullname || "Unnamed Scholar"
+                                    }}
                                 </div>
-                                <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.spas_no }}</div>
+                                <div
+                                    class="text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    {{ props.data.spas_no }}
+                                </div>
                             </div>
                         </template>
                     </Column>
@@ -118,14 +258,27 @@
                     <Column header="School">
                         <template #body="props">
                             <div class="min-w-64">
-                                <div class="text-sm text-slate-700 dark:text-gray-200">{{ props.data.school }}</div>
-                                <div class="text-xs text-slate-500 dark:text-gray-400">{{ props.data.course }}</div>
+                                <div
+                                    class="text-sm text-slate-700 dark:text-gray-200"
+                                >
+                                    {{ props.data.school }}
+                                </div>
+                                <div
+                                    class="text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    {{ props.data.course }}
+                                </div>
                             </div>
                         </template>
                     </Column>
                     <Column header="Status">
                         <template #body="props">
-                            <span :class="statusClass(props.data.status)">
+                            <span
+                                :class="[
+                                    statusClass(props.data.status),
+                                    'text-nowrap',
+                                ]"
+                            >
                                 {{ props.data.status }}
                             </span>
                         </template>
@@ -157,7 +310,12 @@ import DefaultButton from "../../Components/buttons/DefaultButton.vue";
 import DialogScholarGradeRequest from "../../Modules/Others/DialogScholarGradeRequest.vue";
 import { Head, router, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
-import { IconCalendarStats, IconClipboardCheck, IconFilter, IconFilterFilled } from "@tabler/icons-vue";
+import {
+    IconCalendarStats,
+    IconClipboardCheck,
+    IconFilter,
+    IconFilterFilled,
+} from "@tabler/icons-vue";
 import { route } from "ziggy-js";
 
 const page = usePage();
@@ -261,9 +419,12 @@ const openSubmission = (row) => {
 const statusClass = (status) => [
     "rounded border px-2 py-1 text-xs uppercase",
     {
-        submitted: "border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200",
-        approved: "border-green-200 bg-green-50 text-green-600 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200",
-        rejected: "border-red-200 bg-red-50 text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
+        submitted:
+            "border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-200",
+        approved:
+            "border-green-200 bg-green-50 text-green-600 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200",
+        rejected:
+            "border-red-200 bg-red-50 text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200",
     }[status] ??
         "border-slate-200 bg-slate-50 text-slate-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300",
 ];

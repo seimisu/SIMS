@@ -78,13 +78,6 @@ class UserProfileController extends Controller
                 'max:100',
             ],
 
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                'unique:users,email,'.$user->id,
-            ],
-
             'phone' => [
                 'nullable',
                 'string',
@@ -102,10 +95,6 @@ class UserProfileController extends Controller
                 'integer',
                 'exists:list_agencies,id',
             ],
-        ]);
-
-        $user->update([
-            'email' => $validated['email'],
         ]);
 
         $user->profile()->update([

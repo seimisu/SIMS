@@ -7,7 +7,7 @@
         :totalRecords="pagination.total"
         removableSort
         :lazy="true"
-        dataKey="id"
+        :dataKey="dataKey"
         selectionMode="single"
         :metaKeySelection="true"
         :size="size"
@@ -39,7 +39,9 @@
                 class: 'dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-100',
             },
             column: {
-                root: { class: 'dark:!border-gray-700 dark:!bg-gray-800 dark:text-gray-300' },
+                root: {
+                    class: 'dark:!border-gray-700 dark:!bg-gray-800 dark:text-gray-300',
+                },
             },
             bodyRow: {
                 class: [
@@ -131,6 +133,10 @@ const props = defineProps({
     clickable: {
         type: Boolean,
         default: false,
+    },
+    dataKey: {
+        type: String,
+        default: "id",
     },
 });
 

@@ -28,6 +28,14 @@
                 <slot name="option" v-bind="slotProps.option"></slot>
             </template>
         </AutoComplete>
+        <Message
+            severity="secondary"
+            class="mt-1 mx-1"
+            variant="simple"
+            v-show="message"
+        >
+            <p class="text-xs font-light text-gray-400">{{ message }}</p>
+        </Message>
     </div>
 </template>
 
@@ -40,6 +48,10 @@ const props = defineProps({
     },
     label: String,
     placeholder: String,
+    message: {
+        type: String,
+        default: null,
+    },
     disabled: {
         type: Boolean,
         default: false,

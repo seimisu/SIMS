@@ -3,7 +3,7 @@ import "../css/app.css";
 import "primeicons/primeicons.css";
 
 import { createApp, h } from "vue";
-import { createInertiaApp } from "@inertiajs/vue3";
+import { createInertiaApp, router } from "@inertiajs/vue3";
 import { definePreset } from "@primeuix/themes";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { ZiggyVue } from "ziggy-js";
@@ -15,6 +15,90 @@ import ConfirmationService from "primevue/confirmationservice";
 import VCalendar from "v-calendar";
 import "v-calendar/style.css";
 const appName = import.meta.env.VITE_APP_NAME || "SIMS";
+
+function installRequestButtonState() {
+    let buttonForNextVisit = null;
+    const pendingButtons = new Map();
+
+    const rememberButton = (button) => {
+        if (!(button instanceof HTMLButtonElement)) return;
+
+        buttonForNextVisit = button;
+        queueMicrotask(() => {
+            if (buttonForNextVisit === button) buttonForNextVisit = null;
+        });
+    };
+
+    document.addEventListener(
+        "click",
+        (event) => {
+            const target =
+                event.target instanceof Element ? event.target : null;
+            const button = target?.closest("button");
+
+            if (button?.dataset.requestPending === "true") {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                return;
+            }
+
+            rememberButton(button);
+        },
+        true,
+    );
+
+    document.addEventListener(
+        "submit",
+        (event) => {
+            const form = event.target;
+            const button =
+                event.submitter ||
+                form.querySelector(
+                    'button[type="submit"], input[type="submit"]',
+                );
+
+            rememberButton(button);
+        },
+        true,
+    );
+
+    router.on("start", (event) => {
+        const button = buttonForNextVisit;
+        const visit = event.detail.visit;
+        buttonForNextVisit = null;
+
+        if (!button || !button.isConnected || button.disabled) return;
+
+        pendingButtons.set(visit, {
+            button,
+            wasDisabled: button.disabled,
+            previousAriaBusy: button.getAttribute("aria-busy"),
+        });
+        button.dataset.requestPending = "true";
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+    });
+
+    router.on("finish", (event) => {
+        const pending = pendingButtons.get(event.detail.visit);
+        if (!pending) return;
+
+        const { button, wasDisabled, previousAriaBusy } = pending;
+        delete button.dataset.requestPending;
+        button.disabled = wasDisabled;
+
+        if (previousAriaBusy === null) {
+            button.removeAttribute("aria-busy");
+        } else {
+            button.setAttribute("aria-busy", previousAriaBusy);
+        }
+
+        pendingButtons.delete(event.detail.visit);
+    });
+}
+
+installRequestButtonState();
+
 const MyPreset = definePreset(Aura, {
     semantic: {
         primary: {

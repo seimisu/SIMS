@@ -72,24 +72,16 @@ class ActivationController extends Controller
             'contact_no' => $data['contact'],
         ]);
 
-        if ($data['photo']) {
-            // Get the Base64 string
-            $imageData = $data['photo'];
+        if ($request->hasFile('photo')) {
+            $photo = $request->file('photo');
+            $profile = $user->profile;
 
-            // Extract the file type
-            if (preg_match('/^data:image\/([a-zA-Z0-9+]+);base64,/', $imageData, $matches)) {
-                $imageType = $matches[1];
-            } else {
-                dd('Invalid image format', $imageData);
+            if ($profile?->avatar) {
+                Storage::disk('public')->delete("avatars/{$user->id}/{$profile->avatar}");
             }
 
-            // Remove the Base64 prefix
-            $imageData = substr($imageData, strpos($imageData, ',') + 1);
-            $imageData = base64_decode($imageData);
-
-            // Generate a filename
-            $filename = 'profile_'.time().'.'.$imageType;
-            Storage::disk('public')->put("avatars/{$user->id}/{$filename}", $imageData);
+            $filename = 'profile_'.time().'.'.$photo->extension();
+            Storage::disk('public')->putFileAs("avatars/{$user->id}", $photo, $filename);
 
             $user->profile()->update([
                 'avatar' => $filename,
