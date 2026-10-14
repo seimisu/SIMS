@@ -691,6 +691,16 @@
                                     v-tooltip.top="'Open in new tab'"
                                 />
                                 <Button
+                                    icon="pi pi-download"
+                                    severity="secondary"
+                                    text
+                                    size="small"
+                                    as="a"
+                                    :href="route('scholar-documents.download', selectedFile.id ?? selectedFile.document_id)"
+                                    v-tooltip.top="'Download document'"
+                                    aria-label="Download document"
+                                />
+                                <Button
                                     icon="pi pi-times-circle"
                                     severity="secondary"
                                     text
@@ -703,6 +713,8 @@
                         </div>
 
                         <iframe
+                            :key="selectedFile.id ?? selectedFile.document_id"
+                            title="Submitted document preview"
                             :src="
                                 scholarPortalFileUrl(selectedFile)
                             "
