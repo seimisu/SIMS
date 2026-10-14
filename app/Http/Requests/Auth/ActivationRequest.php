@@ -28,9 +28,7 @@ class ActivationRequest extends FormRequest
 
 
         return [
-            'photo'         => ['nullable', 'string'],
-            'photoCrop'     => ['nullable', 'string'],
-            'photoRaw'      => ['nullable'],
+            'photo'         => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'fname'         => ['required', 'string'],
             'lname'         => ['required', 'string'],
             'email'         => ['email', 'required'],

@@ -9,21 +9,124 @@
                 description="Manage your personal information, account details, and security settings."
             />
 
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div
+                    class="rounded-xl border border-surface-200 bg-white p-5 dark:border-slate-600 dark:bg-slate-700"
+                >
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                        >
+                            <IconShieldCheck class="h-5 w-5" />
+                        </div>
+                        <p
+                            class="text-sm font-medium text-surface-600 dark:text-surface-300"
+                        >
+                            Two-factor authentication
+                        </p>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between gap-3">
+                        <div>
+                            <p
+                                class="text-2xl font-semibold text-surface-900 dark:text-white"
+                            >
+                                {{ twoFactorEnabled ? "On" : "Off" }}
+                            </p>
+                            <p class="mt-1 text-xs text-surface-500">
+                                {{
+                                    twoFactorEnabled
+                                        ? "Authenticator app connected"
+                                        : "Add a second sign-in step"
+                                }}
+                            </p>
+                        </div>
+                        <Tag
+                            :value="
+                                twoFactorEnabled ? 'Protected' : 'Recommended'
+                            "
+                            :severity="twoFactorEnabled ? 'success' : 'warn'"
+                        />
+                    </div>
+                </div>
+
+                <div
+                    class="rounded-xl border border-surface-200 bg-white p-5 dark:border-slate-600 dark:bg-slate-700"
+                >
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                        >
+                            <IconFingerprint class="h-5 w-5" />
+                        </div>
+                        <p
+                            class="text-sm font-medium text-surface-600 dark:text-surface-300"
+                        >
+                            Registered passkeys
+                        </p>
+                    </div>
+                    <div class="mt-4">
+                        <p
+                            class="text-2xl font-semibold text-surface-900 dark:text-white"
+                        >
+                            {{ props.passkeys?.length ?? 0 }}
+                        </p>
+                        <p class="mt-1 text-xs text-surface-500">
+                            {{
+                                props.passkeys?.length
+                                    ? "Ready for passwordless sign-in"
+                                    : "Add a device for faster sign-in"
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    class="rounded-xl border border-surface-200 bg-white p-5 dark:border-slate-600 dark:bg-slate-700"
+                >
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                        >
+                            <IconHistory class="h-5 w-5" />
+                        </div>
+                        <p
+                            class="text-sm font-medium text-surface-600 dark:text-surface-300"
+                        >
+                            Recent sign-ins
+                        </p>
+                    </div>
+                    <div class="mt-4">
+                        <p
+                            class="text-2xl font-semibold text-surface-900 dark:text-white"
+                        >
+                            {{ props.logs?.length ?? 0 }}
+                        </p>
+                        <p class="mt-1 text-xs text-surface-500">
+                            Session records shown below
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Profile Content -->
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
                 <!-- ================================================= -->
                 <!-- PROFILE CARD -->
                 <!-- ================================================= -->
 
-                <Card class="xl:col-span-1 dark:bg-slate-700! dark:text-white!">
+                <Card
+                    class="xl:col-span-1 h-full dark:bg-slate-700! dark:text-white!"
+                >
                     <template #content>
-                        <div class="flex flex-col items-center text-center">
+                        <div
+                            class="flex h-full flex-col items-center text-center"
+                        >
                             <!-- Avatar -->
-                            <div class="relative mb-4">
+                            <div class="relative mb-5">
                                 <Avatar
                                     v-if="user.profile.avatar === null"
                                     :label="user.email.charAt(0).toUpperCase()"
-                                    class="!w-28 !h-28 !text-3xl bg-primary text-white"
+                                    class="!w-28 !h-28 !text-3xl bg-primary text-white ring-4 ring-primary/10"
                                     shape="circle"
                                 />
 
@@ -33,7 +136,7 @@
                                         background-color: #dee9fc;
                                         color: #1a2551;
                                     "
-                                    class="!w-28 !h-28"
+                                    class="!w-28 !h-28 ring-4 ring-primary/10"
                                     shape="circle"
                                     :image="user.profile.avatar_url"
                                 />
@@ -49,7 +152,9 @@
                             </div>
 
                             <!-- Name -->
-                            <h2 class="text-xl font-semibold text-surface-900">
+                            <h2
+                                class="text-xl font-semibold text-surface-900 dark:text-white"
+                            >
                                 {{ user.profile.fullname }}
                             </h2>
 
@@ -64,32 +169,85 @@
                                 class="mt-3"
                             />
 
-                            <Divider />
-
-                            <!-- Profile Summary -->
-                            <div class="w-full space-y-4 flex justify-between">
-                                <div>
-                                    <span class="text-xs text-surface-500">
-                                        Account Status
-                                    </span>
-
-                                    <div class="mt-1">
-                                        <Tag
-                                            value="Active"
-                                            severity="success"
+                            <div
+                                class="mt-6 w-full rounded-lg bg-surface-50 p-4 text-left dark:bg-slate-800"
+                            >
+                                <p
+                                    class="text-xs font-semibold uppercase tracking-wide text-surface-500"
+                                >
+                                    Work details
+                                </p>
+                                <div class="mt-3 space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <IconBriefcase
+                                            class="mt-0.5 h-4 w-4 shrink-0 text-primary"
                                         />
+                                        <div class="min-w-0">
+                                            <p class="text-xs text-surface-500">
+                                                Position
+                                            </p>
+                                            <p
+                                                class="break-words text-sm font-medium"
+                                            >
+                                                {{
+                                                    user.profile.designation ||
+                                                    "Not set"
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-3">
+                                        <IconBuilding
+                                            class="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                                        />
+                                        <div class="min-w-0">
+                                            <p class="text-xs text-surface-500">
+                                                Office / Unit
+                                            </p>
+                                            <p
+                                                class="break-words text-sm font-medium"
+                                            >
+                                                {{
+                                                    user.profile.agency_array
+                                                        ?.name || "Not set"
+                                                }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div>
-                                    <span class="text-xs text-surface-500">
-                                        Member Since
-                                    </span>
-
-                                    <p class="font-medium mt-1">
-                                        {{ profile.memberSince }}
-                                    </p>
+                            <div class="mt-5 w-full text-left">
+                                <div
+                                    class="mb-2 flex items-center justify-between gap-3"
+                                >
+                                    <span class="text-sm font-medium"
+                                        >Profile completeness</span
+                                    >
+                                    <span
+                                        class="text-sm font-semibold text-primary"
+                                        >{{ profileCompleteness }}%</span
+                                    >
                                 </div>
+                                <div
+                                    class="h-2 overflow-hidden rounded-full bg-surface-200 dark:bg-slate-600"
+                                    role="progressbar"
+                                    :aria-valuenow="profileCompleteness"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    aria-label="Profile completeness"
+                                >
+                                    <div
+                                        class="h-full rounded-full bg-primary transition-[width] duration-500"
+                                        :style="{
+                                            width: `${profileCompleteness}%`,
+                                        }"
+                                    ></div>
+                                </div>
+                                <p class="mt-2 text-xs text-surface-500">
+                                    Add your contact and work details to
+                                    complete your profile.
+                                </p>
                             </div>
                         </div>
                     </template>
@@ -99,84 +257,157 @@
                 <!-- ACCOUNT INFORMATION -->
                 <!-- ================================================= -->
 
-                <Card class="xl:col-span-2 dark:bg-slate-700! dark:text-white!">
+                <Card
+                    class="xl:col-span-2 h-full overflow-hidden dark:bg-slate-700! dark:text-white!"
+                >
                     <template #title>
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-4"
+                        >
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                                >
+                                    <IconUser class="h-5 w-5" />
+                                </div>
+
+                                <div>
+                                    <h3 class="text-lg font-semibold">
+                                        Personal Information
+                                    </h3>
+
+                                    <p
+                                        class="text-sm text-surface-500 font-normal"
+                                    >
+                                        Update your personal account
+                                        information.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <span
+                                class="inline-flex items-center gap-2 rounded-full bg-surface-100 px-3 py-1.5 text-xs font-medium text-surface-600 dark:bg-slate-600 dark:text-surface-200"
                             >
-                                <i class="pi pi-user text-primary"></i>
-                            </div>
-
-                            <div>
-                                <h3 class="text-lg font-semibold">
-                                    Personal Information
-                                </h3>
-
-                                <p class="text-sm text-surface-500 font-normal">
-                                    Update your personal account information.
-                                </p>
-                            </div>
+                                <span
+                                    class="h-2 w-2 rounded-full"
+                                    :class="
+                                        disable.userDetails
+                                            ? 'bg-surface-400'
+                                            : 'bg-emerald-500'
+                                    "
+                                ></span>
+                                {{
+                                    disable.userDetails
+                                        ? "View mode"
+                                        : "Editing"
+                                }}
+                            </span>
                         </div>
                     </template>
 
                     <template #content>
-                        <form
-                            @submit.prevent="updateProfile"
-                            class="space-y-5 mt-5"
-                        >
-                            <!-- Name -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <TextInput
-                                    label="First Name"
-                                    v-model="form.firstName"
-                                    :disabled="disable.userDetails"
-                                    uppercase
-                                />
+                        <form @submit.prevent="updateProfile" class="mt-5">
+                            <div
+                                class="divide-y divide-surface-200 dark:divide-slate-600"
+                            >
+                                <section class="space-y-4 pb-5">
+                                    <div class="flex items-center gap-2">
+                                        <IconUser
+                                            class="h-4 w-4 text-primary"
+                                        />
+                                        <h4
+                                            class="text-sm font-semibold text-surface-800 dark:text-surface-100"
+                                        >
+                                            Personal details
+                                        </h4>
+                                    </div>
+                                    <div
+                                        class="grid grid-cols-1 gap-5 md:grid-cols-2"
+                                    >
+                                        <TextInput
+                                            label="First Name"
+                                            v-model="form.firstName"
+                                            :disabled="disable.userDetails"
+                                            uppercase
+                                        />
+                                        <TextInput
+                                            label="Last Name"
+                                            v-model="form.lastName"
+                                            :disabled="disable.userDetails"
+                                            uppercase
+                                        />
+                                    </div>
+                                </section>
 
-                                <TextInput
-                                    label="Last Name"
-                                    v-model="form.lastName"
-                                    :disabled="disable.userDetails"
-                                    uppercase
-                                />
-                            </div>
+                                <section class="space-y-4 py-5">
+                                    <div class="flex items-center gap-2">
+                                        <IconPhone
+                                            class="h-4 w-4 text-primary"
+                                        />
+                                        <h4
+                                            class="text-sm font-semibold text-surface-800 dark:text-surface-100"
+                                        >
+                                            Contact information
+                                        </h4>
+                                    </div>
+                                    <div
+                                        class="grid grid-cols-1 gap-5 md:grid-cols-2"
+                                    >
+                                        <div>
+                                            <TextInput
+                                                label="Email Address"
+                                                v-model="form.email"
+                                                type="email"
+                                                disabled
+                                            />
+                                            <p
+                                                class="mt-1 text-xs text-surface-500"
+                                            >
+                                                Email changes are unavailable
+                                                here. Contact an administrator
+                                                if this needs updating.
+                                            </p>
+                                        </div>
+                                        <TextInput
+                                            label="Contact Number"
+                                            v-model="form.phone"
+                                            :disabled="disable.userDetails"
+                                        />
+                                    </div>
+                                </section>
 
-                            <!-- Email / Phone -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <TextInput
-                                    label="Email Address"
-                                    v-model="form.email"
-                                    type="email"
-                                    :disabled="disable.userDetails"
-                                />
-
-                                <TextInput
-                                    label="Contact Number"
-                                    v-model="form.phone"
-                                    :disabled="disable.userDetails"
-                                />
-                            </div>
-
-                            <!-- Position / Office -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <TextInput
-                                    label="Position"
-                                    v-model="form.position"
-                                    :disabled="disable.userDetails"
-                                />
-
-                                <SelectInput
-                                    label="Office / Unit"
-                                    :options="agencyOption"
-                                    v-model="form.office"
-                                    :disable="disable.userDetails"
-                                />
+                                <section class="space-y-4 pt-5">
+                                    <div class="flex items-center gap-2">
+                                        <IconBriefcase
+                                            class="h-4 w-4 text-primary"
+                                        />
+                                        <h4
+                                            class="text-sm font-semibold text-surface-800 dark:text-surface-100"
+                                        >
+                                            Work information
+                                        </h4>
+                                    </div>
+                                    <div
+                                        class="grid grid-cols-1 gap-5 md:grid-cols-2"
+                                    >
+                                        <TextInput
+                                            label="Position"
+                                            v-model="form.position"
+                                            :disabled="disable.userDetails"
+                                        />
+                                        <SelectInput
+                                            label="Office / Unit"
+                                            :options="agencyOption"
+                                            v-model="form.office"
+                                            :disable="disable.userDetails"
+                                        />
+                                    </div>
+                                </section>
                             </div>
 
                             <!-- Actions -->
                             <div
-                                class="flex justify-end gap-2 pt-4 border-t border-surface-200"
+                                class="mt-5 flex flex-wrap justify-end gap-2 border-t border-surface-200 pt-4 dark:border-slate-600"
                             >
                                 <template v-if="!disable.userDetails">
                                     <Button
@@ -185,20 +416,24 @@
                                         severity="secondary"
                                         outlined
                                         @click="resetForm"
-                                    />
+                                    >
+                                        <IconX class="h-4 w-4" />
+                                        <span>Cancel</span>
+                                    </Button>
 
-                                    <Button
-                                        type="submit"
-                                        label="Save Changes"
-                                        icon="pi pi-check"
-                                    />
+                                    <Button type="submit">
+                                        <IconDeviceFloppy class="h-4 w-4" />
+                                        <span>Save changes</span>
+                                    </Button>
                                 </template>
                                 <template v-else>
                                     <Button
-                                        type="submit"
-                                        label="Update Details"
+                                        type="button"
                                         @click="disable.userDetails = false"
-                                    />
+                                    >
+                                        <IconEdit class="h-4 w-4" />
+                                        <span>Edit details</span>
+                                    </Button>
                                 </template>
                             </div>
                         </form>
@@ -216,7 +451,7 @@
                         <div
                             class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center"
                         >
-                            <i class="pi pi-shield text-orange-600"></i>
+                            <IconShieldCheck class="h-5 w-5 text-orange-600" />
                         </div>
 
                         <div>
@@ -236,7 +471,9 @@
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <i class="pi pi-lock text-primary"></i>
+                                        <IconLock
+                                            class="h-4 w-4 text-primary"
+                                        />
 
                                         <h4 class="font-semibold">Password</h4>
                                     </div>
@@ -262,7 +499,7 @@
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <i class="pi pi-key text-primary"></i>
+                                        <IconKey class="h-4 w-4 text-primary" />
 
                                         <h4 class="font-semibold">
                                             Two-Factor Authentication
@@ -299,9 +536,9 @@
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2">
-                                        <i
-                                            class="pi pi-shield text-primary"
-                                        ></i>
+                                        <IconFingerprint
+                                            class="h-4 w-4 text-primary"
+                                        />
 
                                         <h4 class="font-semibold">Passkeys</h4>
                                     </div>
@@ -315,7 +552,7 @@
                                         <div
                                             v-for="passkey in props.passkeys"
                                             :key="passkey.id"
-                                            class="flex items-center justify-between gap-4 rounded-lg border border-surface-200 px-3 py-2"
+                                            class="flex items-center justify-between gap-4 rounded-lg border border-surface-200 bg-surface-50/60 px-3 py-3 dark:border-slate-600 dark:bg-slate-800"
                                         >
                                             <div class="min-w-0">
                                                 <p
@@ -368,7 +605,8 @@
                                 </div>
 
                                 <Button
-                                    label="Add"
+                                    label="Add passkey"
+                                    icon="pi pi-plus"
                                     severity="secondary"
                                     outlined
                                     size="small"
@@ -389,9 +627,12 @@
                 <template #title>
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-lg font-semibold">
-                                Recent Login Activity
-                            </h3>
+                            <div class="flex items-center gap-2">
+                                <IconHistory class="h-5 w-5 text-primary" />
+                                <h3 class="text-lg font-semibold">
+                                    Recent Login Activity
+                                </h3>
+                            </div>
 
                             <p class="text-sm text-surface-500 font-normal">
                                 Review recent activity on your account.
@@ -412,17 +653,18 @@
                                         <div
                                             class="w-9 h-9 rounded-lg bg-surface-100 flex items-center justify-center"
                                         >
-                                            <i
-                                                :class="
-                                                    data.device === 'iPhone' ||
-                                                    data.device === 'iPad'
-                                                        ? 'pi pi-mobile'
-                                                        : data.device ===
-                                                            'Android'
-                                                          ? 'pi pi-mobile'
-                                                          : 'pi pi-desktop'
+                                            <component
+                                                :is="
+                                                    [
+                                                        'iPhone',
+                                                        'iPad',
+                                                        'Android',
+                                                    ].includes(data.device)
+                                                        ? IconDeviceMobile
+                                                        : IconDeviceDesktop
                                                 "
-                                            ></i>
+                                                class="h-5 w-5 text-surface-600 dark:text-surface-300"
+                                            />
                                         </div>
 
                                         <div>
@@ -631,18 +873,22 @@
     <Dialog
         v-model:visible="showQRcodeDialog"
         modal
-        style="width: 50rem"
+        :style="{ width: 'min(50rem, calc(100vw - 2rem))' }"
         class="m-2"
     >
         <template #header>
             <div class="flex items-center gap-3">
-                <Avatar class="shrink-0">
-                    <IconCircleKey />
-                </Avatar>
+                <div
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                >
+                    <IconCircleKey class="h-5 w-5" />
+                </div>
 
                 <div class="flex flex-col">
-                    <div class="text-sm font-semibold text-surface-900">
-                        Set Up Two-Factor Authentication
+                    <div
+                        class="text-sm font-semibold text-surface-900 dark:text-white"
+                    >
+                        Two-Factor Security
                     </div>
 
                     <div class="text-xs leading-5 text-surface-500">
@@ -652,31 +898,49 @@
             </div>
         </template>
         <template #default>
-            <div class="space-y-6">
+            <div class="space-y-5">
                 <!-- Header / Instructions -->
-                <div class="text-center">
-                    <h3 class="text-lg font-semibold text-surface-900">
-                        Set Up Two-Factor Authentication
-                    </h3>
-
-                    <p class="mt-1 text-sm text-surface-500">
-                        Scan the QR code with your authenticator app to secure
-                        your account.
-                    </p>
+                <div
+                    class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40"
+                >
+                    <div class="flex items-start gap-3">
+                        <IconShieldCheck
+                            class="mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300"
+                        />
+                        <div>
+                            <h3
+                                class="font-semibold text-emerald-900 dark:text-emerald-100"
+                            >
+                                Your account has an extra layer of protection
+                            </h3>
+                            <p
+                                class="mt-1 text-sm leading-5 text-emerald-800 dark:text-emerald-200"
+                            >
+                                Keep your authenticator and recovery codes
+                                accessible only to you.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Main Content -->
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <!-- QR Code -->
                     <div
-                        class="flex flex-col items-center rounded-xl border border-surface-200 bg-surface-50 p-5"
+                        class="flex flex-col items-center rounded-xl border border-surface-200 bg-surface-50 p-5 dark:border-slate-600 dark:bg-slate-800"
                     >
-                        <h4 class="font-semibold text-surface-900">
-                            Scan QR Code
-                        </h4>
+                        <div class="flex items-center gap-2">
+                            <IconQrcode class="h-5 w-5 text-primary" />
+                            <h4
+                                class="font-semibold text-surface-900 dark:text-white"
+                            >
+                                Authenticator QR code
+                            </h4>
+                        </div>
 
-                        <p class="mt-1 text-center text-sm text-surface-500">
-                            Open your authenticator app and scan the code below.
+                        <p class="mt-2 text-center text-sm text-surface-500">
+                            Scan with your authenticator app to link this
+                            account.
                         </p>
 
                         <div
@@ -688,25 +952,43 @@
 
                     <!-- Recovery Codes -->
                     <div
-                        class="rounded-xl border border-surface-200 bg-white p-5"
+                        class="rounded-xl border border-surface-200 bg-white p-5 dark:border-slate-600 dark:bg-slate-700"
                     >
-                        <h4 class="font-semibold text-center text-surface-900">
-                            Save Your Recovery Codes
-                        </h4>
+                        <div class="flex items-center justify-center gap-2">
+                            <IconKey class="h-5 w-5 text-primary" />
+                            <h4
+                                class="font-semibold text-center text-surface-900 dark:text-white"
+                            >
+                                Recovery codes
+                            </h4>
+                        </div>
 
-                        <p class="mt-1 text-sm leading-6 text-surface-500">
-                            Store these codes somewhere safe. You can use them
-                            to access your account if you lose your
-                            authenticator device.
+                        <p class="mt-2 text-sm leading-6 text-surface-500">
+                            Use one of these codes if you lose access to your
+                            authenticator.
                         </p>
 
+                        <div
+                            class="mt-3 flex items-center justify-between rounded-md bg-surface-50 px-3 py-2 text-xs dark:bg-slate-800"
+                        >
+                            <span class="text-surface-500"
+                                >Available codes</span
+                            >
+                            <span
+                                class="font-semibold text-surface-700 dark:text-surface-200"
+                                >{{ recoveryCodes?.length ?? 0 }}</span
+                            >
+                        </div>
+
                         <!-- Recovery Codes -->
-                        <div class="mt-4 rounded-lg bg-surface-50 p-3">
+                        <div
+                            class="mt-3 rounded-lg bg-surface-50 p-3 dark:bg-slate-800"
+                        >
                             <div class="grid grid-cols-2 gap-2">
                                 <div
                                     v-for="(code, index) in recoveryCodes"
                                     :key="index"
-                                    class="rounded-md bg-white px-3 py-2 text-center font-mono text-sm text-surface-700 shadow-sm"
+                                    class="rounded-md border border-surface-200 bg-white px-2 py-2 text-center font-mono text-xs text-surface-700 shadow-sm dark:border-slate-600 dark:bg-slate-700 dark:text-surface-100 sm:text-sm"
                                 >
                                     {{ code }}
                                 </div>
@@ -739,18 +1021,25 @@
 
                 <!-- Security Notice -->
                 <div
-                    class="flex gap-3 rounded-lg border border-surface-200 bg-surface-50 p-4"
+                    class="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40"
                 >
-                    <i class="pi pi-shield mt-0.5 text-primary"></i>
+                    <IconShieldLock
+                        class="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300"
+                    />
 
                     <div>
-                        <p class="text-sm font-medium text-surface-900">
+                        <p
+                            class="text-sm font-medium text-amber-950 dark:text-amber-100"
+                        >
                             Keep your recovery codes private
                         </p>
 
-                        <p class="mt-1 text-xs leading-5 text-surface-500">
+                        <p
+                            class="mt-1 text-xs leading-5 text-amber-800 dark:text-amber-200"
+                        >
                             Anyone with these codes may be able to access your
-                            account. Do not share them with anyone.
+                            account. Store them somewhere safe and do not share
+                            them.
                         </p>
                     </div>
                 </div>
@@ -790,6 +1079,22 @@ import {
     IconCircleKey,
     IconRefresh,
     IconLoader,
+    IconShieldCheck,
+    IconFingerprint,
+    IconHistory,
+    IconBriefcase,
+    IconBuilding,
+    IconLock,
+    IconKey,
+    IconDeviceMobile,
+    IconDeviceDesktop,
+    IconQrcode,
+    IconShieldLock,
+    IconUser,
+    IconPhone,
+    IconEdit,
+    IconDeviceFloppy,
+    IconX,
 } from "@tabler/icons-vue";
 
 const toast = useToast();
@@ -808,19 +1113,6 @@ const props = defineProps({
     agencyOption: Object,
     logs: Object,
     passkeys: Array,
-});
-
-const profile = ref({
-    name: "John Rey Dalit",
-    firstName: "John Rey",
-    lastName: "Dalit",
-    email: "johnrey@example.com",
-    phone: "0912 345 6789",
-    employeeId: "DOST-SEI-001",
-    role: "Administrator",
-    position: "Project Technical Specialist I",
-    office: "DOST-SEI",
-    memberSince: "January 2024",
 });
 
 const selectedPhoto = ref(null);
@@ -852,6 +1144,23 @@ const initials = computed(() => {
         .slice(0, 2)
         .join("")
         .toUpperCase();
+});
+
+const profileCompleteness = computed(() => {
+    const details = [
+        props.user?.profile?.fname,
+        props.user?.profile?.lname,
+        props.user?.email,
+        props.user?.profile?.contact_no,
+        props.user?.profile?.designation,
+        props.user?.profile?.agency_array?.id,
+        props.user?.profile?.avatar,
+    ];
+
+    return Math.round(
+        (details.filter((detail) => Boolean(detail)).length / details.length) *
+            100,
+    );
 });
 
 const passwordForm = useForm({
@@ -938,7 +1247,6 @@ const uploadPhoto = () => {
 
 const updateProfile = () => {
     form.transform((data) => ({
-        email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,

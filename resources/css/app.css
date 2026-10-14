@@ -11,6 +11,31 @@ body {
     font-size: 12px;
 }
 
+button[data-request-pending="true"] {
+    position: relative;
+    cursor: progress !important;
+}
+
+button[data-request-pending="true"]::after {
+    position: absolute;
+    inset: 0;
+    width: 1em;
+    height: 1em;
+    margin: auto;
+    border: 2px solid currentColor;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    animation: request-button-spin 0.7s linear infinite;
+    content: "";
+    pointer-events: none;
+}
+
+@keyframes request-button-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .dark .p-datatable,
 .dark .p-datatable-header,
 .dark .p-datatable-table-container,

@@ -4,12 +4,12 @@
         class="z-1000 !min-w-0 flex-1 !border-0 !bg-transparent px-2"
         :pt="{
             submenu: {
-                class: '!min-w-[220px] !rounded-md !border-slate-200 !bg-white !p-1 !shadow-lg dark:!border-slate-700 dark:!bg-slate-900',
+                class: '!min-w-[220px] !rounded-md !border-slate-200 !bg-white !p-1 !shadow-lg dark:!border-slate-700 dark:!bg-slate-900 ',
             },
             separator: {
-                class: 'my-2 !border-slate-200 dark:!border-slate-700',
+                class: 'my-2 !border-slate-200 dark:!border-slate-700 ',
             },
-            itemContent: 'bg-transparent!',
+            itemContent: 'bg-transparent! ',
         }"
     >
         <template #item="{ item }">
@@ -17,13 +17,13 @@
                 v-if="item.route"
                 :href="item.route"
                 :class="[
-                    'flex min-h-10 w-full items-center rounded-md text-slate-600 transition-colors hover:bg-white hover:text-slate-950 dark:text-slate-100 dark:hover:bg-slate-600 dark:hover:text-white',
+                    'flex min-h-10 w-full items-center rounded-md text-slate-600 transition-colors hover:text-slate-950 dark:text-slate-100 dark:hover:bg-slate-600 dark:hover:text-white ',
                     item.subItem
-                        ? 'justify-start gap-3 px-3'
-                        : 'justify-center',
+                        ? 'justify-start gap-3 px-3 '
+                        : 'justify-center ',
                     item.component === page.component
-                        ? 'bg-blue-600 !text-white shadow-sm'
-                        : '',
+                        ? '!bg-blue-600 !text-white shadow-sm   '
+                        : 'px-3!',
                 ]"
                 v-tooltip.top="item.subItem ? '' : item.label"
             >
@@ -51,7 +51,7 @@
             <a
                 v-ripple
                 :class="[
-                    'flex min-h-10 w-full cursor-pointer items-center justify-center rounded-md text-slate-600 transition-colors hover:!bg-white hover:text-slate-950 dark:text-slate-100 dark:hover:!bg-slate-600 dark:hover:text-white',
+                    'flex min-h-10 w-full  cursor-pointer items-center justify-center rounded-md text-slate-600 transition-colors  hover:text-slate-950 dark:text-slate-100 dark:hover:!bg-slate-600 dark:hover:text-white',
                     item.key == activeMenu
                         ? '!bg-blue-600 !text-white shadow-sm'
                         : '',

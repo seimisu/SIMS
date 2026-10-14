@@ -29,7 +29,9 @@
             </template>
             <div class="mt-3 px-1 dark:text-gray-100">
                 <div class="font-semibold text-sm">General Information</div>
-                <span class="block text-gray-400 font-light indent-5 text-xs dark:text-gray-400">
+                <span
+                    class="block text-gray-400 font-light indent-5 text-xs dark:text-gray-400"
+                >
                     {{ description }}
                 </span>
             </div>
@@ -69,7 +71,6 @@
                             :disabled="buttonDisabled"
                             size="small"
                             class="!px-5 !rounded-md"
-                            @click="emit('submit-form')"
                         >
                             <template #icon>
                                 <component
@@ -122,6 +123,8 @@ defineProps({
 const visible = defineModel("visible");
 
 const emit = defineEmits(["submit-form"]);
+
+const submit = () => emit("submit-form");
 </script>
 <style>
 .p-dialog-header {

@@ -27,7 +27,7 @@
                         <div class="flex flex-col w-full gap-3">
                             <div class="flex items-center gap-3 justify-center">
                                 <div class="relative inline-block">
-                                    <Avatar class="!w-30 !h-30" shape="circle" :image="registrationForm.photo" />
+                                    <Avatar class="!w-30 !h-30" shape="circle" :image="photoPreview" />
 
                                     <DefaultButton type="button" :icon="IconPlus" @click="initializePhoto($event)"
                                         size="small" raised rounded class="absolute bottom-3 right-8 translate-y-1/4" />
@@ -77,7 +77,7 @@
                 aspectRatio: 1,
                 resizable: true,
                 previewClass: 'preview'
-            }" :src="registrationForm.photoRaw" :min-height="500" />
+            }" :src="photoRaw" />
 
             <DefaultButton label="  Set profile picture" class="mt-5 w-full" :icon="IconPhoto" @click="cropPicture"
                 type="button" />
@@ -88,32 +88,36 @@
 <script setup>
 import { IconAlertCircle, IconPhoto, IconPlus } from "@tabler/icons-vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
+import { Cropper, CircleStencil } from 'vue-advanced-cropper'
+import { onBeforeUnmount, onMounted, ref } from "vue";
+
+import SelectInput from "../../Components/inputs/SelectInput.vue";
+import MaskInput from "../../Components/inputs/MaskInput.vue";
 import TextInput from "../../Components/inputs/TextInput.vue";
 import PasswordInput from "../../Components/inputs/PasswordInput.vue";
 import DefaultButton from "../../Components/buttons/DefaultButton.vue";
-import { Cropper, CircleStencil } from 'vue-advanced-cropper'
-import { onMounted, ref } from "vue";
-import SelectInput from "../../Components/inputs/SelectInput.vue";
-import MaskInput from "../../Components/inputs/MaskInput.vue";
-import 'vue-advanced-cropper/dist/style.css'
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
-
+import 'vue-advanced-cropper/dist/style.css'
 
 const page = usePage();
+const isCashier = page.props?.user?.role_array?.name?.toLowerCase() === "cashier";
+const defaultCashierAgency = (page.props.agencyOption ?? []).find(
+    (agency) => agency.name?.trim().toLowerCase() === "science education institute",
+);
 const isDark = ref(false);
 const photoDialog = ref(false);
 const cropper = ref(null)
 const fileInput = ref(null);
+const photoRaw = ref(null);
+const photoPreview = ref(null);
 const registrationForm = useForm({
     photo: null,
-    photoRaw: null,
-    photoCrop: null,
     fname: page.props?.user.profile.fname ?? null,
     lname: page.props?.user.profile.lname ?? null,
     email: page.props?.user.email ?? null,
     designation: null,
     school: null,
-    agency: null,
+    agency: isCashier ? defaultCashierAgency ?? null : null,
     contact: null,
     password: null,
     is_coordinator: page.props?.user?.role_array.name == 'School Coordinator' ? true : false,
@@ -125,55 +129,83 @@ const initializePhoto = () => {
     fileInput.value?.click();
 };
 const submitForm = () => {
-
-
     registrationForm.post(route("activation.update", { id: page.props.user?.id }), {
         forceFormData: true,
-        onSuccess: () => registrationForm.reset(),
+        onSuccess: () => {
+            registrationForm.reset();
+            photoRaw.value = null;
+            if (photoPreview.value) URL.revokeObjectURL(photoPreview.value);
+            photoPreview.value = null;
+        },
     });
 };
 
 
-const cropPicture = () => {
-    const { canvas } = cropper.value.getResult()
-    registrationForm.photo = canvas.toDataURL()
+const cropPicture = async () => {
+    const canvas = cropper.value?.getResult()?.canvas;
+    if (!canvas) {
+        registrationForm.setError("photo", "Select and crop a profile picture before continuing.");
+        return;
+    }
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    if (!blob) {
+        registrationForm.setError("photo", "Unable to process this profile picture. Please try another image.");
+        return;
+    }
+
+    if (photoPreview.value) URL.revokeObjectURL(photoPreview.value);
+    registrationForm.clearErrors("photo");
+    registrationForm.photo = new File([blob], "profile.jpg", { type: "image/jpeg" });
+    photoPreview.value = URL.createObjectURL(blob);
     photoDialog.value = false;
 }
 
 const uploadPhotoUpdate = (event) => {
-    try {
-        const file = event.target.files[0];
+    const input = event.target;
+    const file = input.files?.[0];
+    input.value = "";
 
-        if (!file) return;
+    if (!file) return;
 
-        if (!file.type.startsWith("image/")) {
-            console.error("❌ Not an image:", file.type);
-            return;
-        }
+    registrationForm.photo = null;
+    photoRaw.value = null;
+    if (photoPreview.value) URL.revokeObjectURL(photoPreview.value);
+    photoPreview.value = null;
 
-        // Optional: size validation (example: 2MB)
-        const maxSize = 2 * 1024 * 1024;
-        if (file.size > maxSize) {
-            console.error("❌ File too large:", file.size);
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            registrationForm.photoRaw = e.target.result;
-        };
-        reader.readAsDataURL(file);
-        photoDialog.value = true;
-    } catch (error) {
-        console.error(error)
+    const supportedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!supportedTypes.includes(file.type)) {
+        registrationForm.setError("photo", "Choose a JPG, PNG, or WebP image.");
+        return;
     }
+
+    if (file.size > 2 * 1024 * 1024) {
+        registrationForm.setError("photo", "The profile picture must be 2 MB or smaller.");
+        return;
+    }
+
+    registrationForm.clearErrors("photo");
+    const reader = new FileReader();
+    reader.onload = () => {
+        photoRaw.value = reader.result;
+        photoDialog.value = true;
+    };
+    reader.onerror = () => registrationForm.setError("photo", "Unable to read this image. Please try another file.");
+    reader.readAsDataURL(file);
 };
 
 function applyTheme() {
     document.documentElement.classList.toggle("dark", isDark.value);
 }
 
-function onSchoolChange(e) {
-    router.reload({ only: ["schoolOption"], data: {agency: e.id} });
+function onSchoolChange(agency) {
+    const selectedAgency = agency ?? (isCashier ? defaultCashierAgency : null);
+
+    if (!agency && selectedAgency) {
+        registrationForm.agency = selectedAgency;
+    }
+
+    router.reload({ only: ["schoolOption"], data: { agency: selectedAgency?.id ?? null } });
 }
 
 
@@ -185,13 +217,9 @@ onMounted(() => {
     applyTheme();
 });
 
-
-
-
-
-
-
-
+onBeforeUnmount(() => {
+    if (photoPreview.value) URL.revokeObjectURL(photoPreview.value);
+});
 </script>
 <style>
 /* .cropper {
