@@ -2,13 +2,13 @@
 
 namespace App\Imports;
 
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Row;
-use Illuminate\Support\Collection;
 
 class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, WithHeadingRow, WithMultipleSheets
 {
@@ -16,6 +16,7 @@ class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, Wit
      * @param  Collection  $row
      */
     public $rows;
+
     public $rowNumbers = [];
 
     public function headingRow(): int
@@ -30,7 +31,7 @@ class CheckScholarImport implements OnEachRow, SkipsEmptyRows, ToCollection, Wit
         ];
     }
 
-    public function onRow(Row $row)
+    public function onRow(Row $row): void
     {
         $this->rowNumbers[] = $row->getRowIndex();
     }
