@@ -5,14 +5,11 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLogs;
 use App\Models\ListCourse;
-use App\Models\ListReferences;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\CoordinatorUpdateInfoNotification;
-use App\Notifications\UpdateSemesterCoordinatorNotification;
 use App\References\ListClass;
 use App\Services\Academic\CampusGradeRuleValidator;
-use App\Support\IdempotencyGuard;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -26,7 +23,7 @@ class SchoolCoordinatorController extends Controller
     public function index(Request $request, ListClass $ref)
     {
         $campus_id = Auth::user()->school_id;
-        $campus = SchoolCampuses::select('id', 'school_id', 'generated_name', 'grading_id', 'term_id')->find($campus_id);
+        $campus = SchoolCampuses::notDeleted()->select('id', 'school_id', 'generated_name', 'grading_id', 'term_id')->findOrFail($campus_id);
         $search = $request->input('search');
 
         return Inertia::render('Web/schoolCoordinatorPage', [
@@ -198,7 +195,7 @@ class SchoolCoordinatorController extends Controller
             'withdrawn' => ['nullable', 'boolean'],
         ]);
 
-        $campus = SchoolCampuses::with('grading:id,name')->findOrFail($campus_id);
+        $campus = SchoolCampuses::notDeleted()->with('grading:id,name')->findOrFail($campus_id);
         $validator->validate($campus, $validated);
 
         $grade = $campus->grades()->create([
@@ -240,7 +237,7 @@ class SchoolCoordinatorController extends Controller
         $campus_id = Auth::user()->school_id;
         $grade_id = Hashids::decode($id)[0] ?? null;
 
-        $campus = SchoolCampuses::findOrFail($campus_id);
+        $campus = SchoolCampuses::notDeleted()->findOrFail($campus_id);
         $grade = $campus->grades()->findOrFail($grade_id);
 
         $grade->update(['is_delete' => true]);
@@ -290,7 +287,7 @@ class SchoolCoordinatorController extends Controller
         ]);
 
         $course = ListCourse::find($validatedData['course']['id']);
-        $campus = SchoolCampuses::find($campus_id);
+        $campus = SchoolCampuses::notDeleted()->findOrFail($campus_id);
 
         if ($campus->courses()->where('course_id', $course->id)->exists()) {
             return redirect()->back()->with([
@@ -334,7 +331,7 @@ class SchoolCoordinatorController extends Controller
     public function updateInfo(Request $request)
     {
         $campus_id = Auth::user()->school_id;
-        $campus = SchoolCampuses::find($campus_id);
+        $campus = SchoolCampuses::notDeleted()->findOrFail($campus_id);
 
         $validatedData = $request->validate([
             'president' => 'required|string|max:255',

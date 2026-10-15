@@ -2,10 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class SchoolCampuses extends Model
 {
+    // Apply to current operations; historical relationships remain unfiltered.
+    public function scopeNotDeleted(Builder $query): Builder
+    {
+        return $query->where($this->qualifyColumn('is_delete'), false);
+    }
+
     protected $fillable = [
         'school_id',
         'term_id',

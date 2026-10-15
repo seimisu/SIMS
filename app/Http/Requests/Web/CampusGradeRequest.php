@@ -4,6 +4,7 @@ namespace App\Http\Requests\Web;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CampusGradeRequest extends FormRequest
 {
@@ -35,7 +36,7 @@ class CampusGradeRequest extends FormRequest
                 break;
             default:
                 return [
-                    'campusId' => ['required', 'integer', 'exists:school_campuses,id'],
+                    'campusId' => ['required', 'integer', Rule::exists('school_campuses', 'id')->where(fn ($query) => $query->where('is_delete', false))],
                     'grade' => ['required', 'string'],
                     'upper' => ['nullable', 'numeric', 'decimal:0,2'],
                     'lower' => ['nullable', 'numeric', 'decimal:0,2'],

@@ -24,6 +24,7 @@ class ScholarAcademicPeriodService
         }
 
         return SchoolCampusSemesters::query()
+            ->whereHas('campus', fn ($campus) => $campus->notDeleted())
             ->with('semester:id,name')
             ->open()
             ->where('campus_id', $schoolInfo->campus_id)
@@ -48,6 +49,10 @@ class ScholarAcademicPeriodService
         SchoolCampusSemesters $period,
         ?int $levelId = null
     ): ScholarTerm {
+        if (! $period->campus()->notDeleted()->exists()) {
+            throw ValidationException::withMessages(['period' => 'This campus is unavailable for new academic records.']);
+        }
+
         if (ScholarStatuses::blocksServices($scholar->academic_status)) {
             throw ValidationException::withMessages([
                 'period' => 'This scholar status is not eligible to submit academic records.',

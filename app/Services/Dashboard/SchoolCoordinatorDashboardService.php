@@ -34,7 +34,7 @@ class SchoolCoordinatorDashboardService
             $start = $end + 1;
         }
 
-        $campus = SchoolCampuses::select('id', 'school_id', 'generated_name', 'grading_id', 'term_id')->find($campusId);
+        $campus = SchoolCampuses::notDeleted()->select('id', 'school_id', 'generated_name', 'grading_id', 'term_id')->findOrFail($campusId);
 
         $scholars = Scholars::with([
             'program:id,name',
@@ -122,7 +122,7 @@ class SchoolCoordinatorDashboardService
 
         return Inertia::render('Web/dashboardPage', [
             'dashboardType' => $permissions->dashboardType($user),
-            'schoolDetails' => SchoolCampuses::where(['id' => $campusId])
+            'schoolDetails' => SchoolCampuses::notDeleted()->where(['id' => $campusId])
                 ->with(['address'])
                 ->first(),
 

@@ -445,7 +445,7 @@ class ScholarManagementOptionsService
             return null;
         }
 
-        return SchoolCampuses::select('id', 'generated_name')
+        return SchoolCampuses::notDeleted()->select('id', 'generated_name')
             ->whereIn('generated_name', $request->input('schools'))
             ->get()
             ->map(fn ($school) => [

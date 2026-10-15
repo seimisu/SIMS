@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\SchoolCampusInfoRequest;
 use App\Models\SchoolCampusInfo;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SchoolCampusInfoController extends Controller
@@ -27,7 +26,7 @@ class SchoolCampusInfoController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => $info->wasRecentlyCreated ? 'success' : 'info',
-            'title'  => $info->wasRecentlyCreated ? 'School Detail Created' : 'School Detail Updated',
+            'title' => $info->wasRecentlyCreated ? 'School Detail Created' : 'School Detail Updated',
             'message' => $info->wasRecentlyCreated ? 'School detail successfully created.' : 'The existing school detail was updated instead of creating a duplicate.',
         ]);
     }
@@ -36,7 +35,7 @@ class SchoolCampusInfoController extends Controller
     {
         $data = $request->validated();
 
-        $campusInfo = SchoolCampusInfo::find($id);
+        $campusInfo = SchoolCampusInfo::whereHas('campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
 
         switch ($type) {
             case 'status':
@@ -67,7 +66,7 @@ class SchoolCampusInfoController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'School Campus Info Updated',
+            'title' => 'School Campus Info Updated',
             'message' => $message,
         ]);
     }

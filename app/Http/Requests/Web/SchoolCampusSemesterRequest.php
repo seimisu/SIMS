@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Web;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,12 +19,12 @@ class SchoolCampusSemesterRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'campusId' => ['required', 'exists:school_campuses,id'],
+            'campusId' => ['required', Rule::exists('school_campuses', 'id')->where(fn ($query) => $query->where('is_delete', false))],
             'semesterId' => ['required', 'exists:list_references,id'],
             'schoolYear' => [
                 'required',
@@ -38,7 +39,7 @@ class SchoolCampusSemesterRequest extends FormRequest
                     ->where(fn ($query) => $query
                         ->where('campus_id', $this->input('campusId'))
                         ->where('semester_id', $this->input('semesterId'))
-                        ->where('is_delete', false)),
+                        ->where(fn ($query) => $query->where('is_delete', false))),
             ],
             'submissionDate' => ['required', 'date'],
             'status' => ['required', Rule::in(['draft', 'open'])],

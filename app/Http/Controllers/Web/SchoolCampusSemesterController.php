@@ -8,8 +8,8 @@ use App\Models\SchoolCampuses;
 use App\Models\SchoolCampusSemesters;
 use App\Services\Academic\CampusAcademicPeriodService;
 use App\Support\SystemPermissions;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SchoolCampusSemesterController extends Controller
 {
@@ -17,10 +17,9 @@ class SchoolCampusSemesterController extends Controller
         SchoolCampusSemesterRequest $request,
         CampusAcademicPeriodService $periods,
         SystemPermissions $permissions
-    )
-    {
+    ) {
         $data = $request->validated();
-        $campus = SchoolCampuses::with('address')->findOrFail($data['campusId']);
+        $campus = SchoolCampuses::notDeleted()->with('address')->findOrFail($data['campusId']);
         $this->authorizeCampus($campus, $permissions);
         $periods->create($campus, $data, Auth::id());
 
@@ -37,11 +36,10 @@ class SchoolCampusSemesterController extends Controller
         $type,
         CampusAcademicPeriodService $periods,
         SystemPermissions $permissions
-    )
-    {
+    ) {
         abort_unless($type === 'status', 404);
         $data = $request->validate(['status' => ['required', 'in:open,closed']]);
-        $period = SchoolCampusSemesters::with('campus.address')->findOrFail($id);
+        $period = SchoolCampusSemesters::whereHas('campus', fn ($campus) => $campus->notDeleted())->with('campus.address')->findOrFail($id);
         $this->authorizeCampus($period->campus, $permissions);
         $periods->changeStatus($period, $data['status'], Auth::id());
 

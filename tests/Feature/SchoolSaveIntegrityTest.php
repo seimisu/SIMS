@@ -2,19 +2,107 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Web\SchoolCampusInfoController;
 use App\Http\Controllers\Web\SchoolController;
+use App\Http\Middleware\EnsureCoordinatorCampusAvailable;
+use App\Http\Requests\Web\SchoolCampusInfoRequest;
 use App\Http\Requests\Web\SchoolRequest;
 use App\Models\SchoolCampusAddresses;
 use App\Models\SchoolCampuses;
+use App\Models\SchoolCampusInfo;
 use App\Models\Schools;
+use App\Models\User;
 use App\Services\Notifications\RoleBellNotificationService;
+use App\Support\SystemPermissions;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class SchoolSaveIntegrityTest extends TestCase
 {
+    private function campusForDeletionTest(): SchoolCampuses
+    {
+        $school = Schools::create(['name' => 'Campus availability test', 'shortcut' => 'CAT', 'reference_id' => 1]);
+
+        return $school->campuses()->create(['term_id' => 2, 'grading_id' => 3, 'agency_id' => 1]);
+    }
+
+    public function test_deleted_campus_is_excluded_from_operations_but_historical_relationship_is_readable(): void
+    {
+        $campus = $this->campusForDeletionTest();
+        $address = $campus->address()->create(['municipality_code' => 'C']);
+        $this->assertTrue(SchoolCampuses::notDeleted()->whereKey($campus->id)->exists());
+        $campus->update(['is_delete' => true]);
+        $this->assertFalse(SchoolCampuses::notDeleted()->whereKey($campus->id)->exists());
+        $this->assertSame($campus->id, $address->fresh()->campus->id);
+    }
+
+    public function test_deleted_campus_cannot_be_selected_for_new_campus_details(): void
+    {
+        $campus = $this->campusForDeletionTest();
+        $request = new SchoolCampusInfoRequest;
+        $rules = ['campusId' => $request->rules()['campusId']];
+        $this->assertTrue(Validator::make(['campusId' => $campus->id], $rules)->passes());
+        $campus->update(['is_delete' => true]);
+        $this->assertTrue(Validator::make(['campusId' => $campus->id], $rules)->fails());
+    }
+
+    public function test_deleted_campus_details_cannot_be_updated_by_direct_id(): void
+    {
+        (require database_path('migrations/2026_01_05_114045_create_school_campus_infos_table.php'))->up();
+        $campus = $this->campusForDeletionTest();
+        $info = SchoolCampusInfo::create(['campus_id' => $campus->id]);
+        $campus->update(['is_delete' => true]);
+        $request = \Mockery::mock(SchoolCampusInfoRequest::class);
+        $request->shouldReceive('validated')->andReturn(['isActive' => true]);
+        $this->expectException(ModelNotFoundException::class);
+        (new SchoolCampusInfoController)->update($request, (string) $info->id, 'status');
+    }
+
+    public function test_coordinator_is_blocked_after_campus_deletion_but_can_log_out(): void
+    {
+        $campus = $this->campusForDeletionTest();
+        $user = new User;
+        $user->school_id = $campus->id;
+        $this->mock(SystemPermissions::class)
+            ->shouldReceive('isSchoolCoordinator')->with($user)->andReturn(true);
+        $request = Request::create('/dashboard');
+        $request->setUserResolver(fn () => $user);
+        $route = new Route('GET', '/dashboard', fn () => null);
+        $route->name('dashboard');
+        $request->setRouteResolver(fn () => $route);
+        $middleware = new EnsureCoordinatorCampusAvailable;
+        $next = fn () => response('allowed');
+        $this->assertSame(200, $middleware->handle($request, $next)->getStatusCode());
+        $campus->update(['is_delete' => true]);
+        try {
+            $middleware->handle($request, $next);
+            $this->fail('Deleted campus must block coordinator access');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+        $route = new Route('POST', '/logout', fn () => null);
+        $route->name('logout');
+        $request->setRouteResolver(fn () => $route);
+        $this->assertSame(200, $middleware->handle($request, $next)->getStatusCode());
+    }
+
+    public function test_staff_can_still_work_when_their_user_has_no_assigned_campus(): void
+    {
+        $user = new User;
+        $this->mock(SystemPermissions::class)
+            ->shouldReceive('isSchoolCoordinator')->with($user)->andReturn(false);
+        $request = Request::create('/dashboard');
+        $request->setUserResolver(fn () => $user);
+        $this->assertSame(200, (new EnsureCoordinatorCampusAvailable)
+            ->handle($request, fn () => response('allowed'))->getStatusCode());
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

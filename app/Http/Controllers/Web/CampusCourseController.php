@@ -49,7 +49,7 @@ class CampusCourseController extends Controller
     public function update(CampusCourseRequest $request, string $id, string $type)
     {
         $data = $request->validated();
-        $find = SchoolCampusCourses::findOrFail($id);
+        $find = SchoolCampusCourses::whereHas('campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
 
         if ($type == 'form') {
 
@@ -96,7 +96,7 @@ class CampusCourseController extends Controller
     public function destroy(int $id)
     {
 
-        $find = SchoolCampusCourses::findOrFail($id);
+        $find = SchoolCampusCourses::whereHas('campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
         $find->update([
             'is_delete' => true,
         ]);

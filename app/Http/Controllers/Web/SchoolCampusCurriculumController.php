@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\SchoolCampusCurriculumRequest;
 use App\Models\SchoolCampusCourseCurriculums;
 use App\Models\SchoolCampusCourseCurriculumSubjects;
+use App\Models\SchoolCampusCourses;
 use App\Models\SchoolCampusCourseSpecialization;
 use App\Models\SchoolCampuses;
 use App\Models\User;
@@ -26,6 +27,16 @@ class SchoolCampusCurriculumController extends Controller
         $user = Auth::user();
 
         $data = $request->validated();
+
+        // Validate every target before writing any curriculum records.
+        foreach ($data['multi'] as $curriculum) {
+            SchoolCampusCourses::whereHas('campus', fn ($campus) => $campus->notDeleted())
+                ->findOrFail($curriculum['campus_course_id']);
+            if (! empty($curriculum['id'])) {
+                SchoolCampusCourseCurriculums::whereHas('course.campus', fn ($campus) => $campus->notDeleted())
+                    ->findOrFail($curriculum['id']);
+            }
+        }
 
         foreach ($data['multi'] as $curKey => $curriculum) {
             $curriculumGet = SchoolCampusCourseCurriculums::updateOrCreate(
@@ -81,7 +92,7 @@ class SchoolCampusCurriculumController extends Controller
         }
 
         if ($user->role->name == 'School Coordinator') {
-            $campus = SchoolCampuses::find($user->school_id);
+            $campus = SchoolCampuses::notDeleted()->find($user->school_id);
             Notification::send(User::whereHas('role', fn ($q) => $q->where('slug', 'regional staff'))->whereHas('profile', fn ($q) => $q->where('agency_id', $campus->agency_id))->get(), new UpdateCurriculumNotification($user->profile->fullname, $request->program['abbreviation'], $campus->generated_name));
         }
 
@@ -95,7 +106,7 @@ class SchoolCampusCurriculumController extends Controller
     public function copy(int $id)
     {
         try {
-            $curriculum = SchoolCampusCourseCurriculums::findOrFail($id);
+            $curriculum = SchoolCampusCourseCurriculums::whereHas('course.campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
 
             $curriculum->replication()->create([
                 'user_id' => Auth::user()->id,
@@ -118,6 +129,7 @@ class SchoolCampusCurriculumController extends Controller
 
     public function paste(int $id, Request $request)
     {
+        SchoolCampusCourses::whereHas('campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
         try {
             DB::beginTransaction();
 
@@ -130,7 +142,7 @@ class SchoolCampusCurriculumController extends Controller
 
             abort_if(! $decoded, 404);
 
-            $curriculumGet = SchoolCampusCourseCurriculums::with([
+            $curriculumGet = SchoolCampusCourseCurriculums::whereHas('course.campus', fn ($campus) => $campus->notDeleted())->with([
                 'subjects.specializations:id,name,code',
                 'subjects' => fn ($q) => $q->select(
                     'id',
@@ -210,7 +222,7 @@ class SchoolCampusCurriculumController extends Controller
 
     public function destroySubject(int $id)
     {
-        $find = SchoolCampusCourseCurriculumSubjects::findOrFail($id);
+        $find = SchoolCampusCourseCurriculumSubjects::whereHas('curriculum.course.campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
         $find->update([
             'is_delete' => true,
         ]);
@@ -224,7 +236,7 @@ class SchoolCampusCurriculumController extends Controller
 
     public function destroyCurriculum(int $id)
     {
-        $find = SchoolCampusCourseCurriculums::findOrFail($id);
+        $find = SchoolCampusCourseCurriculums::whereHas('course.campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
         $find->update([
             'is_delete' => true,
         ]);

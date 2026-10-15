@@ -37,7 +37,7 @@ class CampusCourseRequest extends FormRequest
                 break;
             default:
                 return [
-                    'campusId' => ['nullable'],
+                    'campusId' => ['required', 'integer', Rule::exists('school_campuses', 'id')->where(fn ($query) => $query->where('is_delete', false))],
                     'course' => ['required', 'array'],
                     'course.id' => [
                         'integer',

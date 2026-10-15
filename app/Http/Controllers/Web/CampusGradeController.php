@@ -14,7 +14,7 @@ class CampusGradeController extends Controller
     public function store(CampusGradeRequest $request, CampusGradeRuleValidator $validator)
     {
         $data = $request->validated();
-        $campus = SchoolCampuses::with('grading:id,name')->findOrFail($data['campusId']);
+        $campus = SchoolCampuses::notDeleted()->with('grading:id,name')->findOrFail($data['campusId']);
         $validator->validate($campus, $data);
 
         $grade = SchoolCampusGrades::firstOrCreate([
@@ -41,10 +41,10 @@ class CampusGradeController extends Controller
     public function update(CampusGradeRequest $request, string $id, string $type, CampusGradeRuleValidator $validator)
     {
         $data = $request->validated();
-        $find = SchoolCampusGrades::findOrFail($id);
+        $find = SchoolCampusGrades::whereHas('campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
 
         if ($type == 'form') {
-            $campus = SchoolCampuses::with('grading:id,name')->findOrFail($find->campus_id);
+            $campus = SchoolCampuses::notDeleted()->with('grading:id,name')->findOrFail($find->campus_id);
             $validator->validate($campus, $data, $find->id, (bool) $find->is_active);
 
             $find->update([
@@ -59,7 +59,7 @@ class CampusGradeController extends Controller
             ]);
         } else {
             if ($data['isActive']) {
-                $campus = SchoolCampuses::with('grading:id,name')->findOrFail($find->campus_id);
+                $campus = SchoolCampuses::notDeleted()->with('grading:id,name')->findOrFail($find->campus_id);
                 $validator->validate($campus, [
                     'lower' => $find->lower,
                     'upper' => $find->upper,
@@ -85,7 +85,7 @@ class CampusGradeController extends Controller
     public function destroy(int $id)
     {
 
-        $find = SchoolCampusGrades::findOrFail($id);
+        $find = SchoolCampusGrades::whereHas('campus', fn ($campus) => $campus->notDeleted())->findOrFail($id);
         $find->update([
             'is_delete' => true,
         ]);

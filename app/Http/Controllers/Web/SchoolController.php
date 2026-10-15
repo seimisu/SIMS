@@ -32,7 +32,7 @@ class SchoolController extends Controller
         $schoolDetail = null;
 
         if ($id = request('id')) {
-            $school = SchoolCampuses::with([
+            $school = SchoolCampuses::notDeleted()->with([
                 'courses.subjects' => fn ($q) => $q->where('is_delete', false),
                 'courses' => fn ($q) => $q->where('is_delete', false),
                 'courses.specializations' => fn ($q) => $q->where('is_delete', false)->where('is_active', true),
@@ -40,7 +40,7 @@ class SchoolController extends Controller
                 'info' => fn ($q) => $q->select(['id', 'campus_id', 'dean', 'registrar', 'contact', 'email'])->where('is_delete', false),
                 'semesters' => fn ($q) => $q->where('is_delete', false),
                 'address',
-            ])->find($id);
+            ])->findOrFail($id);
 
             // Convert entire object recursively to plain arrays
             $schoolDetail = $school ? json_decode(json_encode($school), true) : null;
@@ -67,7 +67,7 @@ class SchoolController extends Controller
                 : [],
             'schoolDetail' => $schoolDetail,
             'subjectDetail' => request('campusCourseId')
-                ? SchoolCampusCourseCurriculums::with([
+                ? SchoolCampusCourseCurriculums::whereHas('course.campus', fn ($campus) => $campus->notDeleted())->with([
                     'subjects' => fn ($q) => $q->select(
                         'id',
                         'curriculum_id',
@@ -107,7 +107,7 @@ class SchoolController extends Controller
                     ->toArray()
                 : null,
             'regionAccess' => request('id') ?
-                SchoolCampuses::when(Auth::check() && $permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
+                SchoolCampuses::notDeleted()->when(Auth::check() && $permissions->shouldScopeToRegion($user), function ($query) use ($permissions, $user) {
                     $query->whereHas('address', function ($q) use ($permissions, $user) {
                         $q->where('region_code', $permissions->regionCodeFor($user));
                     });
@@ -144,7 +144,7 @@ class SchoolController extends Controller
                     ])
                     ->where('user_id', Auth::id())
                     ->whereHas('curriculum.course.campus', function ($q) {
-                        $q->where('school_id', request('schoolId'));
+                        $q->notDeleted()->where('school_id', request('schoolId'));
                     })
                     ->get()
                     ->map(fn ($q) => [
@@ -230,7 +230,7 @@ class SchoolController extends Controller
                     $slice = explode('-', $campus['address']['id']);
                     $municipality = LocationCity::where('code', $slice[1])->value('name');
                     if (! empty($campus['id'])) {
-                        $campusModel = $find->campuses()->findOrFail($campus['id']);
+                        $campusModel = $find->campuses()->notDeleted()->findOrFail($campus['id']);
                         $campusModel->update([
                             'is_main' => $campus['main'],
                             'term_id' => $campus['semester']['id'],
@@ -296,7 +296,7 @@ class SchoolController extends Controller
     public function destroy($id, $type)
     {
         try {
-            $university = SchoolCampuses::findOrFail($id);
+            $university = SchoolCampuses::notDeleted()->findOrFail($id);
             $university->is_delete = true;
             $university->save();
 

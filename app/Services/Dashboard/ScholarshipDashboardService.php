@@ -97,13 +97,14 @@ class ScholarshipDashboardService
                 ];
             })->values();
 
-            $schoolTreemap = SchoolCampuses::with(['school', 'address.municipality', 'agency'])
+            $schoolTreemap = SchoolCampuses::notDeleted()->with(['school', 'address.municipality', 'agency'])
                 ->withCount('scholarCampus')
                 ->get()
                 ->values();
             $totalSchool = $schoolTreemap->sum('scholar_campus_count');
 
             $courseTreemap = SchoolCampusCourses::where('is_delete', false)
+                ->whereHas('campus', fn ($campus) => $campus->notDeleted())
                 ->withCount('scholarCourse')
                 ->get();
             $totalCourse = $courseTreemap->sum('scholar_course_count');
