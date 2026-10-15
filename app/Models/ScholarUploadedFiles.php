@@ -44,7 +44,7 @@ class ScholarUploadedFiles extends Model
     public function getFileUrlAttribute()
     {
         return $this->filepath
-            ? asset('storage/'.$this->filepath)
+            ? route('private.scholar-import', ['file' => $this->hash_id])
             : null;
     }
 

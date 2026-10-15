@@ -20,6 +20,7 @@ use App\Http\Controllers\Web\LocationProvinceController;
 use App\Http\Controllers\Web\LocationRegionController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\PayrollController;
+use App\Http\Controllers\Web\PrivateFileController;
 use App\Http\Controllers\Web\programController;
 use App\Http\Controllers\Web\ReferenceController;
 use App\Http\Controllers\Web\RoleController;
@@ -62,6 +63,10 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware(['auth', 'web'])->group(function () {
+    Route::get('private/payroll/{batch}/{file}', [PrivateFileController::class, 'payroll'])
+        ->middleware('throttle:downloads')->name('private.payroll');
+    Route::get('private/scholar-imports/{file}', [PrivateFileController::class, 'scholarImport'])
+        ->middleware('throttle:downloads')->name('private.scholar-import');
     Route::get('/profile', [UserProfileController::class, 'index'])->name('profile');
     Route::put('/profile/update', [UserProfileController::class, 'update'])->middleware('throttle:writes')->name('profile.update');
     Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->middleware('throttle:uploads')->name('profile.photo.update');

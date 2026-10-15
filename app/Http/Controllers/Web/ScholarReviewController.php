@@ -212,8 +212,8 @@ class ScholarReviewController extends Controller
 
             $import = new CheckScholarImport;
             $filename = Str::random(12).'.'.$file->getClientOriginalExtension();
-            $path = $file->storeAs('imports/scholars', $filename, 'public');
-            Excel::import($import, storage_path('app/public/'.$path));
+            $path = $file->storeAs('imports/scholars', $filename, 'sensitive');
+            Excel::import($import, Storage::disk('sensitive')->path($path));
             $this->validateImportHeaders($import->rows);
             $duplicateLookups = $this->duplicateLookupsForImport($import->rows);
             $lookupCache = [
@@ -328,15 +328,15 @@ class ScholarReviewController extends Controller
             ]);
         } catch (ValidationException $e) {
             DB::rollBack();
-            if ($path && Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
+            if ($path && Storage::disk('sensitive')->exists($path)) {
+                Storage::disk('sensitive')->delete($path);
             }
 
             throw $e;
         } catch (Exception $e) {
             DB::rollBack();
-            if ($path && Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
+            if ($path && Storage::disk('sensitive')->exists($path)) {
+                Storage::disk('sensitive')->delete($path);
             }
 
             Log::error('Scholar import failed after file passed request validation.', [
@@ -466,7 +466,7 @@ class ScholarReviewController extends Controller
                 ));
             }
 
-            Excel::import(new ScholarImport, storage_path('app/public/'.$file->filepath));
+            Excel::import(new ScholarImport, Storage::disk('sensitive')->path($file->filepath));
             DB::commit();
 
             return redirect()->back()->with('flash', [

@@ -46,7 +46,7 @@ class GeolocationController extends Controller
                 $path = $file->storeAs(
                     'imports/locations',
                     $file->getClientOriginalName(),
-                    'public'
+                    'sensitive'
                 );
 
                 GeolocationFiles::create([

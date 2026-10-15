@@ -501,7 +501,7 @@ class PayrollController extends Controller
                 : null,
             'payroll_file' => $latestPayrollFile ? [
                 'name' => $latestPayrollFile->payroll_file_name,
-                'url' => Storage::disk('public')->url($latestPayrollFile->payroll_file_path),
+                'url' => route('private.payroll', ['batch' => Hashids::encode($batch->id), 'file' => $latestPayrollFile->id]),
                 'uploaded_by' => $latestPayrollFile->action_by,
                 'uploaded_at' => $latestPayrollFile->created_at
                     ? Carbon::parse($latestPayrollFile->created_at)->format('M d, Y | h:i a')
@@ -509,7 +509,7 @@ class PayrollController extends Controller
             ] : null,
             'generated_excel_file' => $batch->generated_excel_path ? [
                 'name' => $batch->generated_excel_name ?: 'Generated payroll Excel',
-                'url' => Storage::disk('public')->url($batch->generated_excel_path),
+                'url' => route('private.payroll', ['batch' => Hashids::encode($batch->id), 'file' => 'excel']),
                 'generated_at' => $batch->generated_excel_at
                     ? Carbon::parse($batch->generated_excel_at)->format('M d, Y | h:i a')
                     : null,
@@ -732,13 +732,13 @@ class PayrollController extends Controller
         $excelPath = "payroll-generated/{$excelName}";
         $shouldRegenerateExcel = $batch->generated_excel_hash !== $exportHash
             || $batch->generated_excel_path !== $excelPath
-            || ! Storage::disk('public')->exists($excelPath);
+            || ! Storage::disk('sensitive')->exists($excelPath);
 
         if ($shouldRegenerateExcel) {
-            Excel::store(new PayrollExport($batch, $rows, $preparedBy, $notedBy, $certifiedBy), $excelPath, 'public');
+            Excel::store(new PayrollExport($batch, $rows, $preparedBy, $notedBy, $certifiedBy), $excelPath, 'sensitive');
 
             if ($previousExcelPath && $previousExcelPath !== $excelPath) {
-                Storage::disk('public')->delete($previousExcelPath);
+                Storage::disk('sensitive')->delete($previousExcelPath);
             }
 
             $batch->forceFill([
@@ -784,7 +784,7 @@ class PayrollController extends Controller
             ]);
         }
 
-        $storedPath = $file->store('payroll-historical-imports', 'public');
+        $storedPath = $file->store('payroll-historical-imports', 'sensitive');
 
         [$createdBatches, $createdRecipients] = DB::transaction(function () use ($rows, $scholars, $storedPath, $file, $fileHash) {
             return $this->historicalPayrollImports()->store(
@@ -913,7 +913,7 @@ class PayrollController extends Controller
 
             if (($data['status'] ?? null) === 'submitted_payroll' && $request->hasFile('payroll_file')) {
                 $payrollFile = $request->file('payroll_file');
-                $payrollFilePath = $payrollFile->store('payroll-submissions', 'public');
+                $payrollFilePath = $payrollFile->store('payroll-submissions', 'sensitive');
                 $payrollFileName = $payrollFile->getClientOriginalName();
             }
 

@@ -8,6 +8,7 @@ use App\Models\DocumentCategory;
 use App\Models\ListReferences;
 use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\LibraryAccess;
+use App\Support\DocumentFileAccess;
 use App\Support\SystemPermissions;
 use App\Support\UploadedFileHash;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class DocumentController extends Controller
 
         return Inertia::render('Web/documentPage', [
             'documents' => Document::with(['category:id,name', 'targets'])
+                ->tap(fn ($query) => app(DocumentFileAccess::class)->visibleTo($query, $user))
                 ->when($search, function ($query, $search) {
                     $query->where(function ($q) use ($search) {
                         $q->where('title', 'ILIKE', "%{$search}%")
@@ -92,7 +94,7 @@ class DocumentController extends Controller
             ]);
         }
 
-        $path = $file->store('documents', 'public');
+        $path = $file->store('documents', 'sensitive');
 
         $document = Document::create([
             'document_category_id' => $data['category_id'] ?? null,
@@ -128,6 +130,7 @@ class DocumentController extends Controller
 
     public function update(Request $request, Document $document)
     {
+        app(DocumentFileAccess::class)->authorize($document, $request->user());
         $data = $this->validateDocument($request, $document);
 
         $payload = [
@@ -153,9 +156,9 @@ class DocumentController extends Controller
                 ]);
             }
 
-            Storage::disk('public')->delete($document->file_path);
+            Storage::disk('sensitive')->delete($document->file_path);
             $payload = array_merge($payload, [
-                'file_path' => $file->store('documents', 'public'),
+                'file_path' => $file->store('documents', 'sensitive'),
                 'original_filename' => $file->getClientOriginalName(),
                 'file_hash' => $fileHash,
                 'mime_type' => $file->getMimeType(),
@@ -184,6 +187,7 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
+        app(DocumentFileAccess::class)->authorize($document, Auth::user());
         $document->delete();
 
         return back()->with('flash', [
@@ -253,7 +257,7 @@ class DocumentController extends Controller
             ->where('is_active', true)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
-            ->tap(fn ($query) => app(LibraryAccess::class)->applyPublicVisibility($query, $request))
+            ->tap(fn ($query) => app(DocumentFileAccess::class)->visibleTo($query, $request->user()))
             ->latest('published_at')
             ->get()
             ->map(fn ($document) => [
@@ -274,21 +278,27 @@ class DocumentController extends Controller
 
     public function download(Document $document)
     {
-        abort_unless(Auth::check() || ($document->is_active && $document->published_at && $document->published_at->lte(now())), 404);
-        abort_unless(Storage::disk('public')->exists($document->file_path), 404);
+        app(DocumentFileAccess::class)->authorize($document, Auth::user());
+        abort_unless(Storage::disk('sensitive')->exists($document->file_path), 404);
 
-        return Storage::disk('public')->download($document->file_path, $document->original_filename);
+        return Storage::disk('sensitive')->download($document->file_path, $document->original_filename, [
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function preview(Document $document)
     {
-        abort_unless(Auth::check() || ($document->is_active && $document->published_at && $document->published_at->lte(now())), 404);
-        abort_unless(Storage::disk('public')->exists($document->file_path), 404);
+        app(DocumentFileAccess::class)->authorize($document, Auth::user());
+        abort_unless(Storage::disk('sensitive')->exists($document->file_path), 404);
 
-        return response()->file(Storage::disk('public')->path($document->file_path), [
+        $safeToPreview = in_array($document->mime_type, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'], true);
+
+        return Storage::disk('sensitive')->response($document->file_path, $document->original_filename, [
             'Content-Type' => $document->mime_type ?: 'application/octet-stream',
-            'Content-Disposition' => 'inline; filename="'.$document->original_filename.'"',
-        ]);
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ], $safeToPreview ? 'inline' : 'attachment');
     }
 
     private function validateDocument(Request $request, ?Document $document = null): array

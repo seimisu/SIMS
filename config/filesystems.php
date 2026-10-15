@@ -30,6 +30,15 @@ return [
 
     'disks' => [
 
+        'sensitive' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/sensitive'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
