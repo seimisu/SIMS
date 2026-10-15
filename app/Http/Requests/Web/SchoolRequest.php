@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Web;
 
+use App\Models\LocationBarangays;
 use App\Support\GradingSystem;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,9 +41,12 @@ class SchoolRequest extends FormRequest
                     'name' => ['required', 'string', Rule::unique('schools')->where(fn ($q) => $q->where('is_delete', false))->ignore($this->id)],
                     'abbreviation' => ['required', 'string'],
                     'class' => ['required', 'array'],
+                    'class.id' => ['required', 'integer', Rule::exists('list_references', 'id')->where('classification', 'Class')],
+                    'campuses' => ['required', 'array', 'min:1'],
                     'campuses.*.id' => ['nullable', 'integer'],
-                    'campuses.*.name' => ['nullable'],
-                    'campuses.*.semester' => ['required'],
+                    'campuses.*.name' => ['nullable', 'string'],
+                    'campuses.*.semester' => ['required', 'array'],
+                    'campuses.*.semester.id' => ['required', 'integer', Rule::exists('list_references', 'id')->where('classification', 'Term Type')],
                     'campuses.*.grading' => ['required', 'array'],
                     'campuses.*.grading.id' => [
                         'required',
@@ -55,10 +59,37 @@ class SchoolRequest extends FormRequest
                     ],
                     'campuses.*.startDate' => ['nullable', 'date'],
                     'campuses.*.endDate' => ['nullable', 'date'],
-                    'campuses.*.agency' => ['required'],
+                    'campuses.*.agency' => ['required', 'array'],
+                    'campuses.*.agency.id' => ['required', 'integer', 'exists:list_agencies,id'],
                     'campuses.*.street' => ['nullable', 'string'],
-                    'campuses.*.address' => ['required'],
-                    'campuses.*.main' => ['boolean'],
+                    'campuses.*.address' => ['required', 'array'],
+                    'campuses.*.address.id' => ['bail', 'required', 'string', function ($attribute, $value, $fail) {
+                        $codes = explode('-', $value);
+                        if (count($codes) !== 4 || in_array('', $codes, true)) {
+                            $fail('Select a complete address from the address suggestions.');
+
+                            return;
+                        }
+
+                        [$barangay, $municipality, $province, $region] = $codes;
+                        $valid = LocationBarangays::where('code', $barangay)
+                            ->where('municipality_code', $municipality)
+                            ->where('is_delete', false)
+                            ->whereHas('cityCode', fn ($query) => $query
+                                ->where('province_code', $province)
+                                ->where('is_delete', false)
+                                ->whereHas('provinceCode', fn ($query) => $query
+                                    ->where('region_code', $region)
+                                    ->where('is_delete', false)
+                                    ->whereHas('regionCode', fn ($query) => $query->where('is_delete', false))))
+                            ->exists();
+
+                        if (! $valid) {
+                            $fail('Select a valid address with matching barangay, municipality, province, and region.');
+                        }
+                    }],
+                    'campuses.*.address.name' => ['required', 'string'],
+                    'campuses.*.main' => ['required', 'boolean'],
                 ];
                 break;
         }
@@ -67,6 +98,15 @@ class SchoolRequest extends FormRequest
     public function messages()
     {
         return [
+            'campuses.required' => 'Add at least one campus with complete details and an address.',
+            'campuses.min' => 'Add at least one campus with complete details and an address.',
+            'campuses.*.semester.id.required' => 'Select an academic term.',
+            'campuses.*.semester.id.exists' => 'Select a valid academic term.',
+            'campuses.*.grading.id.required' => 'Select a grading system.',
+            'campuses.*.grading.id.exists' => 'Select a valid supported grading system.',
+            'campuses.*.agency.id.required' => 'Select a regional office.',
+            'campuses.*.agency.id.exists' => 'Select a valid regional office.',
+            'campuses.*.address.id.required' => 'Select a complete address from the address suggestions.',
             'campuses.*.semester.required' => 'The academic term field is required.',
             'campuses.*.grading.required' => 'The grading field is required.',
             'campuses.*.agency.required' => 'The agency field is required.',

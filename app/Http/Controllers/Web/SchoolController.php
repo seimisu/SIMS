@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\SchoolRequest;
 use App\Models\CurriculumReplication;
+use App\Models\LocationCity;
 use App\Models\SchoolCampusCourseCurriculums;
 use App\Models\SchoolCampuses;
 use App\Models\Schools;
@@ -15,6 +16,7 @@ use App\Support\GradingSystem;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -157,36 +159,40 @@ class SchoolController extends Controller
     {
         $data = $request->validated();
 
-        $school = Schools::create([
-            'name' => Str::lower($data['name']),
-            'shortcut' => $data['abbreviation'],
-            'reference_id' => $data['class']['id'],
-            'created_by' => Auth::user()->profile->fullname,
-        ]);
-
-        foreach ($data['campuses'] as $campus) {
-            $slice = explode('-', $campus['address']['id']);
-            $sliceName = explode(',', $campus['address']['name']);
-            $campusModel = $school->campuses()->create([
-                'is_main' => $campus['main'],
-                'term_id' => $campus['semester']['id'],
-                'name' => isset($campus['name']) ? Str::lower($campus['name']) : null,
-                'agency_id' => $campus['agency']['id'],
-                'grading_id' => $campus['grading']['id'],
-                'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::of($sliceName[1])->trim()->upper(),
+        $school = DB::transaction(function () use ($data) {
+            $school = Schools::create([
+                'name' => Str::lower($data['name']),
+                'shortcut' => $data['abbreviation'],
+                'reference_id' => $data['class']['id'],
                 'created_by' => Auth::user()->profile->fullname,
             ]);
 
-            $campusModel->address()->create([
+            foreach ($data['campuses'] as $campus) {
+                $slice = explode('-', $campus['address']['id']);
+                $municipality = LocationCity::where('code', $slice[1])->value('name');
+                $campusModel = $school->campuses()->create([
+                    'is_main' => $campus['main'],
+                    'term_id' => $campus['semester']['id'],
+                    'name' => isset($campus['name']) ? Str::lower($campus['name']) : null,
+                    'agency_id' => $campus['agency']['id'],
+                    'grading_id' => $campus['grading']['id'],
+                    'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::upper($municipality),
+                    'created_by' => Auth::user()->profile->fullname,
+                ]);
 
-                'address' => $campus['street'],
-                'barangay_code' => $slice[0],
-                'municipality_code' => $slice[1],
-                'province_code' => $slice[2],
-                'region_code' => $slice[3],
-                'created_by' => Auth::user()->profile->fullname,
-            ]);
-        }
+                $campusModel->address()->create([
+
+                    'address' => $campus['street'] ?? null,
+                    'barangay_code' => $slice[0],
+                    'municipality_code' => $slice[1],
+                    'province_code' => $slice[2],
+                    'region_code' => $slice[3],
+                    'created_by' => Auth::user()->profile->fullname,
+                ]);
+            }
+
+            return $school;
+        });
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'school_added',
             'New school added',
@@ -209,65 +215,68 @@ class SchoolController extends Controller
         $data = $request->validated();
         $find = Schools::findOrFail($id);
 
-        if ($type == 'form') {
+        DB::transaction(function () use ($data, $find, $type) {
+            if ($type == 'form') {
 
-            $find->update([
-                'name' => $data['name'],
-                'shortcut' => $data['abbreviation'],
-                'reference_id' => $data['class']['id'],
-                'updated_by' => Auth::user()->profile->fullname,
-                'updated_at' => now(),
-            ]);
+                $find->update([
+                    'name' => $data['name'],
+                    'shortcut' => $data['abbreviation'],
+                    'reference_id' => $data['class']['id'],
+                    'updated_by' => Auth::user()->profile->fullname,
+                    'updated_at' => now(),
+                ]);
 
-            foreach ($data['campuses'] as $campus) {
-                $slice = explode('-', $campus['address']['id']);
-                $sliceName = explode(',', $campus['address']['name']);
-                if (! empty($campus['id'])) {
-                    $campusModel = $find->campuses()->find($campus['id']);
-                    $campusModel->update([
-                        'is_main' => $campus['main'],
-                        'term_id' => $campus['semester']['id'],
-                        'agency_id' => $campus['agency']['id'],
-                        'name' => isset($campus['name']) ? Str::lower($campus['name']) : null,
-                        'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::of($sliceName[1])->trim()->upper(),
-                        'grading_id' => $campus['grading']['id'],
-                        'updated_by' => Auth::user()->profile->fullname,
-                        'updated_at' => now(),
-                    ]);
-                    $campusModel->address()->update([
-                        'address' => $campus['street'],
-                        'barangay_code' => $slice[0],
-                        'municipality_code' => $slice[1],
-                        'province_code' => $slice[2],
-                        'region_code' => $slice[3],
+                foreach ($data['campuses'] as $campus) {
+                    $slice = explode('-', $campus['address']['id']);
+                    $municipality = LocationCity::where('code', $slice[1])->value('name');
+                    if (! empty($campus['id'])) {
+                        $campusModel = $find->campuses()->findOrFail($campus['id']);
+                        $campusModel->update([
+                            'is_main' => $campus['main'],
+                            'term_id' => $campus['semester']['id'],
+                            'agency_id' => $campus['agency']['id'],
+                            'name' => isset($campus['name']) ? Str::lower($campus['name']) : null,
+                            'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::upper($municipality),
+                            'grading_id' => $campus['grading']['id'],
+                            'updated_by' => Auth::user()->profile->fullname,
+                            'updated_at' => now(),
+                        ]);
+                        $campusModel->address()->updateOrCreate([], [
+                            'address' => $campus['street'] ?? null,
+                            'barangay_code' => $slice[0],
+                            'municipality_code' => $slice[1],
+                            'province_code' => $slice[2],
+                            'region_code' => $slice[3],
 
-                        'updated_at' => now(),
-                    ]);
-                } else {
-                    $newCampus = $find->campuses()->create([
-                        'is_main' => $campus['main'],
-                        'term_id' => $campus['semester']['id'],
-                        'agency_id' => $campus['agency']['id'],
-                        'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::of($sliceName[1])->trim()->upper(),
-                        'grading_id' => $campus['grading']['id'],
-                        'created_by' => Auth::user()->profile->fullname,
-                    ]);
+                            'updated_at' => now(),
+                        ]);
+                    } else {
+                        $newCampus = $find->campuses()->create([
+                            'name' => isset($campus['name']) ? Str::lower($campus['name']) : null,
+                            'is_main' => $campus['main'],
+                            'term_id' => $campus['semester']['id'],
+                            'agency_id' => $campus['agency']['id'],
+                            'generated_name' => isset($campus['name']) ? Str::upper($data['name']).'-'.Str::upper($campus['name']) : Str::upper($data['name']).'-'.Str::upper($municipality),
+                            'grading_id' => $campus['grading']['id'],
+                            'created_by' => Auth::user()->profile->fullname,
+                        ]);
 
-                    $newCampus->address()->create([
-                        'address' => $campus['street'],
-                        'barangay_code' => $slice[0],
-                        'municipality_code' => $slice[1],
-                        'province_code' => $slice[2],
-                        'region_code' => $slice[3],
-                        'created_by' => Auth::user()->profile->fullname,
-                    ]);
+                        $newCampus->address()->create([
+                            'address' => $campus['street'] ?? null,
+                            'barangay_code' => $slice[0],
+                            'municipality_code' => $slice[1],
+                            'province_code' => $slice[2],
+                            'region_code' => $slice[3],
+                            'created_by' => Auth::user()->profile->fullname,
+                        ]);
+                    }
                 }
+            } else {
+                $find->update([
+                    'is_active' => $data['isActive'],
+                ]);
             }
-        } else {
-            $find->update([
-                'is_active' => $data['isActive'],
-            ]);
-        }
+        });
         app(RoleBellNotificationService::class)->notifyRegionalAndScholarshipStaff(
             'school_updated',
             'School updated',

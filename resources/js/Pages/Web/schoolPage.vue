@@ -73,7 +73,7 @@
                             <SelectInput
                                 v-model="universityForm.class"
                                 :options="page.props.classOption"
-                                :error-mark="universityForm.errors.class"
+                                :error-mark="universityForm.errors.class || universityForm.errors['class.id']"
                                 label="Class"
                                 clearable
                             >
@@ -138,7 +138,7 @@
                                             :error-mark="
                                                 universityForm.errors[
                                                     `campuses.${index}.semester`
-                                                ]
+                                                ] || universityForm.errors[`campuses.${index}.semester.id`]
                                             "
                                             :options="
                                                 page.props.classificationOption
@@ -155,7 +155,7 @@
                                             :error-mark="
                                                 universityForm.errors[
                                                     `campuses.${index}.grading`
-                                                ]
+                                                ] || universityForm.errors[`campuses.${index}.grading.id`]
                                             "
                                             :options="page.props.gradingOption"
                                             label="Grading System"
@@ -171,7 +171,7 @@
                                         :error-mark="
                                             universityForm.errors[
                                                 `campuses.${index}.agency`
-                                            ]
+                                            ] || universityForm.errors[`campuses.${index}.agency.id`]
                                         "
                                         :options="page.props.agencyOption"
                                         label="Regional Office"
@@ -196,7 +196,8 @@
                                         :error-mark="
                                             universityForm.errors[
                                                 `campuses.${index}.address`
-                                            ]
+                                            ] || universityForm.errors[`campuses.${index}.address.id`]
+                                              || universityForm.errors[`campuses.${index}.address.name`]
                                         "
                                         :options="page.props.resultSearch"
                                         placeholder="Find by Barangay, City, Province, or Region"
@@ -590,7 +591,9 @@
                                 <div class="capitalize">
                                     {{
                                         prop.data.name ??
-                                        prop.data.address.municipality.name
+                                        prop.data.address?.municipality?.name ??
+                                        prop.data.generated_name ??
+                                        "Unnamed campus"
                                     }}
                                 </div>
 
@@ -955,8 +958,8 @@ const toggleModal = (res) => {
                                 ? new Date(element.end_date)
                                 : null,
                             name: element.name,
-                            street: element.address.address,
-                            address: element.address.full_address,
+                            street: element.address?.address ?? null,
+                            address: element.address?.full_address ?? null,
                             main: element.is_main,
                         });
                     });

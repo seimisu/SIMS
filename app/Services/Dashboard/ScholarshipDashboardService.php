@@ -97,16 +97,11 @@ class ScholarshipDashboardService
                 ];
             })->values();
 
-            $schoolTreemap = SchoolCampuses::withCount('scholarCampus')
+            $schoolTreemap = SchoolCampuses::with(['school', 'address.municipality', 'agency'])
+                ->withCount('scholarCampus')
                 ->get()
                 ->values();
-            $totalSchool = $schoolTreemap->map(function ($campus) {
-
-                return [
-                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut.'-'.$campus->address->municipality_array['name'] : $campus->school->shortcut.'-'.$campus->name),
-                    'y' => $campus->scholar_campus_count,
-                ];
-            })->sum('y');
+            $totalSchool = $schoolTreemap->sum('scholar_campus_count');
 
             $courseTreemap = SchoolCampusCourses::where('is_delete', false)
                 ->withCount('scholarCourse')
@@ -127,7 +122,7 @@ class ScholarshipDashboardService
                             'data' => $schoolTreemap->map(function ($campus) {
 
                                 return [
-                                    'x' => Str::upper($campus->name == null ? $campus->school->shortcut.'-'.$campus->address->municipality_array['name'] : $campus->school->shortcut.'-'.$campus->name),
+                                    'x' => $this->schoolChartLabel($campus),
                                     'y' => $campus->scholar_campus_count,
                                 ];
                             }),
@@ -137,8 +132,10 @@ class ScholarshipDashboardService
 
                         return [
                             'name' => $campus->generated_name,
-                            'region' => Str::upper($campus->agency->slug),
-                            'percent' => $campus->scholar_campus_count / $totalSchool * 100,
+                            'region' => Str::upper($campus->agency?->slug ?? 'Unknown'),
+                            'percent' => $totalSchool > 0
+                                ? $campus->scholar_campus_count / $totalSchool * 100
+                                : 0,
                             'total' => $campus->scholar_campus_count,
                         ];
                     }),
@@ -270,5 +267,14 @@ class ScholarshipDashboardService
                     })->count(),
                 ],
             ]);
+    }
+    private function schoolChartLabel(SchoolCampuses $campus): string
+    {
+        $school = $campus->school?->shortcut ?? $campus->school?->name ?? 'Unknown school';
+        $location = $campus->name ?? $campus->address?->municipality?->name;
+
+        return Str::upper($location !== null
+            ? $school.'-'.$location
+            : ($campus->generated_name ?? $school.'-Campus '.$campus->id));
     }
 }
