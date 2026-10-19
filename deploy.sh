@@ -13,7 +13,7 @@ echo "=== SIMS Deployment ==="
 cd "$PROJECT_DIR"
 
 echo "[1/6] Pulling latest code..."
-git pull main staging --ff-only
+git pull origin main --ff-only
 
 echo "[2/6] Installing npm dependencies..."
 npm install
