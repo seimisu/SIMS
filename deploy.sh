@@ -26,8 +26,6 @@ npm run build
 
 echo "[5/6] Optimising build"
 php artisan optimize:clear
-cd "$PROJECT_DIR/public"
-sudo rm hot
 
 echo "[6/6] Copying files to NGINX"
 cd $PROJECT_DIR
