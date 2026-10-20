@@ -118,7 +118,7 @@ class ListClass
         }
     }
 
-    public function getRefs(string $main, $search = null, $type = null, $classification = null)
+    public function getRefs(string $main, $search = null, $type = null, $classification = null, $filterType = null)
     {
         switch ($main) {
             case 'option':
@@ -152,18 +152,23 @@ class ListClass
                             ];
                         });
                 break;
-
             default:
-                return ListReferences::where('is_delete', false)->when($search, function ($query) {
-                    $search = strtolower(request('search'));
+                return ListReferences::where('is_delete', false)
+                    ->when($filterType !== null, function ($query) use ($filterType) {
+                        $query->where('type', $filterType);
+                    })
+                    ->when($search, function ($query) {
+                        $search = strtolower(request('search'));
 
-                    $query->where(function ($query) use ($search) {
-                        $query->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
-                            ->orWhereRaw('LOWER(classification) LIKE ?', ["%{$search}%"])
-                            ->orWhereRaw('LOWER(type) LIKE ?', ["%{$search}%"])
-                            ->orWhereRaw('LOWER(others) LIKE ?', ["%{$search}%"]);
-                    });
-                })->orderBy('id', 'desc')->paginate(10);
+                        $query->where(function ($query) use ($search) {
+                            $query->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"])
+                                ->orWhereRaw('LOWER(classification) LIKE ?', ["%{$search}%"])
+                                ->orWhereRaw('LOWER(type) LIKE ?', ["%{$search}%"])
+                                ->orWhereRaw('LOWER(others) LIKE ?', ["%{$search}%"]);
+                        });
+                    })
+                    ->orderBy('id', 'desc')
+                    ->paginate(10);
                 break;
         }
     }

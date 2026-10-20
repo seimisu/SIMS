@@ -1,11 +1,35 @@
 <template>
     <Head title="References" />
     <AuthLayout>
-        <div class="references-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
-            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
-                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-                    <div class="flex min-w-0 items-start gap-3"><div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"><IconListDetails :size="21" /></div><HeaderModule title="References" description="Manage reusable classifications, types, labels, and colors." /></div>
-                    <DefaultButton size="small" label="Create Reference" severity="secondary" outlined :icon="IconCirclePlusFilled" class="self-start xl:self-auto" @click="toggleModal({ type: 'create' })" />
+        <div
+            class="references-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100"
+        >
+            <div
+                class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700"
+            >
+                <div
+                    class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+                >
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div
+                            class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"
+                        >
+                            <IconListDetails :size="21" />
+                        </div>
+                        <HeaderModule
+                            title="References"
+                            description="Manage reusable classifications, types, labels, and colors."
+                        />
+                    </div>
+                    <DefaultButton
+                        size="small"
+                        label="Create Reference"
+                        severity="secondary"
+                        outlined
+                        :icon="IconCirclePlusFilled"
+                        class="self-start xl:self-auto"
+                        @click="toggleModal({ type: 'create' })"
+                    />
                 </div>
             </div>
             <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
@@ -64,6 +88,18 @@
                         </div>
                     </template>
                 </ToolbarModule>
+                <Tabs v-model:value="activeType" class="reference-type-tabs">
+                    <TabList class="text-xs font-black">
+                        <Tab value="all">All types</Tab>
+                        <Tab
+                            v-for="type in page.props.typeOption"
+                            :key="type.id"
+                            :value="String(type.id)"
+                        >
+                            {{ type.name }}
+                        </Tab>
+                    </TabList>
+                </Tabs>
                 <DefaultTable
                     :items="page.props.references.data"
                     :pagination="{
@@ -186,6 +222,7 @@ import SelectInput from "../../Components/inputs/SelectInput.vue";
 
 const page = usePage();
 const searchInput = ref(null);
+const activeType = ref(page.props.selectedType ?? "all");
 const timerBounce = ref(null);
 const selectedRow = ref(null);
 const toolbarRef = ref(null);
@@ -278,7 +315,7 @@ const deleteRow = (id) => {
                     referenceForm.resetAndClearErrors();
                     toastRef.value.show(page.props.flash);
                 },
-            }
+            },
         );
     });
 };
@@ -303,7 +340,7 @@ const submitForm = () => {
                     referenceForm.resetAndClearErrors();
                     toastRef.value.show(page.props.flash);
                 },
-            }
+            },
         );
     }
 };
@@ -315,7 +352,7 @@ const updateStatus = (result) => {
             onSuccess: () => {
                 toastRef.value.show(page.props.flash);
             },
-        }
+        },
     );
 };
 
@@ -323,19 +360,24 @@ const clearSearch = () => {
     searchInput.value = null;
 };
 
-const loadPage = (page) => {
+const loadPage = (pageNumber) => {
     router.get(
         route("academic.references"),
         {
-            page,
+            page: pageNumber,
             search: searchInput.value,
+            type: activeType.value === "all" ? null : activeType.value,
         },
         {
             preserveState: true,
             preserveScroll: true,
-        }
+        },
     );
 };
+
+watch(activeType, () => {
+    loadPage(1);
+});
 
 watch(
     () => searchInput.value,
@@ -344,6 +386,6 @@ watch(
         timerBounce.value = setTimeout(() => {
             loadPage(1);
         }, 300);
-    }
+    },
 );
 </script>

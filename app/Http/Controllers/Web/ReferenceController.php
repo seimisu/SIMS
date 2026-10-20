@@ -15,9 +15,16 @@ class ReferenceController extends Controller
     public function index(ListClass $ref, Request $request)
     {
         return Inertia::render('Web/referencePage', [
-            'references' => $ref->getRefs('main', $request->input('search')),
+            'references' => $ref->getRefs(
+                'main',
+                $request->input('search'),
+                null,
+                null,
+                $request->input('type')
+            ),
             'classOption' => $ref->getRefs('distinct', null, 'classification'),
             'typeOption' => $ref->getRefs('distinct', null, 'type'),
+            'selectedType' => $request->input('type', 'all'),
         ]);
     }
 

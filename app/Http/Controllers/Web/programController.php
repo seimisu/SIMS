@@ -18,16 +18,25 @@ class programController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Web/programPage', [
-            'programs' => ListPrograms::with(['program', 'type'])->when($request->input('search'), function ($q) use ($request) {
-                $search = strtolower(request('search'));
-                $q->whereRaw('LOWER(name) LIKE ?', ['%' . $search . '%']);
-            })->where('is_delete', false)->orderBy('id', 'desc')->paginate(10),
+            'programs' => ListPrograms::with(['program', 'type'])
+                ->when($request->input('scholarship'), function ($query) use ($request) {
+                    $query->where('program_id', $request->input('scholarship'));
+                })
+                ->when($request->input('search'), function ($query) use ($request) {
+                    $search = strtolower($request->input('search'));
+                    $query->whereRaw('LOWER(name) LIKE ?', ['%'.$search.'%']);
+                })
+                ->where('is_delete', false)
+                ->orderBy('id', 'desc')
+                ->paginate(10),
             'scholarshipOptions' => ListReferences::select('id', 'name')
                 ->where([
                     ['classification', '=', 'Scholarship'],
+                    ['type', '=', 'Category'],
                     ['is_delete', '=', false],
                 ])->get()
                 ->makeHidden(['classification_array', 'type_array', 'color_array', 'reference_array']),
+            'selectedScholarship' => $request->input('scholarship', 'all'),
             'typeOptions' => ListReferences::select('id', 'name')
                 ->where([
                     ['type', '=', 'Type'],
@@ -60,14 +69,14 @@ class programController extends Controller
             'is_delete' => false,
         ], [
             'others' => $data['description'] ?? null,
-            'created_by' =>  Auth::user()->profile->fullname
+            'created_by' => Auth::user()->profile->fullname,
         ]);
 
         return redirect()->back()->with('flash', [
             'status' => $program->wasRecentlyCreated ? 'success' : 'info',
-            'title'  => $program->wasRecentlyCreated ? 'Program Created' : 'Program Already Exists',
+            'title' => $program->wasRecentlyCreated ? 'Program Created' : 'Program Already Exists',
             'message' => $program->wasRecentlyCreated ? 'Program successfully created.' : 'This program already exists, so no duplicate was created.',
-        ]);;
+        ]);
     }
 
     /**
@@ -89,7 +98,7 @@ class programController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    function update(ProgramRequest $request, string $id, string $type)
+    public function update(ProgramRequest $request, string $id, string $type)
     {
         $data = $request->validated();
         $find = ListPrograms::findOrFail($id);
@@ -101,8 +110,8 @@ class programController extends Controller
                 'program_id' => $data['scholarship']['id'] ?? null,
                 'type_id' => $data['type']['id'] ?? null,
                 'is_sub' => $data['isSub'] ?? false,
-                'updated_by'    => Auth::user()->profile->fullname,
-                'updated_at'    => now()
+                'updated_by' => Auth::user()->profile->fullname,
+                'updated_at' => now(),
             ]);
         } else {
             $find->update([
@@ -112,7 +121,7 @@ class programController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Program Updated',
+            'title' => 'Program Updated',
             'message' => 'Program successfully updated.',
         ]);
     }
@@ -129,7 +138,7 @@ class programController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title'  => 'Program Deleted',
+            'title' => 'Program Deleted',
             'message' => 'Program successfully deleted.',
         ]);
     }
