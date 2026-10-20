@@ -20,7 +20,13 @@
                 </label>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <p class="text-xs text-slate-500 dark:text-gray-400">
+                Scholar cards and charts include all activation statuses, with a recorded award year through {{ asOf.year }}.
+                Region and campus follow each scholar?s latest school record. These are current records, not historical snapshots.
+                Payroll uses the selected month-end. Pending submissions show current requests for the included scholars.
+                <span v-if="card.otherTypes">{{ formatNumber(card.otherTypes) }} scholars have another or unspecified scholarship type.</span>
+            </p>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <section
                     v-for="metric in metrics"
                     :key="metric.label"
@@ -126,7 +132,7 @@
                                 Pending Submissions
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Requests waiting for regional review.
+                                Current requests for scholars included in the totals.
                             </p>
                         </div>
                         <button
@@ -173,7 +179,7 @@
                                 Awarded Scholars By Year
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Program distribution in {{ regionName }}.
+                                By program and award year through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
@@ -197,7 +203,7 @@
                                 Scholarship Type Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Activated scholars awarded through {{ asOf.year }}.
+                                All scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
@@ -238,13 +244,13 @@
                                 Sex Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Activated scholars awarded through {{ asOf.year }}.
+                                All scholars awarded through {{ asOf.year }}.
                             </p>
                         </div>
                     </div>
                     <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-800">
                         <div class="mb-3 flex items-end justify-between">
-                            <span class="text-xs text-slate-500 dark:text-gray-400">Total with profile sex</span>
+                            <span class="text-xs text-slate-500 dark:text-gray-400">Total scholars</span>
                             <span class="text-2xl font-semibold text-slate-900 dark:text-white">
                                 {{ formatNumber(genderTotal) }}
                             </span>
@@ -289,7 +295,7 @@
                                 Scholar Count by School
                             </h2>
                             <p class="hidden text-[11px] text-slate-500 dark:text-gray-400 sm:block">
-                                Schools with the highest scholar count in the region.
+                                Latest campus of scholars in Total Scholars; highest counts first.
                             </p>
                         </div>
                     </div>
@@ -297,7 +303,7 @@
                         <div class="grid gap-3">
                             <div
                                 v-for="school in schoolDistribution"
-                                :key="school.name"
+                                :key="school.id"
                                 class="grid grid-cols-[1fr_auto] items-center gap-3"
                             >
                                 <div class="min-w-0">
@@ -341,36 +347,46 @@ import ApexChart from "vue3-apexcharts";
 import { route } from "ziggy-js";
 
 const page = usePage();
-const { card, timeline, user, gender } = page.props;
+const card = computed(() => page.props.card ?? {});
+const timeline = computed(() => page.props.timeline ?? {});
+const user = computed(() => page.props.user ?? {});
+const gender = computed(() => page.props.gender ?? {});
 const isDark = ref(false);
 const asOf = computed(() => page.props.asOf ?? {});
 const filterAsOfMonth = ref(page.props.asOf?.month ?? currentMonth());
 const insights = computed(() => page.props.regionalInsights ?? {});
-const regionName = computed(() => user.profile.agency.slug?.toUpperCase() ?? "Regional");
+const regionName = computed(() => user.value.profile?.agency?.slug?.toUpperCase() ?? "Regional");
 const payrollSummary = computed(() => insights.value.payrollSummary ?? {});
 const payrollQueue = computed(() => insights.value.payrollQueue ?? []);
 
 const metrics = computed(() => [
     {
         label: "Total Scholars",
-        value: card.total,
-        caption: `Activated scholars awarded through ${asOf.value.year ?? "selected year"}`,
+        value: card.value.total,
+        caption: `All scholars awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconUsersGroup,
         color: "bg-blue-50 text-blue-600",
     },
     {
         label: "Undergraduate",
-        value: card.Ucnt,
+        value: card.value.Ucnt,
         caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconSchool,
         color: "bg-emerald-50 text-emerald-600",
     },
     {
         label: "JLSS",
-        value: card.Jcnt,
+        value: card.value.Jcnt,
         caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
         icon: IconFileCheck,
         color: "bg-cyan-50 text-cyan-600",
+    },
+    {
+        label: "Activated Scholars",
+        value: card.value.activated,
+        caption: "Of Total Scholars; activation date is recorded",
+        icon: IconUsersGroup,
+        color: "bg-violet-50 text-violet-600",
     },
     {
         label: "Payroll Needs Action",
@@ -384,7 +400,7 @@ const metrics = computed(() => [
 const scholarshipTypeDots = ["bg-blue-500", "bg-emerald-500", "bg-rose-500", "bg-amber-500", "bg-cyan-500"];
 const scholarshipTypeColors = ["#2563EB", "#10B981", "#E11D48", "#F59E0B", "#06B6D4"];
 const scholarshipTypeDistribution = computed(() => {
-    const rows = timeline.timelineTotal ?? [];
+    const rows = timeline.value.timelineTotal ?? [];
 
     return rows.map((item, index) => ({
         name: item.name,
@@ -394,10 +410,11 @@ const scholarshipTypeDistribution = computed(() => {
 });
 const scholarshipTypeSeries = computed(() => scholarshipTypeDistribution.value.map((item) => Number(item.count ?? 0)));
 const genderDetails = computed(() => {
-    const rows = gender?.result ?? [];
+    const rows = gender.value.result ?? [];
     const female = Number(rows.find((item) => item.sex === "F")?.total ?? 0);
     const male = Number(rows.find((item) => item.sex === "M")?.total ?? 0);
-    const total = Math.max(female + male, 1);
+    const unspecified = rows.reduce((sum, item) => sum + (!["F", "M"].includes(item.sex) ? Number(item.total ?? 0) : 0), 0);
+    const total = Math.max(female + male + unspecified, 1);
 
     return [
         {
@@ -412,13 +429,19 @@ const genderDetails = computed(() => {
             percent: Math.round((male / total) * 100),
             dot: "bg-blue-500",
         },
+        {
+            label: "Unspecified / Other",
+            value: unspecified,
+            percent: Math.round((unspecified / total) * 100),
+            dot: "bg-slate-400",
+        },
     ];
 });
 const genderTotal = computed(() => genderDetails.value.reduce((sum, item) => sum + item.value, 0));
 const sexSegments = computed(() => genderDetails.value.map((item) => ({
     label: item.label,
     percent: genderTotal.value === 0 ? 0 : item.percent,
-    color: item.label === "Female" ? "bg-pink-500" : "bg-blue-500",
+    color: item.dot,
 })));
 const schoolDistribution = computed(() => {
     const rows = insights.value.schoolDistribution ?? [];
@@ -471,7 +494,7 @@ const apexOptionsTimeline = computed(() => ({
         },
     },
     xaxis: {
-        categories: timeline.categories,
+        categories: timeline.value.categories,
         axisBorder: { show: false },
         axisTicks: { show: false },
     },

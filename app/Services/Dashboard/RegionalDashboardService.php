@@ -45,7 +45,6 @@ class RegionalDashboardService
                 ->filter(fn ($scholar) => $this->currentSchoolInfo($scholar)?->campus?->address?->region_code === $regionCode)
                 ->values();
             $asOfScholars = $scholars
-                ->whereNotNull('activated_at')
                 ->whereNotNull('award_year')
                 ->where('award_year', '<=', $asOfYear)
                 ->values();
@@ -94,7 +93,7 @@ class RegionalDashboardService
                     'date' => $batch->latestLog?->created_at ? Carbon::parse($batch->latestLog->created_at)->format('M d, Y') : null,
                 ])
                 ->values();
-            $statusSummary = $scholars
+            $statusSummary = $asOfScholars
                 ->groupBy(fn ($scholar) => $scholar->status?->name ?? 'No status')
                 ->map(fn ($rows, $name) => [
                     'name' => $name,
@@ -102,24 +101,18 @@ class RegionalDashboardService
                 ])
                 ->sortByDesc('count')
                 ->values();
-            $scholarCountsBySchool = $scholars
+            $schoolDistribution = $asOfScholars
                 ->map(fn ($scholar) => $this->currentSchoolInfo($scholar))
                 ->filter(fn ($schoolInfo) => $schoolInfo?->campus)
-                ->groupBy(fn ($schoolInfo) => $schoolInfo->campus->generated_name)
-                ->map(fn ($rows) => $rows->pluck('scholar_id')->unique()->count());
-            $schoolDistribution = SchoolCampuses::select('id', 'generated_name')
-                ->where('is_delete', false)
-                ->when($permissions->shouldScopeToRegion($user), function ($q) use ($permissions, $user) {
-                    $q->whereHas('address', fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user)));
-                })
-                ->orderBy('generated_name')
-                ->get()
-                ->map(fn ($campus) => [
-                    'name' => $campus->generated_name,
-                    'count' => $scholarCountsBySchool->get($campus->generated_name, 0),
+                ->groupBy('campus_id')
+                ->map(fn ($rows, $campusId) => [
+                    'id' => $campusId,
+                    'name' => $rows->first()->campus->generated_name ?: 'Unnamed campus',
+                    'count' => $rows->pluck('scholar_id')->unique()->count(),
                 ])
+                ->sortByDesc('count')
                 ->values();
-            $regionalScholarIds = $scholars->pluck('id')->filter()->values();
+            $regionalScholarIds = $asOfScholars->pluck('id')->filter()->values();
             $pendingSubmissions = [
                 'grades' => ScholarTerm::where('verification_status', 'submitted')
                     ->whereIn('scholar_id', $regionalScholarIds)
@@ -132,7 +125,7 @@ class RegionalDashboardService
                     ->count(),
             ];
 
-            $categories = $scholars
+            $categories = $asOfScholars
                 ->pluck('award_year')
                 ->flatten()
                 ->filter()
@@ -140,8 +133,8 @@ class RegionalDashboardService
                 ->sort()
                 ->values();
 
-            $series = $scholars
-                ->groupBy(fn ($s) => $s->program->name)
+            $series = $asOfScholars
+                ->groupBy(fn ($s) => $s->program?->name ?? 'Unspecified program')
                 ->map(function ($rows, $program) use ($categories) {
                     $data = collect($categories)->map(function ($year) use ($rows) {
                         return $rows->filter(
@@ -158,7 +151,7 @@ class RegionalDashboardService
                 ->toArray();
 
             $timelineTotal = $asOfScholars
-                ->groupBy(fn ($s) => $s->program->name)
+                ->groupBy(fn ($s) => $s->program?->name ?? 'Unspecified program')
                 ->map(function ($rows, $program) {
 
                     return [
@@ -232,6 +225,8 @@ class RegionalDashboardService
                         ->where('award_year', $currentYear)
                         ->count(),
                     'total' => $asOfScholars->count(),
+                    'activated' => $asOfScholars->whereNotNull('activated_at')->count(),
+                    'otherTypes' => $asOfScholars->whereNotIn('type_id', [28, 29])->count(),
                 ],
                 'asOf' => [
                     'month' => $asOfMonth,
