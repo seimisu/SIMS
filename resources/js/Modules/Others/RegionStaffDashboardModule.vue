@@ -21,10 +21,8 @@
             </div>
 
             <p class="text-xs text-slate-500 dark:text-gray-400">
-                Scholar cards and charts include all activation statuses, with a recorded award year through {{ asOf.year }}.
-                Region and campus follow each scholar?s latest school record. These are current records, not historical snapshots.
-                Payroll uses the selected month-end. Pending submissions show current requests for the included scholars.
-                <span v-if="card.otherTypes">{{ formatNumber(card.otherTypes) }} scholars have another or unspecified scholarship type.</span>
+                Scholar counts include awards through {{ asOf.year }}. Select a month to update the dashboard.
+                <span v-if="card.otherTypes">Other scholarship types: {{ formatNumber(card.otherTypes) }} scholars.</span>
             </p>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <section
@@ -59,7 +57,7 @@
                                 Payroll Work Queue
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Draft and returned payrolls updated through {{ asOf.label }}.
+                                Draft and returned payrolls.
                             </p>
                         </div>
                         <div class="flex flex-wrap justify-end gap-1 text-[11px]">
@@ -132,7 +130,7 @@
                                 Pending Submissions
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Current requests for scholars included in the totals.
+                                Requests waiting for review.
                             </p>
                         </div>
                         <button
@@ -179,7 +177,7 @@
                                 Awarded Scholars By Year
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                By program and award year through {{ asOf.year }}.
+                                Scholar awards by year and program.
                             </p>
                         </div>
                     </div>
@@ -203,7 +201,7 @@
                                 Scholarship Type Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                All scholars awarded through {{ asOf.year }}.
+                                Number of scholars by program.
                             </p>
                         </div>
                     </div>
@@ -244,7 +242,7 @@
                                 Sex Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                All scholars awarded through {{ asOf.year }}.
+                                Number of scholars by sex.
                             </p>
                         </div>
                     </div>
@@ -295,7 +293,7 @@
                                 Scholar Count by School
                             </h2>
                             <p class="hidden text-[11px] text-slate-500 dark:text-gray-400 sm:block">
-                                Latest campus of scholars in Total Scholars; highest counts first.
+                                Number of scholars per school.
                             </p>
                         </div>
                     </div>
@@ -363,35 +361,35 @@ const metrics = computed(() => [
     {
         label: "Total Scholars",
         value: card.value.total,
-        caption: `All scholars awarded through ${asOf.value.year ?? "selected year"}`,
+        caption: "Total number of scholars",
         icon: IconUsersGroup,
         color: "bg-blue-50 text-blue-600",
     },
     {
         label: "Undergraduate",
         value: card.value.Ucnt,
-        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
+        caption: "Number of undergraduate scholars",
         icon: IconSchool,
         color: "bg-emerald-50 text-emerald-600",
     },
     {
         label: "JLSS",
         value: card.value.Jcnt,
-        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
+        caption: "Number of JLSS scholars",
         icon: IconFileCheck,
         color: "bg-cyan-50 text-cyan-600",
     },
     {
         label: "Activated Scholars",
         value: card.value.activated,
-        caption: "Of Total Scholars; activation date is recorded",
+        caption: "Scholars with activated accounts",
         icon: IconUsersGroup,
         color: "bg-violet-50 text-violet-600",
     },
     {
         label: "Payroll Needs Action",
         value: Number(payrollSummary.value.draft ?? 0) + Number(payrollSummary.value.rejected_payroll ?? 0),
-        caption: `Updated through ${asOf.value.label ?? "selected month"}`,
+        caption: "Payrolls needing attention",
         icon: IconClipboardList,
         color: "bg-red-50 text-red-600",
     },

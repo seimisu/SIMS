@@ -77,8 +77,8 @@ class CampusGradeController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Campus Course Updated',
-            'message' => 'Campus course successfully updated.',
+            'title' => 'Campus Grade Updated',
+            'message' => 'Campus grade successfully updated.',
         ]);
     }
 
@@ -92,8 +92,8 @@ class CampusGradeController extends Controller
 
         return redirect()->back()->with('flash', [
             'status' => 'success',
-            'title' => 'Campus Course Deleted',
-            'message' => 'Campus course successfully deleted.',
+            'title' => 'Campus Grade Deleted',
+            'message' => 'Campus grade successfully deleted.',
         ]);
     }
 }

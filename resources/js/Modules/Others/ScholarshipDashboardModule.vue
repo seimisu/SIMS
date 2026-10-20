@@ -7,10 +7,10 @@
                         Scholarship operations
                     </div>
                     <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
-                        Scholarship Staff Dashboard
+                        {{ dashboardTitle }}
                     </h1>
                     <p class="text-xs text-slate-500 dark:text-gray-400">
-                        Monitor scholar status, distributions, and review workload signals.
+                        Overview of scholars and scholarship programs.
                     </p>
                 </div>
                 <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300">
@@ -23,7 +23,11 @@
                 </label>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <p class="text-xs text-slate-500 dark:text-gray-400">
+                Scholar counts include awards through {{ asOf.year }}. Select a month to update the dashboard.
+                <span v-if="card.otherTypes">Other scholarship types: {{ formatNumber(card.otherTypes) }} scholars.</span>
+            </p>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <section
                     v-for="metric in metrics"
                     :key="metric.label"
@@ -60,7 +64,7 @@
                                     Scholarship Awards by Year
                                 </h2>
                                 <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                    Annual awards grouped by scholarship program.
+                                    Scholar awards by year and program.
                                 </p>
                             </div>
                         </div>
@@ -85,7 +89,7 @@
                                 Program Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Activated scholars awarded through {{ asOf.year }}.
+                                Number of scholars by program.
                             </p>
                         </div>
                     </div>
@@ -126,13 +130,13 @@
                                 Sex Distribution
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Activated scholars awarded through {{ asOf.year }}.
+                                Number of scholars by sex.
                             </p>
                         </div>
                     </div>
                     <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-800">
                         <div class="mb-3 flex items-end justify-between">
-                            <span class="text-xs text-slate-500 dark:text-gray-400">Total with profile sex</span>
+                            <span class="text-xs text-slate-500 dark:text-gray-400">Total scholars</span>
                             <span class="text-2xl font-semibold text-slate-900 dark:text-white">
                                 {{ formatNumber(genderTotal) }}
                             </span>
@@ -174,7 +178,7 @@
                                 Sex Breakdown by Region
                             </h2>
                             <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                Male and female counts compared per region.
+                                Number of scholars by sex in each region.
                             </p>
                         </div>
                     </div>
@@ -196,10 +200,10 @@
                             </div>
                             <div>
                                 <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
-                                    Registered Scholars by Region
+                                    Scholars by Region
                                 </h2>
                                 <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                    Regional scholar registration totals.
+                                    Number of scholars per region.
                                 </p>
                             </div>
                         </div>
@@ -214,6 +218,19 @@
 
                 <section class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-1 xl:col-span-2" style="height: 360px">
                     <div class="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Scholar Count by School</h2>
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">Number of scholars per school.</p>
+                        </div>
+                        <Button type="button" label="Details" size="small" severity="secondary" @click="toggleDialogs('schoolTable')" />
+                    </div>
+                    <div class="min-h-0 flex-1 overflow-auto pr-1">
+                        <RankedDistribution :items="schoolDistribution" color="bg-emerald-500" />
+                    </div>
+                </section>
+
+                <section class="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 md:col-span-1 xl:col-span-2" style="height: 360px">
+                    <div class="mb-4 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <div class="rounded bg-sky-50 p-2 text-sky-600">
                                 <IconBook2 :size="20" />
@@ -223,7 +240,7 @@
                                     Course Scholar Distribution
                                 </h2>
                                 <p class="text-[11px] text-slate-500 dark:text-gray-400">
-                                    Ranked by scholar count.
+                                    Number of scholars per course.
                                 </p>
                             </div>
                         </div>
@@ -342,9 +359,12 @@ import {
 } from "@tabler/icons-vue";
 import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch } from "vue";
 import ApexChart from "vue3-apexcharts";
+import { route } from "ziggy-js";
 
 const page = usePage();
 const card = computed(() => page.props.card ?? {});
+const dashboardTitle = computed(() => String(page.props.user?.role_array?.name ?? "").toLowerCase() === "scholarship coordinator"
+    ? "Scholarship Coordinator Dashboard" : "Scholarship Staff Dashboard");
 const asOf = computed(() => page.props.asOf ?? {});
 const timeline = computed(() => page.props.timeline ?? {});
 
@@ -357,30 +377,37 @@ const filterAsOfMonth = ref(page.props.asOf?.month ?? currentMonth());
 
 const metrics = computed(() => [
     {
-        label: "Active Scholars",
-        value: asOf.value.active,
-        caption: `Active as of ${asOf.value.label ?? "selected month"}`,
+        label: "Total Scholars",
+        value: card.value.total,
+        caption: "Total number of scholars",
         icon: IconUser,
         color: "bg-blue-50 text-blue-600",
     },
     {
         label: "Undergraduate",
-        value: asOf.value.undergraduate,
-        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
+        value: card.value.undergraduate,
+        caption: "Number of undergraduate scholars",
         icon: IconSchool,
         color: "bg-emerald-50 text-emerald-600",
     },
     {
         label: "JLSS",
-        value: asOf.value.jlss,
-        caption: `Awarded through ${asOf.value.year ?? "selected year"}`,
+        value: card.value.jlss,
+        caption: "Number of JLSS scholars",
         icon: IconFileCheck,
         color: "bg-cyan-50 text-cyan-600",
     },
     {
+        label: "Activated Scholars",
+        value: card.value.activated,
+        caption: "Scholars with activated accounts",
+        icon: IconUser,
+        color: "bg-amber-50 text-amber-600",
+    },
+    {
         label: "Graduated",
-        value: asOf.value.graduated,
-        caption: `Graduated through ${asOf.value.year ?? "selected year"}`,
+        value: card.value.graduated,
+        caption: "Number of graduated scholars",
         icon: IconAward,
         color: "bg-violet-50 text-violet-600",
     },
@@ -400,9 +427,10 @@ const genderTotals = computed(() => {
     const female = Number(page.props.gender?.bar?.series?.[0]?.data?.[0] ?? 0);
     const male = Number(page.props.gender?.bar?.series?.[0]?.data?.[1] ?? 0);
 
-    return { female, male };
+    const unspecified = Number(page.props.gender?.bar?.series?.[0]?.data?.[2] ?? 0);
+    return { female, male, unspecified };
 });
-const genderTotal = computed(() => genderTotals.value.female + genderTotals.value.male);
+const genderTotal = computed(() => genderTotals.value.female + genderTotals.value.male + genderTotals.value.unspecified);
 const genderDetails = computed(() => {
     const total = Math.max(genderTotal.value, 1);
 
@@ -419,14 +447,21 @@ const genderDetails = computed(() => {
             percent: Math.round((genderTotals.value.male / total) * 100),
             dot: "bg-blue-500",
         },
+        {
+            label: "Unspecified / Other",
+            value: genderTotals.value.unspecified,
+            percent: Math.round((genderTotals.value.unspecified / total) * 100),
+            dot: "bg-slate-400",
+        },
     ];
 });
 const sexSegments = computed(() => genderDetails.value.map((item) => ({
     label: item.label,
     percent: genderTotal.value === 0 ? 0 : item.percent,
-    color: item.label === "Female" ? "bg-pink-500" : "bg-blue-500",
+    color: item.dot,
 })));
 
+const schoolDistribution = computed(() => rankedItems(page.props.school?.series?.[0]?.data ?? []));
 const courseDistribution = computed(() => rankedItems(page.props.course?.series?.[0]?.data ?? []));
 const registeredScholarsByRegion = computed(() => {
     const regionTotals = new Map();
@@ -525,7 +560,7 @@ const chartOptionsSexByRegion = computed(() => ({
             barHeight: "55%",
         },
     },
-    colors: ["#EC4899", "#3B82F6"],
+    colors: ["#EC4899", "#3B82F6", "#94A3B8"],
     dataLabels: { enabled: false },
     legend: { show: true, position: "bottom" },
     grid: {
@@ -558,7 +593,7 @@ const RankedDistribution = defineComponent({
     },
     setup(props) {
         return () => h("div", { class: "grid gap-3" }, props.items.map((item) => h("div", {
-            key: item.name,
+            key: item.id ?? item.name,
             class: "grid grid-cols-[1fr_auto] items-center gap-3",
         }, [
             h("div", { class: "min-w-0" }, [
@@ -578,6 +613,7 @@ const RankedDistribution = defineComponent({
 function rankedItems(rows) {
     const mapped = rows
         .map((row) => ({
+            id: row.id,
             name: row.x,
             count: Number(row.y ?? 0),
         }))
