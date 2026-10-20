@@ -11,6 +11,7 @@ use App\Models\SchoolCampusCourseSpecialization;
 use App\Models\SchoolCampuses;
 use App\Models\User;
 use App\Notifications\UpdateCurriculumNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,57 +39,69 @@ class SchoolCampusCurriculumController extends Controller
             }
         }
 
-        foreach ($data['multi'] as $curKey => $curriculum) {
-            $curriculumGet = SchoolCampusCourseCurriculums::updateOrCreate(
-                ['id' => $curriculum['id']],
-                [
-                    'campus_course_id' => $curriculum['campus_course_id'],
-                    'years' => trim($curriculum['yearLevel']),
-                    'elective_limit' => $curriculum['elective_limit'] ?? null,
-                    'created_by' => Auth::user()->profile->fullname,
-                    'semester_type_id' => $curriculum['semesterTypeId'],
-                ]
-            );
+        try {
+            DB::transaction(function () use ($data) {
+                foreach ($data['multi'] as $curKey => $curriculum) {
+                    $curriculumGet = SchoolCampusCourseCurriculums::updateOrCreate(
+                        ['id' => $curriculum['id']],
+                        [
+                            'campus_course_id' => $curriculum['campus_course_id'],
+                            'years' => trim($curriculum['yearLevel']),
+                            'elective_limit' => $curriculum['elective_limit'] ?? null,
+                            'created_by' => Auth::user()->profile->fullname,
+                            'semester_type_id' => $curriculum['semesterTypeId'],
+                        ]
+                    );
 
-            foreach ($data['multi'][$curKey]['subjects'] as $subKey => $subject) {
-                $specializationIds = collect($subject['specialization_options'] ?? [])->pluck('id')->all();
-                if ($specializationIds) {
-                    $validSpecializationCount = SchoolCampusCourseSpecialization::whereIn('id', $specializationIds)
-                        ->where('campus_course_id', $curriculum['campus_course_id'])
-                        ->where('is_active', true)
-                        ->where('is_delete', false)
-                        ->where('starts_at_year', '<=', $subject['year'])
-                        ->count();
+                    foreach ($data['multi'][$curKey]['subjects'] as $subKey => $subject) {
+                        $specializationIds = collect($subject['specialization_options'] ?? [])->pluck('id')->all();
+                        if ($specializationIds) {
+                            $validSpecializationCount = SchoolCampusCourseSpecialization::whereIn('id', $specializationIds)
+                                ->where('campus_course_id', $curriculum['campus_course_id'])
+                                ->where('is_active', true)
+                                ->where('is_delete', false)
+                                ->where('starts_at_year', '<=', $subject['year'])
+                                ->count();
 
-                    if ($validSpecializationCount !== count($specializationIds)) {
-                        throw ValidationException::withMessages([
-                            "multi.{$curKey}.subjects.{$subKey}.specialization_options" => 'One or more specializations are not available for this program and year.',
-                        ]);
+                            if ($validSpecializationCount !== count($specializationIds)) {
+                                throw ValidationException::withMessages([
+                                    "multi.{$curKey}.subjects.{$subKey}.specialization_options" => 'One or more specializations are not available for this program and year.',
+                                ]);
+                            }
+                        }
+
+                        $model = SchoolCampusCourseCurriculumSubjects::updateOrCreate(
+                            ['id' => $subject['id']],
+                            [
+                                'curriculum_id' => $curriculumGet->id,
+                                'semester_id' => $subject['semester_array']['id'],
+                                'year' => $subject['year'],
+                                'name' => Str::lower($subject['name']),
+                                'subject_code' => $subject['subjectCode'],
+                                'subject_class' => $subject['class_array']['name'],
+                                'specialization_id' => null,
+                                'requirement_type' => $subject['requirement_option']['id'],
+                                'unit' => $subject['unit'],
+                                'updated_by' => Auth::user()->profile->fullname,
+                            ]
+                        );
+                        $model->specializations()->sync($specializationIds);
+
+                        if ($model->wasRecentlyCreated) {
+                            $model->created_by = Auth::user()->profile->fullname;
+                            $model->save();
+                        }
                     }
                 }
 
-                $model = SchoolCampusCourseCurriculumSubjects::updateOrCreate(
-                    ['id' => $subject['id']],
-                    [
-                        'curriculum_id' => $curriculumGet->id,
-                        'semester_id' => $subject['semester_array']['id'],
-                        'year' => $subject['year'],
-                        'name' => Str::lower($subject['name']),
-                        'subject_code' => $subject['subjectCode'],
-                        'subject_class' => $subject['class_array']['name'],
-                        'specialization_id' => null,
-                        'requirement_type' => $subject['requirement_option']['id'],
-                        'unit' => $subject['unit'],
-                        'updated_by' => Auth::user()->profile->fullname,
-                    ]
-                );
-                $model->specializations()->sync($specializationIds);
-
-                if ($model->wasRecentlyCreated) {
-                    $model->created_by = Auth::user()->profile->fullname;
-                    $model->save();
-                }
+            });
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23505' && str_contains($e->getMessage(), 'curriculum_subjects_active_code_unique')) {
+                throw ValidationException::withMessages([
+                    'multi' => 'A subject code already exists in this curriculum, year level, and semester. Reload the curriculum and assign specializations on the existing subject row.',
+                ]);
             }
+            throw $e;
         }
 
         if ($user->role->name == 'School Coordinator') {

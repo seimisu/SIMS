@@ -295,9 +295,9 @@
                                     <TextInput v-model="specialization.name" label="Name" placeholder="e.g. Web Development" />
                                     <TextInput v-model="specialization.code" label="Code" placeholder="e.g. WEB" />
                                     <TextInput v-model="specialization.starts_at_year" type="number" min="1" :max="courseForm.years" label="Starts at year" />
-                                    <DefaultButton :icon="IconX" severity="danger" text tooltip="Remove specialization" @click="courseForm.specializations.splice(index, 1)" />
+                                    <DefaultButton type="button" :icon="IconX" severity="danger" text tooltip="Remove specialization" @click="courseForm.specializations.splice(index, 1)" />
                                 </div>
-                                <DefaultButton label="Add specialization" :icon="IconPlus" severity="secondary" outlined @click="courseForm.specializations.push({ id: null, name: null, code: null, starts_at_year: 1 })" />
+                                <DefaultButton type="button" label="Add specialization" :icon="IconPlus" severity="secondary" outlined @click="courseForm.specializations.push({ id: null, name: null, code: null, starts_at_year: 1 })" />
                             </div>
                         </template>
                     </ToolbarModule>
@@ -784,7 +784,7 @@
                             </span>
                         </Tab>
                         <div class="flex items-end">
-                            <DefaultButton
+                            <DefaultButton type="button"
                                 v-if="canManageSchools"
                                 size="small"
                                 rounded
@@ -816,7 +816,7 @@
                                         <TextInput v-model="curItem.elective_limit" type="number" min="0" placeholder="No limit" :disabled="!canManageSchools" />
                                     </div>
                                 </div>
-                                <DefaultButton
+                                <DefaultButton type="button"
                                     v-if="canManageSchools && curItem.id"
                                     label="Make template"
                                     size="small"
@@ -832,7 +832,7 @@
                                             <SelectInput v-model="templateForm.select" :options="page.props?.templateOptions" clearable placeholder="Select" />
                                         </div>
                                     </div>
-                                    <DefaultButton
+                                    <DefaultButton type="button"
                                         v-if="canManageSchools"
                                         size="small"
                                         :disabled="loading.paste"
@@ -842,8 +842,8 @@
                                     />
                                 </template>
                                 <div class="flex-1"></div>
-                                <DefaultButton v-if="canManageSchools" label="Save changes" size="small" :icon="IconCheck" :loading="curriculumForm.processing" @click="submitCurriculum" />
-                                <DefaultButton
+                                <DefaultButton type="button" v-if="canManageSchools" label="Save changes" size="small" :icon="IconCheck" :loading="curriculumForm.processing" @click="submitCurriculum" />
+                                <DefaultButton type="button"
                                     v-if="canManageSchools"
                                     label="Delete curriculum"
                                     size="small"
@@ -1169,7 +1169,7 @@
                                                                 <div
                                                                     class="order-last w-auto pt-5 gap-1 justify-start flex items-end h-full"
                                                                 >
-                                                                    <DefaultButton
+                                                                    <DefaultButton type="button"
                                                                         v-if="canManageSchools"
                                                                         size="small"
                                                                         rounded
@@ -1202,7 +1202,7 @@
                                                                         tooltip="Unlock to edit"
                                                                     />
 
-                                                                    <DefaultButton
+                                                                    <DefaultButton type="button"
                                                                         v-if="canManageSchools"
                                                                         size="small"
                                                                         rounded
@@ -1244,7 +1244,7 @@
                                                         <Divider
                                                             type="dashed"
                                                         ></Divider>
-                                                        <DefaultButton
+                                                        <DefaultButton type="button"
                                                             v-if="canManageSchools"
                                                             size="small"
                                                             :icon="IconPlus"
@@ -1274,7 +1274,7 @@
                         <div class="text-sm font-semibold">No curriculum configured</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">This program does not currently have a curriculum.</div>
                     </div>
-                    <DefaultButton v-if="canManageSchools" label="Add curriculum" size="small" :icon="IconPlus" @click="addCurriculum" />
+                    <DefaultButton type="button" v-if="canManageSchools" label="Add curriculum" size="small" :icon="IconPlus" @click="addCurriculum" />
                 </div>
             </div>
         </template>
@@ -1908,7 +1908,7 @@ const UpdateDetailsForm = () => {
 };
 
 const submitCurriculum = () => {
-    if (!canManageSchools.value) return;
+    if (!canManageSchools.value || curriculumForm.processing) return;
 
     curriculumForm.post(route("campus.curriculum.store"), {
         onSuccess: () => {

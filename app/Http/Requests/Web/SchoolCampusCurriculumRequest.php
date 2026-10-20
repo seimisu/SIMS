@@ -78,6 +78,43 @@ class SchoolCampusCurriculumRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            foreach ($this->input('multi', []) as $index => $curriculum) {
+                $subjectKeys = [];
+                foreach ($curriculum['subjects'] ?? [] as $subjectIndex => $subject) {
+                    $code = Str::lower(trim((string) ($subject['subjectCode'] ?? '')));
+                    $semesterId = $subject['semester_array']['id'] ?? null;
+                    $year = (string) ($subject['year'] ?? '');
+                    $key = json_encode([$semesterId, $year, $code]);
+                    $field = "multi.{$index}.subjects.{$subjectIndex}.subjectCode";
+                    $message = 'This subject code already exists in this curriculum, year level, and semester. Select all applicable specializations on one subject row.';
+
+                    if (isset($subjectKeys[$key])) {
+                        $validator->errors()->add($field, $message);
+
+                        continue;
+                    }
+                    $subjectKeys[$key] = true;
+
+                    if (! empty($curriculum['id'])) {
+                        $exists = DB::table('school_campus_course_curriculum_subjects')
+                            ->where('curriculum_id', $curriculum['id'])
+                            ->where('semester_id', $semesterId)
+                            ->whereRaw("COALESCE(year::text, '') = ?", [$year])
+                            ->whereRaw('LOWER(BTRIM(subject_code)) = ?', [$code])
+                            ->where('is_delete', false)
+                            ->when($subject['id'] ?? null, fn ($query, $id) => $query->where('id', '!=', $id))
+                            ->exists();
+                        if ($exists) {
+                            $validator->errors()->add($field, $message);
+                        }
+                    }
+                }
+            }
+
             $seen = [];
 
             foreach ($this->input('multi', []) as $index => $curriculum) {
