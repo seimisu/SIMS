@@ -48,17 +48,17 @@ class SchoolController extends Controller
 
         return Inertia::render('Web/schoolPage', [
             // table shool
-            'universities' => $ref->getSchools('table', $request->input('search')),
+            'universities' => fn () => $ref->getSchools('table', $request->input('search')),
             // option ref
-            'classOption' => $ref->getRefs('option', null, null, 'Class'),
-            'classificationOption' => $ref->getRefs('option', null, null, 'Term Type'),
-            'agencyOption' => $ref->getAgencies(false),
-            'gradingOption' => collect($ref->getRefs('option', null, null, 'Grading System'))
+            'classOption' => fn () => $ref->getRefs('option', null, null, 'Class'),
+            'classificationOption' => fn () => $ref->getRefs('option', null, null, 'Term Type'),
+            'agencyOption' => fn () => $ref->getAgencies(false),
+            'gradingOption' => fn () => collect($ref->getRefs('option', null, null, 'Grading System'))
                 ->filter(fn ($option) => in_array($option['name'] ?? null, GradingSystem::SUPPORTED, true))
                 ->values(),
-            'courseOption' => $ref->getCourses('option'),
-            'subClassOption' => $ref->getRefs('option', null, 'Subject', null),
-            'semesterOption' => request('semesterType')
+            'courseOption' => fn () => $ref->getCourses('option'),
+            'subClassOption' => fn () => $ref->getRefs('option', null, 'Subject', null),
+            'semesterOption' => fn () => request('semesterType')
                 ? $ref->getRefs('option', null, null, request('semesterType'))
                 : null,
             // search

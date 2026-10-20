@@ -10,6 +10,8 @@ use App\Services\Academic\CampusAcademicPeriodService;
 use App\Support\SystemPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class SchoolCampusSemesterController extends Controller
 {
@@ -37,10 +39,39 @@ class SchoolCampusSemesterController extends Controller
         CampusAcademicPeriodService $periods,
         SystemPermissions $permissions
     ) {
-        abort_unless($type === 'status', 404);
-        $data = $request->validate(['status' => ['required', 'in:open,closed']]);
+        abort_unless(in_array($type, ['status', 'deadline', 'edit'], true), 404);
         $period = SchoolCampusSemesters::whereHas('campus', fn ($campus) => $campus->notDeleted())->with('campus.address')->findOrFail($id);
         $this->authorizeCampus($period->campus, $permissions);
+        if ($type === 'edit') {
+            $data = $request->validate([
+                'submissionDate' => ['required', 'date_format:Y-m-d'],
+                'status' => ['required', Rule::in($period->status === 'draft' ? ['draft', 'open', 'closed'] : ['open', 'closed'])],
+            ]);
+            DB::transaction(function () use ($period, $periods, $data) {
+                $period->update(['submission_date' => $data['submissionDate']]);
+                if ($period->status !== $data['status']) {
+                    $periods->changeStatus($period, $data['status'], Auth::id());
+                }
+            });
+
+            return redirect()->back()->with('flash', [
+                'status' => 'success',
+                'title' => 'Academic Period Updated',
+                'message' => 'The submission deadline and period status were saved successfully.',
+            ]);
+        }
+        $data = $type === 'deadline'
+            ? $request->validate(['submissionDate' => ['required', 'date_format:Y-m-d']])
+            : $request->validate(['status' => ['required', 'in:open,closed']]);
+        if ($type === 'deadline') {
+            $period->update(['submission_date' => $data['submissionDate']]);
+
+            return redirect()->back()->with('flash', [
+                'status' => 'success',
+                'title' => 'Submission Deadline Updated',
+                'message' => 'The academic period submission deadline was updated successfully.',
+            ]);
+        }
         $periods->changeStatus($period, $data['status'], Auth::id());
 
         return redirect()->back()->with('flash', [

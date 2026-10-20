@@ -178,6 +178,7 @@ import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.
 import AutoCompleteInput from "../../Components/inputs/AutoCompleteInput.vue";
 import { computed, ref, watch } from "vue";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
+import { usePermissions } from "../../Composables/usePermissions";
 import {
     IconCheck,
     IconLock,
@@ -190,6 +191,7 @@ import {
 } from "@tabler/icons-vue";
 
 const page = usePage();
+const { can } = usePermissions();
 const searchInput = ref(null);
 const timerBounce = ref(null);
 const selectedRow = ref(null);
@@ -252,12 +254,12 @@ const toggleModal = (res) => {
 };
 
 const deleteRow = (id) => {
-    if (page.props.user?.role_array["name"] != "Administrator") {
+    if (!can("courses.delete")) {
         toastRef.value.show({
             status: "warn",
             title: "Access Denied",
             message:
-                "You are not authorized to view or delete course information.",
+                "You are not authorized to delete course information.",
         });
         return;
     }

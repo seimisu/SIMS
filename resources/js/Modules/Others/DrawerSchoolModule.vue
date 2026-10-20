@@ -675,7 +675,7 @@
                 <div v-if="page.props?.schoolDetail?.semesters?.length" class="flex flex-col gap-2">
                     <div class="text-xs font-semibold uppercase text-slate-500 dark:text-gray-400">Configured periods</div>
                     <div
-                        v-for="period in page.props.schoolDetail.semesters"
+                        v-for="period in sortedPeriods"
                         :key="period.id"
                         class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2 dark:border-gray-700"
                     >
@@ -690,20 +690,12 @@
                         <div class="flex items-center gap-2">
                             <span :class="periodStatusClass(period.status)">{{ period.status || "draft" }}</span>
                             <DefaultButton
-                                v-if="period.status !== 'open'"
+                                v-if="can('schools.update')"
+                                type="button"
                                 size="small"
-                                label="Open"
-                                severity="success"
+                                label="Edit"
                                 outlined
-                                @click="changePeriodStatus(period, 'open')"
-                            />
-                            <DefaultButton
-                                v-else
-                                size="small"
-                                label="Close"
-                                severity="secondary"
-                                outlined
-                                @click="changePeriodStatus(period, 'closed')"
+                                @click="editPeriodDeadline(period)"
                             />
                         </div>
                     </div>
@@ -738,6 +730,24 @@
                 message-type="error"
                 :message="semesterForm.errors"
             />
+        </template>
+    </DefaultDialog>
+    <DefaultDialog
+        v-model:visible="deadlineDialog"
+        :icon="IconCalendarWeek"
+        title="Edit Academic Period"
+        :description="deadlinePeriodLabel"
+        button-label="Save changes"
+        :loading="deadlineForm.processing"
+        @submit-form="savePeriodDeadline"
+    >
+        <template #forms>
+            <div class="px-3 py-5">
+                <DatePickerInput v-model="deadlineForm.submissionDate" label="Submission Deadline" />
+                <SelectInput v-model="deadlineForm.status" label="Status" :options="editPeriodStatusOptions" />
+                <p class="mt-2 text-xs text-slate-500">Opening this period closes any other open period for this campus.</p>
+                <DefaultMessages v-if="deadlineForm.hasErrors" message-type="error" :message="deadlineForm.errors" />
+            </div>
         </template>
     </DefaultDialog>
     <DefaultDialog
@@ -1352,7 +1362,7 @@ const selectedRow = ref(null);
 const menu = ref(null);
 const menuGrade = ref(null);
 const hideRemoveButton = ref("create");
-const { canAny } = usePermissions();
+const { can, canAny } = usePermissions();
 const canManageSchools = computed(() =>
     canAny([
         "schools.create",
@@ -1477,6 +1487,57 @@ const semesterForm = useForm({
     submissionDate: null,
     status: { id: "draft", name: "Draft" },
 });
+const sortedPeriods = computed(() => {
+    const termOrder = (name = "") => {
+        const normalized = name.toLowerCase();
+        if (/summer|mid.?year/.test(normalized)) return 99;
+        const ordinal = normalized.match(/\d+/);
+        if (ordinal) return Number(ordinal[0]);
+        return ["first", "second", "third", "fourth"].findIndex((word) => normalized.includes(word)) + 1 || 98;
+    };
+    return [...(page.props.schoolDetail?.semesters ?? [])].sort((a, b) =>
+        String(b.school_year ?? "").localeCompare(String(a.school_year ?? ""))
+        || termOrder(a.semester_array?.name) - termOrder(b.semester_array?.name)
+        || String(a.semester_array?.name ?? "").localeCompare(String(b.semester_array?.name ?? ""), undefined, { numeric: true })
+        || a.id - b.id,
+    );
+});
+const deadlineDialog = ref(false);
+const deadlinePeriodId = ref(null);
+const deadlinePeriodLabel = ref("");
+const deadlineForm = useForm({ submissionDate: null, status: null });
+const editPeriodStatusOptions = ref([]);
+const editPeriodDeadline = (period) => {
+    semesterForm.clearErrors();
+    deadlineForm.resetAndClearErrors();
+    deadlinePeriodId.value = period.id;
+    editPeriodStatusOptions.value = [
+        ...(period.status === "draft" ? [{ id: "draft", name: "Draft" }] : []),
+        { id: "open", name: "Open" },
+        { id: "closed", name: "Closed" },
+    ];
+    deadlineForm.status = editPeriodStatusOptions.value.find((option) => option.id === period.status) ?? null;
+    deadlinePeriodLabel.value = `${period.semester_array?.name ?? "Semester"} / AY ${period.school_year}`;
+    const date = period.submission_date?.slice(0, 10);
+    deadlineForm.submissionDate = date ? new Date(`${date}T00:00:00`) : null;
+    deadlineDialog.value = true;
+};
+const savePeriodDeadline = () => {
+    if (!can("schools.update")) return;
+    deadlineForm.transform(({ submissionDate, status }) => ({
+        status: status?.id ?? status,
+        submissionDate: submissionDate instanceof Date
+            ? `${submissionDate.getFullYear()}-${String(submissionDate.getMonth() + 1).padStart(2, "0")}-${String(submissionDate.getDate()).padStart(2, "0")}`
+            : null,
+    })).put(route("campus.semester.update", { id: deadlinePeriodId.value, type: "edit" }), {
+        only: ["schoolDetail", "flash"],
+        preserveScroll: true,
+        onSuccess: () => {
+            deadlineDialog.value = false;
+            toastRef.value.show(page.props.flash);
+        },
+    });
+};
 const periodStatusOptions = [
     { id: "draft", name: "Draft" },
     { id: "open", name: "Open immediately" },
@@ -2127,14 +2188,4 @@ watch(
     },
 );
 
-const changePeriodStatus = (period, status) => {
-    router.put(
-        route("campus.semester.update", { id: period.id, type: "status" }),
-        { status },
-        {
-            preserveScroll: true,
-            onSuccess: () => toastRef.value.show(page.props.flash),
-        },
-    );
-};
 </script>
