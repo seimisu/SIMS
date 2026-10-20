@@ -10,7 +10,6 @@ use App\Models\ActivityLogs;
 use App\Models\ListPrograms;
 use App\Models\ListReferences;
 use App\Models\ListStatuses;
-use App\Support\ScholarStatuses;
 use App\Models\LocationBarangays;
 use App\Models\LocationCity;
 use App\Models\LocationProvinces;
@@ -18,7 +17,6 @@ use App\Models\LocationRegions;
 use App\Models\ScholarProfiles;
 use App\Models\Scholars;
 use App\Models\ScholarSchoolGrades;
-use App\Models\ScholarSchoolInfos;
 use App\Models\ScholarTerm;
 use App\Models\ScholarUploadedFiles;
 use App\Models\ScholarUploadTemp;
@@ -29,8 +27,10 @@ use App\Models\User;
 use App\Notifications\ScholarUploadedNotification;
 use App\Notifications\ValidatedFilesNotification;
 use App\References\LocationClass;
+use App\Services\Academic\AcademicRecordEditRules;
 use App\Services\Academic\CampusGradeResolver;
 use App\Support\IdempotencyGuard;
+use App\Support\ScholarStatuses;
 use App\Support\SystemPermissions;
 use App\Support\UploadedFileHash;
 use Carbon\Carbon;
@@ -493,26 +493,18 @@ class ScholarReviewController extends Controller
         }
 
         $data = $request->validate([
-            'school' => ['nullable', 'array'],
-            'school.id' => ['nullable', 'integer'],
-            'course' => ['nullable', 'array'],
-            'course.id' => ['nullable', 'integer'],
-            'level' => ['nullable', 'array'],
-            'level.id' => ['nullable', 'integer'],
-            'term' => ['nullable', 'array'],
-            'term.id' => ['nullable', 'integer'],
-            'academic_year' => ['nullable', 'string', 'max:20'],
-            'scholarship_status' => ['nullable'],
+            'record_version' => ['required', 'string'],
+            'scholarship_status' => ['sometimes', 'required', 'string'],
             'subjects' => ['required', 'array'],
             'deleted_subjects' => ['nullable', 'array'],
-            'deleted_subjects.*' => ['integer'],
-            'subjects.*.id' => ['nullable', 'integer'],
+            'deleted_subjects.*' => ['integer', 'distinct'],
+            'subjects.*.id' => ['nullable', 'integer', 'distinct'],
             'subjects.*.input_grade' => ['nullable'],
             'subjects.*.is_incomplete' => ['nullable', 'boolean'],
             'subjects.*.is_drop' => ['nullable', 'boolean'],
             'subjects.*.is_withdrawn' => ['nullable', 'boolean'],
             'subjects.*.subject' => ['required', 'array'],
-            'subjects.*.subject.id' => ['required', 'integer'],
+            'subjects.*.subject.id' => ['required', 'integer', 'distinct'],
         ]);
 
         DB::beginTransaction();
@@ -526,8 +518,7 @@ class ScholarReviewController extends Controller
                 'scholar',
                 'subjects.subject',
                 'subjects.grade',
-            ])->findOrFail($termRecordId);
-            $previousAcademicLog = $this->academicRecordLogSnapshot($termRecord);
+            ])->lockForUpdate()->findOrFail($termRecordId);
 
             if ($permissions->shouldScopeToRegion(Auth::user())) {
                 $regionCode = $termRecord->schoolInfo?->campus?->address?->region_code;
@@ -536,28 +527,62 @@ class ScholarReviewController extends Controller
                 }
             }
 
-            if (! empty($data['school']['id']) || ! empty($data['course']['id'])) {
-                $schoolInfo = ScholarSchoolInfos::updateOrCreate(
-                    [
-                        'id' => $termRecord->scholar_school_id,
-                        'scholar_id' => $termRecord->scholar_id,
-                    ],
-                    [
-                        'scholar_id' => $termRecord->scholar_id,
-                        'campus_id' => $data['school']['id'] ?? $termRecord->schoolInfo?->campus_id,
-                        'campus_course_id' => $data['course']['id'] ?? $termRecord->schoolInfo?->campus_course_id,
-                    ]
-                );
-
-                $termRecord->scholar_school_id = $schoolInfo->id;
+            if ($permissions->isSchoolCoordinator(Auth::user())) {
+                abort_unless((int) $termRecord->schoolInfo?->campus_id === (int) Auth::user()->school_id, 403);
             }
 
-            $termRecord->fill([
-                'term_id' => $data['term']['id'] ?? $termRecord->term_id,
-                'level_id' => $data['level']['id'] ?? $termRecord->level_id,
-                'academic_year' => $data['academic_year'] ?? $termRecord->academic_year,
-            ])->save();
-            $termRecord->load('schoolInfo');
+            $editRules = app(AcademicRecordEditRules::class);
+            if (! hash_equals($editRules->version($termRecord), $data['record_version'])) {
+                throw ValidationException::withMessages(['subjects' => 'This academic record changed while you were editing. Reload it before saving.']);
+            }
+            $previousAcademicLog = $this->academicRecordLogSnapshot($termRecord);
+            $previousStatus = $previousAcademicLog['scholarship_status'];
+            $normalizedStatus = array_key_exists('scholarship_status', $data)
+                ? Str::upper(trim($data['scholarship_status'])) : $previousStatus;
+            $statusChanged = $normalizedStatus !== $previousStatus;
+            if ($statusChanged) {
+                $batches = $editRules->matchingBatches($termRecord)->lockForUpdate()->get();
+                $access = $editRules->scholarshipAccess($batches);
+                if (! $access['editable']) {
+                    throw ValidationException::withMessages(['scholarship_status' => $access['reason']]);
+                }
+                $validStanding = ListStatuses::where('type', 'standing')->where('is_active', true)
+                    ->where('is_delete', false)->whereRaw('UPPER(name) = ?', [$normalizedStatus])->exists();
+                if (! $validStanding) {
+                    throw ValidationException::withMessages(['scholarship_status' => 'Select a valid scholarship status.']);
+                }
+            }
+
+            $currentRows = $termRecord->subjects->keyBy('id');
+            $deletedIds = collect($data['deleted_subjects'] ?? []);
+            $submittedIds = collect($data['subjects'])->pluck('id')->filter();
+            if ($deletedIds->diff($currentRows->keys())->isNotEmpty()
+                || $submittedIds->diff($currentRows->keys())->isNotEmpty()
+                || $deletedIds->intersect($submittedIds)->isNotEmpty()
+                || $currentRows->keys()->diff($deletedIds->merge($submittedIds))->isNotEmpty()) {
+                throw ValidationException::withMessages(['subjects' => 'The subject rows do not match this academic record. Reload it before saving.']);
+            }
+            $eligible = $editRules->eligibleSubjects($termRecord)->get()->keyBy('id');
+            $seenCodes = [];
+            foreach ($data['subjects'] as $index => $row) {
+                $subjectId = $row['subject']['id'];
+                $original = $currentRows->get($row['id'] ?? null);
+                $unchangedSubject = $original && (int) $original->subject_id === (int) $subjectId;
+                if (! $unchangedSubject && ! $eligible->has($subjectId)) {
+                    throw ValidationException::withMessages(["subjects.{$index}.subject" => 'Select a subject from the curriculum and specialization recorded for this term.']);
+                }
+                $subject = $eligible->get($subjectId) ?? $original?->subject;
+                $code = Str::lower(trim($subject?->subject_code ?? ''));
+                $key = $code !== '' ? $code : 'id:'.$subjectId;
+                if (isset($seenCodes[$key])) {
+                    throw ValidationException::withMessages(["subjects.{$index}.subject" => 'This subject is already included in the academic term.']);
+                }
+                $seenCodes[$key] = true;
+                if (empty($row['is_incomplete']) && empty($row['is_drop']) && empty($row['is_withdrawn'])
+                    && ($row['input_grade'] ?? '') === '') {
+                    throw ValidationException::withMessages(["subjects.{$index}.input_grade" => 'Enter a grade or select Incomplete, Dropped, or Withdrawn.']);
+                }
+            }
             $campusId = $termRecord->schoolInfo?->campus_id;
 
             if (! $campusId) {
@@ -634,34 +659,13 @@ class ScholarReviewController extends Controller
                 }
             }
 
-            if (array_key_exists('scholarship_status', $data)) {
-                $status = is_array($data['scholarship_status'])
-                    ? ($data['scholarship_status']['name'] ?? $data['scholarship_status']['id'] ?? null)
-                    : $data['scholarship_status'];
-                $normalizedStatus = $status ? Str::upper($status) : null;
-
-                DB::connection('scholars')
-                    ->table('scholar_processes')
-                    ->updateOrInsert(
-                        ['term_record_id' => $termRecord->id],
-                        [
-                            'scholar_id' => $termRecord->scholar_id,
-                            'scholarship_status' => $normalizedStatus,
-                            'submission' => 'APPROVED',
-                            'payroll' => 'NOT SUBMITTED',
-                            'is_end' => false,
-                            'updated_at' => now(),
-                            'updated_by' => Auth::user()?->profile?->fullname,
-                        ]
-                    );
-
-                if ($normalizedStatus === 'TERMINATED') {
-                    Scholars::whereKey($termRecord->scholar_id)->update([
-                        ...ScholarStatuses::attributes('terminated'),
-                        'updated_at' => now(),
-                    ]);
-                }
+            if ($statusChanged && $normalizedStatus === 'TERMINATED') {
+                Scholars::whereKey($termRecord->scholar_id)->update([
+                    ...ScholarStatuses::attributes('terminated'),
+                    'updated_at' => now(),
+                ]);
             }
+            $termRecord->touch();
 
             $updatedAcademicLog = $this->academicRecordLogSnapshot(
                 $termRecord->fresh([
@@ -674,6 +678,8 @@ class ScholarReviewController extends Controller
                     'subjects.grade',
                 ])
             );
+
+            $updatedAcademicLog['scholarship_status'] = $normalizedStatus;
 
             $academicLogChanges = $this->academicRecordLogChanges(
                 $previousAcademicLog,
@@ -690,6 +696,22 @@ class ScholarReviewController extends Controller
                 ]);
             }
 
+            // Process data lives on another connection: only write an explicitly allowed
+            // standing change, after grade validation and logging have succeeded.
+            if ($statusChanged) {
+                $batches->first()->recipients()->where('scholar_id', $termRecord->scholar_id)
+                    ->update(['scholarship_status' => $normalizedStatus]);
+                $updated = DB::connection('scholars')->table('scholar_processes')
+                    ->where('term_record_id', $termRecord->id)
+                    ->update([
+                        'scholarship_status' => $normalizedStatus,
+                        'updated_at' => now(),
+                        'updated_by' => Auth::user()?->profile?->fullname,
+                    ]);
+                if (! $updated) {
+                    throw ValidationException::withMessages(['scholarship_status' => 'The academic submission process is missing. Reload the record and contact an administrator.']);
+                }
+            }
             DB::commit();
 
             return redirect()->back()->with('flash', [
@@ -697,12 +719,10 @@ class ScholarReviewController extends Controller
                 'title' => 'Academic Record Updated!',
                 'message' => 'The academic record has been successfully updated.',
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
-            throw ValidationException::withMessages([
-                'subjects' => ['There was an error updating the grades: '.$e->getMessage()],
-            ]);
+            throw $e;
         }
     }
 
@@ -844,6 +864,10 @@ class ScholarReviewController extends Controller
             }
 
             $grade = ScholarSchoolGrades::with('termRecord.schoolInfo.campus.address')->findOrFail($id);
+
+            if ($permissions->isSchoolCoordinator(Auth::user())) {
+                abort_unless((int) $grade->termRecord?->schoolInfo?->campus_id === (int) Auth::user()->school_id, 403);
+            }
 
             if ($permissions->shouldScopeToRegion(Auth::user())) {
                 $regionCode = $grade->termRecord?->schoolInfo?->campus?->address?->region_code;

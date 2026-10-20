@@ -1221,75 +1221,24 @@
                                                     v-else
                                                     class="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
                                                 >
-                                                    <SelectInput
-                                                        v-model="
-                                                            academicRecordForm.school
-                                                        "
-                                                        label="School"
-                                                        :options="
-                                                            page.props
-                                                                ?.schoolOptions ??
-                                                            []
-                                                        "
-                                                        filter
-                                                        @change="
-                                                            renderAcademicCourse
-                                                        "
-                                                    />
-                                                    <SelectInput
-                                                        v-model="
-                                                            academicRecordForm.course
-                                                        "
-                                                        label="Course"
-                                                        :options="
-                                                            page.props
-                                                                ?.courseOptions ??
-                                                            []
-                                                        "
-                                                        filter
-                                                    />
-                                                    <SelectInput
-                                                        v-model="
-                                                            academicRecordForm.level
-                                                        "
-                                                        label="Year Level"
-                                                        :options="
-                                                            page.props
-                                                                ?.yearOptions ??
-                                                            []
-                                                        "
-                                                        filter
-                                                    />
-                                                    <SelectInput
-                                                        v-model="
-                                                            academicRecordForm.term
-                                                        "
-                                                        label="Semester"
-                                                        :options="
-                                                            page.props
-                                                                ?.termOptions ??
-                                                            []
-                                                        "
-                                                        filter
-                                                    />
-                                                    <TextInput
-                                                        v-model="
-                                                            academicRecordForm.academic_year
-                                                        "
-                                                        label="Academic Year"
-                                                    />
-                                                    <SelectInput
-                                                        v-model="
-                                                            academicRecordForm.scholarship_status
-                                                        "
-                                                        label="Scholarship Status"
-                                                        :options="
-                                                            page.props
-                                                                ?.standingOptions ??
-                                                            []
-                                                        "
-                                                        filter
-                                                    />
+                                                    <div><div class="text-xs text-gray-500">School</div><div>{{ termRecord.schoolInput?.name || "Not recorded" }}</div></div>
+                                                    <div><div class="text-xs text-gray-500">Course</div><div>{{ termRecord.courseInput?.name || "Not recorded" }}</div></div>
+                                                    <div><div class="text-xs text-gray-500">Semester / Academic Year</div><div>{{ termRecord.termInput?.name }} / {{ termRecord.academic_year }}</div></div>
+                                                    <div>
+                                                        <SelectInput
+                                                            v-model="academicRecordForm.scholarship_status"
+                                                            label="Scholarship Status"
+                                                            :options="page.props?.standingOptions ?? []"
+                                                            :disable="!termRecord.scholarshipEdit?.editable || academicRecordForm.processing"
+                                                            filter
+                                                        />
+                                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ termRecord.scholarshipEdit?.editable ? "Editable while the scholar payroll batch is Draft or Returned." : termRecord.scholarshipEdit?.reason }}
+                                                        </p>
+                                                        <p v-if="termRecord.scholarshipEdit?.batchName" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                            Payroll: {{ termRecord.scholarshipEdit.batchName }}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                                 <div
                                                     v-if="
@@ -1711,7 +1660,7 @@
                                                             colspan="7"
                                                             class="px-3 py-2"
                                                         >
-                                                            <DefaultButton
+                                                            <DefaultButton type="button"
                                                                 :icon="
                                                                     TablerIcons.IconScriptPlus
                                                                 "
@@ -3145,11 +3094,7 @@ const validateGradeForm = useForm({
 
 const academicRecordForm = useForm({
     termRecordId: null,
-    school: null,
-    course: null,
-    level: null,
-    term: null,
-    academic_year: null,
+    record_version: null,
     scholarship_status: null,
     subjects: [],
     deleted_subjects: [],
@@ -3221,8 +3166,11 @@ const isPrerequisiteSubject = (subject) => {
     return text.includes("prerequisite") || text.includes("pre-requisite");
 };
 
+const editingAcademicTerm = computed(() => (page.props?.details?.termGrades ?? [])
+    .find((term) => term.id === academicRecordForm.termRecordId));
+
 const academicSubjectOptions = computed(() =>
-    (page.props?.subjectOptions ?? [])
+    (editingAcademicTerm.value?.subjectOptions ?? [])
         .filter((subject) => {
             const subjectClass = String(
                 subject?.class ?? subject?.subject_class ?? "academic",
@@ -3248,7 +3196,11 @@ const academicSubjectOptions = computed(() =>
 
 const academicSubjectOptionsForRow = (index) => {
     const selected = academicRecordForm.subjects[index]?.subject;
-    const options = academicSubjectOptions.value;
+    const otherRows = academicRecordForm.subjects.filter((_, rowIndex) => rowIndex !== index);
+    const usedIds = new Set(otherRows.map((row) => row.subject?.id).filter(Boolean));
+    const usedCodes = new Set(otherRows.map((row) => String(row.subject?.code ?? row.subject?.subject_code ?? "").trim().toLowerCase()).filter(Boolean));
+    const options = academicSubjectOptions.value.filter((option) => !usedIds.has(option.id)
+        && !usedCodes.has(String(option.code ?? option.subject_code ?? "").trim().toLowerCase()));
 
     if (
         !selected?.id ||
@@ -3650,13 +3602,7 @@ const editAcademicRecord = (termRecord) => {
     academicRecordForm.clearErrors();
     academicRecordForm.termRecordId = termRecord.id;
     academicRecordForm.deleted_subjects = [];
-    academicRecordForm.school =
-        termRecord.schoolInput ?? page.props?.details?.schoolInput ?? null;
-    academicRecordForm.course =
-        termRecord.courseInput ?? page.props?.details?.courseInput ?? null;
-    academicRecordForm.level = termRecord.levelInput ?? null;
-    academicRecordForm.term = termRecord.termInput ?? null;
-    academicRecordForm.academic_year = termRecord.academic_year ?? null;
+    academicRecordForm.record_version = termRecord.recordVersion;
     academicRecordForm.scholarship_status =
         page.props?.standingOptions?.find((status) => {
             const currentStatus = String(
@@ -3756,25 +3702,15 @@ const removeAcademicSubject = (index) => {
     }
 };
 
-const renderAcademicCourse = (event) => {
-    const school = event?.value ?? academicRecordForm.school;
-
-    if (!school?.name) return;
-
-    academicRecordForm.course = null;
-    router.reload({
-        only: ["courseOptions"],
-        data: { campus: school.name },
-        preserveState: true,
-        preserveScroll: true,
-        showProgress: true,
-    });
-};
-
 const updateAcademicRecord = () => {
-    if (!canUpdateScholars.value || !academicRecordForm.termRecordId) return;
+    if (!canUpdateScholars.value || !academicRecordForm.termRecordId || academicRecordForm.processing) return;
 
-    academicRecordForm.post(
+    academicRecordForm.transform((data) => {
+        const { scholarship_status, ...grades } = data;
+        return editingAcademicTerm.value?.scholarshipEdit?.editable
+            ? { ...grades, scholarship_status: scholarship_status?.name ?? scholarship_status?.id ?? scholarship_status }
+            : grades;
+    }).post(
         route("scholar.grade-update", {
             id: academicRecordForm.termRecordId,
         }),
@@ -3791,17 +3727,7 @@ const updateAcademicRecord = () => {
                 if (page.props.flash?.status === "success") {
                     editBtn.value.academicRecord = false;
                     academicRecordForm.reset();
-                    router.reload({
-                        data: { id: page.props?.details?.id },
-                        only: [
-                            "details",
-                            "courseOptions",
-                            "curriculumOptions",
-                            "subjectOptions",
-                            "gradeOptions",
-                        ],
-                        preserveScroll: true,
-                    });
+
                 }
             },
             onError: (errors) => {
@@ -3819,7 +3745,7 @@ const updateAcademicRecord = () => {
 };
 
 const confirmAcademicRecordSave = () => {
-    if (!canUpdateScholars.value || !academicRecordForm.termRecordId) return;
+    if (!canUpdateScholars.value || !academicRecordForm.termRecordId || academicRecordForm.processing) return;
 
     confirm.require({
         group: "academic-record",

@@ -4,6 +4,7 @@ namespace App\Services\Scholar\Management;
 
 use App\Models\Scholars;
 use App\Models\StudentDocument;
+use App\Services\Academic\AcademicRecordEditRules;
 use App\Services\Payroll\PayrollMonthlyCreditService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
@@ -186,7 +187,7 @@ class ScholarManagementDetailsService
                     ->latest()
                     ->limit(1),
                 'termRecords' => fn ($q) => $q
-                    ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id', 'verification_status')
+                    ->select('id', 'scholar_id', 'term_id', 'level_id', 'academic_year', 'scholar_school_id', 'term_type_id', 'verification_status', 'specialization_id', 'updated_at')
                     ->where('verification_status', 'approved')
                     ->with([
                         'termType:id,name',
@@ -381,6 +382,19 @@ class ScholarManagementDetailsService
                     'average' => $totalUnits > 0 ? number_format($totalGradePoints / $totalUnits, 2, '.', '') : null,
                 ],
                 'scholarshipStatus' => $standings->get($term->id),
+                'recordVersion' => app(AcademicRecordEditRules::class)->version($term),
+                'scholarshipEdit' => app(AcademicRecordEditRules::class)->scholarshipAccess(
+                    app(AcademicRecordEditRules::class)->matchingBatches($term)->get()
+                ),
+                'subjectOptions' => app(AcademicRecordEditRules::class)->eligibleSubjects($term)
+                    ->get(['id', 'name', 'subject_code', 'unit', 'subject_class'])
+                    ->map(fn ($subject) => [
+                        'id' => $subject->id,
+                        'name' => Str::upper($subject->name),
+                        'code' => Str::upper($subject->subject_code),
+                        'unit' => $subject->unit,
+                        'class' => $subject->subject_class,
+                    ])->values(),
             ];
         });
     }
