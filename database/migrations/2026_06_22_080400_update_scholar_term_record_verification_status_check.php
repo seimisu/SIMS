@@ -11,27 +11,48 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('scholar_term_records')) {
+        if (! Schema::hasTable('scholar_term_records')) {
             return;
         }
 
-        DB::statement('ALTER TABLE scholar_term_records DROP CONSTRAINT IF EXISTS scholar_term_records_verification_status_check');
-        DB::statement("
-            ALTER TABLE scholar_term_records
-            ADD CONSTRAINT scholar_term_records_verification_status_check
-            CHECK (
-                verification_status IN (
-                    'pending',
-                    'submitted',
-                    'approved',
-                    'rejected',
-                    'draft_payroll',
-                    'submitted_payroll',
-                    'rejected_payroll',
-                    'approved_payroll'
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            DB::statement('ALTER TABLE scholar_term_records DROP CONSTRAINT IF EXISTS scholar_term_records_verification_status_check');
+            DB::statement("
+                ALTER TABLE scholar_term_records
+                ADD CONSTRAINT scholar_term_records_verification_status_check
+                CHECK (
+                    verification_status IN (
+                        'pending',
+                        'submitted',
+                        'approved',
+                        'rejected',
+                        'draft_payroll',
+                        'submitted_payroll',
+                        'rejected_payroll',
+                        'approved_payroll'
+                    )
                 )
-            )
-        ");
+            ");
+        } elseif (in_array($driver, ['mysql', 'mariadb'], true)) {
+            DB::statement("
+                ALTER TABLE scholar_term_records
+                ADD CONSTRAINT scholar_term_records_verification_status_check
+                CHECK (
+                    verification_status IN (
+                        'pending',
+                        'submitted',
+                        'approved',
+                        'rejected',
+                        'draft_payroll',
+                        'submitted_payroll',
+                        'rejected_payroll',
+                        'approved_payroll'
+                    )
+                )
+            ");
+        }
     }
 
     /**
@@ -39,22 +60,40 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (!Schema::hasTable('scholar_term_records')) {
+        if (! Schema::hasTable('scholar_term_records')) {
             return;
         }
 
-        DB::statement('ALTER TABLE scholar_term_records DROP CONSTRAINT IF EXISTS scholar_term_records_verification_status_check');
-        DB::statement("
-            ALTER TABLE scholar_term_records
-            ADD CONSTRAINT scholar_term_records_verification_status_check
-            CHECK (
-                verification_status IN (
-                    'pending',
-                    'submitted',
-                    'approved',
-                    'rejected'
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            DB::statement('ALTER TABLE scholar_term_records DROP CONSTRAINT IF EXISTS scholar_term_records_verification_status_check');
+            DB::statement("
+                ALTER TABLE scholar_term_records
+                ADD CONSTRAINT scholar_term_records_verification_status_check
+                CHECK (
+                    verification_status IN (
+                        'pending',
+                        'submitted',
+                        'approved',
+                        'rejected'
+                    )
                 )
-            )
-        ");
+            ");
+        } elseif (in_array($driver, ['mysql', 'mariadb'], true)) {
+            DB::statement('ALTER TABLE scholar_term_records DROP CHECK scholar_term_records_verification_status_check');
+            DB::statement("
+                ALTER TABLE scholar_term_records
+                ADD CONSTRAINT scholar_term_records_verification_status_check
+                CHECK (
+                    verification_status IN (
+                        'pending',
+                        'submitted',
+                        'approved',
+                        'rejected'
+                    )
+                )
+            ");
+        }
     }
 };

@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('geolocations', function (Blueprint $table) {
-            $table->dropColumn('parent_id'); // remove the parent_id column
+            $table->dropForeign(['parent_id']);
+            $table->dropIndex(['parent_id']);
+            $table->dropIndex(['parent_id', 'type']);
+            $table->dropColumn('parent_id');
         });
     }
 
@@ -22,7 +25,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('geolocations', function (Blueprint $table) {
-            //
+            $table->foreignId('parent_id')
+                ->nullable()
+                ->constrained('geolocations')
+                ->cascadeOnDelete();
+            $table->index('parent_id');
+            $table->index(['parent_id', 'type']);
         });
     }
 };

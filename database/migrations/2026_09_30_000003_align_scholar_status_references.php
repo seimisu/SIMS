@@ -28,6 +28,7 @@ return new class extends Migration
 
     public function up(): void
     {
+        $colorIds = DB::table('list_colors')->pluck('id')->all();
         $scholarStatusNames = array_column(self::SCHOLAR_STATUSES, 'name');
 
         DB::table('list_statuses')
@@ -42,7 +43,7 @@ return new class extends Migration
                 ['name' => $status['name'], 'type' => $type],
                 [
                     'icon' => $status['icon'],
-                    'color_id' => $status['color_id'],
+                    'color_id' => in_array($status['color_id'], $colorIds) ? $status['color_id'] : null,
                     'is_active' => true,
                     'is_delete' => false,
                     'updated_at' => now(),

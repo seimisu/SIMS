@@ -176,10 +176,6 @@ function onRowSelected(event) {
     display: block;
 }
 
-::v-deep(.p-datatable-header-cell) {
-    background-color: transparent !important;
-}
-
 :global(.dark .p-datatable),
 :global(.dark .p-datatable-table),
 :global(.dark .p-datatable-thead > tr > th),

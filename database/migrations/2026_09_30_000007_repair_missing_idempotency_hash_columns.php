@@ -32,6 +32,7 @@ return new class extends Migration
             Schema::table($tableName, function (Blueprint $table) use ($tableName, $columns) {
                 foreach ($columns as $column) {
                     if (Schema::hasColumn($tableName, $column)) {
+                        $table->dropIndex([$column]);
                         $table->dropColumn($column);
                     }
                 }

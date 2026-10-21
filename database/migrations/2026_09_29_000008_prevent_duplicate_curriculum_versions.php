@@ -9,7 +9,7 @@ return new class extends Migration
     {
         DB::statement('
             CREATE UNIQUE INDEX school_curriculums_active_version_unique
-            ON school_campus_course_curriculums (campus_course_id, LOWER(BTRIM(years)))
+            ON school_campus_course_curriculums (campus_course_id, LOWER(TRIM(years)))
             WHERE is_delete = false
         ');
     }

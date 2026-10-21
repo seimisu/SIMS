@@ -22,14 +22,18 @@ return new class extends Migration
 
         DB::statement("
             UPDATE batches
-            SET status = COALESCE(latest.status, 'draft')
-            FROM (
-                SELECT DISTINCT ON (batch_id) batch_id, status
+            SET status = COALESCE((
+                SELECT batches_logs.status
                 FROM batches_logs
-                WHERE batch_id IS NOT NULL
-                ORDER BY batch_id, created_at DESC, id DESC
-            ) latest
-            WHERE latest.batch_id = batches.id
+                WHERE batches_logs.batch_id = batches.id
+                ORDER BY batches_logs.created_at DESC, batches_logs.id DESC
+                LIMIT 1
+            ), 'draft')
+            WHERE EXISTS (
+                SELECT 1
+                FROM batches_logs
+                WHERE batches_logs.batch_id = batches.id
+            )
         ");
 
         DB::statement('CREATE INDEX IF NOT EXISTS idx_batches_accepting_lookup ON batches (region, school_year, term_id, status)');
