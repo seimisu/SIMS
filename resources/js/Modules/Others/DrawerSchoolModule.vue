@@ -1,5 +1,5 @@
 <template>
-    <DefaultDrawer v-model:visible="drawer" size="!w-[50rem]">
+    <DefaultDrawer v-if="page.props.schoolDetail" v-model:visible="drawer" size="!w-[50rem]">
         <template #header>
             <div class="flex items-center gap-2 !sticky !top-0 text-slate-900 dark:text-gray-100">
                 <div class="">
@@ -24,7 +24,7 @@
                         </div>
 
                         <DefaultButton
-                            v-if="canManageSchools"
+                            v-if="can('schools.delete')"
                             rounded
                             text
                             size="small"
@@ -757,6 +757,7 @@
         width-set="lg:!w-[70%]"
         :submit-form="submitCurriculum"
         :title="selectedRow?.course?.name"
+        button-label="Save changes"
         @submit-form="submitCurriculum"
         :hide-footer="!canManageSchools || curriculumForm.multi.length === 0"
         absolute-div
@@ -842,7 +843,6 @@
                                     />
                                 </template>
                                 <div class="flex-1"></div>
-                                <DefaultButton type="button" v-if="canManageSchools" label="Save changes" size="small" :icon="IconCheck" :loading="curriculumForm.processing" @click="submitCurriculum" />
                                 <DefaultButton type="button"
                                     v-if="canManageSchools"
                                     label="Delete curriculum"
@@ -2097,6 +2097,7 @@ const deleteRow = (res) => {
             });
             break;
         case "campus":
+            if (!can("schools.delete")) return;
             props.confirmRef.popupDialog(() => {
                 router.delete(
                     route("academic.universities.destroy", {
@@ -2108,8 +2109,19 @@ const deleteRow = (res) => {
                             toastRef.value.show(page.props.flash);
                             drawer.value = false;
                         },
+                        onError: (errors) => {
+                            toastRef.value.show({
+                                status: "error",
+                                title: "Unable to delete campus",
+                                message: errors.campus || "Unable to delete this campus. Please try again.",
+                            });
+                        },
                     },
                 );
+            }, {
+                header: "Delete Campus",
+                message: `Delete the campus "${page.props.schoolDetail?.generated_name || "Unnamed campus"}"? If this is the school's last campus, the school will also be removed from the list.`,
+                acceptLabel: "Delete campus",
             });
             break;
         default:

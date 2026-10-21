@@ -6,12 +6,15 @@ use App\Models\Scholars;
 use App\Models\ScholarTerm;
 use App\Models\SchoolCampusSemesters;
 use App\Support\ScholarStatuses;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ScholarAcademicPeriodService
 {
+    public const DUPLICATE_MESSAGE = 'You already have a submission for this academic year and semester. Please open your existing submission. If it was rejected, correct and resubmit that record.';
+
     public function availableFor(Scholars $scholar): Collection
     {
         if (ScholarStatuses::blocksServices($scholar->academic_status)) {
@@ -30,6 +33,11 @@ class ScholarAcademicPeriodService
             ->where('campus_id', $schoolInfo->campus_id)
             ->whereDate('submission_date', '>=', today())
             ->whereDoesntHave('termRecords', fn ($query) => $query->where('scholar_id', $scholar->id))
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')
+                ->from('scholar_term_records as existing_term')
+                ->where('existing_term.scholar_id', $scholar->id)
+                ->whereColumn('existing_term.term_id', 'school_campus_semesters.semester_id')
+                ->whereRaw('TRIM(existing_term.academic_year) = TRIM(school_campus_semesters.school_year)'))
             ->orderByDesc('school_year')
             ->orderBy('semester_id')
             ->get()
@@ -74,15 +82,29 @@ class ScholarAcademicPeriodService
             throw ValidationException::withMessages(['period' => 'The submission deadline has passed.']);
         }
 
-        return DB::transaction(fn () => ScholarTerm::create([
-            'scholar_id' => $scholar->id,
-            'scholar_school_id' => $schoolInfo->id,
-            'campus_semester_id' => $period->id,
-            'term_id' => $period->semester_id,
-            'term_type_id' => $schoolInfo->campus?->term_id,
-            'academic_year' => $period->school_year,
-            'level_id' => $levelId,
-            'specialization_id' => $schoolInfo->specialization_id,
-        ]));
+        if (ScholarTerm::forAcademicPeriod($scholar->id, $period->school_year, $period->semester_id)->exists()) {
+            throw ValidationException::withMessages(['period' => self::DUPLICATE_MESSAGE]);
+        }
+
+        try {
+            return DB::connection('pgsql')->transaction(fn () => ScholarTerm::create([
+                'scholar_id' => $scholar->id,
+                'scholar_school_id' => $schoolInfo->id,
+                'campus_semester_id' => $period->id,
+                'term_id' => $period->semester_id,
+                'term_type_id' => $schoolInfo->campus?->term_id,
+                'academic_year' => trim($period->school_year),
+                'level_id' => $levelId,
+                'specialization_id' => $schoolInfo->specialization_id,
+            ]));
+        } catch (UniqueConstraintViolationException $exception) {
+            // Catch outside the transaction so PostgreSQL has already rolled back.
+            if (str_contains($exception->getMessage(), 'scholar_academic_year_term_unique')
+                || str_contains($exception->getMessage(), 'scholar_campus_semester_unique')) {
+                throw ValidationException::withMessages(['period' => self::DUPLICATE_MESSAGE]);
+            }
+
+            throw $exception;
+        }
     }
 }

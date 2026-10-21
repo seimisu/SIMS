@@ -52,6 +52,11 @@
                                 <TextInput
                                     v-model="userForm.contact_no"
                                     label="Contact Number"
+                                    type="tel"
+                                    inputmode="numeric"
+                                    :maxlength="11"
+                                    pattern="09[0-9]{9}"
+                                    message="Optional. Enter 11 digits starting with 09, with no spaces or symbols."
                                 ></TextInput>
                                 <TextInput
                                     v-model="userForm.designation"

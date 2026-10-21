@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class ScholarTerm extends Model
@@ -23,6 +24,13 @@ class ScholarTerm extends Model
         'rejection_reason',
         'specialization_id',
     ];
+
+    public function scopeForAcademicPeriod(Builder $query, int $scholarId, string $academicYear, int $termId): Builder
+    {
+        return $query->where('scholar_id', $scholarId)
+            ->whereRaw('TRIM(academic_year) = ?', [trim($academicYear)])
+            ->where('term_id', $termId);
+    }
 
     public function term()
     {

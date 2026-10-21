@@ -34,6 +34,28 @@ class ScholarGradeRequestService
         }
 
         if ($type === 'accept') {
+            $periods = [];
+            foreach ($terms as $term) {
+                if ($term->scholar_id === null || $term->academic_year === null || $term->term_id === null) {
+                    return [
+                        'status' => 'error',
+                        'title' => 'Academic period missing',
+                        'message' => 'The scholar, academic year, and semester must be complete before approving this submission.',
+                    ];
+                }
+
+                $key = json_encode([$term->scholar_id, trim($term->academic_year), $term->term_id]);
+                if (isset($periods[$key]) || ScholarTerm::forAcademicPeriod($term->scholar_id, $term->academic_year, $term->term_id)
+                    ->whereKeyNot($term->id)->where('verification_status', 'approved')->exists()) {
+                    return [
+                        'status' => 'error',
+                        'title' => 'Duplicate academic period',
+                        'message' => 'Another selected or approved record covers the same scholar, academic year, and semester. Please review the existing record.',
+                    ];
+                }
+                $periods[$key] = true;
+            }
+
             $validation = Validator::make($data[0], [
                 'scholarshipStatus' => 'required|array|max:255',
             ]);

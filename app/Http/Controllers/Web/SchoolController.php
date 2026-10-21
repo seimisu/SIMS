@@ -295,21 +295,34 @@ class SchoolController extends Controller
 
     public function destroy($id, $type)
     {
+        $campus = SchoolCampuses::notDeleted()->find($id);
+        if (! $campus) {
+            return redirect()->route('academic.universities')->withErrors([
+                'campus' => 'This campus is no longer available. Please refresh the school list.',
+            ]);
+        }
+
+        $permissions = app(SystemPermissions::class);
+        $user = Auth::user();
+        if ($permissions->shouldScopeToRegion($user)
+            && (! $permissions->regionCodeFor($user)
+                || ! $campus->address()->where('region_code', $permissions->regionCodeFor($user))->exists())) {
+            return redirect()->route('academic.universities')->withErrors([
+                'campus' => 'You do not have permission to delete campuses outside your assigned region.',
+            ]);
+        }
+
         try {
-            $university = SchoolCampuses::notDeleted()->findOrFail($id);
-            $university->is_delete = true;
-            $university->save();
+            DB::transaction(function () use ($campus) {
+                $school = Schools::whereKey($campus->school_id)->lockForUpdate()->firstOrFail();
+                $campus->update(['is_delete' => true]);
 
-            $school = Schools::withCount(['campuses' => fn ($q) => $q->where('is_delete', false)])
-                ->where('id', $university->school_id)
-                ->first();
+                if (! $school->campuses()->notDeleted()->exists()) {
+                    $school->update(['is_delete' => true]);
+                }
+            });
 
-            if ($school && $school->campuses_count === 0) {
-                $school->is_delete = true;
-                $school->save();
-            }
-
-            return redirect()->back()->with('flash', [
+            return redirect()->route('academic.universities')->with('flash', [
                 'status' => 'success',
                 'title' => 'School Campus Deleted',
                 'message' => 'School campus successfully deleted.',
@@ -320,10 +333,8 @@ class SchoolController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->back()->with('flash', [
-                'status' => 'error',
-                'title' => 'Something went wrong',
-                'message' => 'Please report this to Administrator.',
+            return redirect()->route('academic.universities', ['id' => $campus->id])->withErrors([
+                'campus' => 'Unable to delete this campus. Please try again. If the problem continues, contact an administrator.',
             ]);
         }
     }

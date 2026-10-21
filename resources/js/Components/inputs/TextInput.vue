@@ -19,6 +19,9 @@
             :step="step"
             :min="min"
             :max="max"
+            :maxlength="maxlength"
+            :inputmode="inputmode"
+            :pattern="pattern"
             autocomplete="off"
             :pt="{
                 root: {
@@ -53,6 +56,9 @@ defineProps({
         type: String,
     },
     capitalize: { type: Boolean, default: false },
+    maxlength: { type: Number, default: undefined },
+    inputmode: { type: String, default: undefined },
+    pattern: { type: String, default: undefined },
     uppercase: { type: Boolean, default: false },
     error: { type: [String, Array, Object], default: "" },
     message: {

@@ -809,7 +809,7 @@ const confirmRef = ref(null);
 const drawerRef = ref(false);
 const menu = ref(null);
 
-const { canAny } = usePermissions();
+const { can, canAny } = usePermissions();
 const canManageSchools = computed(() =>
     canAny([
         "schools.create",
@@ -914,14 +914,16 @@ const menuItems = computed(() => {
                 });
             },
         },
-        {
-            label: "Delete",
+        ...(can("schools.delete") ? (selectedRow.value.campuses ?? [selectedRow.value]).map((campus) => ({
+            label: selectedRow.value.campuses
+                ? `Delete campus: ${campus.name || campus.generated_name || "Unnamed campus"}`
+                : "Delete campus",
             icon: IconTrash,
             class: "text-red-500",
             command: () => {
-                deleteRow(selectedRow.value.id);
+                deleteRow(campus);
             },
-        },
+        })) : []),
     ];
 });
 
@@ -972,12 +974,22 @@ const toggleModal = (res) => {
     }
 };
 
-const deleteRow = () => {
-    toastRef.value.show({
-        status: "info",
-        title: "Unable to delete school",
-        message:
-            "You don’t have permission to access or modify campuses outside your assigned region.",
+const deleteRow = (campus) => {
+    if (!can("schools.delete")) return;
+    confirmRef.value.popupDialog(() => {
+        router.delete(route("academic.universities.destroy", { id: campus.id, type: "delete" }), {
+            preserveScroll: true,
+            onSuccess: () => toastRef.value.show(page.props.flash),
+            onError: (errors) => toastRef.value.show({
+                status: "error",
+                title: "Unable to delete campus",
+                message: errors.campus || "Unable to delete this campus. Please try again.",
+            }),
+        });
+    }, {
+        header: "Delete Campus",
+        message: `Delete the campus "${campus.generated_name || campus.name || "Unnamed campus"}"? If this is the school's last campus, the school will also be removed from the list.`,
+        acceptLabel: "Delete campus",
     });
 };
 

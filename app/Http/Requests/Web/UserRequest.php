@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Web;
 
 
+use App\Rules\PhilippineMobileNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -40,7 +41,7 @@ class UserRequest extends FormRequest
                     'lname'     => ['required', 'string', 'max:50'],
                     'email'     => ['required', 'email', Rule::unique('users', 'email')->ignore($this->route('id'))],
                     'role'      => ['required', 'array'],
-                    'contact_no' => ['nullable', 'string', 'max:20'],
+                    'contact_no' => ['nullable', new PhilippineMobileNumber],
                     'designation' => ['nullable', 'string', 'max:100'],
                     'agency' => ['nullable', 'array'],
                     'agency.id' => ['nullable', 'integer', 'exists:list_agencies,id'],

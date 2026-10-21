@@ -1,5 +1,6 @@
 <template>
     <Head title="My Profile" />
+    <DefaultConfirmDialog ref="confirmRef" group="profile-confirmation" />
 
     <AuthLayout>
         <div class="flex flex-col w-full h-full gap-6">
@@ -371,6 +372,11 @@
                                         <TextInput
                                             label="Contact Number"
                                             v-model="form.phone"
+                                            type="tel"
+                                            inputmode="numeric"
+                                            :maxlength="11"
+                                            pattern="09[0-9]{9}"
+                                            message="Optional. Enter 11 digits starting with 09, with no spaces or symbols."
                                             :disabled="disable.userDetails"
                                         />
                                     </div>
@@ -405,6 +411,10 @@
                                 </section>
                             </div>
 
+                            <div v-if="form.hasErrors" class="mt-4 space-y-1" role="alert">
+                                <p v-for="(error, field) in form.errors" :key="field" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+                            </div>
+
                             <!-- Actions -->
                             <div
                                 class="mt-5 flex flex-wrap justify-end gap-2 border-t border-surface-200 pt-4 dark:border-slate-600"
@@ -421,7 +431,7 @@
                                         <span>Cancel</span>
                                     </Button>
 
-                                    <Button type="submit">
+                                    <Button type="submit" :loading="form.processing">
                                         <IconDeviceFloppy class="h-4 w-4" />
                                         <span>Save changes</span>
                                     </Button>
@@ -726,7 +736,7 @@
         </div>
 
         <DefaultDialog
-            v-model:visible="passwordDialog"
+            v-model:visible="passwordDialogVisible"
             :icon="IconPasswordUser"
             width-set="lg:!w-[35%]"
             :loading="passwordForm.processing"
@@ -1049,7 +1059,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 import { Head, router, useForm } from "@inertiajs/vue3";
 import axios from "axios";
@@ -1074,6 +1084,7 @@ import { usePasskeyRegister } from "@laravel/passkeys/vue";
 import PasswordInput from "../../Components/inputs/PasswordInput.vue";
 import DefaultDialog from "../../Components/dialogs/DefaultDialog.vue";
 import DefaultMessages from "../../Components/messages/DefaultMessages.vue";
+import DefaultConfirmDialog from "../../Components/dialogs/DefaultConfirmDialog.vue";
 import {
     IconPasswordUser,
     IconCircleKey,
@@ -1169,6 +1180,60 @@ const passwordForm = useForm({
     confirm: "",
 });
 
+const showSaveError = (validation = false) => {
+    toast.add({
+        severity: "error",
+        summary: "Unable to save changes",
+        detail: validation ? "Please check the details you entered." : "Unable to save changes. Please try again.",
+        life: 5000,
+    });
+};
+const confirmRef = ref(null);
+const confirmDiscard = (onAccept) => confirmRef.value.popupDialog(onAccept, {
+    header: "Unsaved Changes",
+    message: "You have unsaved changes. Do you want to discard them?",
+    acceptLabel: "Discard changes",
+    rejectLabel: "Keep editing",
+    severity: "warn",
+});
+const hasUnsavedChanges = () => (!disable.value.userDetails && form.isDirty) || (passwordDialog.value && passwordForm.isDirty);
+const passwordDialogVisible = computed({
+    get: () => passwordDialog.value,
+    set: (visible) => {
+        if (passwordForm.processing) return;
+        const updateVisibility = () => {
+            passwordForm.resetAndClearErrors();
+            passwordDialog.value = visible;
+        };
+        if (!visible && passwordForm.isDirty) confirmDiscard(updateVisibility);
+        else updateVisibility();
+    },
+});
+const removeListeners = [];
+onMounted(() => {
+    removeListeners.push(router.on("before", (event) => {
+        const visit = event.detail.visit;
+        if (visit.method !== "get" || !hasUnsavedChanges()) return;
+        event.preventDefault();
+        confirmDiscard(() => {
+            form.resetAndClearErrors();
+            passwordForm.resetAndClearErrors();
+            disable.value.userDetails = true;
+            passwordDialog.value = false;
+            router.visit(visit.url, { ...visit });
+        });
+    }));
+    const handleSaveFailure = (event) => {
+        if (!form.processing && !passwordForm.processing) return;
+        event.preventDefault();
+        showSaveError();
+    };
+    removeListeners.push(router.on("exception", handleSaveFailure), router.on("invalid", handleSaveFailure));
+});
+onUnmounted(() => {
+    removeListeners.forEach((remove) => remove());
+});
+
 const twoFactorEnabled = ref(props.isTwoFactorEnabled ?? false);
 const pendingTwoFactorState = ref(twoFactorEnabled.value);
 const twoFactorChangeConfirmed = ref(false);
@@ -1246,6 +1311,7 @@ const uploadPhoto = () => {
 };
 
 const updateProfile = () => {
+    if (form.processing) return;
     form.transform((data) => ({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -1256,6 +1322,8 @@ const updateProfile = () => {
         preserveScroll: true,
 
         onSuccess: () => {
+            form.defaults();
+            disable.value.userDetails = true;
             toast.add({
                 severity: "success",
                 summary: "Profile Updated",
@@ -1264,45 +1332,36 @@ const updateProfile = () => {
             });
         },
 
-        onError: (errors) => {
-            console.log("Validation errors:", errors);
-        },
-        onFinish: () => {
-            disable.value.userDetails = true;
-        },
+        onError: () => showSaveError(true),
     });
 };
 
 const resetForm = () => {
-    disable.value.userDetails = true;
-
-    form.value = {
-        firstName: props.user?.profile.fname,
-        lastName: props.user?.profile.lname,
-        email: props.user?.email,
-        phone: props.user?.profile.contact_no,
-        position: props.user?.profile.designation,
-        office: props.user?.profile.agency_array,
+    if (form.processing) return;
+    const discardChanges = () => {
+        form.resetAndClearErrors();
+        disable.value.userDetails = true;
     };
+    if (form.isDirty) confirmDiscard(discardChanges);
+    else discardChanges();
 };
 
 const changePassword = () => {
+    if (passwordForm.processing) return;
     passwordForm.post(route("user.changePassword"), {
         fresh: true,
         replace: true,
         onSuccess: () => {
             toast.add({
                 severity: "success",
-                summary: "Profile Updated",
-                detail: "Your profile has been successfully updated.",
+                summary: "Password Changed",
+                detail: "Your password has been successfully changed.",
                 life: 3000,
             });
             passwordDialog.value = false;
             passwordForm.resetAndClearErrors();
-            nextTick(() => {
-                window.location.reload();
-            });
         },
+        onError: () => showSaveError(true),
     });
 };
 
@@ -1324,10 +1383,7 @@ const formatPasskeyDate = (date) => {
 };
 
 const deletePasskey = (passkey) => {
-    if (!window.confirm(`Remove the passkey "${passkey.name}"?`)) {
-        return;
-    }
-
+    confirmRef.value.popupDialog(() => {
     router.delete(route("passkey.destroy", passkey.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -1338,6 +1394,11 @@ const deletePasskey = (passkey) => {
                 life: 3000,
             });
         },
+    });
+    }, {
+        header: "Remove Passkey",
+        message: `Remove the passkey "${passkey.name}"?`,
+        acceptLabel: "Remove",
     });
 };
 

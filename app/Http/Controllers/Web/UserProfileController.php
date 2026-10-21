@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\ListAgencies;
 use App\Models\User;
+use App\Rules\PhilippineMobileNumber;
 use App\Services\Profile\TwoFactoryAuthenticatorQR;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -80,8 +81,7 @@ class UserProfileController extends Controller
 
             'phone' => [
                 'nullable',
-                'string',
-                'max:30',
+                new PhilippineMobileNumber,
             ],
 
             'position' => [

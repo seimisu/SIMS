@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Preserve contact-number whitespace so validation rejects it rather than silently trimming it.
+        $middleware->trimStrings(except: ['phone', 'contact_no']);
         $middleware->web(append: [
             EnsureCoordinatorCampusAvailable::class,
             HandleInertiaRequests::class,

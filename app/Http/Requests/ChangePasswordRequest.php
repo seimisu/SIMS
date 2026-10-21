@@ -32,6 +32,15 @@ class ChangePasswordRequest extends FormRequest
         ];
     }
 
+    public function attributes(): array
+    {
+        return [
+            'current' => 'current password',
+            'new' => 'new password',
+            'confirm' => 'password confirmation',
+        ];
+    }
+
     public function withValidator($validator)
     {
 
