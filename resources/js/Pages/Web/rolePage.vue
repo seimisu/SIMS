@@ -42,6 +42,7 @@
                             ></TextInput>
                             <TextInput
                                 v-model="roleForm.description"
+                                :maxlength="200"
                                 label="Description"
                             ></TextInput>
                             <div>

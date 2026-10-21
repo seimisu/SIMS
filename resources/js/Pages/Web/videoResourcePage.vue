@@ -87,6 +87,7 @@
                                 >
                                 <Textarea
                                     v-model="resourceForm.description"
+                                    :maxlength="200"
                                     rows="3"
                                     autoResize
                                     fluid

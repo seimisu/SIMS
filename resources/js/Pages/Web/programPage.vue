@@ -39,6 +39,7 @@
                             ></TextInput>
                             <TextInput
                                 v-model="programForm.description"
+                                :maxlength="200"
                                 label="Description"
                             ></TextInput>
                             <SelectInput

@@ -1137,6 +1137,7 @@
                                                                         "
                                                                         capitalize
                                                                         label="Description"
+                                                                        :maxlength="200"
                                                                     >
                                                                     </TextInput>
                                                                 </div>

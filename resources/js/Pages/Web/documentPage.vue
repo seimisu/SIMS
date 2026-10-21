@@ -102,6 +102,7 @@
                                     >
                                     <Textarea
                                         v-model="documentForm.description"
+                                        :maxlength="200"
                                         rows="3"
                                         autoResize
                                         fluid
@@ -120,6 +121,9 @@
                                     @select-files="handleFile"
                                     @remove-file="clearFile"
                                 />
+                                <p class="text-xs text-slate-500 dark:text-gray-400">
+                                    PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, JPEG, or PNG. Maximum 20 MB. Files are checked before saving.
+                                </p>
                                 <div
                                     class="grid grid-cols-1 gap-3 lg:grid-cols-2"
                                 >
@@ -328,6 +332,7 @@
                                     >
                                     <Textarea
                                         v-model="categoryForm.description"
+                                        :maxlength="200"
                                         rows="3"
                                         autoResize
                                         fluid

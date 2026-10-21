@@ -35,7 +35,7 @@ class RoleRequest extends FormRequest
             return [
                 'name' => ['required', Rule::unique('list_roles', 'name')->ignore($this->route('id')), 'string'],
                 'slug' => ['required', 'string'],
-                'description' => ['required', 'string'],
+                'description' => ['required', 'string', 'max:200'],
                 'isLock' => ['boolean'],
 
             ];

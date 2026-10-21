@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\ListReferences;
+use App\Rules\LibraryDocument;
 use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\LibraryAccess;
 use App\Support\DocumentFileAccess;
@@ -201,7 +202,7 @@ class DocumentController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:200'],
             'is_active' => ['boolean'],
         ]);
 
@@ -223,7 +224,7 @@ class DocumentController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:200'],
             'is_active' => ['boolean'],
         ]);
 
@@ -305,11 +306,11 @@ class DocumentController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:200'],
             'category_id' => ['nullable', 'exists:document_categories,id'],
             'is_active' => ['boolean'],
             'publish_now' => ['boolean'],
-            'file' => [$document ? 'nullable' : 'required', 'file', 'max:20480'],
+            'file' => ['bail', $document ? 'nullable' : 'required', 'file', 'max:20480', new LibraryDocument],
             'targets' => ['required', 'array', 'min:1'],
             'targets.*.target_type' => ['required', Rule::in(['all', 'region', 'scholarship_program', 'program', 'school'])],
             'targets.*.target_id' => ['nullable', 'string', 'max:255'],

@@ -184,9 +184,9 @@ class VideoResourceController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'video_url' => ['required', 'url', 'max:2048'],
-            'thumbnail_url' => ['nullable', 'url', 'max:2048'],
+            'description' => ['nullable', 'string', 'max:200'],
+            'video_url' => ['required', 'url:http,https', 'max:2048'],
+            'thumbnail_url' => ['nullable', 'url:http,https', 'max:2048'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'is_active' => ['boolean'],
             'publish_now' => ['boolean'],

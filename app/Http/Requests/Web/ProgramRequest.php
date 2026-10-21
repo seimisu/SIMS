@@ -39,7 +39,7 @@ class ProgramRequest extends FormRequest
                     'name' => ['required', Rule::unique('list_programs')->ignore($this->id)->where(function ($query) {
                         return $query->where('is_delete', false);
                     }), 'string', 'max:255'],
-                    'description' => ['nullable', 'string'],
+                    'description' => ['nullable', 'string', 'max:200'],
                     'scholarship' => ['required', 'array'],
                     'type' => ['required', 'array'],
                     'isSub' => ['boolean'],

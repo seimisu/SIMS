@@ -47,7 +47,7 @@ class SchoolCampusCurriculumRequest extends FormRequest
                     'multi.*.yearNumber' => ['nullable'],
                     'multi.*.subjects' => ['required', 'array'],
                     'multi.*.subjects.*.id' => ['nullable'],
-                    'multi.*.subjects.*.name' => ['required'],
+                    'multi.*.subjects.*.name' => ['required', 'string', 'max:200'],
                     'multi.*.subjects.*.semester_array' => ['nullable', 'array'],
                     'multi.*.subjects.*.class_array' => ['required', 'array'],
                     'multi.*.subjects.*.subjectCode' => ['required'],
@@ -67,7 +67,8 @@ class SchoolCampusCurriculumRequest extends FormRequest
     {
         return [
             'multi.*.subjects' => 'Please make sure to add subjects before proceeding.',
-            'multi.*.subjects.*.name' => 'Please provide the subject name.',
+            'multi.*.subjects.*.name.required' => 'Please provide the subject name.',
+            'multi.*.subjects.*.name.max' => 'The subject description must not exceed 200 characters.',
             'multi.*.subjects.*.class_array' => 'Please select a subject class. ',
             'multi.*.subjects.*.subjectCode' => 'Please enter the subject code.',
             'multi.*.subjects.*.unit' => 'Please specify the number of units.',
