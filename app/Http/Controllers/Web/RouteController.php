@@ -38,7 +38,7 @@ class RouteController extends Controller
             'icon'          => $data['icon'],
             'component'     => $data['component'],
             'is_submenu'    => $data['isSubmenu'],
-            'main_id'       => $data['submenu']['id'] ?? null,
+            'main_id'       => $request->boolean('isSubmenu') ? ($data['submenu']['id'] ?? null) : null,
             'roles'         =>  $data['role'],
             'created_by'    => Auth::user()->profile->fullname
         ]);
@@ -63,7 +63,7 @@ class RouteController extends Controller
                 'icon'          => $data['icon'],
                 'component'     => $data['component'],
                 'is_submenu'    => $data['isSubmenu'],
-                'main_id'       => $data['submenu']['id'] ?? null,
+                'main_id'       => $request->boolean('isSubmenu') ? ($data['submenu']['id'] ?? null) : null,
                 'roles'         =>  $data['role'],
                 'updated_by'    => Auth::user()->profile->fullname,
                 'updated_at'    =>  now()

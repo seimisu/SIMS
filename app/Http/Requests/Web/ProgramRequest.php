@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests\Web;
 
+use App\Rules\UniqueEntryName;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class ProgramRequest extends FormRequest
 {
@@ -18,7 +19,7 @@ class ProgramRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -26,19 +27,20 @@ class ProgramRequest extends FormRequest
         switch ($this->route('type')) {
             case 'delete':
                 return [
-                    'isDelete' => ['boolean']
+                    'isDelete' => ['boolean'],
                 ];
                 break;
             case 'status':
                 return [
-                    'isActive' => ['boolean']
+                    'isActive' => ['boolean'],
                 ];
                 break;
             default:
                 return [
-                    'name' => ['required', Rule::unique('list_programs')->ignore($this->id)->where(function ($query) {
-                        return $query->where('is_delete', false);
-                    }), 'string', 'max:255'],
+                    'name' => ['required', 'string', 'max:255', new UniqueEntryName('programs', $this->route('id'), [
+                        'program_id' => $this->input('scholarship.id'),
+                        'type_id' => $this->input('type.id'),
+                    ])],
                     'description' => ['nullable', 'string', 'max:200'],
                     'scholarship' => ['required', 'array'],
                     'type' => ['required', 'array'],

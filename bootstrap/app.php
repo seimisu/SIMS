@@ -30,5 +30,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Database\UniqueConstraintViolationException $exception, \Illuminate\Http\Request $request) {
+            $field = \App\Support\NamedEntryUniqueness::constraintField($exception->getMessage());
+            if ($field === null) {
+                return null;
+            }
+            $message = $field === 'slug'
+                ? 'This slug already exists. Please enter a different slug.'
+                : 'This name already exists. Please enter a different name.';
+            if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+                return response()->json(['message' => $message, 'errors' => [$field => [$message]]], 422);
+            }
+
+            return redirect()->back()->withErrors([$field => $message]);
+        });
     })->create();

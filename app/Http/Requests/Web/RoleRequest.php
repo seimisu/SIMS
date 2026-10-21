@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests\Web;
 
+use App\Rules\UniqueEntryName;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class RoleRequest extends FormRequest
 {
@@ -18,13 +19,13 @@ class RoleRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         if ($this->type == 'status') {
             return [
-                'isActive' => ['boolean']
+                'isActive' => ['boolean'],
             ];
         } elseif ($this->type == 'permissions') {
             return [
@@ -33,8 +34,8 @@ class RoleRequest extends FormRequest
             ];
         } else {
             return [
-                'name' => ['required', Rule::unique('list_roles', 'name')->ignore($this->route('id')), 'string'],
-                'slug' => ['required', 'string'],
+                'name' => ['required', 'string', new UniqueEntryName('roles', $this->route('id'))],
+                'slug' => ['required', 'string', new UniqueEntryName('role_slugs', $this->route('id'))],
                 'description' => ['required', 'string', 'max:200'],
                 'isLock' => ['boolean'],
 

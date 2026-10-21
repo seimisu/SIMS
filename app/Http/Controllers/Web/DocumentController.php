@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\ListReferences;
 use App\Rules\LibraryDocument;
+use App\Rules\UniqueEntryName;
 use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\LibraryAccess;
 use App\Support\DocumentFileAccess;
@@ -201,7 +202,7 @@ class DocumentController extends Controller
     public function storeCategory(Request $request)
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', new UniqueEntryName('document_categories')],
             'description' => ['nullable', 'string', 'max:200'],
             'is_active' => ['boolean'],
         ]);
@@ -223,7 +224,7 @@ class DocumentController extends Controller
     public function updateCategory(Request $request, DocumentCategory $category)
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', new UniqueEntryName('document_categories', $category->id)],
             'description' => ['nullable', 'string', 'max:200'],
             'is_active' => ['boolean'],
         ]);

@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests\Web;
 
+use App\Rules\UniqueEntryName;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class CourseRequest extends FormRequest
 {
@@ -18,19 +19,19 @@ class CourseRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         switch ($this->type) {
             case 'delete':
                 return [
-                    'isDelete' => ['boolean']
+                    'isDelete' => ['boolean'],
                 ];
                 break;
             case 'status':
                 return [
-                    'isActive' => ['boolean']
+                    'isActive' => ['boolean'],
                 ];
                 break;
             default:
@@ -38,7 +39,7 @@ class CourseRequest extends FormRequest
                     'name' => [
                         'required',
                         'string',
-                        Rule::unique('list_courses', 'name')->ignore($this->route('id')),
+                        new UniqueEntryName('courses', $this->route('id')),
                     ],
                     'field' => ['required'],
                     'abbreviation' => ['required', 'string'],
@@ -50,7 +51,7 @@ class CourseRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'field'         => 'category',
+            'field' => 'category',
         ];
     }
 }

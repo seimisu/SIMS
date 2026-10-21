@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests\Web;
 
+use App\Rules\UniqueEntryName;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class RouteRequest extends FormRequest
 {
@@ -18,34 +19,36 @@ class RouteRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
 
-
-
         if ($this->type == 'status') {
             return [
-                'isActive' => ['boolean']
+                'isActive' => ['boolean'],
             ];
         } else {
             return [
-                'role'      => ['required'],
-                'label'     => ['required', 'string'],
-                'slug'      => [
+                'role' => ['required'],
+                'label' => ['required', 'string', new UniqueEntryName('navigation', $this->route('id'), [
+                    'main_id' => $this->boolean('isSubmenu') ? $this->input('submenu.id') : null,
+                ])],
+                'slug' => [
                     'required',
-                    Rule::unique('list_routes', 'label')->ignore($this->route('id'))
+                    'string',
+                    new UniqueEntryName('navigation_slugs', $this->route('id')),
                 ],
-                'icon'      => ['required'],
-                'route'     => ['nullable'],
+                'icon' => ['required'],
+                'route' => ['nullable'],
                 'component' => ['nullable'],
                 'isSubmenu' => ['boolean'],
-                'submenu'   => ['required_if:isSubmenu,true'],
+                'submenu' => ['required_if:isSubmenu,true'],
 
             ];
         }
     }
+
     public function messages()
     {
         return [

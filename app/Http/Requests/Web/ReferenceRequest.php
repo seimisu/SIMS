@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Web;
 
+use App\Rules\UniqueEntryName;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ReferenceRequest extends FormRequest
@@ -17,26 +19,28 @@ class ReferenceRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
 
-
         switch ($this->type) {
             case 'delete':
                 return [
-                    'isDelete' => ['boolean']
+                    'isDelete' => ['boolean'],
                 ];
                 break;
             case 'status':
                 return [
-                    'isActive' => ['boolean']
+                    'isActive' => ['boolean'],
                 ];
                 break;
             default:
                 return [
-                    'name' => ['required',],
+                    'name' => ['required', 'string', new UniqueEntryName('references', $this->route('id'), [
+                        'classification' => $this->input('class.id'),
+                        'type' => $this->input('typeReference.id'),
+                    ])],
                     'class' => ['required'],
                     'typeReference' => ['required'],
                     'color' => ['nullable', 'array'],
