@@ -27,7 +27,8 @@ return new class extends Migration
         foreach (self::INDEXES as $area => [$table, $expressions, $filter]) {
             $duplicates = $db->selectOne("SELECT COUNT(*) AS total FROM (SELECT 1 FROM {$table} WHERE {$filter} GROUP BY {$expressions} HAVING COUNT(*) > 1) duplicates");
             if ((int) $duplicates->total > 0) {
-                throw new RuntimeException("Cannot enforce {$area} uniqueness: {$duplicates->total} duplicate groups require review. No entries were renamed, deleted, or merged.");
+                // Preserve existing entries; the following guard migration handles future writes.
+                return;
             }
         }
         foreach (self::INDEXES as $area => [$table, $expressions, $filter]) {

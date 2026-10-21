@@ -24,15 +24,17 @@ class NamedEntryUniqueness
     }
 
     public const DEFINITIONS = [
-        'roles' => ['table' => 'list_roles', 'column' => 'name', 'active' => false, 'scope' => []],
-        'role_slugs' => ['table' => 'list_roles', 'column' => 'slug', 'active' => false, 'scope' => []],
+        'roles' => ['table' => 'list_roles', 'column' => 'name', 'active' => true, 'scope' => []],
+        'role_slugs' => ['table' => 'list_roles', 'column' => 'slug', 'active' => true, 'scope' => []],
         'courses' => ['table' => 'list_courses', 'column' => 'name', 'active' => true, 'scope' => []],
         'programs' => ['table' => 'list_programs', 'column' => 'name', 'active' => true, 'scope' => ['program_id' => 'id', 'type_id' => 'id']],
         'references' => ['table' => 'list_references', 'column' => 'name', 'active' => true, 'scope' => ['classification' => 'text', 'type' => 'text']],
         'statuses' => ['table' => 'list_statuses', 'column' => 'name', 'active' => true, 'scope' => ['type' => 'text']],
-        'document_categories' => ['table' => 'document_categories', 'column' => 'name', 'active' => false, 'scope' => []],
+        'document_categories' => ['table' => 'document_categories', 'column' => 'name', 'active' => true, 'deleted_column' => 'deleted_at', 'scope' => []],
         'navigation' => ['table' => 'list_routes', 'column' => 'label', 'active' => true, 'scope' => ['main_id' => 'parent']],
         'navigation_slugs' => ['table' => 'list_routes', 'column' => 'slug', 'active' => true, 'scope' => []],
+        'schools' => ['table' => 'schools', 'column' => 'name', 'active' => true, 'scope' => []],
+        'subjects' => ['table' => 'school_campus_course_curriculum_subjects', 'column' => 'subject_code', 'active' => true, 'scope' => ['curriculum_id' => 'id', 'semester_id' => 'id', 'year' => 'text']],
     ];
 
     public static function scopeExpression(string $column, string $type): string
@@ -50,7 +52,11 @@ class NamedEntryUniqueness
         $query = DB::connection('pgsql')->table($definition['table'])
             ->whereRaw("LOWER(TRIM({$definition['column']})) = LOWER(TRIM(?))", [$value]);
         if ($definition['active']) {
-            $query->where('is_delete', false);
+            if (($definition['deleted_column'] ?? null) === 'deleted_at') {
+                $query->whereNull('deleted_at');
+            } else {
+                $query->where('is_delete', false);
+            }
         }
         foreach ($definition['scope'] as $column => $type) {
             $expression = self::scopeExpression($column, $type);

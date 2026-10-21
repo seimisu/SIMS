@@ -40,10 +40,20 @@ class SchoolCampusInfoRequest extends FormRequest
                     'campusId' => ['required', Rule::exists('school_campuses', 'id')->where(fn ($query) => $query->where('is_delete', false))],
                     'dean' => ['required', 'string'],
                     'registrar' => ['required', 'string'],
-                    'contact' => ['required', 'string'],
+                    'contact' => ['bail', 'required', 'string', 'max:11', 'regex:/\A[0-9]+\z/'],
                     'email' => ['required', 'email'],
                 ];
                 break;
         }
+    }
+
+    public function messages(): array
+    {
+        return [
+            'contact.required' => 'Please enter the school contact number.',
+            'contact.string' => 'Please enter a contact number using digits only.',
+            'contact.max' => 'The school contact number must not exceed 11 digits.',
+            'contact.regex' => 'Please enter a contact number using digits only, without spaces or symbols.',
+        ];
     }
 }

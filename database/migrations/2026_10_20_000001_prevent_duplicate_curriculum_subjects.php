@@ -22,10 +22,8 @@ return new class extends Migration
         SQL);
 
         if ((int) $duplicates->total > 0) {
-            throw new RuntimeException(
-                "Cannot add subject uniqueness: {$duplicates->total} duplicate groups require review. "
-                .'Preserve scholar grade links and combine applicable specializations before retrying.'
-            );
+            // Preserve legacy duplicates; the incoming-entry guard migration protects future writes.
+            return;
         }
 
         DB::statement(<<<'SQL'

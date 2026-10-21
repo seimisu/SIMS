@@ -190,6 +190,11 @@
                                 v-else
                                 v-model="detailsForm.contact"
                                 placeholder="School Contact No."
+                                type="tel"
+                                inputmode="numeric"
+                                :maxlength="11"
+                                pattern="[0-9]{1,11}"
+                                message="Enter up to 11 digits."
                             >
                             </TextInput>
                         </div>

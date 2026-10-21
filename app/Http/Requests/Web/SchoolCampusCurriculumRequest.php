@@ -93,14 +93,24 @@ class SchoolCampusCurriculumRequest extends FormRequest
                     $field = "multi.{$index}.subjects.{$subjectIndex}.subjectCode";
                     $message = 'This subject code already exists in this curriculum, year level, and semester. Select all applicable specializations on one subject row.';
 
-                    if (isset($subjectKeys[$key])) {
+                    $unchanged = ! empty($curriculum['id']) && ! empty($subject['id'])
+                        && DB::table('school_campus_course_curriculum_subjects')
+                            ->where('id', $subject['id'])
+                            ->where('curriculum_id', $curriculum['id'])
+                            ->where('semester_id', $semesterId)
+                            ->whereRaw("COALESCE(year::text, '') = ?", [$year])
+                            ->whereRaw('LOWER(BTRIM(subject_code)) = ?', [$code])
+                            ->where('is_delete', false)
+                            ->exists();
+
+                    if (isset($subjectKeys[$key]) && ! ($subjectKeys[$key] && $unchanged)) {
                         $validator->errors()->add($field, $message);
 
                         continue;
                     }
-                    $subjectKeys[$key] = true;
+                    $subjectKeys[$key] = $unchanged;
 
-                    if (! empty($curriculum['id'])) {
+                    if (! empty($curriculum['id']) && ! $unchanged) {
                         $exists = DB::table('school_campus_course_curriculum_subjects')
                             ->where('curriculum_id', $curriculum['id'])
                             ->where('semester_id', $semesterId)

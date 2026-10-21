@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Web;
 
 use App\Models\LocationBarangays;
+use App\Rules\UniqueEntryName;
 use App\Support\GradingSystem;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -38,7 +39,7 @@ class SchoolRequest extends FormRequest
                 break;
             default:
                 return [
-                    'name' => ['required', 'string', Rule::unique('schools')->where(fn ($q) => $q->where('is_delete', false))->ignore($this->id)],
+                    'name' => ['required', 'string', new UniqueEntryName('schools', $this->route('id'))],
                     'abbreviation' => ['required', 'string'],
                     'class' => ['required', 'array'],
                     'class.id' => ['required', 'integer', Rule::exists('list_references', 'id')->where('classification', 'Class')],

@@ -27,6 +27,10 @@ class UniqueEntryName implements ValidationRule
                 return;
             }
         }
+        // Existing conflicts may remain, but an unchanged identity does not create a new one.
+        if ($this->ignoreId !== null && NamedEntryUniqueness::query($this->area, $value, $this->context)->where('id', $this->ignoreId)->exists()) {
+            return;
+        }
         if (NamedEntryUniqueness::query($this->area, $value, $this->context, $this->ignoreId)->exists()) {
             $fail(str_ends_with($this->area, '_slugs')
                 ? 'This slug already exists. Please enter a different slug.'
