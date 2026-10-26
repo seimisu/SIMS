@@ -83,6 +83,7 @@
                         :dialog-icon="IconFileUpload"
                         :dialog-button-loading="documentForm.processing"
                         :dialog-button-disabled="documentForm.processing"
+                        :confirm-close="documentForm.isDirty"
                         message-type="error"
                         :button-visible="false"
                         @deleteSearch="clearSearch"
@@ -96,6 +97,7 @@
                                     v-model="documentForm.title"
                                     label="Downloadable Name"
                                 />
+                                <LibraryFieldError :errors="documentForm.errors" field="title" />
                                 <div class="flex flex-col">
                                     <span class="text-sm font-medium"
                                         >Description</span
@@ -107,6 +109,7 @@
                                         autoResize
                                         fluid
                                     />
+                                <LibraryFieldError :errors="documentForm.errors" field="description" />
                                 </div>
                                 <SelectInput
                                     v-model="documentForm.category"
@@ -114,13 +117,15 @@
                                     :options="page.props.categoryOptions"
                                     :clearable="true"
                                 />
+                                <LibraryFieldError :errors="documentForm.errors" field="category_id" />
                                 <UploadInput
                                     ref="uploadRef"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
-                                    :progress="progressUpload"
+                                    :disabled="documentForm.processing"
                                     @select-files="handleFile"
                                     @remove-file="clearFile"
                                 />
+                                <LibraryFieldError :errors="documentForm.errors" field="file" />
                                 <p class="text-xs text-slate-500 dark:text-gray-400">
                                     PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, JPEG, or PNG. Maximum 20 MB. Files are checked before saving.
                                 </p>
@@ -174,6 +179,7 @@
                                     :region-locked="isRegionLocked"
                                     :locked-region="lockedRegion"
                                 />
+                                <LibraryFieldError :errors="documentForm.errors" field="targets" />
                             </div>
                         </template>
                     </ToolbarModule>
@@ -415,6 +421,8 @@
 </template>
 
 <script setup>
+import LibraryFieldError from "../../Components/messages/LibraryFieldError.vue";
+import { validateLibraryForm } from "../../Utils/libraryValidation";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
@@ -601,6 +609,14 @@ const loadPage = (pageNumber) => {
 
 const openDocumentForm = (row = null) => {
     documentForm.reset();
+    documentForm.id = null;
+    documentForm.title = null;
+    documentForm.description = null;
+    documentForm.region_scopes = [];
+    documentForm.scholarships = [];
+    documentForm.programs = [];
+    documentForm.category = null;
+    documentForm.file = null;
     documentForm.clearErrors();
     progressUpload.value = 0;
     uploadRef.value?.clear();
@@ -638,6 +654,7 @@ const openDocumentForm = (row = null) => {
 
     applyRegionalTargeting();
 
+    documentForm.defaults();
     documentToolbarRef.value.openModal();
 };
 
@@ -660,6 +677,13 @@ const clearFile = () => {
 };
 
 const saveDocument = () => {
+    if (documentForm.processing) return;
+    documentForm.clearErrors();
+    const errors = validateLibraryForm(documentForm, targets.value, false);
+    if (Object.keys(errors).length) {
+        documentForm.setError(errors);
+        return;
+    }
     const isUpdating = Boolean(documentForm.id);
     const action = isUpdating ? "Update downloadable" : "Create downloadable";
 

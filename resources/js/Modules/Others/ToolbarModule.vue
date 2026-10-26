@@ -33,6 +33,7 @@
         :description="dialogDescription"
         :button-label="dialogButtonLabel"
         :loading="dialogButtonLoading"
+        :confirm-close="confirmClose"
         :button-disabled="dialogButtonDisabled"
         @submit-form="triggerSave"
     >
@@ -60,6 +61,7 @@ const modal = ref(false);
 const emit = defineEmits(["deleteSearch", "saveForm", "buttonOpenModal"]);
 
 defineProps({
+    confirmClose: Boolean,
     dialogDescription: String,
     dialogTitle: String,
     dialogIcon: Function,

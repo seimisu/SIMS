@@ -45,9 +45,11 @@
                     dialog-button-label="Save"
                     :dialog-icon="IconVideo"
                     :dialog-button-loading="resourceForm.processing"
+                    :dialog-button-disabled="resourceForm.processing"
                     :message-has-errors="resourceForm.hasErrors"
                     :message-errors="resourceForm.errors"
-                    message-type="error"
+                    :confirm-close="resourceForm.isDirty"
+                        message-type="error"
                     :button-visible="false"
                     @deleteSearch="clearSearch"
                     @buttonOpenModal="openResourceForm()"
@@ -60,10 +62,12 @@
                                 v-model="resourceForm.title"
                                 label="Title"
                             />
+                                <LibraryFieldError :errors="resourceForm.errors" field="title" />
                             <TextInput
                                 v-model="resourceForm.video_url"
                                 label="Video Link"
                             />
+                                <LibraryFieldError :errors="resourceForm.errors" field="video_url" />
                             <div class="flex flex-col gap-2">
                                 <span class="text-sm font-medium"
                                     >Preview Image</span
@@ -71,6 +75,7 @@
                                 <input
                                     type="file"
                                     accept="image/*"
+                                    :disabled="resourceForm.processing"
                                     class="rounded-lg border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700"
                                     @change="handleThumbnail"
                                 />
@@ -81,6 +86,9 @@
                                     alt=""
                                 />
                             </div>
+                            <p class="text-xs text-slate-500">Optional preview image. Maximum 5 MB.</p>
+                                <LibraryFieldError :errors="resourceForm.errors" field="thumbnail" />
+                                <LibraryFieldError :errors="resourceForm.errors" field="thumbnail_url" />
                             <div class="flex flex-col">
                                 <span class="text-sm font-medium"
                                     >Description</span
@@ -92,6 +100,7 @@
                                     autoResize
                                     fluid
                                 />
+                                <LibraryFieldError :errors="resourceForm.errors" field="description" />
                             </div>
                             <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
                                 <div
@@ -139,6 +148,7 @@
                                 :region-locked="isRegionLocked"
                                 :locked-region="lockedRegion"
                             />
+                                <LibraryFieldError :errors="resourceForm.errors" field="targets" />
                         </div>
                     </template>
                 </ToolbarModule>
@@ -266,6 +276,8 @@
 </template>
 
 <script setup>
+import LibraryFieldError from "../../Components/messages/LibraryFieldError.vue";
+import { validateLibraryForm } from "../../Utils/libraryValidation";
 import { Head, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import { route } from "ziggy-js";
@@ -377,6 +389,15 @@ const loadPage = (pageNumber) => {
 
 const openResourceForm = (row = null) => {
     resourceForm.reset();
+    resourceForm.id = null;
+    resourceForm.title = null;
+    resourceForm.description = null;
+    resourceForm.region_scopes = [];
+    resourceForm.scholarships = [];
+    resourceForm.programs = [];
+    resourceForm.video_url = null;
+    resourceForm.thumbnail_url = null;
+    resourceForm.thumbnail = null;
     resourceForm.clearErrors();
     resourceForm.is_active = true;
     resourceForm.publish_now = true;
@@ -415,6 +436,7 @@ const openResourceForm = (row = null) => {
 
     applyRegionalTargeting();
 
+    resourceForm.defaults();
     toolbarRef.value.openModal();
 };
 
@@ -432,6 +454,13 @@ const mapTargets = (row, type, options) => {
 };
 
 const saveResource = () => {
+    if (resourceForm.processing) return;
+    resourceForm.clearErrors();
+    const errors = validateLibraryForm(resourceForm, targets.value, true);
+    if (Object.keys(errors).length) {
+        resourceForm.setError(errors);
+        return;
+    }
     const payload = {
         title: resourceForm.title,
         description: resourceForm.description,
@@ -444,6 +473,8 @@ const saveResource = () => {
     };
 
     const options = {
+        onHttpException: () => resourceForm.setError("save", "Unable to save the video. Please try again."),
+        onNetworkError: () => resourceForm.setError("save", "Connection lost. Check your connection and try saving again."),
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {

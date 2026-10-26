@@ -315,6 +315,12 @@ class DocumentController extends Controller
             'targets' => ['required', 'array', 'min:1'],
             'targets.*.target_type' => ['required', Rule::in(['all', 'region', 'scholarship_program', 'program', 'school'])],
             'targets.*.target_id' => ['nullable', 'string', 'max:255'],
+        ], [
+            'title.max' => 'Please shorten the title.',
+            'description.max' => 'Please shorten the description.',
+            'video_url.max' => 'Please use a shorter video link.',
+            'thumbnail_url.max' => 'Please use a shorter preview image link.',
+            'targets.*.target_id.max' => 'The selected audience is invalid.',
         ]);
     }
 

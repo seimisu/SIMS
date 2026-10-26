@@ -10,6 +10,7 @@
         mode="advanced"
         ref="fileupload"
         :accept="accept"
+        :disabled="disabled"
     >
         <template #empty>
             <div
@@ -19,7 +20,7 @@
                     <IconFileUpload :size="40" stroke-width="1" />
                     <div>Drag and drop files to here to upload.</div>
                     <div class="text-xs">
-                        Accepted formats: (.csv, .xls, .xlsx)
+                        Accepted formats: {{ accept || "All files" }}
                     </div>
                 </div>
             </div>

@@ -1,7 +1,9 @@
 <template>
     <div class="flex justify-center">
+        <DefaultConfirmDialog ref="discardConfirmRef" :group="discardGroup" />
         <Dialog
-            v-model:visible="visible"
+            :visible="visible"
+            @update:visible="requestVisibility"
             modal
             :class="[
                 ' w-[90%] sm:w-1/3 dark:!bg-gray-800 dark:!text-gray-300 dark:!border-gray-600',
@@ -54,7 +56,7 @@
                             label="Cancel"
                             severity="secondary"
                             outlined
-                            @click="visible = false"
+                            @click="requestVisibility(false)"
                         >
                             <template #icon>
                                 <component
@@ -88,7 +90,13 @@
 </template>
 
 <script setup>
-defineProps({
+import { ref, useId } from "vue";
+import DefaultConfirmDialog from "./DefaultConfirmDialog.vue";
+
+const discardConfirmRef = ref(null);
+const discardGroup = `discard-${useId()}`;
+const props = defineProps({
+    confirmClose: Boolean,
     description: String,
     title: String,
     icon: Function,
@@ -121,6 +129,23 @@ defineProps({
 });
 
 const visible = defineModel("visible");
+
+const requestVisibility = (next) => {
+    if (!next && props.loading && props.confirmClose) return;
+    if (!next && props.confirmClose) {
+        discardConfirmRef.value.popupDialog(() => {
+            visible.value = false;
+        }, {
+            header: "Unsaved Changes",
+            message: "Discard your unsaved changes?",
+            acceptLabel: "Discard",
+            rejectLabel: "Keep Editing",
+            severity: "warn",
+        });
+        return;
+    }
+    visible.value = next;
+};
 
 const emit = defineEmits(["submit-form"]);
 
