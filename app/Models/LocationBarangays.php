@@ -11,6 +11,8 @@ class LocationBarangays extends Model
         'name',
         'code',
         'old_name',
+        'district',
+        'municipality_code',
         'region_code',
         'is_active',
         'is_delete',
