@@ -24,6 +24,15 @@ class ScholarProfiles extends Model
     ];
 
 
+    public function getPhotoAttribute($value)
+    {
+        if (is_string($value) && str_starts_with($value, 'profile-photos/')) {
+            return route('scholar-photos.show', ['scholar' => $this->scholar_id]);
+        }
+
+        return $value;
+    }
+
     public function scholar()
     {
         return $this->belongsTo(Scholars::class, 'scholar_id');

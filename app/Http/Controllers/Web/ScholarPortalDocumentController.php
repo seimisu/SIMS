@@ -6,27 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Models\ScholarTerm;
 use App\Models\StudentDocument;
 use App\Support\SystemPermissions;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use App\Support\ScholarPortalFiles;
+use App\Models\StudentProfileRequest;
+use App\Models\studentLandbankRequest;
+use App\Models\Scholars;
 use Illuminate\Support\Facades\Log;
 
 class ScholarPortalDocumentController extends Controller
 {
     public function preview(Request $request, int|string $document)
     {
-        return $this->proxy($document, inline: true);
+        return $this->serve($document, inline: true);
     }
 
     public function download(Request $request, int|string $document)
     {
-        return $this->proxy($document, inline: false);
+        return $this->serve($document, inline: false);
     }
 
-    private function proxy(int|string $document, bool $inline)
+    private function serve(int|string $document, bool $inline)
     {
         if (! auth()->check()) {
-            Log::warning('Scholar Portal document proxy rejected unauthenticated request.', [
+            Log::warning('Scholar Portal document request rejected unauthenticated request.', [
                 'document' => $document,
                 'mode' => $inline ? 'preview' : 'download',
                 'url' => request()->fullUrl(),
@@ -45,71 +47,63 @@ class ScholarPortalDocumentController extends Controller
         abort_unless($permissions->can($user, $permission), 403);
         $term = ScholarTerm::findOrFail($metadata->term_record_id);
         if ($permissions->shouldScopeToRegion($user)) {
+            abort_unless($permissions->regionCodeFor($user), 403);
             abort_unless($term->scholar()->whereHas('schoolInfo.campus.address',
                 fn ($address) => $address->where('region_code', $permissions->regionCodeFor($user))
             )->exists(), 403);
         }
 
-        $baseUrl = rtrim((string) config('services.scholar_portal.api_base_url'), '/');
-        $apiKey = (string) config('services.scholar_portal.file_api_key');
-
-        if ($baseUrl === '' || $apiKey === '') {
-            Log::warning('Scholar Portal document proxy is missing configuration.', [
-                'document' => $document,
-                'has_base_url' => $baseUrl !== '',
-                'has_api_key' => $apiKey !== '',
-            ]);
-
-            return response('Document retrieval is not configured. Please contact your administrator.', 503);
-        }
-
-        try {
-            $portalResponse = Http::withHeaders([
-                'X-SIMS-API-Key' => $apiKey,
-                'Accept' => '*/*',
-            ])
-                ->connectTimeout(10)
-                ->timeout(30)
-                ->get($baseUrl.'/api/sims/documents/'.$document);
-        } catch (ConnectionException $exception) {
-            Log::warning('Scholar Portal document connection failed.', ['document' => $document]);
-            return response('The Scholar Portal is unavailable. Please try again later.', 502);
-        }
-
-        if ($portalResponse->status() === 404) {
-            return response('The uploaded document could not be found.', 404);
-        }
-
-        if (! $portalResponse->successful()) {
-            Log::warning('Scholar Portal document proxy request failed.', [
-                'document' => $document,
-                'mode' => $inline ? 'preview' : 'download',
-                'portal_url' => $baseUrl.'/api/sims/documents/'.$document,
-                'portal_status' => $portalResponse->status(),
-                'portal_content_type' => $portalResponse->header('Content-Type'),
-            ]);
-
-            return response('Unable to retrieve the document from the Scholar Portal.', 502);
-        }
-
-        $contentType = $portalResponse->header('Content-Type') ?: 'application/octet-stream';
-        $filename = str_replace(["\r", "\n", '"', '\\'], '_',
-            $metadata->file_name ?: $this->filename($portalResponse->header('Content-Disposition'), $document));
-        $disposition = $inline ? 'inline' : 'attachment';
-
-        return response($portalResponse->body(), 200, [
-            'Content-Type' => $contentType,
-            'Content-Disposition' => $disposition.'; filename="'.$filename.'"',
-            'Cache-Control' => 'private, no-store',
-        ]);
+        return app(ScholarPortalFiles::class)->send($metadata->file_path, $metadata->file_name, $inline);
     }
 
-    private function filename(?string $contentDisposition, int|string $document): string
+    public function profileProof(Request $request, int|string $record, string $mode)
     {
-        if ($contentDisposition && preg_match('/filename\*?=(?:UTF-8\'\')?"?([^";]+)"?/i', $contentDisposition, $matches)) {
-            return basename(urldecode($matches[1]));
+        $this->requirePermission('profile-requests.view');
+        $metadata = StudentProfileRequest::findOrFail($record);
+        $this->authorizeScholar($metadata->scholar_id);
+
+        return app(ScholarPortalFiles::class)->send($metadata->proof, inline: $mode === 'preview');
+    }
+
+    public function landbankProof(Request $request, int|string $record, string $mode)
+    {
+        $this->requirePermission('landbank-requests.view');
+        $metadata = studentLandbankRequest::findOrFail($record);
+        $this->authorizeScholar($metadata->scholar_id);
+
+        return app(ScholarPortalFiles::class)->send($metadata->uploaded_file, inline: $mode === 'preview');
+    }
+
+    public function photo(Request $request, int|string $scholar)
+    {
+        abort_unless(auth()->check(), 403);
+        $permissions = app(SystemPermissions::class);
+        abort_unless(collect(['scholars.view', 'grade-submissions.view', 'profile-requests.view', 'landbank-requests.view'])
+            ->contains(fn ($permission) => $permissions->can(auth()->user(), $permission)), 403);
+        $record = $this->authorizeScholar($scholar);
+        $path = $record->profile?->getRawOriginal('photo');
+        abort_unless(is_string($path) && str_starts_with($path, 'profile-photos/'), 404);
+
+        return app(ScholarPortalFiles::class)->send($path);
+    }
+
+    private function requirePermission(string $permission): void
+    {
+        abort_unless(auth()->check(), 403);
+        abort_unless(app(SystemPermissions::class)->can(auth()->user(), $permission), 403);
+    }
+
+    private function authorizeScholar(int|string $id): Scholars
+    {
+        $permissions = app(SystemPermissions::class);
+        $user = auth()->user();
+        $query = Scholars::whereKey($id);
+        if ($permissions->shouldScopeToRegion($user)) {
+            $region = $permissions->regionCodeFor($user);
+            abort_unless($region, 403);
+            $query->whereHas('schoolInfo.campus.address', fn ($address) => $address->where('region_code', $region));
         }
 
-        return 'document-'.$document;
+        return $query->firstOrFail();
     }
 }

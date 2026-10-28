@@ -30,6 +30,15 @@ return [
 
     'disks' => [
 
+        // Link/mount this directory to the Scholar Portal backend/uploads folder.
+        'scholar_portal' => [
+            'driver' => 'local',
+            'root' => env('SCHOLAR_PORTAL_FILES_DIR') ?: storage_path('app/private/portal-files'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+        ],
+
         'sensitive' => [
             'driver' => 'local',
             'root' => storage_path('app/private/sensitive'),

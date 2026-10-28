@@ -70,6 +70,12 @@ Route::middleware(['auth', 'web'])->group(function () {
     Route::get('/profile', [UserProfileController::class, 'index'])->name('profile');
     Route::put('/profile/update', [UserProfileController::class, 'update'])->middleware('throttle:writes')->name('profile.update');
     Route::post('/profile/photo', [UserProfileController::class, 'updatePhoto'])->middleware('throttle:uploads')->name('profile.photo.update');
+    Route::get('scholar-profile-proofs/{record}/{mode}', [ScholarPortalDocumentController::class, 'profileProof'])
+        ->whereIn('mode', ['preview', 'download'])->middleware('throttle:downloads')->name('scholar-profile-proofs.show');
+    Route::get('scholar-landbank-proofs/{record}/{mode}', [ScholarPortalDocumentController::class, 'landbankProof'])
+        ->whereIn('mode', ['preview', 'download'])->middleware('throttle:downloads')->name('scholar-landbank-proofs.show');
+    Route::get('scholar-photos/{scholar}', [ScholarPortalDocumentController::class, 'photo'])
+        ->middleware('throttle:downloads')->name('scholar-photos.show');
     Route::get('scholar-documents/{document}/preview', [ScholarPortalDocumentController::class, 'preview'])->middleware('throttle:downloads')->name('scholar-documents.preview');
     Route::get('scholar-documents/{document}/download', [ScholarPortalDocumentController::class, 'download'])->middleware('throttle:downloads')->name('scholar-documents.download');
 });

@@ -695,9 +695,9 @@ const loading = ref({
 });
 const personalRequest = ref(null);
 const scholarPortalFileUrl = (file) => {
-    const documentId = file?.document_id ?? file?.id ?? file?.request_id;
+    const requestId = file?.request_id;
 
-    return documentId ? route("scholar-documents.preview", documentId) : null;
+    return requestId ? route("scholar-profile-proofs.show", { record: requestId, mode: "preview" }) : null;
 };
 
 const scholar = computed(() => {

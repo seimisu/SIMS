@@ -746,9 +746,9 @@ const loading = ref({
 
 const landbankRequest = ref(null);
 const scholarPortalFileUrl = (file) => {
-    const documentId = file?.document_id ?? file?.id ?? file?.request_id;
+    const requestId = file?.request_id;
 
-    return documentId ? route("scholar-documents.preview", documentId) : null;
+    return requestId ? route("scholar-landbank-proofs.show", { record: requestId, mode: "preview" }) : null;
 };
 const landbankPasswordDialog = ref(false);
 const landbankPassword = ref("");
