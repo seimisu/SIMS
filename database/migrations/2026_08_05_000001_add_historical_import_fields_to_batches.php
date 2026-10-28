@@ -47,6 +47,10 @@ return new class extends Migration
                 'import_file_name',
             ] as $column) {
                 if (Schema::hasColumn('batches', $column)) {
+                    if (in_array($column, ['source', 'is_historical'], true)) {
+                        $table->dropIndex([$column]);
+                    }
+
                     $table->dropColumn($column);
                 }
             }

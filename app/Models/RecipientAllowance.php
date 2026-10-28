@@ -13,10 +13,15 @@ class RecipientAllowance extends Model
         'amount',
         'remarks',
         'status',
+        'deposit_status',
+        'deposited_by',
+        'deposited_at',
+        'deposit_remarks',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'deposited_at' => 'datetime',
     ];
 
     public function recipient()
@@ -27,5 +32,10 @@ class RecipientAllowance extends Model
     public function allowanceType()
     {
         return $this->belongsTo(AllowanceType::class);
+    }
+
+    public function depositedBy()
+    {
+        return $this->belongsTo(User::class, 'deposited_by');
     }
 }

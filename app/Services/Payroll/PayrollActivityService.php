@@ -56,6 +56,7 @@ class PayrollActivityService
                 'payroll_verified',
                 'payroll_returned',
                 'payroll_month_credited',
+                'payroll_allowances_credited',
                 'scholar_removed',
             ]);
         } elseif ($permissions->isScholarshipReviewer($user)) {
@@ -72,6 +73,7 @@ class PayrollActivityService
             $query->whereIn('action', [
                 'payroll_approved',
                 'payroll_month_credited',
+                'payroll_allowances_credited',
             ]);
         }
 
@@ -90,6 +92,7 @@ class PayrollActivityService
             'payroll_imported' => 'Historical payroll imported',
             'payroll_returned' => 'Payroll returned',
             'payroll_month_credited' => 'Payroll month deposit',
+            'payroll_allowances_credited' => 'Payroll allowance deposits',
             'scholar_marked_for_removal' => 'Scholar marked for removal',
             'scholar_moved_from_returned_payroll' => 'Scholar moved from returned payroll',
             'scholar_removal_cancelled' => 'Scholar removal cancelled',

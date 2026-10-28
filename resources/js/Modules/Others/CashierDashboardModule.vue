@@ -10,7 +10,7 @@
                         Cashier Dashboard
                     </h1>
                     <p class="text-xs text-slate-500 dark:text-gray-400">
-                        Monitor approved batches and monthly deposit progress.
+                        Monitor approved batches, stipend releases, and financial allowance deposits.
                     </p>
                 </div>
                 <button
@@ -128,6 +128,73 @@
                 </section>
 
                 <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 lg:col-span-3">
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                Financial Allowance Deposit Status
+                            </h2>
+                            <p class="text-[11px] text-slate-500 dark:text-gray-400">
+                                Allowances are deposited individually and tracked separately from monthly stipends.
+                            </p>
+                        </div>
+                        <span
+                            :class="[
+                                allowanceStatusClass(summary.financial_allowance_status),
+                                'rounded-full px-3 py-1 text-xs font-semibold',
+                            ]"
+                        >
+                            {{ allowanceStatusLabel(summary.financial_allowance_status) }}
+                        </span>
+                    </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-800">
+                            <div class="mb-2 flex items-center justify-between gap-3">
+                                <span class="text-xs text-slate-600 dark:text-gray-300">
+                                    Allowance records deposited
+                                </span>
+                                <span class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    {{ formatNumber(summary.credited_financial_allowances) }} /
+                                    {{ formatNumber(summary.financial_allowances) }}
+                                </span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded bg-slate-200 dark:bg-gray-700">
+                                <div
+                                    class="h-full rounded bg-emerald-500"
+                                    :style="{ width: `${allowanceCompletionPercent}%` }"
+                                />
+                            </div>
+                            <div class="mt-2 text-right text-xs text-slate-500 dark:text-gray-400">
+                                {{ allowanceCompletionPercent }}% deposited
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-800">
+                                <div class="text-[11px] text-slate-500 dark:text-gray-400">
+                                    Deposited amount
+                                </div>
+                                <div class="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
+                                    {{ formatMoney(summary.credited_financial_allowance_amount) }}
+                                </div>
+                                <div class="text-[11px] text-slate-500 dark:text-gray-400">
+                                    {{ formatNumber(summary.credited_financial_allowances) }} allowance(s)
+                                </div>
+                            </div>
+                            <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-800">
+                                <div class="text-[11px] text-slate-500 dark:text-gray-400">
+                                    Pending amount
+                                </div>
+                                <div class="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
+                                    {{ formatMoney(summary.pending_financial_allowance_amount) }}
+                                </div>
+                                <div class="text-[11px] text-slate-500 dark:text-gray-400">
+                                    {{ formatNumber(summary.pending_financial_allowances) }} allowance(s)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-700 lg:col-span-3">
                     <div class="mb-4 flex items-center justify-between gap-3">
                         <div>
                             <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
@@ -139,7 +206,7 @@
                         </div>
                     </div>
                     <div class="overflow-auto rounded border border-slate-200 dark:border-gray-600">
-                        <table class="w-full min-w-[820px] text-left text-xs">
+                        <table class="w-full min-w-[1000px] text-left text-xs">
                             <thead class="bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-300">
                                 <tr>
                                     <th class="px-3 py-2 font-semibold">Batch</th>
@@ -147,6 +214,7 @@
                                     <th class="px-3 py-2 font-semibold">Term / AY</th>
                                     <th class="px-3 py-2 font-semibold">Scholars</th>
                                     <th class="px-3 py-2 font-semibold">Deposit</th>
+                                    <th class="px-3 py-2 font-semibold">Financial Allowances</th>
                                     <th class="px-3 py-2 font-semibold">Approved</th>
                                 </tr>
                             </thead>
@@ -165,10 +233,32 @@
                                             {{ batch.credited }}/{{ batch.total }}
                                         </span>
                                     </td>
+                                    <td class="px-3 py-2">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span
+                                                :class="[
+                                                    allowanceStatusClass(batch.financial_allowance.status),
+                                                    'rounded-full px-2 py-1 text-xs font-semibold',
+                                                ]"
+                                            >
+                                                {{ allowanceStatusLabel(batch.financial_allowance.status) }}
+                                            </span>
+                                            <span class="text-slate-600 dark:text-gray-300">
+                                                {{ batch.financial_allowance.credited }}/{{ batch.financial_allowance.total }}
+                                            </span>
+                                        </div>
+                                        <div class="mt-1 text-[11px] text-slate-500 dark:text-gray-400">
+                                            {{ formatNumber(batch.financial_allowance.pending) }} pending
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 dark:text-gray-400">
+                                            {{ formatMoney(batch.financial_allowance.credited_amount) }} /
+                                            {{ formatMoney(batch.financial_allowance.total_amount) }}
+                                        </div>
+                                    </td>
                                     <td class="px-3 py-2 text-slate-600 dark:text-gray-300">{{ batch.approved_at || "-" }}</td>
                                 </tr>
                                 <tr v-if="!recentBatches.length">
-                                    <td colspan="6" class="px-3 py-6 text-center text-xs text-slate-500 dark:text-gray-400">
+                                    <td colspan="7" class="px-3 py-6 text-center text-xs text-slate-500 dark:text-gray-400">
                                         No approved batches are ready for deposit.
                                     </td>
                                 </tr>
@@ -204,6 +294,14 @@ const completionPercent = computed(() => {
 
     return Math.round((Number(summary.value.credited_releases ?? 0) / total) * 100);
 });
+const allowanceCompletionPercent = computed(() => {
+    const total = Number(summary.value.financial_allowances ?? 0);
+    if (!total) return 0;
+
+    return Math.round(
+        (Number(summary.value.credited_financial_allowances ?? 0) / total) * 100,
+    );
+});
 
 const metrics = computed(() => [
     {
@@ -238,6 +336,31 @@ const metrics = computed(() => [
 
 function formatNumber(num) {
     return Number(num ?? 0).toLocaleString("en-US");
+}
+
+function formatMoney(amount) {
+    return new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+    }).format(Number(amount ?? 0));
+}
+
+function allowanceStatusLabel(status) {
+    return {
+        credited: "Fully deposited",
+        partial: "Partially deposited",
+        pending: "Pending",
+        none: "No allowances",
+    }[status] ?? "Pending";
+}
+
+function allowanceStatusClass(status) {
+    return {
+        credited: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+        partial: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+        pending: "bg-slate-100 text-slate-700 dark:bg-gray-600 dark:text-gray-200",
+        none: "bg-slate-100 text-slate-500 dark:bg-gray-600 dark:text-gray-300",
+    }[status] ?? "bg-slate-100 text-slate-700 dark:bg-gray-600 dark:text-gray-200";
 }
 
 function goToCredits() {

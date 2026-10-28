@@ -4,6 +4,7 @@ namespace App\Services\Payroll;
 
 use App\Models\Batches;
 use App\Models\PayrollBatchMonthlyCredit;
+use App\Models\RecipientStipend;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -95,6 +96,7 @@ class PayrollMonthlyCreditService
                     ])->filter()->join(' ')),
                     'spas_no' => $stipend->recipient?->scholar?->spas_no,
                     'account_no' => $stipend->recipient?->account_no,
+                    'test' => $stipend,
                     'amount' => (float) $stipend->amount,
                     'status' => $stipend->status === 'credited' ? 'credited' : 'pending',
                     'remarks' => $stipend->remarks,
@@ -217,7 +219,7 @@ class PayrollMonthlyCreditService
 
     private function eligibleStipendsQuery(Batches $batch, int $month)
     {
-        return \App\Models\RecipientStipend::query()
+        return RecipientStipend::query()
             ->where('month_no', $month)
             ->where('amount', '>', 0)
             ->whereHas('recipient', function ($query) use ($batch) {

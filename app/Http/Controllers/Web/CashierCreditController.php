@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Batches;
+use App\Services\Notifications\RoleBellNotificationService;
 use App\Services\Payroll\PayrollActivityService;
+use App\Services\Payroll\PayrollAllowanceCreditService;
 use App\Services\Payroll\PayrollMonthlyCreditService;
 use App\Services\Payroll\PayrollStatusService;
-use App\Services\Notifications\RoleBellNotificationService;
 use App\Support\SystemPermissions;
 use Carbon\Carbon;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +55,102 @@ class CashierCreditController extends Controller
         ]);
     }
 
+    public function allowances(string $id): JsonResponse
+    {
+        abort_unless(app(SystemPermissions::class)->can(Auth::user(), 'payroll.credits.view'), 403);
+
+        $batch = Batches::findOrFail(Hashids::decode($id)[0] ?? 0);
+        abort_unless(app(PayrollStatusService::class)->currentBatchStatus($batch) === 'approved_payroll', 422);
+
+        $service = app(PayrollAllowanceCreditService::class);
+        abort_unless(app(PayrollMonthlyCreditService::class)->isCreditEligible($batch), 422);
+        $allowances = $service->recipientRowsForBatch($batch);
+
+        return response()->json([
+            'batch' => [
+                'id' => $id,
+                'name' => $batch->name,
+                'region' => $batch->region,
+                'term' => $batch->academic_term,
+                'school_year' => $batch->school_year,
+            ],
+            'allowances' => $allowances,
+            'summary' => $service->summaryForBatch($batch),
+        ]);
+    }
+
+    public function updateAllowances(Request $request, string $id): RedirectResponse
+    {
+        if (! app(SystemPermissions::class)->can(Auth::user(), 'payroll.credits.update')) {
+            abort(403);
+        }
+
+        $batch = Batches::findOrFail(Hashids::decode($id)[0] ?? 0);
+
+        if (app(PayrollStatusService::class)->currentBatchStatus($batch) !== 'approved_payroll') {
+            return redirect()->back()->with('flash', [
+                'status' => 'error',
+                'title' => 'Payroll not approved',
+                'message' => 'Only approved payroll batches can be marked as deposit.',
+            ]);
+        }
+
+        if (! app(PayrollMonthlyCreditService::class)->isCreditEligible($batch)) {
+            return redirect()->back()->with('flash', [
+                'status' => 'error',
+                'title' => 'Payroll not available for deposit',
+                'message' => 'Historical imported payroll batches cannot be marked as deposit by the cashier.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'allowances' => ['required', 'array', 'min:1'],
+            'allowances.*.id' => ['required', 'string', 'distinct'],
+            'allowances.*.selected' => ['required', 'boolean'],
+            'allowances.*.remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        foreach ($data['allowances'] as $index => $allowance) {
+            if (! $allowance['selected'] && blank($allowance['remarks'] ?? null)) {
+                return redirect()->back()->withErrors([
+                    "allowances.{$index}.remarks" => 'Remarks are required for allowances not selected for deposit.',
+                ]);
+            }
+        }
+
+        $result = DB::transaction(function () use ($batch, $data) {
+            $result = app(PayrollAllowanceCreditService::class)->creditSelected(
+                $batch,
+                (int) Auth::id(),
+                $data['allowances']
+            );
+
+            $summary = $result['summary'];
+            app(PayrollActivityService::class)->log(
+                $batch,
+                'payroll_allowances_credited',
+                oldStatus: 'pending',
+                newStatus: $summary['status'],
+                metadata: [
+                    'amount' => $result['amount'],
+                    'allowance_count' => $result['recipient_count'],
+                    'credited_count' => $summary['credited_count'],
+                    'total_count' => $summary['total_count'],
+                ]
+            );
+
+            return $result;
+        });
+
+        return redirect()->back()->with('flash', [
+            'status' => 'success',
+            'title' => $result['summary']['status'] === 'credited'
+                ? 'Allowance deposits complete'
+                : 'Partial allowance deposits',
+            'message' => "{$result['recipient_count']} allowance(s) deposited.",
+        ]);
+    }
+
     public function index(Request $request): Response
     {
         $permissions = app(SystemPermissions::class);
@@ -68,6 +165,7 @@ class CashierCreditController extends Controller
         $schoolYear = $request->input('school_year');
         $creditStatus = $request->input('credit_status');
         $credits = app(PayrollMonthlyCreditService::class);
+        $allowanceCredits = app(PayrollAllowanceCreditService::class);
         $baseQuery = Batches::query()
             ->whereNull('deleted_at')
             ->where(function ($query) {
@@ -104,8 +202,8 @@ class CashierCreditController extends Controller
                     ->orderByDesc('school_year')
                     ->get(),
                 'creditStatuses' => [
-                    ['id' => 'pending', 'name' => 'Has Pending Month'],
-                    ['id' => 'credited', 'name' => 'Complete Deposit'],
+                    ['id' => 'pending', 'name' => 'Has Pending Stipend Month'],
+                    ['id' => 'credited', 'name' => 'Complete Stipend Deposits'],
                 ],
             ],
             'batches' => fn () => (clone $baseQuery)
@@ -151,6 +249,7 @@ class CashierCreditController extends Controller
                     'scholars_count' => $batch->scholars_count,
                     'approved_at' => $this->approvedAt($batch),
                     'credits' => $credits->rowsForBatch($batch),
+                    'allowance_deposits' => $allowanceCredits->summaryForBatch($batch),
                 ]),
         ]);
     }

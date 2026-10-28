@@ -5,7 +5,6 @@ namespace App\Http\Requests\Auth;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Override;
 
@@ -32,8 +31,7 @@ class ActivationRequest extends FormRequest
             'fname' => ['required', 'string'],
             'lname' => ['required', 'string'],
             'email' => ['email', 'required'],
-            'school' => ['nullable', 'array', 'required_if:is_coordinator,1'],
-            'school.id' => ['required_with:school', 'nullable', 'integer', Rule::exists('school_campuses', 'id')->where(fn ($query) => $query->where('is_delete', false))],
+            'school' => ['required_if:is_coordinator,1'],
             'designation' => ['required', 'string'],
             'agency' => ['required', 'array'],
             'contact' => ['required'],

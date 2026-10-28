@@ -1,14 +1,35 @@
 <template>
     <Head title="Programs" />
     <AuthLayout>
-        <div class="programs-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100">
-            <div class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700">
-                <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div
+            class="programs-page flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden text-slate-800 dark:text-gray-100"
+        >
+            <div
+                class="shrink-0 border-b border-slate-200 pb-4 dark:border-gray-700"
+            >
+                <div
+                    class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+                >
                     <div class="flex min-w-0 items-start gap-3">
-                        <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"><IconCertificate :size="21" /></div>
-                        <HeaderModule title="Programs" description="Manage scholarship programs, types, and program classifications." />
+                        <div
+                            class="flex size-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"
+                        >
+                            <IconCertificate :size="21" />
+                        </div>
+                        <HeaderModule
+                            title="Programs"
+                            description="Manage scholarship programs, types, and program classifications."
+                        />
                     </div>
-                    <DefaultButton size="small" label="Create Program" severity="secondary" outlined :icon="IconCirclePlusFilled" class="self-start xl:self-auto" @click="toggleModal({ type: 'create' })" />
+                    <DefaultButton
+                        size="small"
+                        label="Create Program"
+                        severity="secondary"
+                        outlined
+                        :icon="IconCirclePlusFilled"
+                        class="self-start xl:self-auto"
+                        @click="toggleModal({ type: 'create' })"
+                    />
                 </div>
             </div>
             <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
@@ -72,6 +93,21 @@
                         </div>
                     </template>
                 </ToolbarModule>
+                <Tabs
+                    v-model:value="activeScholarship"
+                    class="program-scholarship-tabs"
+                >
+                    <TabList class="text-xs font-black">
+                        <Tab value="all">All scholarships</Tab>
+                        <Tab
+                            v-for="scholarship in page.props.scholarshipOptions"
+                            :key="scholarship.id"
+                            :value="String(scholarship.id)"
+                        >
+                            {{ scholarship.name }}
+                        </Tab>
+                    </TabList>
+                </Tabs>
                 <DefaultTable
                     :items="page.props.programs.data"
                     :pagination="{
@@ -208,6 +244,7 @@ import SelectInput from "../../Components/inputs/SelectInput.vue";
 
 const page = usePage();
 const searchInput = ref(null);
+const activeScholarship = ref(page.props.selectedScholarship ?? "all");
 const timerBounce = ref(null);
 const selectedRow = ref(null);
 const toolbarRef = ref(null);
@@ -327,12 +364,16 @@ const clearSearch = () => {
     searchInput.value = null;
 };
 
-const loadPage = (page) => {
+const loadPage = (pageNumber) => {
     router.get(
         route("programs"),
         {
-            page,
+            page: pageNumber,
             search: searchInput.value,
+            scholarship:
+                activeScholarship.value === "all"
+                    ? null
+                    : activeScholarship.value,
         },
         {
             preserveState: true,
@@ -340,6 +381,10 @@ const loadPage = (page) => {
         },
     );
 };
+
+watch(activeScholarship, () => {
+    loadPage(1);
+});
 
 watch(
     () => searchInput.value,
@@ -354,6 +399,11 @@ watch(
 
 <style scoped>
 :global(.dark .programs-page .p-datatable-header-cell),
-:global(.dark .programs-page .p-datatable-column-header-content) { color: #e5e7eb !important; }
-:global(.programs-page .p-datatable-tbody > tr > td) { padding-top: 0.65rem; padding-bottom: 0.65rem; }
+:global(.dark .programs-page .p-datatable-column-header-content) {
+    color: #e5e7eb !important;
+}
+:global(.programs-page .p-datatable-tbody > tr > td) {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
 </style>
