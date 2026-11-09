@@ -33,7 +33,7 @@ return [
         // Link/mount this directory to the Scholar Portal backend/uploads folder.
         'scholar_portal' => [
             'driver' => 'local',
-            'root' => env('SCHOLAR_PORTAL_FILES_DIR') ?: storage_path('app/private/portal-files'),
+            'root' => env('SCHOLAR_PORTAL_FILES_DIR') ?: storage_path('/mnt/portalsimsfiles'),
             'visibility' => 'private',
             'serve' => false,
             'throw' => true,

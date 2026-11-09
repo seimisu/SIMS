@@ -36,39 +36,21 @@ sudo cp -r * "$DEPLOY_DIR/"
 
 PORTAL_UPLOADS="${PORTAL_UPLOADS_DIR:-/var/www/sei-scholars-portal-next/backend/uploads}"
 
-echo "[7/7] Creating symlink..."
-TARGET="$PORTAL_UPLOADS"
-MNT_DIR="$DEPLOY_DIR/storage/app/private"
-LINK="$MNT_DIR/portal-files"
+echo "[7/7] Checking portal uploads storage..."
 
-if [[ "$TARGET" != /* ]] || ! sudo test -d "$TARGET"; then
-  echo "Portal uploads directory not found or not absolute: $TARGET" >&2
-  exit 1
+PORTAL_UPLOADS="/mnt/portalsimsfiles/uploads"
+
+if ! sudo test -d "$PORTAL_UPLOADS"; then
+    echo "Error: Portal uploads directory not found: $PORTAL_UPLOADS" >&2
+    exit 1
 fi
 
-sudo mkdir -p "$MNT_DIR"
-
-if sudo test -L "$LINK"; then
-  if [ "$(sudo readlink "$LINK")" = "$TARGET" ]; then
-    echo "Symlink already configured: $LINK"
-  else
-    echo "Updating symlink: $LINK"
-    sudo ln -sfnT "$TARGET" "$LINK"
-  fi
-elif sudo test -e "$LINK"; then
-  echo "Error: $LINK exists but is not a symlink." >&2
-  exit 1
-else
-  sudo ln -s "$TARGET" "$LINK"
-  echo "Created symlink: $LINK -> $TARGET"
+if ! sudo test -r "$PORTAL_UPLOADS" || ! sudo test -x "$PORTAL_UPLOADS"; then
+    echo "Error: Portal uploads directory is not accessible: $PORTAL_UPLOADS" >&2
+    exit 1
 fi
 
-if ! sudo test -d "$LINK" || ! sudo test -r "$LINK" || ! sudo test -x "$LINK"; then
-  echo "Portal storage is not accessible: $LINK" >&2
-  exit 1
-fi
-
-echo "Portal storage link configured successfully."
+echo "Portal uploads storage verified: $PORTAL_UPLOADS"
 
 cd "$DEPLOY_DIR"
 sudo php artisan config:clear
